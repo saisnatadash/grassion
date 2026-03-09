@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0C0F1A;--paper:#FAFAF8;--off:#F3F3F0;--border:#E4E4DE;--muted:#7A7A72;--dim:#ABABAA;--sub:#3D3D38;--blue:#1D4ED8;--blue-l:#EFF6FF;--blue-m:#BFDBFE}
+*{margin:0;padding:0;box-sizing:border-box}body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,250,248,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 48px}
+.logo{font-family:'Fraunces',serif;font-size:22px;color:var(--ink);text-decoration:none;font-weight:400}
+.logo b{color:var(--blue);font-weight:400}
+.nav-mid{display:flex;align-items:center;gap:32px;list-style:none}
+.nav-mid a{font-size:14px;color:var(--muted);text-decoration:none;transition:color .15s}
+.nav-mid a:hover{color:var(--ink)}
+.has-drop{position:relative}
+.drop{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--paper);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.1);padding:8px;min-width:260px;opacity:0;pointer-events:none;transition:all .15s;z-index:300}
+.has-drop:hover .drop{opacity:1;pointer-events:all;top:calc(100% + 4px)}
+.drop-cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px}
+.drop-card{padding:12px;border:1px solid var(--border);border-radius:7px;text-decoration:none;display:flex;flex-direction:column;gap:3px;transition:all .15s}
+.drop-card:hover{background:var(--blue-l);border-color:var(--blue-m)}
+.dc-icon{font-size:16px}.dc-title{font-size:12px;font-weight:600;color:var(--ink)}.dc-sub{font-size:11px;color:var(--muted)}
+.drop a.plain{display:block;padding:9px 12px;font-size:13px;color:var(--sub);border-radius:6px;text-decoration:none;transition:background .1s}
+.drop a.plain:hover{background:var(--off)}
+.drop-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:6px 12px 2px;font-weight:500}
+.nav-right{display:flex;align-items:center;gap:10px}
+.btn-nav{font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:7px 12px;text-decoration:none}
+.btn-cta{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--paper);border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;text-decoration:none}
+
+.page{max-width:800px;margin:0 auto;padding:100px 48px 80px}
+.ey{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;font-weight:500}
+h1{font-family:'Fraunces',serif;font-size:clamp(40px,5.5vw,58px);font-weight:400;letter-spacing:-2px;line-height:1.08;margin-bottom:20px}
+h1 em{font-style:italic;color:var(--blue)}
+.lead{font-size:18px;color:var(--sub);line-height:1.75;margin-bottom:48px;border-left:3px solid var(--blue);padding-left:20px}
+.story p{font-size:15px;color:var(--sub);line-height:1.85;margin-bottom:20px}
+.story strong{color:var(--ink);font-weight:600}
+hr{border:none;border-top:1px solid var(--border);margin:48px 0}
+h2{font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-.5px;margin-bottom:28px}
+.vals{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.val{padding:22px;border:1px solid var(--border);border-radius:10px;transition:background .15s}
+.val:hover{background:var(--off)}
+.val-n{font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:7px;font-weight:500}
+.val-t{font-size:15px;font-weight:600;margin-bottom:7px}
+.val-p{font-size:13px;color:var(--muted);line-height:1.6}
+footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.fl-logo{font-family:'Fraunces',serif;font-size:18px;color:var(--ink);text-decoration:none}
+.fl-links{display:flex;gap:24px}
+.fl-links a{font-size:12px;color:var(--dim);text-decoration:none}
+.fl-links a:hover{color:var(--ink)}
+.fl-copy{font-size:12px;color:var(--dim)}
+@media(max-width:768px){nav{padding:0 20px}.nav-mid{display:none}.page{padding:90px 20px 60px}.vals{grid-template-columns:1fr}footer{padding:24px 20px}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="/">Grassion<b>.</b></a>
+  <ul class="nav-mid">
+    <li><a href="/#features">Features</a></li>
+    <li class="has-drop"><a href="/about.html">About us ▾</a>
+      <div class="drop"><div class="drop-label">Company</div><a class="plain" href="/about.html">Our story</a><a class="plain" href="#values">Our values</a></div>
+    </li>
+    <li class="has-drop"><a href="/contact.html">Contact ▾</a>
+      <div class="drop" style="min-width:290px"><div class="drop-label">Get in touch</div>
+        <div class="drop-cards">
+          <a href="/contact.html#work" class="drop-card"><div class="dc-icon">🛠</div><div class="dc-title">Work with us</div><div class="dc-sub">Join the team</div></a>
+          <a href="/contact.html#collaborate" class="drop-card"><div class="dc-icon">🤝</div><div class="dc-title">Collaborate</div><div class="dc-sub">Partnerships</div></a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <div class="nav-right">
+    <a href="/" class="btn-nav">Log in</a>
+    <a href="/" class="btn-cta">Get started free</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="ey">About us</div>
+  <h1>Built by engineers<br>who got <em>burned.</em></h1>
+
+  <p class="lead">We've all been in that postmortem where someone says "we tried this two years ago and it killed the API." Grassion exists so that conversation never needs to happen again.</p>
+
+  <div class="story">
+    <p><strong>Every engineering team carries invisible institutional knowledge.</strong> It lives in Slack threads that get archived, in PR comments that get buried, in incident runbooks that no one reads until something breaks again. The moment that knowledge becomes inaccessible — when a senior engineer leaves, when the team doubles in size, when the codebase outgrows the people who originally built it — the same mistakes start repeating.</p>
+    <p>We started Grassion because we experienced this directly. An engineer on our team spent four days debugging an outage, only to discover the root cause was a config value that had been intentionally set the way it was after a nearly identical incident eighteen months earlier. The knowledge existed. It was just inaccessible at the moment it mattered most.</p>
+    <p><strong>Grassion puts that knowledge back where it belongs — inside the pull request, at the exact moment a change is being made.</strong> Not in a wiki nobody reads. Not in a Slack channel that requires archaeology. Right there, before the merge button is clicked.</p>
+    <p>We're a small team. We move fast. We build things that work. We believe the best developer tools are the ones that feel like they were always supposed to exist — so obvious you wonder why nobody built it sooner.</p>
+  </div>
+
+  <hr id="values">
+  <h2>What we believe</h2>
+  <div class="vals">
+    <div class="val"><div class="val-n">01</div><div class="val-t">Tools should work where you already work</div><p class="val-p">Grassion lives inside GitHub pull requests. No new dashboards to check. No new workflows to adopt. It fits into what you already do.</p></div>
+    <div class="val"><div class="val-n">02</div><div class="val-t">Context beats data</div><p class="val-p">A warning with no context is noise. Grassion tells you not just what is risky — but why the original decision was made, with the full reasoning behind it.</p></div>
+    <div class="val"><div class="val-n">03</div><div class="val-t">Simple first, complex only when needed</div><p class="val-p">The free tier does one thing extremely well. The pro tier unlocks depth when you need it. We don't over-engineer on day one.</p></div>
+    <div class="val"><div class="val-n">04</div><div class="val-t">Privacy is not an afterthought</div><p class="val-p">Your code and your incidents are sensitive. We process only what's necessary. We never store raw code. We don't sell data. Ever.</p></div>
+  </div>
+</div>
+
+<footer>
+  <a class="fl-logo" href="/">Grassion<span style="color:var(--blue)">.</span></a>
+  <div class="fl-links">
+    <a href="/about.html">About</a>
+    <a href="/contact.html#work">Work with us</a>
+    <a href="/contact.html#collaborate">Collaborate</a>
+    <a href="mailto:info@grassion.com">info@grassion.com</a>
+    <a href="https://www.linkedin.com/company/grassion/" target="_blank">LinkedIn</a>
+  </div>
+  <span class="fl-copy">© 2025 Grassion</span>
+</footer>
+</body>
+</html>

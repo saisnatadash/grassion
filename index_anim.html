@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grassion — The last incident your team needs to repeat</title>
+<meta name="description" content="A GitHub bot that catches dangerous code changes before they merge — by remembering every incident your team has ever had.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0C0F1A; --paper:#FAFAF8; --off:#F3F3F0; --border:#E4E4DE;
+  --muted:#7A7A72; --dim:#ABABAA; --sub:#3D3D38;
+  --blue:#1D4ED8; --blue-l:#EFF6FF; --blue-m:#BFDBFE;
+  --green:#15803D; --green-l:#F0FDF4;
+  --amber:#B45309; --amber-l:#FFFBEB;
+  --red:#B91C1C; --red-l:#FEF2F2;
+  --violet:#6D28D9;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;overflow-x:hidden;line-height:1.6}
+
+/* DOTS */
+#dc{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.d{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .3s}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  background:rgba(250,250,248,0.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);height:60px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 48px;
+}
+.logo{font-family:'Fraunces',serif;font-size:22px;color:var(--ink);text-decoration:none;letter-spacing:-.4px;font-weight:400}
+.logo-accent{color:var(--blue)}
+.nav-mid{display:flex;align-items:center;gap:32px;list-style:none}
+.nav-mid a{font-size:14px;color:var(--muted);text-decoration:none;font-weight:400;transition:color .15s}
+.nav-mid a:hover{color:var(--ink)}
+.has-drop{position:relative}
+.drop{
+  position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:var(--paper);border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 12px 32px rgba(0,0,0,.1);padding:8px;min-width:260px;
+  opacity:0;pointer-events:none;transition:all .15s;z-index:300;
+}
+.has-drop:hover .drop{opacity:1;pointer-events:all;top:calc(100% + 4px)}
+.drop-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:6px 12px 2px;font-weight:500}
+/* Slide-style contact boxes */
+.drop-cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px}
+.drop-card{
+  padding:12px;border:1px solid var(--border);border-radius:7px;
+  text-decoration:none;display:flex;flex-direction:column;gap:3px;
+  transition:all .15s;cursor:pointer;
+}
+.drop-card:hover{background:var(--blue-l);border-color:var(--blue-m);transform:translateY(-1px)}
+.dc-icon{font-size:16px;margin-bottom:2px}
+.dc-title{font-size:12px;font-weight:600;color:var(--ink)}
+.dc-sub{font-size:11px;color:var(--muted)}
+.drop a.plain{display:block;padding:9px 12px;font-size:13px;color:var(--sub);border-radius:6px;text-decoration:none;transition:background .1s}
+.drop a.plain:hover{background:var(--off)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.btn-nav{font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:7px 12px;transition:color .15s}
+.btn-nav:hover{color:var(--ink)}
+.btn-cta{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--ink);color:var(--paper);
+  border:none;padding:8px 18px;border-radius:7px;
+  font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;
+  cursor:pointer;text-decoration:none;transition:opacity .15s;
+}
+.btn-cta:hover{opacity:.82}
+
+/* HERO */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:100px 48px 60px;
+  text-align:center;position:relative;z-index:1;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:28px;
+  background:var(--off);border:1px solid var(--border);
+  border-radius:100px;padding:5px 14px;
+  font-size:12px;font-weight:500;color:var(--muted);
+  animation:up .6s ease both;
+}
+.live-dot{width:6px;height:6px;background:#22C55E;border-radius:50%;animation:live 2s infinite}
+@keyframes live{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(34,197,94,0)}}
+
+.hero h1{
+  font-family:'Fraunces',serif;
+  font-size:clamp(52px,7vw,96px);
+  font-weight:400;line-height:1.0;letter-spacing:-3px;
+  color:var(--ink);margin-bottom:20px;
+  animation:up .6s .06s ease both;
+  max-width:900px;
+}
+.hero h1 em{font-style:italic;color:var(--blue)}
+.hero h1 .cross{
+  display:inline-block;position:relative;color:var(--dim);
+}
+.hero h1 .cross::after{
+  content:'';position:absolute;left:0;top:50%;right:0;
+  height:2px;background:var(--muted);transform:rotate(-2deg);
+}
+
+.hero-sub{
+  font-size:clamp(16px,2vw,20px);color:var(--muted);
+  max-width:540px;margin:0 auto 12px;line-height:1.7;font-weight:400;
+  animation:up .6s .12s ease both;
+}
+.hero-sub strong{color:var(--sub);font-weight:500}
+
+.hero-tagline{
+  font-family:'DM Mono',monospace;font-size:13px;
+  color:var(--dim);margin-bottom:36px;letter-spacing:.5px;
+  animation:up .6s .16s ease both;
+}
+.hero-tagline span{color:var(--blue)}
+
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;animation:up .6s .2s ease both;margin-bottom:14px}
+.btn-hero{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--blue);color:white;
+  padding:13px 28px;border-radius:8px;
+  font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;
+  border:none;cursor:pointer;text-decoration:none;transition:all .15s;
+  box-shadow:0 2px 12px rgba(29,78,216,.3);
+}
+.btn-hero:hover{background:#1e40af;transform:translateY(-1px);box-shadow:0 6px 20px rgba(29,78,216,.35)}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--paper);color:var(--sub);
+  padding:13px 24px;border-radius:8px;font-size:14px;font-weight:500;
+  border:1.5px solid var(--border);cursor:pointer;text-decoration:none;transition:all .15s;
+  font-family:'DM Sans',sans-serif;
+}
+.btn-ghost:hover{border-color:#c0c0b8;background:var(--off)}
+.hero-footnote{font-size:12px;color:var(--dim);animation:up .6s .24s ease both}
+
+/* EARLY ACCESS STRIP */
+.ea-strip{margin-top:40px;width:100%;max-width:520px;animation:up .6s .28s ease both}
+.ea-label{font-size:12px;color:var(--muted);margin-bottom:8px;text-align:left}
+.ea-row{display:flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;background:var(--paper);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.ea-row:focus-within{border-color:var(--blue)}
+.ea-in{flex:1;border:none;background:transparent;padding:11px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none}
+.ea-btn{background:var(--blue);color:white;border:none;padding:11px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s}
+.ea-btn:hover{background:#1e40af}
+.ea-ok{font-size:13px;color:var(--green);margin-top:8px;display:none;text-align:left}
+
+@keyframes up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* PR DEMO CARD */
+.demo-wrap{
+  margin:52px auto 0;max-width:680px;
+  animation:up .6s .34s ease both;position:relative;z-index:1;
+}
+.pr{
+  background:var(--paper);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 6px 32px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+  overflow:hidden;text-align:left;
+}
+.pr-top{padding:13px 18px;border-bottom:1px solid var(--border);background:var(--off);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pr-title{font-size:13px;font-weight:600;flex:1;color:var(--ink)}
+.pr-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
+.pr-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:#DCFCE7;color:#15803D;border:1px solid #BBF7D0}
+.diff{padding:13px 18px;font-family:'DM Mono',monospace;font-size:12px;background:#FAFAFA;border-bottom:1px solid var(--border)}
+.del{color:#991B1B;background:#FEF2F2;padding:2px 6px;display:block;border-radius:3px;margin-bottom:3px}
+.ins{color:#166534;background:#F0FDF4;padding:2px 6px;display:block;border-radius:3px}
+.cmt-free{padding:15px 18px}
+.cmt-pro{padding:15px 18px;border-top:1px solid var(--border);background:#FAFBFF}
+.cmt-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bot-av{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#1D4ED8,#6D28D9);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;font-family:'DM Mono',monospace;flex-shrink:0}
+.bot-name{font-size:13px;font-weight:600;color:var(--ink)}
+.tier{font-size:9px;padding:2px 8px;border-radius:100px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.t-free{background:var(--green-l);color:var(--green);border:1px solid #BBF7D0}
+.t-pro{background:linear-gradient(135deg,#1D4ED8,#6D28D9);color:white}
+.ts{font-size:11px;color:var(--dim);margin-left:auto}
+.cmt-body-free{background:var(--amber-l);border:1px solid #FDE68A;border-radius:8px;padding:12px 14px;font-size:13px;color:var(--sub);line-height:1.6}
+.warn-line{display:flex;gap:7px;font-weight:600;color:#92400E;margin-bottom:6px}
+.cmt-body-pro{background:var(--blue-l);border:1px solid var(--blue-m);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--sub);line-height:1.6;margin-top:10px}
+.inc-row{display:flex;gap:10px;background:white;border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-top:8px;align-items:flex-start}
+.inc-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.inc-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+code{font-family:'DM Mono',monospace;font-size:11px;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:3px}
+
+/* SECTIONS */
+section{position:relative;z-index:1}
+.wrap{max-width:940px;margin:0 auto;padding:0 48px}
+.ey{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;font-weight:500}
+h2.sec{font-family:'Fraunces',serif;font-size:clamp(32px,4.5vw,52px);font-weight:400;letter-spacing:-1.5px;line-height:1.1;margin-bottom:14px}
+h2.sec em{font-style:italic;color:var(--blue)}
+.sec-p{font-size:16px;color:var(--muted);max-width:480px;line-height:1.7;margin-bottom:48px}
+
+/* PROBLEM */
+.problem{padding:96px 0}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.col{background:var(--paper);padding:28px 24px;transition:background .15s}
+.col:hover{background:var(--off)}
+.col-ic{font-size:24px;margin-bottom:14px}
+.col-t{font-size:14px;font-weight:600;margin-bottom:6px}
+.col-p{font-size:13px;color:var(--muted);line-height:1.65}
+
+/* CONVO */
+.convo-sec{padding:96px 0;background:var(--off);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.dialogue{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:28px;max-width:520px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.msg{display:flex;gap:10px;align-items:flex-start;margin-bottom:13px}
+.msg:last-child{margin-bottom:0}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0}
+.bubble{background:var(--off);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--sub);line-height:1.55}
+.resolution{background:var(--blue-l);border:1px solid var(--blue-m);border-radius:10px;padding:18px 22px;max-width:520px;display:flex;gap:12px;align-items:center}
+.res-text{font-size:14px;color:var(--sub);line-height:1.6}
+.res-text strong{color:var(--blue);font-weight:600}
+
+/* FEATURES */
+.features-sec{padding:96px 0}
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:44px}
+.fcard{border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .2s}
+.fcard:hover{box-shadow:0 10px 32px rgba(0,0,0,.09);transform:translateY(-2px)}
+.fcard-head{padding:24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.fcard-name{font-family:'Fraunces',serif;font-size:24px;font-weight:400;letter-spacing:-.5px;margin-bottom:5px}
+.fcard-desc{font-size:13px;color:var(--muted);line-height:1.55}
+.plan-tag{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;padding:3px 11px;border-radius:100px;white-space:nowrap}
+.pt-free{background:var(--green-l);color:var(--green);border:1px solid #BBF7D0}
+.pt-pro{background:linear-gradient(135deg,#1D4ED8,#6D28D9);color:white}
+.fcard-body{padding:20px 24px;background:var(--off)}
+.flist{list-style:none;display:flex;flex-direction:column;gap:9px}
+.flist li{display:flex;gap:9px;font-size:13px;color:var(--sub);line-height:1.5;align-items:flex-start}
+.flist li::before{content:'→';color:var(--blue);flex-shrink:0;margin-top:1px;font-weight:500}
+.flist.pro-list li::before{color:var(--violet)}
+
+/* REFERRAL */
+.ref-sec{padding:96px 0;background:var(--off);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ref-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:36px;max-width:640px;box-shadow:0 4px 16px rgba(0,0,0,.05)}
+.ref-tiers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:24px 0}
+.rt{border:1px solid var(--border);border-radius:9px;padding:18px 14px;text-align:center;transition:all .15s}
+.rt:hover{border-color:var(--blue-m);background:var(--blue-l)}
+.rt-n{font-family:'Fraunces',serif;font-size:36px;color:var(--blue);margin-bottom:4px;line-height:1}
+.rt-l{font-size:12px;color:var(--muted);line-height:1.4}
+.share-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.sh{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--paper);color:var(--sub);text-decoration:none;transition:all .15s;font-family:'DM Sans',sans-serif}
+.sh:hover{border-color:#c0c0b8;background:var(--off)}
+.sh-wa{border-color:#25D366;color:#25D366}
+.sh-wa:hover{background:#F0FFF4}
+.sh-li{border-color:#0A66C2;color:#0A66C2}
+.sh-li:hover{background:#EFF6FF}
+
+/* HOW IT WORKS */
+.how-sec{padding:96px 0}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;margin-top:48px}
+.step{display:flex;flex-direction:column;gap:12px}
+.step-n{width:34px;height:34px;border:2px solid var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--blue)}
+.step-t{font-size:15px;font-weight:600}
+.step-p{font-size:13px;color:var(--muted);line-height:1.65}
+.step-code{background:var(--off);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--blue);margin-top:4px}
+
+/* TRIAL */
+.trial-sec{padding:104px 48px;text-align:center;position:relative;z-index:1}
+.trial-sec h2{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,58px);font-weight:400;letter-spacing:-2px;margin-bottom:14px}
+.trial-sec h2 em{font-style:italic;color:var(--blue)}
+.trial-sec p{font-size:17px;color:var(--muted);margin-bottom:36px;max-width:440px;margin-left:auto;margin-right:auto}
+.trial-form{display:flex;max-width:500px;margin:0 auto 14px;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.trial-form:focus-within{border-color:var(--blue)}
+.trial-in{flex:1;border:none;background:var(--paper);padding:13px 18px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none}
+.trial-btn{background:var(--blue);color:white;border:none;padding:13px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:background .15s}
+.trial-btn:hover{background:#1e40af}
+.trial-ok{font-size:13px;color:var(--green);margin:8px 0;display:none}
+.trial-note{font-size:12px;color:var(--dim)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:40px 48px 28px;position:relative;z-index:1}
+.foot-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;flex-wrap:wrap;gap:32px}
+.foot-brand .fl{font-family:'Fraunces',serif;font-size:20px;color:var(--ink);text-decoration:none;display:block;margin-bottom:5px}
+.foot-brand p{font-size:12px;color:var(--muted);max-width:200px;line-height:1.6}
+.foot-links{display:flex;gap:48px;flex-wrap:wrap}
+.foot-col-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:12px;font-weight:500}
+.foot-col a{display:block;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:8px;transition:color .15s}
+.foot-col a:hover{color:var(--ink)}
+.foot-bottom{border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.foot-copy{font-size:12px;color:var(--dim)}
+.foot-social{display:flex;gap:16px}
+.foot-social a{font-size:12px;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color .15s}
+.foot-social a:hover{color:var(--ink)}
+
+/* REVEAL ANIMATIONS */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .55s ease,transform .55s ease}
+.rv.in{opacity:1;transform:translateY(0)}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.ov.open{display:flex}
+.modal{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:36px;width:440px;max-width:92vw;box-shadow:0 24px 64px rgba(0,0,0,.16);position:relative}
+.modal-title{font-family:'Fraunces',serif;font-size:24px;font-weight:400;letter-spacing:-.5px;margin-bottom:5px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:22px}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:'DM Sans',sans-serif}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:12px;font-weight:500;color:var(--sub);margin-bottom:5px}
+.fi{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none;background:var(--paper);transition:border .15s}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+.fb{width:100%;background:var(--blue);color:white;border:none;border-radius:7px;padding:12px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s;margin-top:4px}
+.fb:hover{background:#1e40af}
+.fm{font-size:12px;margin-top:8px}
+.fm.err{color:var(--red)}
+.fm.ok{color:var(--green)}
+.mc{position:absolute;top:14px;right:18px;font-size:20px;cursor:pointer;color:var(--dim);background:none;border:none;line-height:1}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-mid{display:none}
+  .hero,.trial-sec{padding:100px 20px 60px}
+  .wrap{padding:0 20px}
+  .three,.feat-grid,.steps,.ref-tiers{grid-template-columns:1fr}
+  footer{padding:32px 20px 24px}
+  .foot-links,.foot-top{flex-direction:column;gap:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- DOTS CANVAS — hover-triggered via JS -->
+<div id="dc"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="/">Grassion<span class="logo-accent">.</span></a>
+
+  <ul class="nav-mid">
+    <li class="has-drop">
+      <a href="/about.html">About us ▾</a>
+      <div class="drop">
+        <div class="drop-label">Company</div>
+        <a class="plain" href="/about.html">Our story</a>
+        <a class="plain" href="/about.html#values">Our values</a>
+      </div>
+    </li>
+    <li class="has-drop">
+      <a href="/contact.html">Contact ▾</a>
+      <div class="drop" style="min-width:290px">
+        <div class="drop-label">Get in touch</div>
+        <div class="drop-cards">
+          <a href="/about.html" class="drop-card">
+            <div class="dc-icon">🏢</div>
+            <div class="dc-title">About us</div>
+            <div class="dc-sub">Our story & values</div>
+          </a>
+          <a href="/contact.html#collaborate" class="drop-card">
+            <div class="dc-icon">🤝</div>
+            <div class="dc-title">Collaborate</div>
+            <div class="dc-sub">Partnerships & integrations</div>
+          </a>
+        </div>
+      </div>
+    </li>
+  </ul>
+
+  <div class="nav-right">
+    <button class="btn-nav" onclick="openAuth('login')">Log in</button>
+    <a href="#" class="btn-cta" onclick="openAuth('register')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      Get started free
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">
+    <div class="live-dot"></div>
+    Early access · Free forever for individuals
+  </div>
+
+  <h1>The last incident<br>your team needs<br>to repeat is <em>zero.</em></h1>
+
+  <p class="hero-sub">
+    Grassion watches every pull request and warns engineers when they're about to repeat a decision that <strong>already broke production.</strong>
+  </p>
+
+  <p class="hero-tagline">Catches the change. <span>Shows the history.</span> Prevents the incident.</p>
+
+  <div class="hero-actions">
+    <a href="#" class="btn-hero" onclick="openAuth('register')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      Install on GitHub — Free
+    </a>
+    <a href="#features" class="btn-ghost">See how it works ↓</a>
+  </div>
+
+  <p class="hero-footnote">Works inside GitHub pull requests · No code changes · 2 min setup · No credit card</p>
+
+  <!-- EARLY ACCESS EMAIL -->
+  <div class="ea-strip">
+    <div class="ea-label">✉ Join the waitlist — get notified when Pro with AI incident trace launches</div>
+    <div class="ea-row">
+      <input class="ea-in" id="earlyEmail" type="email" placeholder="your@company.com">
+      <button class="ea-btn" onclick="earlySignup()">Get early access</button>
+    </div>
+    <div class="ea-ok" id="earlyOk">✓ You're on the list. We'll reach out personally.</div>
+  </div>
+
+  <!-- DEMO CARD -->
+  <div class="demo-wrap">
+    <div class="pr">
+      <div class="pr-top">
+        <span class="pr-num">#1284</span>
+        <span class="pr-title">Increase retry count for better API resilience</span>
+        <span class="pr-badge">● Open</span>
+      </div>
+      <div class="diff">
+        <span class="del">- RETRY_COUNT = 3</span>
+        <span class="ins">+ RETRY_COUNT = 10</span>
+      </div>
+      <!-- FREE tier comment -->
+      <div class="cmt-free">
+        <div class="cmt-head">
+          <div class="bot-av">G</div>
+          <span class="bot-name">grassion-bot</span>
+          <span class="tier t-free">Free</span>
+          <span class="ts">just now</span>
+        </div>
+        <div class="cmt-body-free">
+          <div class="warn-line">⚠️ Risky pattern — retry configuration</div>
+          <code>RETRY_COUNT</code> has change history tied to a past incident. Review before merging.
+          <br><a href="#" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--blue);text-decoration:none;display:inline-block;margin-top:7px">→ View PR #842 discussion</a>
+        </div>
+      </div>
+      <!-- PRO tier comment -->
+      <div class="cmt-pro">
+        <div class="cmt-head">
+          <div class="bot-av" style="background:linear-gradient(135deg,#6D28D9,#1D4ED8)">G</div>
+          <span class="bot-name">grassion-bot</span>
+          <span class="tier t-pro">Pro</span>
+          <span class="ts">just now</span>
+        </div>
+        <div class="cmt-body-pro">
+          <div style="font-weight:600;color:var(--blue);margin-bottom:8px">🧠 Incident trace — AI reasoning active</div>
+          <div style="margin-bottom:10px;color:var(--sub)">In <strong>Nov 2024</strong>, setting <code>RETRY_COUNT = 10</code> triggered a <strong>retry storm</strong> — 847 requests stuck, 38 min outage. The decision was reverted same day and explicitly documented: <em>"Never exceed 3 retries on this service."</em></div>
+          <div class="inc-row">
+            <div style="font-size:16px;margin-top:1px">🔴</div>
+            <div>
+              <div class="inc-title">Incident #214 — API Retry Storm · Severity P1</div>
+              <div class="inc-meta">Nov 18 2024 · 38 min downtime · Reverted in PR #851</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN ANIMATION -->
+<section class="anim-sec rv">
+  <div class="wrap" style="padding-top:0;padding-bottom:0">
+    <div class="ey">See it in action</div>
+    <h2 class="sec">From risky change to<br><em>warning in 5 seconds.</em></h2>
+    <p class="sec-p" style="margin-bottom:32px">Watch Grassion catch a dangerous config change the moment a PR is opened — no setup, no config, automatically.</p>
+
+    <div class="anim-shell">
+      <!-- Browser chrome bar -->
+      <div class="anim-chrome">
+        <div class="anim-dots"><span></span><span></span><span></span></div>
+        <div class="anim-url">
+          <span class="anim-lock">🔒</span>
+          <span id="anim-url-text">github.com/yourteam/api</span>
+        </div>
+        <div class="anim-tab-bar">
+          <span class="anim-tab on" id="atab1">Pull requests</span>
+          <span class="anim-tab" id="atab2">Code</span>
+          <span class="anim-tab" id="atab3">Actions</span>
+        </div>
+      </div>
+
+      <!-- Screen content area -->
+      <div class="anim-screen" id="anim-screen">
+
+        <!-- FRAME 0: PR list -->
+        <div class="anim-frame" id="af0">
+          <div class="af-pr-list">
+            <div class="af-pr-item dimmed"><span class="af-pr-num">#1281</span><span class="af-pr-ttl">Update auth middleware</span><span class="af-pr-lbl merged">Merged</span></div>
+            <div class="af-pr-item dimmed"><span class="af-pr-num">#1282</span><span class="af-pr-ttl">Add pagination to /users endpoint</span><span class="af-pr-lbl merged">Merged</span></div>
+            <div class="af-pr-item highlight" id="af-new-pr" style="opacity:0">
+              <span class="af-pr-num">#1284</span>
+              <span class="af-pr-ttl">Increase retry count for API resilience</span>
+              <span class="af-pr-lbl open">Open</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FRAME 1: PR diff view -->
+        <div class="anim-frame" id="af1" style="display:none">
+          <div class="af-pr-header">
+            <div class="af-pr-h-title">Increase retry count for API resilience <span class="af-pr-lbl open" style="margin-left:8px">Open</span></div>
+            <div class="af-pr-h-meta">rahul-dev wants to merge 1 commit into <code>main</code></div>
+          </div>
+          <div class="af-diff-box">
+            <div class="af-diff-file">config/api.env</div>
+            <div class="af-diff-lines">
+              <div class="af-dl del"><span class="af-dl-sign">−</span> RETRY_COUNT = 3</div>
+              <div class="af-dl ins"><span class="af-dl-sign">+</span> RETRY_COUNT = 10</div>
+              <div class="af-dl ctx"> TIMEOUT_MS = 5000</div>
+              <div class="af-dl ctx"> POOL_SIZE = 20</div>
+            </div>
+          </div>
+          <div class="af-merge-btn-row">
+            <div class="af-merge-btn" id="af-merge-btn">Merge pull request ▾</div>
+          </div>
+        </div>
+
+        <!-- FRAME 2: Grassion bot thinking -->
+        <div class="anim-frame" id="af2" style="display:none">
+          <div class="af-pr-header">
+            <div class="af-pr-h-title">Increase retry count for API resilience <span class="af-pr-lbl open" style="margin-left:8px">Open</span></div>
+            <div class="af-pr-h-meta">rahul-dev wants to merge 1 commit into <code>main</code></div>
+          </div>
+          <div class="af-thinking">
+            <div class="af-bot-thinking-row">
+              <div class="af-bot-av">G</div>
+              <div class="af-thinking-text">
+                <span class="af-thinking-name">grassion-bot</span>
+                <span class="af-thinking-dots"><span>.</span><span>.</span><span>.</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FRAME 3: Bot warning comment -->
+        <div class="anim-frame" id="af3" style="display:none">
+          <div class="af-pr-header">
+            <div class="af-pr-h-title">Increase retry count for API resilience <span class="af-pr-lbl open" style="margin-left:8px">Open</span></div>
+            <div class="af-pr-h-meta">rahul-dev wants to merge 1 commit into <code>main</code></div>
+          </div>
+          <div class="af-comment-block" id="af-comment-block">
+            <div class="af-cmt-head">
+              <div class="af-bot-av">G</div>
+              <span class="af-cmt-name">grassion-bot</span>
+              <span class="af-cmt-tier free">FREE</span>
+              <span class="af-cmt-ts">just now</span>
+            </div>
+            <div class="af-cmt-body">
+              <div class="af-cmt-warn">⚠️ Risky pattern detected — <strong>retry configuration</strong></div>
+              <div class="af-cmt-detail" id="af-cmt-detail" style="opacity:0">
+                <code>RETRY_COUNT</code> was modified after a production incident.
+                Review before merging.<br>
+                <a class="af-cmt-link">→ View PR #842 — "Revert retry changes after API storm"</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cursor pauses on "merge" button showing user reconsidering -->
+          <div class="af-reconsider" id="af-reconsider" style="opacity:0">
+            <div class="af-merge-btn blocked">⚠ Review required before merge</div>
+          </div>
+        </div>
+
+      </div><!-- /anim-screen -->
+
+      <!-- Progress bar -->
+      <div class="anim-progress">
+        <div class="anim-step" id="astep0">
+          <div class="astep-dot on" id="adot0"></div>
+          <div class="astep-label">PR opened</div>
+        </div>
+        <div class="anim-step-line"></div>
+        <div class="anim-step" id="astep1">
+          <div class="astep-dot" id="adot1"></div>
+          <div class="astep-label">Diff detected</div>
+        </div>
+        <div class="anim-step-line"></div>
+        <div class="anim-step" id="astep2">
+          <div class="astep-dot" id="adot2"></div>
+          <div class="astep-label">Grassion scanning</div>
+        </div>
+        <div class="anim-step-line"></div>
+        <div class="anim-step" id="astep3">
+          <div class="astep-dot" id="adot3"></div>
+          <div class="astep-label">Warning posted</div>
+        </div>
+      </div>
+
+      <!-- Replay -->
+      <div class="anim-replay" id="anim-replay" style="opacity:0;pointer-events:none" onclick="startAnim()">
+        ↺ Replay
+      </div>
+    </div><!-- /anim-shell -->
+  </div>
+</section>
+
+<style>
+/* ── ANIMATION SECTION ─────────────────────────────────────────────────────── */
+.anim-sec{padding:96px 0;background:var(--off);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+
+.anim-shell{
+  max-width:720px;border-radius:14px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.06);
+  border:1px solid var(--border);position:relative;
+  animation:up .6s .1s ease both;
+}
+
+/* Chrome bar */
+.anim-chrome{background:#F1F3F4;border-bottom:1px solid var(--border);padding:10px 16px 0}
+.anim-dots{display:flex;gap:6px;margin-bottom:8px}
+.anim-dots span{width:11px;height:11px;border-radius:50%;background:#E4E4DE}
+.anim-dots span:nth-child(1){background:#FF5F56}
+.anim-dots span:nth-child(2){background:#FEBC2E}
+.anim-dots span:nth-child(3){background:#28C840}
+.anim-url{display:flex;align-items:center;gap:7px;background:white;border:1px solid var(--border);border-radius:100px;padding:4px 14px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:10px;max-width:380px}
+.anim-lock{font-size:10px}
+#anim-url-text{font-size:12px;transition:all .3s}
+.anim-tab-bar{display:flex;gap:0;border-top:1px solid var(--border);margin:0 -16px}
+.anim-tab{padding:8px 18px;font-size:12px;color:var(--muted);cursor:default;border-bottom:2.5px solid transparent;transition:all .2s;font-family:'DM Sans',sans-serif}
+.anim-tab.on{color:var(--blue);border-bottom-color:var(--blue);background:white}
+
+/* Screen */
+.anim-screen{background:white;min-height:280px;padding:20px 24px;position:relative;overflow:hidden}
+.anim-frame{animation:frameFade .35s ease both}
+@keyframes frameFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* PR list frame */
+.af-pr-list{display:flex;flex-direction:column;gap:2px}
+.af-pr-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:8px;border:1px solid transparent;transition:all .3s}
+.af-pr-item.dimmed{opacity:.45}
+.af-pr-item.highlight{background:#FFF9F0;border-color:#FDE68A}
+.af-pr-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);min-width:38px}
+.af-pr-ttl{font-size:13px;color:var(--ink);flex:1;font-weight:500}
+.af-pr-lbl{font-size:10px;padding:2px 9px;border-radius:100px;font-weight:700;letter-spacing:.5px}
+.af-pr-lbl.merged{background:#F3F4F6;color:#6B7280}
+.af-pr-lbl.open{background:#DCFCE7;color:#15803D;border:1px solid #BBF7D0}
+
+/* PR diff frame */
+.af-pr-header{margin-bottom:16px}
+.af-pr-h-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:5px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.af-pr-h-meta{font-size:12px;color:var(--muted)}
+.af-pr-h-meta code{font-family:'DM Mono',monospace;background:var(--off);padding:1px 5px;border-radius:3px;font-size:11px}
+.af-diff-box{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.af-diff-file{padding:7px 14px;background:var(--off);font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}
+.af-diff-lines{padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.af-dl{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:13px;padding:2px 4px;border-radius:3px}
+.af-dl.del{color:#991B1B;background:#FEF2F2}
+.af-dl.ins{color:#166534;background:#F0FDF4}
+.af-dl.ctx{color:var(--muted)}
+.af-dl-sign{width:14px;font-weight:700;flex-shrink:0}
+.af-merge-btn-row{display:flex;justify-content:flex-end}
+.af-merge-btn{background:#2DA44E;color:white;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:default;transition:all .3s}
+.af-merge-btn.blocked{background:var(--amber-l);color:var(--amber);border:1px solid #FDE68A}
+
+/* Thinking dots */
+.af-thinking{padding:10px 0}
+.af-bot-thinking-row{display:flex;align-items:center;gap:10px}
+.af-bot-av{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#1D4ED8,#6D28D9);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;font-family:'DM Mono',monospace;flex-shrink:0}
+.af-thinking-text{display:flex;align-items:center;gap:8px}
+.af-thinking-name{font-size:13px;font-weight:600;color:var(--ink)}
+.af-thinking-dots{display:flex;gap:4px;align-items:center}
+.af-thinking-dots span{width:6px;height:6px;background:var(--blue);border-radius:50%;animation:tdot 1.2s infinite}
+.af-thinking-dots span:nth-child(2){animation-delay:.2s}
+.af-thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* Bot comment */
+.af-comment-block{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.af-cmt-head{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--off);border-bottom:1px solid var(--border)}
+.af-cmt-name{font-size:13px;font-weight:600;color:var(--ink)}
+.af-cmt-tier{font-size:9px;padding:2px 8px;border-radius:100px;font-weight:700;letter-spacing:.8px}
+.af-cmt-tier.free{background:var(--green-l);color:var(--green);border:1px solid #BBF7D0}
+.af-cmt-ts{font-size:11px;color:var(--dim);margin-left:auto}
+.af-cmt-body{padding:13px 14px;background:var(--amber-l);border-top:none}
+.af-cmt-warn{font-size:13px;font-weight:600;color:#92400E;margin-bottom:8px}
+.af-cmt-detail{font-size:13px;color:var(--sub);line-height:1.65;transition:opacity .4s}
+.af-cmt-detail code{font-family:'DM Mono',monospace;font-size:11px;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:3px}
+.af-cmt-link{color:var(--blue);cursor:default;font-family:'DM Mono',monospace;font-size:12px;display:inline-block;margin-top:6px}
+.af-reconsider{transition:opacity .4s;margin-top:4px;display:flex;justify-content:flex-end}
+
+/* Progress */
+.anim-progress{display:flex;align-items:center;justify-content:center;padding:14px 24px;background:#FAFAF8;border-top:1px solid var(--border);gap:0}
+.anim-step{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:80px}
+.anim-step-line{flex:1;height:1.5px;background:var(--border);margin-bottom:20px;transition:background .4s}
+.anim-step-line.done{background:var(--blue)}
+.astep-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:white;transition:all .4s}
+.astep-dot.on{border-color:var(--blue);background:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+.astep-dot.done{border-color:var(--blue);background:var(--blue)}
+.astep-label{font-size:10px;color:var(--dim);text-align:center;white-space:nowrap;font-family:'DM Sans',sans-serif}
+
+/* Replay */
+.anim-replay{
+  position:absolute;bottom:60px;right:20px;
+  background:var(--ink);color:white;padding:7px 14px;border-radius:100px;
+  font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;
+  cursor:pointer;transition:all .3s;
+}
+.anim-replay:hover{background:var(--blue)}
+
+@media(max-width:600px){
+  .anim-tab-bar{overflow-x:auto}.anim-sec .wrap{padding:0 16px}
+  .astep-label{display:none}
+}
+</style>
+
+<script>
+// ─── SCREEN ANIMATION ────────────────────────────────────────────────────────
+let animTimer = null;
+
+function setStep(i) {
+  document.querySelectorAll('.astep-dot').forEach((d, j) => {
+    d.className = 'astep-dot' + (j < i ? ' done' : j === i ? ' on' : '');
+  });
+  document.querySelectorAll('.anim-step-line').forEach((l, j) => {
+    l.className = 'anim-step-line' + (j < i ? ' done' : '');
+  });
+}
+
+function showFrame(id) {
+  ['af0','af1','af2','af3'].forEach(f => {
+    const el = document.getElementById(f);
+    if(el) { el.style.display = f === id ? 'block' : 'none'; }
+  });
+}
+
+function startAnim() {
+  if(animTimer) clearTimeout(animTimer);
+  // Reset
+  const replay = document.getElementById('anim-replay');
+  replay.style.opacity = '0';
+  replay.style.pointerEvents = 'none';
+  showFrame('af0');
+  setStep(0);
+  document.getElementById('af-new-pr').style.opacity = '0';
+  document.getElementById('anim-url-text').textContent = 'github.com/yourteam/api';
+  document.querySelector('#atab1').className = 'anim-tab on';
+
+  // Step 0 → PR list appears, new PR fades in
+  animTimer = setTimeout(() => {
+    const newPR = document.getElementById('af-new-pr');
+    newPR.style.transition = 'opacity .5s';
+    newPR.style.opacity = '1';
+  }, 600);
+
+  // Step 1 → click into PR, diff appears
+  animTimer = setTimeout(() => {
+    document.getElementById('anim-url-text').textContent = 'github.com/yourteam/api/pull/1284';
+    showFrame('af1');
+    setStep(1);
+  }, 1800);
+
+  // Step 2 → Grassion scanning
+  animTimer = setTimeout(() => {
+    showFrame('af2');
+    setStep(2);
+  }, 3200);
+
+  // Step 3 → Warning comment appears
+  animTimer = setTimeout(() => {
+    showFrame('af3');
+    setStep(3);
+    const detail = document.getElementById('af-cmt-detail');
+    setTimeout(() => { detail.style.opacity = '1'; }, 400);
+    setTimeout(() => {
+      const rec = document.getElementById('af-reconsider');
+      rec.style.opacity = '1';
+    }, 900);
+    // Show replay button
+    setTimeout(() => {
+      replay.style.opacity = '1';
+      replay.style.pointerEvents = 'auto';
+    }, 2200);
+  }, 4800);
+}
+
+// Auto-start when section scrolls into view
+const animObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      animObs.disconnect();
+      setTimeout(startAnim, 400);
+    }
+  });
+}, { threshold: 0.4 });
+
+const animEl = document.querySelector('.anim-shell');
+if(animEl) animObs.observe(animEl);
+</script>
+
+<!-- PROBLEM -->
+<section class="problem rv">
+  <div class="wrap">
+    <div class="ey">The problem</div>
+    <h2 class="sec">Your team keeps paying<br>for decisions <em>already made.</em></h2>
+    <p class="sec-p">Not because they're careless. Because the context that explains past decisions is buried where no one will ever find it.</p>
+    <div class="three">
+      <div class="col rv"><div class="col-ic">💬</div><div class="col-t">Slack threads expire</div><p class="col-p">The conversation explaining why a critical value is set the way it is lives in a thread from 2 years ago that nobody can find.</p></div>
+      <div class="col rv" style="transition-delay:.07s"><div class="col-ic">📋</div><div class="col-t">PR context gets buried</div><p class="col-p">The original PR that documents a dangerous config has 300 comments. Nobody reads it before opening a new one.</p></div>
+      <div class="col rv" style="transition-delay:.14s"><div class="col-ic">🔁</div><div class="col-t">Incidents repeat</div><p class="col-p">The engineer who fixed the outage left the company. The knowledge left with them. Six months later — same failure mode.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- THE CONVO -->
+<section class="convo-sec rv">
+  <div class="wrap" style="padding-top:0;padding-bottom:0">
+    <div class="ey">The moment</div>
+    <h2 class="sec">Every team has lived<br>through this <em>exact conversation.</em></h2>
+    <div class="dialogue rv">
+      <div class="msg"><div class="av" style="background:#3B82F6">A</div><div class="bubble">"Let's bump RETRY_COUNT to 10. More resilience."</div></div>
+      <div class="msg"><div class="av" style="background:#10B981">B</div><div class="bubble">"Wait — we did this last year. Took down the API for 40 minutes."</div></div>
+      <div class="msg"><div class="av" style="background:#3B82F6">A</div><div class="bubble">"Are you sure? Where is that documented?"</div></div>
+      <div class="msg"><div class="av" style="background:#10B981">B</div><div class="bubble" style="color:var(--red)">…I think there's a Slack thread. Somewhere. Maybe.</div></div>
+    </div>
+    <div class="resolution rv" style="transition-delay:.1s">
+      <div style="font-size:26px">🛡️</div>
+      <div class="res-text"><strong>Grassion catches this before it happens.</strong> Every PR gets checked. Risky changes get the full incident context — automatically, inside GitHub, before the merge button is clicked.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-sec" id="features">
+  <div class="wrap">
+    <div class="ey">Features</div>
+    <h2 class="sec rv">Two tiers. One mission:<br><em>zero repeated incidents.</em></h2>
+    <p class="sec-p rv">Start free in two minutes. Upgrade when the stakes get real.</p>
+    <div class="feat-grid">
+      <div class="fcard rv">
+        <div class="fcard-head">
+          <div>
+            <div class="fcard-name">PR Warning</div>
+            <div class="fcard-desc">Automatic risk detection on every pull request. Zero configuration required.</div>
+          </div>
+          <span class="plan-tag pt-free">Free forever</span>
+        </div>
+        <div class="fcard-body">
+          <ul class="flist">
+            <li>Detects 15+ risky config patterns: RETRY, TIMEOUT, CACHE_TTL, POOL_SIZE, WORKER_COUNT, RATE_LIMIT, BATCH_SIZE…</li>
+            <li>Posts a comment linking to past PRs that touched the same key</li>
+            <li>Indexes your full PR history automatically on first install</li>
+            <li>Works on any GitHub repo — public or private — in 2 minutes</li>
+            <li>Unlimited PRs, unlimited repos, always free</li>
+          </ul>
+        </div>
+      </div>
+      <div class="fcard rv" style="transition-delay:.07s;border-color:#BFDBFE">
+        <div class="fcard-head" style="background:linear-gradient(135deg,#EFF6FF,#F5F3FF)">
+          <div>
+            <div class="fcard-name">Incident Trace</div>
+            <div class="fcard-desc">Full AI reasoning from past incidents. Tells engineers exactly why a decision was made.</div>
+          </div>
+          <span class="plan-tag pt-pro">Pro</span>
+        </div>
+        <div class="fcard-body" style="background:#FAFBFF">
+          <ul class="flist pro-list">
+            <li>Complete incident history: date, severity P1–P3, duration, root cause</li>
+            <li>AI generates plain-English explanation of <em>why</em> the original decision was made</li>
+            <li>Connects to Slack threads, Notion runbooks, incident reports</li>
+            <li>Block merge on critical pattern matches — configurable per repo</li>
+            <li>Team dashboard: full timeline of guardrail events across all repos</li>
+            <li>Weekly digest: "4 risky patterns blocked this week"</li>
+            <li>SOC2-ready audit trail for every guardrail event</li>
+            <li>Priority support + Slack channel with the Grassion team</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-sec">
+  <div class="wrap">
+    <div class="ey">Setup</div>
+    <h2 class="sec rv">Live on your repo<br>in <em>under 2 minutes.</em></h2>
+    <div class="steps">
+      <div class="step rv"><div class="step-n">01</div><div class="step-t">Install GitHub App</div><p class="step-p">One click. Grant access to the repos you want protected. No code changes, no YAML, nothing to configure.</p><div class="step-code">github.com/apps/grassion</div></div>
+      <div class="step rv" style="transition-delay:.07s"><div class="step-n">02</div><div class="step-t">History indexed automatically</div><p class="step-p">Grassion reads your full PR history and builds your guardrail profile. You don't do anything.</p><div class="step-code">✓ 2,841 PRs indexed in 12s</div></div>
+      <div class="step rv" style="transition-delay:.14s"><div class="step-n">03</div><div class="step-t">Every PR gets checked</div><p class="step-p">From the moment Grassion is installed, every new PR is scanned. Risky changes get a comment before they merge.</p><div class="step-code">⚠ Warning posted on PR #1284</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRIAL / FREE ACCESS -->
+<section class="trial-sec rv">
+  <h2>Test it on your repo.<br><em>Right now. Free.</em></h2>
+  <p>Enter your email, install on GitHub, and see your first guardrail warning in minutes.</p>
+  <div class="trial-form">
+    <input class="trial-in" id="trialEmail" type="email" placeholder="your@company.com">
+    <button class="trial-btn" onclick="trialSignup()">Get free access →</button>
+  </div>
+  <div class="trial-ok" id="trialOk">✓ Check your inbox — install link sent.</div>
+  <p class="trial-note">Free forever for individuals · No credit card required · Works in 2 minutes</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-top">
+    <div class="foot-brand">
+      <a class="fl" href="/">Grassion<span style="color:var(--blue)">.</span></a>
+      <p>The last incident your team needs to repeat is zero.</p>
+    </div>
+    <div class="foot-links">
+      <div class="foot-col">
+        <div class="foot-col-title">Product</div>
+        <a href="#features">Features</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </div>
+      <div class="foot-col">
+        <div class="foot-col-title">Company</div>
+        <a href="/about.html">About us</a>
+        <a href="/contact.html#work">Work with us</a>
+        <a href="/contact.html#collaborate">Collaborate</a>
+      </div>
+      <div class="foot-col">
+        <div class="foot-col-title">Contact</div>
+        <a href="/cdn-cgi/l/email-protection#bed7d0d8d1fed9ccdfcdcdd7d1d090ddd1d3"><span class="__cf_email__" data-cfemail="3c55525a537c5b4e5d4f4f555352125f5351">[email&#160;protected]</span></a>
+        <a href="https://www.linkedin.com/company/grassion/" target="_blank">LinkedIn</a>
+        <a href="/privacy.html">Privacy</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span class="foot-copy">© 2025 Grassion · grassion.com</span>
+    <div class="foot-social">
+      <a href="/cdn-cgi/l/email-protection#deb7b0b8b19eb9acbfadadb7b1b0f0bdb1b3">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span class="__cf_email__" data-cfemail="89e0e7efe6c9eefbe8fafae0e6e7a7eae6e4">[email&#160;protected]</span>
+      </a>
+      <a href="https://www.linkedin.com/company/grassion/" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+    </div>
+  </div>
+</footer>
+
+<!-- AUTH MODAL -->
+<div class="ov" id="authOv">
+  <div class="modal">
+    <button class="mc" onclick="closeAuth()">×</button>
+    <div class="modal-title" id="mTitle">Get started free</div>
+    <div class="modal-sub" id="mSub">Free forever · No credit card · 2 min setup</div>
+    <div class="tabs">
+      <div class="tab on" id="tLogin" onclick="swTab('login')">Log in</div>
+      <div class="tab" id="tReg" onclick="swTab('register')">Sign up</div>
+    </div>
+    <div id="loginF">
+      <div class="fg"><label class="fl">Email</label><input class="fi" id="lEmail" type="email" placeholder="you@company.com"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="lPass" type="password" placeholder="••••••••"></div>
+      <button class="fb" onclick="doLogin()">Log in →</button>
+      <div class="fm" id="lMsg"></div>
+    </div>
+    <div id="regF" style="display:none">
+      <div class="fg"><label class="fl">Name</label><input class="fi" id="rName" type="text" placeholder="Your name"></div>
+      <div class="fg"><label class="fl">Work email</label><input class="fi" id="rEmail" type="email" placeholder="you@company.com"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="rPass" type="password" placeholder="Min 8 characters"></div>
+      <button class="fb" onclick="doRegister()">Create free account →</button>
+      <div class="fm" id="rMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ─── HOVER DOTS ───────────────────────────────────────────────────────────────
+(function(){
+  const canvas = document.getElementById('dc');
+  const COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#EC4899','#14B8A6'];
+  const SIZES  = [4, 5, 6, 7, 8, 5, 4, 6, 5, 7];
+  let pool = [];
+
+  // Create dot pool
+  for(let i = 0; i < 24; i++){
+    const d = document.createElement('div');
+    d.className = 'd';
+    const sz = SIZES[i % SIZES.length];
+    d.style.width  = sz + 'px';
+    d.style.height = sz + 'px';
+    d.style.background = COLORS[i % COLORS.length];
+    d.style.position = 'fixed';
+    d.style.pointerEvents = 'none';
+    canvas.appendChild(d);
+    pool.push({ el: d, active: false, vx: 0, vy: 0, x: 0, y: 0, life: 0, maxLife: 0 });
+  }
+
+  let mouseX = 0, mouseY = 0;
+
+  document.addEventListener('mousemove', function(e){
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    // Spawn a dot near cursor
+    spawnDot(mouseX + (Math.random()-0.5)*20, mouseY + (Math.random()-0.5)*20);
+  });
+
+  function spawnDot(x, y){
+    // Find free dot
+    const dot = pool.find(d => !d.active);
+    if(!dot) return;
+    dot.active = true;
+    dot.x = x;
+    dot.y = y;
+    dot.vx = (Math.random()-0.5) * 2.5;
+    dot.vy = -1.5 - Math.random() * 2;
+    dot.life = 0;
+    dot.maxLife = 60 + Math.random() * 40;
+    dot.el.style.left = x + 'px';
+    dot.el.style.top  = y + 'px';
+    dot.el.style.opacity = '0.55';
+  }
+
+  function tick(){
+    for(const dot of pool){
+      if(!dot.active) continue;
+      dot.x += dot.vx;
+      dot.y += dot.vy;
+      dot.vy += 0.04; // slight gravity
+      dot.life++;
+      const progress = dot.life / dot.maxLife;
+      dot.el.style.left = dot.x + 'px';
+      dot.el.style.top  = dot.y + 'px';
+      dot.el.style.opacity = (0.55 * (1 - progress)).toString();
+      dot.el.style.transform = `scale(${1 - progress * 0.4})`;
+      if(dot.life >= dot.maxLife){
+        dot.active = false;
+        dot.el.style.opacity = '0';
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+// ─── SCROLL REVEAL ────────────────────────────────────────────────────────────
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.rv').forEach(el => ro.observe(el));
+
+// ─── EARLY ACCESS ─────────────────────────────────────────────────────────────
+async function earlySignup(){
+  const email = document.getElementById('earlyEmail').value.trim();
+  if(!email || !email.includes('@')){ toast('Please enter a valid email'); return; }
+  await postEA(email, 'early');
+  document.getElementById('earlyOk').style.display = 'block';
+  document.getElementById('earlyEmail').value = '';
+}
+
+async function trialSignup(){
+  const email = document.getElementById('trialEmail').value.trim();
+  if(!email || !email.includes('@')){ toast('Please enter a valid email'); return; }
+  await postEA(email, 'trial');
+  document.getElementById('trialOk').style.display = 'block';
+  document.getElementById('trialEmail').value = '';
+}
+
+async function postEA(email, source){
+  try{
+    await fetch('/api/early-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, source })
+    });
+  } catch(_){}
+}
+
+// ─── REFERRAL / SHARE ─────────────────────────────────────────────────────────
+function getRefLink(){
+  const t = localStorage.getItem('grassion_token');
+  // In production this would decode userId from JWT
+  return window.location.origin + '?ref=user';
+}
+
+function shareWA(e){
+  e.preventDefault();
+  const txt = encodeURIComponent('Stop repeating production incidents. Grassion warns engineers before they repeat past mistakes — right inside GitHub PRs. Free to install: ' + getRefLink());
+  window.open('https://wa.me/?text=' + txt, '_blank');
+}
+
+function copyRef(e){
+  e.preventDefault();
+  navigator.clipboard.writeText(getRefLink());
+  toast('Referral link copied!');
+}
+
+function shareNative(e){
+  e.preventDefault();
+  if(navigator.share){
+    navigator.share({ title: 'Grassion', text: "Stop shipping yesterday's mistakes twice.", url: getRefLink() });
+  } else {
+    copyRef(e);
+  }
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg){
+  let t = document.getElementById('_t');
+  if(!t){
+    t = document.createElement('div');
+    t.id = '_t';
+    Object.assign(t.style, {
+      position:'fixed', bottom:'24px', right:'24px', background:'#0C0F1A',
+      color:'white', padding:'12px 18px', borderRadius:'8px', fontSize:'13px',
+      fontFamily:'DM Sans,sans-serif', zIndex:'999', opacity:'0',
+      transition:'all .25s', transform:'translateY(10px)', maxWidth:'300px'
+    });
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; }, 2600);
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+function openAuth(tab){ document.getElementById('authOv').classList.add('open'); swTab(tab || 'register'); }
+function closeAuth(){ document.getElementById('authOv').classList.remove('open'); }
+function swTab(t){
+  document.getElementById('loginF').style.display = t === 'login' ? 'block' : 'none';
+  document.getElementById('regF').style.display   = t === 'register' ? 'block' : 'none';
+  document.getElementById('tLogin').className = 'tab ' + (t === 'login'    ? 'on' : '');
+  document.getElementById('tReg').className   = 'tab ' + (t === 'register' ? 'on' : '');
+  document.getElementById('mTitle').textContent = t === 'login' ? 'Welcome back' : 'Create free account';
+  document.getElementById('mSub').textContent   = t === 'login' ? 'Continue protecting your PRs' : 'Free forever · No credit card · 2 min setup';
+}
+document.getElementById('authOv').addEventListener('click', e => { if(e.target.id === 'authOv') closeAuth(); });
+
+async function doLogin(){
+  const email = document.getElementById('lEmail').value;
+  const pass  = document.getElementById('lPass').value;
+  const msg   = document.getElementById('lMsg');
+  msg.textContent = '';
+  try {
+    const r = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password: pass }) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Login failed');
+    localStorage.setItem('grassion_token', d.token);
+    window.location.href = '/dashboard.html';
+  } catch(e){ msg.className = 'fm err'; msg.textContent = e.message; }
+}
+
+async function doRegister(){
+  const name  = document.getElementById('rName').value;
+  const email = document.getElementById('rEmail').value;
+  const pass  = document.getElementById('rPass').value;
+  const msg   = document.getElementById('rMsg');
+  const ref   = new URLSearchParams(window.location.search).get('ref');
+  msg.textContent = '';
+  try {
+    const r = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, email, password: pass, referredBy: ref }) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Registration

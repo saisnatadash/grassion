@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --white:#FFFFFF; --off:#F8F9FA; --border:#E5E7EB; --border2:#D1D5DB; --text:#111827; --sub:#374151; --muted:#6B7280; --dim:#9CA3AF; --blue:#2563EB; --blue-light:#EFF6FF; --blue-mid:#DBEAFE; --green:#16A34A; --green-light:#F0FDF4; --yellow:#D97706; --yellow-light:#FFFBEB; --red:#DC2626; --red-light:#FEF2F2; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--off); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+
+.sidebar { position:fixed; top:0; left:0; bottom:0; width:224px; background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; z-index:50; }
+.logo { padding:0 20px 28px; font-family:'Instrument Serif',serif; font-size:20px; color:var(--text); text-decoration:none; display:block; }
+.logo-dot { color:var(--blue); }
+
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 20px; color:var(--muted); font-size:13px; cursor:pointer; transition:all 0.12s; text-decoration:none; border-left:2px solid transparent; }
+.nav-item:hover, .nav-item.active { color:var(--text); background:var(--off); border-left-color:var(--blue); }
+.nav-icon { width:16px; text-align:center; font-size:14px; }
+
+.sidebar-bottom { margin-top:auto; padding:16px 20px; border-top:1px solid var(--border); }
+.plan-tag { display:inline-block; padding:3px 10px; font-size:10px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100px; background:var(--blue-light); color:var(--blue); border:1px solid var(--blue-mid); margin-bottom:8px; }
+.user-email { font-size:11px; color:var(--muted); margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.upgrade-link { font-size:12px; color:var(--blue); text-decoration:none; font-weight:500; }
+
+.main { margin-left:224px; padding:32px; }
+.page { display:none; }
+.page.active { display:block; }
+
+.page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
+.page-title { font-family:'Instrument Serif',serif; font-size:26px; font-weight:400; letter-spacing:-0.5px; }
+
+.btn { padding:9px 20px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; border-radius:6px; border:none; transition:all 0.12s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+.btn-primary { background:var(--blue); color:white; }
+.btn-primary:hover { background:#1d4ed8; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted); }
+.btn-outline:hover { border-color:var(--border2); color:var(--text); }
+
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+.stat-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:20px; }
+.stat-num { font-family:'DM Mono',monospace; font-size:30px; font-weight:500; line-height:1; margin-bottom:6px; }
+.stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.stat-card.danger .stat-num { color:var(--red); }
+.stat-card.warn .stat-num { color:var(--yellow); }
+.stat-card.good .stat-num { color:var(--green); }
+.stat-card.blue .stat-num { color:var(--blue); }
+
+.card { background:var(--white); border:1px solid var(--border); border-radius:10px; margin-bottom:20px; overflow:hidden; }
+.card-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.card-title { font-size:13px; font-weight:600; color:var(--text); }
+
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; padding:10px 20px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); font-weight:500; }
+td { padding:13px 20px; font-size:13px; border-bottom:1px solid rgba(229,231,235,0.5); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--off); }
+
+.badge { display:inline-block; padding:2px 8px; font-size:10px; letter-spacing:0.5px; text-transform:uppercase; font-weight:600; border-radius:100px; }
+.badge-critical { background:var(--red-light); color:var(--red); }
+.badge-high { background:#FFF7ED; color:#C2410C; }
+.badge-medium { background:var(--yellow-light); color:var(--yellow); }
+.badge-low { background:var(--off); color:var(--muted); border:1px solid var(--border); }
+.badge-free { background:var(--green-light); color:var(--green); }
+.badge-pro { background:var(--blue-light); color:var(--blue); }
+
+.empty { padding:48px 20px; text-align:center; }
+.empty-icon { font-size:28px; margin-bottom:12px; }
+.empty-title { font-family:'Instrument Serif',serif; font-size:18px; color:var(--muted); margin-bottom:6px; }
+.empty-sub { font-size:13px; color:var(--dim); }
+
+.code-block { background:var(--off); border:1px solid var(--border); border-radius:6px; padding:14px 16px; font-family:'DM Mono',monospace; font-size:12px; color:var(--blue); line-height:1.8; margin-top:8px; }
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:200; display:none; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:32px; width:460px; max-width:92vw; box-shadow:0 16px 48px rgba(0,0,0,0.12); position:relative; }
+.modal-title { font-family:'Instrument Serif',serif; font-size:22px; letter-spacing:-0.5px; margin-bottom:20px; }
+.form-group { margin-bottom:14px; }
+.form-label { display:block; font-size:12px; font-weight:500; color:var(--sub); margin-bottom:5px; }
+.form-input { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:6px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); outline:none; }
+.form-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-light); }
+textarea.form-input { min-height:100px; resize:vertical; }
+.form-select { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:var(--white); }
+.form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+.modal-close { position:absolute; top:14px; right:18px; font-size:18px; cursor:pointer; color:var(--muted); background:none; border:none; line-height:1; }
+
+.toast { position:fixed; bottom:24px; right:24px; z-index:300; background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 18px; font-size:13px; box-shadow:0 4px 16px rgba(0,0,0,0.1); opacity:0; transform:translateY(12px); transition:all 0.25s; max-width:320px; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.success { border-color:#BBF7D0; color:var(--green); }
+.toast.error { border-color:#FECACA; color:var(--red); }
+
+.api-row { display:flex; align-items:center; gap:10px; background:var(--off); border:1px solid var(--border); border-radius:6px; padding:10px 14px; font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); }
+.api-val { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.copy-btn { cursor:pointer; font-size:11px; color:var(--blue); background:none; border:none; font-family:'DM Sans',sans-serif; font-weight:500; flex-shrink:0; }
+
+.pricing-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+.price-card { border:1px solid var(--border); border-radius:10px; padding:24px; }
+.price-card.featured { border-color:var(--blue-mid); background:var(--blue-light); }
+.price-name { font-family:'DM Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:8px; }
+.price-amount { font-family:'Instrument Serif',serif; font-size:36px; letter-spacing:-1px; margin-bottom:4px; }
+.price-period { font-size:13px; color:var(--muted); margin-bottom:16px; }
+.price-list { list-style:none; font-size:13px; color:var(--sub); line-height:2; margin-bottom:20px; }
+.price-list li::before { content:'→ '; color:var(--blue); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="/" class="logo">Grassion<span class="logo-dot">.</span></a>
+  <nav>
+    <a class="nav-item active" data-page="overview"><span class="nav-icon">◈</span> Overview</a>
+    <a class="nav-item" data-page="events"><span class="nav-icon">⚡</span> Guardrail Events</a>
+    <a class="nav-item" data-page="repos"><span class="nav-icon">⬡</span> Repositories</a>
+    <a class="nav-item" data-page="incidents"><span class="nav-icon">🔴</span> Incidents <span class="badge badge-pro" style="font-size:9px;margin-left:4px">PRO</span></a>
+    <a class="nav-item" data-page="settings"><span class="nav-icon">⊙</span> Settings</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="plan-tag" id="planTag">free</div>
+    <div class="user-email" id="userEmail">Loading...</div>
+    <a href="#" class="upgrade-link" onclick="showPage('settings')">Upgrade to Pro →</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="page-header">
+      <div class="page-title">Overview</div>
+      <div style="display:flex;gap:10px">
+        <a href="https://github.com/apps/grassion" target="_blank" class="btn btn-primary">+ Install on GitHub</a>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card danger"><div class="stat-num" id="statCritical">—</div><div class="stat-label">Critical Warnings</div></div>
+      <div class="stat-card warn"><div class="stat-num" id="statHigh">—</div><div class="stat-label">High Risk Events</div></div>
+      <div class="stat-card blue"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Total Guardrail Events</div></div>
+      <div class="stat-card good"><div class="stat-num" id="statRepos">—</div><div class="stat-label">Repos Protected</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Recent Guardrail Events</span></div>
+      <table>
+        <thead><tr><th>Repository</th><th>PR</th><th>Config Key</th><th>Risk</th><th>Time</th></tr></thead>
+        <tbody id="recentEvents">
+          <tr><td colspan="5"><div class="empty"><div class="empty-icon">🛡️</div><div class="empty-title">No events yet</div><div class="empty-sub">Install Grassion on a GitHub repo to start detecting risky changes</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="padding:24px">
+      <div class="card-title" style="margin-bottom:12px">Quick Setup</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Install the GitHub App on any repo. Grassion automatically monitors every PR.</p>
+      <div class="code-block">
+        1. Go to: github.com/apps/grassion<br>
+        2. Click "Install" → select your repos<br>
+        3. Grassion starts watching immediately. No code changes needed.
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENTS -->
+  <div class="page" id="page-events">
+    <div class="page-header"><div class="page-title">Guardrail Events</div></div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Repository</th><th>PR #</th><th>PR Title</th><th>Triggered Key</th><th>Risk</th><th>Plan</th><th>When</th></tr></thead>
+        <tbody id="allEvents">
+          <tr><td colspan="7"><div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">No events yet</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPOS -->
+  <div class="page" id="page-repos">
+    <div class="page-header"><div class="page-title">Repositories</div></div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Repository</th><th>PRs Scanned</th><th>Status</th><th>Added</th></tr></thead>
+        <tbody id="reposList">
+          <tr><td colspan="4"><div class="empty"><div class="empty-icon">⬡</div><div class="empty-title">No repos yet</div><div class="empty-sub"><a href="https://github.com/apps/grassion" style="color:var(--blue)">Install on GitHub →</a></div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- INCIDENTS (PRO) -->
+  <div class="page" id="page-incidents">
+    <div class="page-header">
+      <div class="page-title">Incident History</div>
+      <button class="btn btn-primary" onclick="openIncidentModal()">+ Add Incident</button>
+    </div>
+    <div id="incidentProGate" style="display:none">
+      <div class="card" style="padding:40px;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">🔴</div>
+        <div class="empty-title">Incident History is a Pro feature</div>
+        <p style="font-size:13px;color:var(--dim);margin:8px 0 20px">Store past incidents so Grassion can give engineers full AI-powered context in PR comments.</p>
+        <button class="btn btn-primary" onclick="showPage('settings')">Upgrade to Pro →</button>
+      </div>
+    </div>
+    <div id="incidentContent">
+      <div class="card">
+        <table>
+          <thead><tr><th>Title</th><th>Config Keys</th><th>Severity</th><th>Occurred</th></tr></thead>
+          <tbody id="incidentsList">
+            <tr><td colspan="4"><div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No incidents logged</div><div class="empty-sub">Add past incidents to power AI reasoning in PR comments</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="page-header"><div class="page-title">Settings</div></div>
+
+    <div class="card" style="margin-bottom:20px;padding:24px">
+      <div class="card-title" style="margin-bottom:12px">API Token</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Use this to authenticate the Grassion CLI with your dashboard.</p>
+      <div class="api-row">
+        <span class="api-val" id="apiTokenVal">Loading...</span>
+        <button class="copy-btn" onclick="copyToken()">Copy</button>
+      </div>
+      <button class="btn btn-outline" style="margin-top:12px;font-size:12px" onclick="regenToken()">Regenerate</button>
+    </div>
+
+    <div class="card" style="padding:24px">
+      <div class="card-title" style="margin-bottom:6px">Plan & Billing</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Current plan: <strong id="currentPlanLabel">Free</strong></p>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-name">Pro</div>
+          <div class="price-amount">₹2,900</div>
+          <div class="price-period">per month</div>
+          <ul class="price-list">
+            <li>Everything in Free</li>
+            <li>Full incident history trace</li>
+            <li>AI reasoning in PR comments</li>
+            <li>Block merges on critical matches</li>
+            <li>Dashboard analytics</li>
+          </ul>
+          <button class="btn btn-primary" style="width:100%" onclick="pay('pro')">Upgrade to Pro</button>
+        </div>
+        <div class="price-card featured">
+          <div class="price-name">Team</div>
+          <div class="price-amount">₹9,900</div>
+          <div class="price-period">per month</div>
+          <ul class="price-list">
+            <li>Everything in Pro</li>
+            <li>Unlimited repos</li>
+            <li>SOC2 audit trail</li>
+            <li>Slack integration</li>
+            <li>Priority support</li>
+          </ul>
+          <button class="btn btn-primary" style="width:100%" onclick="pay('team')">Upgrade to Team</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ADD INCIDENT MODAL -->
+<div class="modal-overlay" id="incidentModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeIncidentModal()">×</button>
+    <div class="modal-title">Log Incident</div>
+    <div class="form-group">
+      <label class="form-label">Title *</label>
+      <input class="form-input" id="incTitle" placeholder="e.g. Redis OOM — Cache TTL increase">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-input" id="incDesc" placeholder="What happened and why..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Config keys involved (comma-separated)</label>
+      <input class="form-input" id="incKeys" placeholder="CACHE_TTL, RETRY_COUNT">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Severity</label>
+      <select class="form-select" id="incSeverity">
+        <option value="P1">P1 — Critical (full outage)</option>
+        <option value="P2" selected>P2 — High (major impact)</option>
+        <option value="P3">P3 — Medium (partial impact)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date it occurred</label>
+      <input class="form-input" id="incDate" type="date">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeIncidentModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIncident()">Save Incident</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+const TOKEN = localStorage.getItem('grassion_token');
+let userData = null;
+
+async function init() {
+  if (!TOKEN) { window.location.href = '/'; return; }
+  await loadUser();
+  await loadStats();
+  await loadEvents();
+  await loadRepos();
+}
+
+async function loadUser() {
+  try {
+    userData = await api('/api/auth/me');
+    document.getElementById('userEmail').textContent = userData.email;
+    document.getElementById('planTag').textContent = userData.plan;
+    document.getElementById('currentPlanLabel').textContent = userData.plan.charAt(0).toUpperCase() + userData.plan.slice(1);
+    document.getElementById('apiTokenVal').textContent = userData.api_token || 'Not set';
+  } catch { window.location.href = '/'; }
+}
+
+async function loadStats() {
+  try {
+    const s = await api('/api/scan/stats');
+    const critical = s.byRisk?.find(r => r.risk_level === 'critical')?.count || 0;
+    const high = s.byRisk?.find(r => r.risk_level === 'high')?.count || 0;
+    document.getElementById('statCritical').textContent = critical;
+    document.getElementById('statHigh').textContent = high;
+    document.getElementById('statTotal').textContent = s.total || 0;
+  } catch {}
+}
+
+async function loadEvents() {
+  try {
+    const events = await api('/api/github/events');
+    document.getElementById('statRepos').textContent = new Set(events.map(e => e.repo_name)).size || 0;
+
+    const tbody = document.getElementById('recentEvents');
+    const allTbody = document.getElementById('allEvents');
+    if (!events.length) return;
+
+    const rows = events.slice(0, 10).map(e => `
+      <tr>
+        <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${e.repo_name}</td>
+        <td>#${e.pr_number}</td>
+        <td style="color:var(--sub);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.pr_title || '—'}</td>
+        <td><code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--off);padding:2px 6px;border-radius:3px">${e.triggered_key}</code></td>
+        <td><span class="badge badge-${e.risk_level}">${e.risk_level}</span></td>
+        <td>${timeAgo(e.created_at)}</td>
+      </tr>
+    `).join('');
+
+    tbody.innerHTML = rows;
+    allTbody.innerHTML = events.map(e => `
+      <tr>
+        <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${e.repo_name}</td>
+        <td>#${e.pr_number}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.pr_title || '—'}</td>
+        <td><code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--off);padding:2px 6px;border-radius:3px">${e.triggered_key}</code></td>
+        <td><span class="badge badge-${e.risk_level}">${e.risk_level}</span></td>
+        <td><span class="badge badge-${e.plan_tier === 'free' ? 'free' : 'pro'}">${e.plan_tier}</span></td>
+        <td style="color:var(--muted);font-size:12px">${timeAgo(e.created_at)}</td>
+      </tr>
+    `).join('');
+  } catch {}
+}
+
+async function loadRepos() {
+  try {
+    const repos = await api('/api/github/repos');
+    const tbody = document.getElementById('reposList');
+    if (!repos.length) return;
+    tbody.innerHTML = repos.map(r => `
+      <tr>
+        <td style="font-family:'DM Mono',monospace;font-size:13px"><a href="https://github.com/${r.full_name}" target="_blank" style="color:var(--blue);text-decoration:none">${r.full_name}</a></td>
+        <td>${r.pr_count || 0}</td>
+        <td><span class="badge ${r.indexed ? 'badge-free' : 'badge-low'}">${r.indexed ? 'active' : 'pending'}</span></td>
+        <td style="color:var(--muted);font-size:12px">${timeAgo(r.created_at)}</td>
+      </tr>
+    `).join('');
+  } catch {}
+}
+
+async function loadIncidents() {
+  if (!userData) return;
+  if (userData.plan === 'free') {
+    document.getElementById('incidentProGate').style.display = 'block';
+    document.getElementById('incidentContent').style.display = 'none';
+    return;
+  }
+  try {
+    const incidents = await api('/api/github/incidents');
+    const tbody = document.getElementById('incidentsList');
+    if (!incidents.length) return;
+    tbody.innerHTML = incidents.map(i => `
+      <tr>
+        <td>${i.title}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${(i.config_keys || []).join(', ')}</td>
+        <td><span class="badge badge-${i.severity === 'P1' ? 'critical' : i.severity === 'P2' ? 'high' : 'medium'}">${i.severity}</span></td>
+        <td style="color:var(--muted);font-size:12px">${i.occurred_at ? new Date(i.occurred_at).toLocaleDateString() : '—'}</td>
+      </tr>
+    `).join('');
+  } catch {}
+}
+
+// PAYMENT
+async function pay(plan) {
+  try {
+    const order = await api('/api/billing/create-order', { method:'POST', body: JSON.stringify({ plan }) });
+    const rzp = new Razorpay({
+      key: order.keyId,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'Grassion',
+      description: plan + ' Plan',
+      order_id: order.orderId,
+      handler: async function(resp) {
+        await api('/api/billing/verify', { method:'POST', body: JSON.stringify({ ...resp, plan }) });
+        showToast('✓ Upgraded to ' + plan, 'success');
+        await loadUser();
+      },
+      theme: { color: '#2563EB' }
+    });
+    rzp.open();
+  } catch(e) { showToast('Payment failed', 'error'); }
+}
+
+// INCIDENTS
+function openIncidentModal() { document.getElementById('incidentModal').classList.add('open'); }
+function closeIncidentModal() { document.getElementById('incidentModal').classList.remove('open'); }
+
+async function saveIncident() {
+  const title = document.getElementById('incTitle').value;
+  const desc = document.getElementById('incDesc').value;
+  const keys = document.getElementById('incKeys').value.split(',').map(s => s.trim()).filter(Boolean);
+  const severity = document.getElementById('incSeverity').value;
+  const date = document.getElementById('incDate').value;
+
+  if (!title) { showToast('Title required', 'error'); return; }
+
+  try {
+    await api('/api/github/incidents', {
+      method:'POST',
+      body: JSON.stringify({ title, description: desc, configKeys: keys, severity, occurredAt: date || new Date().toISOString() })
+    });
+    closeIncidentModal();
+    showToast('Incident saved', 'success');
+    await loadIncidents();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// TOKEN
+function copyToken() {
+  navigator.clipboard.writeText(document.getElementById('apiTokenVal').textContent);
+  showToast('Token copied', 'success');
+}
+
+async function regenToken() {
+  if (!confirm('Regenerate token? Your existing integrations will stop working.')) return;
+  const r = await api('/api/auth/regenerate-token', { method:'POST' });
+  document.getElementById('apiTokenVal').textContent = r.apiToken;
+  showToast('Token regenerated', 'success');
+}
+
+// NAV
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name)?.classList.add('active');
+  document.querySelector(`[data-page="${name}"]`)?.classList.add('active');
+  if (name === 'incidents') loadIncidents();
+}
+
+document.querySelectorAll('[data-page]').forEach(el => {
+  el.addEventListener('click', () => showPage(el.dataset.page));
+});
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// TOAST
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// API
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${TOKEN}`, ...(opts.headers||{}) }
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function timeAgo(d) {
+  const diff = Date.now() - new Date(d).getTime();
+  const m = Math.floor(diff/60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m/60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h/24) + 'd ago';
+}
+
+init();
+</script>
+</body>
+</html>
