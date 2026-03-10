@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Grassion</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <canvas id="water-canvas"></canvas>
+  <style>
+    .sidebar {
+      position: fixed;
+      left: 0; top: var(--nav-h);
+      bottom: 0;
+      width: 220px;
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 100;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      border: none;
+      background: none;
+      text-decoration: none;
+      transition: var(--transition);
+      text-align: left;
+      width: 100%;
+    }
+
+    .sidebar-item:hover { background: var(--surface-hover); color: var(--text); }
+    .sidebar-item.active { background: rgba(108,99,255,0.1); color: var(--accent); }
+
+    .sidebar-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    .main-content {
+      margin-left: 220px;
+      margin-top: var(--nav-h);
+      padding: 40px;
+      min-height: calc(100vh - var(--nav-h));
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat-card {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-number { font-family: var(--font-display); font-size: 2.4rem; font-weight: 700; letter-spacing: -1px; }
+
+    .panel { padding: 28px; }
+
+    .pr-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pr-row:last-child { border-bottom: none; }
+
+    .pro-gate {
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; padding: 24px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">🛡</div>
+      Grass<span>ion</span>
+    </a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="plan-badge" class="badge badge-free">Free</span>
+      <button class="theme-toggle" aria-label="Toggle dark mode"><span class="theme-icon">🌙</span></button>
+      <span id="user-name" style="font-size:0.88rem;color:var(--text-2);">Loading...</span>
+      <button class="btn btn-ghost btn-sm" id="btn-logout">Sign out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Dashboard navigation">
+  <button class="sidebar-item active" data-tab="overview">
+    <span class="sidebar-icon">📊</span> Overview
+  </button>
+  <button class="sidebar-item" data-tab="repos">
+    <span class="sidebar-icon">📁</span> Repositories
+  </button>
+  <button class="sidebar-item" data-tab="prs">
+    <span class="sidebar-icon">🔀</span> PR Events
+  </button>
+  <button class="sidebar-item" data-tab="notifications">
+    <span class="sidebar-icon">🔔</span> Notifications <span id="notif-count" style="margin-left:auto;background:var(--accent);color:white;border-radius:100px;padding:2px 7px;font-size:0.7rem;display:none;"></span>
+  </button>
+  <button class="sidebar-item" data-tab="settings">
+    <span class="sidebar-icon">⚙️</span> Settings
+  </button>
+  <div style="flex:1;"></div>
+  <button class="sidebar-item" data-tab="upgrade" id="sidebar-upgrade" style="color:var(--accent);">
+    <span class="sidebar-icon">⚡</span> Upgrade to Pro
+  </button>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content" id="main-content">
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview">
+    <div style="margin-bottom:32px;">
+      <h1 style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;margin-bottom:6px;">Good morning 👋</h1>
+      <p style="color:var(--text-2);font-size:0.9rem;">Here's what's happening with your repos.</p>
+    </div>
+
+    <div class="grid-3" style="margin-bottom:32px;">
+      <div class="glass stat-card reveal">
+        <span style="font-size:0.78rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Total PRs</span>
+        <span class="stat-number" id="stat-prs" style="color:var(--accent);">—</span>
+        <span style="font-size:0.8rem;color:var(--text-3);">analysed by Grassion</span>
+      </div>
+      <div class="glass stat-card reveal reveal-delay-1">
+        <span style="font-size:0.78rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Repos tracked</span>
+        <span class="stat-number" id="stat-repos" style="color:var(--accent-2);">—</span>
+        <span style="font-size:0.8rem;color:var(--text-3);">connected repositories</span>
+      </div>
+      <div class="glass stat-card reveal reveal-delay-2">
+        <span style="font-size:0.78rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Alerts</span>
+        <span class="stat-number" id="stat-notifs" style="color:var(--accent-3);">—</span>
+        <span style="font-size:0.8rem;color:var(--text-3);">unread notifications</span>
+      </div>
+    </div>
+
+    <div class="glass panel reveal">
+      <h2 style="font-size:1rem;font-weight:600;margin-bottom:20px;">Recent PR Activity</h2>
+      <div id="recent-prs-list">
+        <div style="text-align:center;padding:32px;color:var(--text-3);font-size:0.9rem;">Connect a repo to start seeing PR events</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPOS TAB -->
+  <div id="tab-repos" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+      <div>
+        <h1 style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;">Repositories</h1>
+        <p style="color:var(--text-2);font-size:0.88rem;margin-top:4px;">Connect your GitHub repos to start tracking PRs</p>
+      </div>
+      <button class="btn btn-primary" id="btn-add-repo">+ Add Repo</button>
+    </div>
+
+    <div class="glass panel reveal" style="margin-bottom:24px;">
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:12px;">Add Repository</h3>
+      <form id="form-add-repo" style="display:flex;gap:12px;align-items:flex-end;">
+        <div class="input-wrap" style="flex:1;">
+          <label class="input-label">GitHub repo (owner/repo)</label>
+          <input type="text" name="github_repo" placeholder="acme/backend-api" required pattern="[^/]+/[^/]+" />
+        </div>
+        <button type="submit" class="btn btn-primary">Add</button>
+      </form>
+    </div>
+
+    <div id="repos-list" class="glass panel reveal">
+      <div style="text-align:center;padding:32px;color:var(--text-3);">Loading...</div>
+    </div>
+  </div>
+
+  <!-- PR EVENTS TAB -->
+  <div id="tab-prs" style="display:none;">
+    <div style="margin-bottom:28px;">
+      <h1 style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;">PR Events</h1>
+      <p style="color:var(--text-2);font-size:0.88rem;margin-top:4px;">All pull requests analysed by Grassion</p>
+    </div>
+
+    <div id="pr-events-list" class="glass panel reveal">
+      <div style="text-align:center;padding:32px;color:var(--text-3);">Loading...</div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS TAB -->
+  <div id="tab-notifications" style="display:none;">
+    <div style="margin-bottom:28px;">
+      <h1 style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;">Notifications</h1>
+    </div>
+    <div id="notifs-list" class="glass panel reveal">
+      <div style="text-align:center;padding:32px;color:var(--text-3);">Loading...</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div id="tab-settings" style="display:none;">
+    <div style="margin-bottom:28px;">
+      <h1 style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;">Settings</h1>
+    </div>
+
+    <div class="glass panel reveal" style="max-width:560px;">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:20px;">Webhook Setup</h3>
+      <p style="font-size:0.88rem;color:var(--text-2);margin-bottom:16px;line-height:1.7;">Add this webhook to your GitHub repo: <strong>Settings → Webhooks → Add webhook</strong></p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label class="input-label">Payload URL</label>
+          <input type="text" readonly id="webhook-url" value="https://grassion.com/api/github/webhook" onclick="this.select();" />
+        </div>
+        <div>
+          <label class="input-label">Content type</label>
+          <input type="text" readonly value="application/json" />
+        </div>
+        <div>
+          <label class="input-label">Secret</label>
+          <input type="text" readonly value="7f3a9b2e4c8d1f6a0e5b9c3d7f2a8e4b1c6d9f3a7b2e5c8d1f4a0e6b9c2d5f8a" onclick="this.select();" />
+        </div>
+        <p style="font-size:0.8rem;color:var(--text-3);">Events: Select "Pull requests" only.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPGRADE TAB -->
+  <div id="tab-upgrade" style="display:none;">
+    <div style="margin-bottom:28px;">
+      <h1 style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;">Upgrade your plan</h1>
+    </div>
+    <div class="grid-2" style="max-width:760px;">
+      <div class="glass pricing-card featured reveal">
+        <div style="font-size:0.8rem;font-weight:700;letter-spacing:0.8px;color:var(--accent);text-transform:uppercase;margin-bottom:16px;">Pro</div>
+        <div style="margin-bottom:20px;"><span class="price-amount">₹2,900</span><span class="price-period"> /mo</span></div>
+        <ul class="feature-list">
+          <li>Private repos</li>
+          <li>AI PR summaries</li>
+          <li>Block merges</li>
+          <li>Incident trace</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="btn btn-primary" style="width:100%;margin-top:16px;" id="dash-upgrade-pro">Upgrade to Pro</button>
+      </div>
+      <div class="glass pricing-card reveal reveal-delay-1">
+        <div style="font-size:0.8rem;font-weight:700;letter-spacing:0.8px;color:var(--text-3);text-transform:uppercase;margin-bottom:16px;">Team</div>
+        <div style="margin-bottom:20px;"><span class="price-amount">₹9,900</span><span class="price-period"> /mo</span></div>
+        <ul class="feature-list">
+          <li>Unlimited seats</li>
+          <li>SOC2 audit logs</li>
+          <li>Slack integration</li>
+          <li>Custom rules</li>
+          <li>Dedicated onboarding</li>
+        </ul>
+        <button class="btn btn-outline" style="width:100%;margin-top:16px;" id="dash-upgrade-team">Upgrade to Team</button>
+      </div>
+    </div>
+
+    <!-- Test Pro without payment -->
+    <div class="glass panel reveal" style="max-width:560px;margin-top:28px;border:1px dashed rgba(108,99,255,0.3);">
+      <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:10px;">🧪 Test Pro Features</h3>
+      <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:16px;line-height:1.6;">Run this SQL in Railway → PostgreSQL → Data tab to unlock pro for testing:</p>
+      <pre style="background:var(--bg2);padding:14px;border-radius:var(--radius-xs);font-size:0.78rem;overflow-x:auto;color:var(--accent);border:1px solid var(--border);">UPDATE users SET plan='pro',
+subscription_status='active',
+subscription_end_date=NOW()+INTERVAL '12 months'
+WHERE email='YOUR_EMAIL_HERE';</pre>
+      <button class="btn btn-sm btn-outline" style="margin-top:12px;" onclick="navigator.clipboard.writeText(\"UPDATE users SET plan='pro', subscription_status='active', subscription_end_date=NOW()+INTERVAL '12 months' WHERE email='YOUR_EMAIL_HERE';\").then(()=>Toast.show('Copied!','success'))">Copy SQL</button>
+    </div>
+  </div>
+
+</main>
+
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+
+  // Auth guard
+  if (!API.isLoggedIn()) {
+    window.location.href = '/?need-login=1';
+    return;
+  }
+
+  // Load user
+  try {
+    const user = await API.getMe();
+    document.getElementById('user-name').textContent = user.name;
+    const badge = document.getElementById('plan-badge');
+    badge.textContent = user.plan.charAt(0).toUpperCase() + user.plan.slice(1);
+    badge.className = `badge badge-${user.plan === 'free' ? 'free' : 'pro'}`;
+
+    // Hide upgrade if already pro/team
+    if (user.plan !== 'free') {
+      document.getElementById('sidebar-upgrade').style.display = 'none';
+    }
+
+    // Personalise greeting
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    document.querySelector('#tab-overview h1').textContent = `${greeting}, ${user.name.split(' ')[0]} 👋`;
+  } catch { API.logout(); }
+
+  // Load stats
+  try {
+    const stats = await API.getDashboardStats();
+    document.getElementById('stat-prs').textContent   = stats.prs;
+    document.getElementById('stat-repos').textContent = stats.repos;
+    document.getElementById('stat-notifs').textContent = stats.unread_notifications;
+    if (stats.unread_notifications > 0) {
+      const c = document.getElementById('notif-count');
+      c.textContent = stats.unread_notifications;
+      c.style.display = 'inline';
+    }
+  } catch {}
+
+  // Load PR events
+  async function loadPRs() {
+    try {
+      const events = await API.request('/github/events');
+      const list = document.getElementById('recent-prs-list');
+      const fullList = document.getElementById('pr-events-list');
+      if (!events.length) {
+        list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-3);">No PR events yet. Connect a repo and open a PR!</div>';
+        fullList.innerHTML = list.innerHTML;
+        return;
+      }
+      const renderRow = (e) => `
+        <div class="pr-row">
+          <div>
+            <div style="font-size:0.9rem;font-weight:500;">${e.pr_title || 'PR #' + e.pr_number}</div>
+            <div style="font-size:0.78rem;color:var(--text-3);margin-top:3px;">${e.github_repo} · #${e.pr_number} · by ${e.pr_author || 'unknown'} · ${new Date(e.created_at).toLocaleDateString()}</div>
+          </div>
+          <span class="badge badge-${e.risk_level || 'low'}">${(e.risk_level || 'low').toUpperCase()}</span>
+        </div>`;
+      list.innerHTML = events.slice(0, 5).map(renderRow).join('');
+      fullList.innerHTML = events.map(renderRow).join('');
+    } catch {}
+  }
+  loadPRs();
+
+  // Load repos
+  async function loadRepos() {
+    try {
+      const repos = await API.getRepos();
+      const el = document.getElementById('repos-list');
+      if (!repos.length) {
+        el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-3);">No repos yet. Add one above!</div>';
+        return;
+      }
+      el.innerHTML = repos.map(r => `
+        <div class="pr-row">
+          <div>
+            <div style="font-size:0.9rem;font-weight:500;">📁 ${r.github_repo}</div>
+            <div style="font-size:0.78rem;color:var(--text-3);margin-top:2px;">Added ${new Date(r.created_at).toLocaleDateString()}</div>
+          </div>
+          <span class="badge badge-${r.enabled ? 'low' : 'free'}">${r.enabled ? 'Active' : 'Paused'}</span>
+        </div>`).join('');
+    } catch {}
+  }
+
+  // Load notifications
+  async function loadNotifications() {
+    try {
+      const notifs = await API.request('/dashboard/notifications');
+      const el = document.getElementById('notifs-list');
+      if (!notifs.length) {
+        el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-3);">No notifications yet.</div>';
+        return;
+      }
+      el.innerHTML = notifs.map(n => `
+        <div class="pr-row" style="${!n.read ? 'opacity:1;' : 'opacity:0.6;'}">
+          <div>
+            <div style="font-size:0.9rem;font-weight:500;">${n.title}</div>
+            <div style="font-size:0.78rem;color:var(--text-3);margin-top:2px;">${n.body || ''} · ${new Date(n.created_at).toLocaleDateString()}</div>
+          </div>
+          ${!n.read ? `<button class="btn btn-sm btn-ghost" onclick="API.request('/dashboard/notifications/${n.id}/read',{method:'PATCH'}).then(()=>loadNotifications())">Mark read</button>` : ''}
+        </div>`).join('');
+    } catch {}
+  }
+
+  // Tab switching
+  const tabs = document.querySelectorAll('.sidebar-item[data-tab]');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+      const tab = document.getElementById('tab-' + btn.dataset.tab);
+      if (tab) tab.style.display = 'block';
+
+      // Lazy load
+      if (btn.dataset.tab === 'repos')         loadRepos();
+      if (btn.dataset.tab === 'prs')           loadPRs();
+      if (btn.dataset.tab === 'notifications') loadNotifications();
+    });
+  });
+
+  // Add repo form
+  bindForm('form-add-repo', async fd => {
+    await API.request('/github/repos', { method: 'POST', body: { github_repo: fd.get('github_repo') } });
+    Toast.show('Repo added! Now add the webhook in GitHub Settings.', 'success');
+    loadRepos();
+    document.getElementById('form-add-repo').reset();
+  });
+
+  // Logout
+  document.getElementById('btn-logout')?.addEventListener('click', () => API.logout());
+
+  // Upgrade handlers
+  function handleUpgrade(plan) {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = async () => {
+      try {
+        const order = await API.createOrder(plan);
+        const rzp = new Razorpay({
+          key: order.key, amount: order.amount, currency: 'INR',
+          name: 'Grassion', description: order.name, order_id: order.order_id,
+          theme: { color: '#6c63ff' },
+          handler: async (response) => {
+            await API.request('/billing/verify', { method: 'POST', body: { ...response, plan } });
+            Toast.show('Payment successful! Reloading...', 'success');
+            setTimeout(() => window.location.reload(), 1500);
+          }
+        });
+        rzp.open();
+      } catch (e) { Toast.show(e.message, 'error'); }
+    };
+    document.head.appendChild(script);
+  }
+
+  document.getElementById('dash-upgrade-pro')?.addEventListener('click',  () => handleUpgrade('pro'));
+  document.getElementById('dash-upgrade-team')?.addEventListener('click', () => handleUpgrade('team'));
+});
+</script>
+</body>
+</html>
