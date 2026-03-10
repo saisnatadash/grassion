@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node server/src/index.js"
   },
   "dependencies": {
     "@octokit/rest": "^20.1.1",
