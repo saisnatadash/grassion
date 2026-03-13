@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Grassion</title>
+  <link rel="icon" type="image/png" href="../img/logo-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{--navy:#1a2b3c;--teal:#2a7fa5;--tl:#3a9bc4;--w:#fff;--off:#f4f7fa;--border:rgba(42,127,165,0.15);--muted:#6b8099;--font:'Inter',sans-serif;--sw:220px;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--font);background:var(--off);color:var(--navy);display:flex;min-height:100vh;}
+    .sidebar{width:var(--sw);background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;}
+    .slogo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.08);}
+    .slogo img{height:26px;filter:brightness(0) invert(1);opacity:0.9;}
+    .stag{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:10px 16px 8px;}
+    .snav{flex:1;padding:8px;display:flex;flex-direction:column;gap:2px;}
+    .ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;text-decoration:none;color:rgba(255,255,255,.55);font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;width:100%;font-family:var(--font);transition:background .15s,color .15s;}
+    .ni svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;}
+    .ni:hover,.ni.active{background:rgba(255,255,255,.08);color:white;}
+    .sfooter{padding:12px 8px;border-top:1px solid rgba(255,255,255,.08);}
+    .abadge{display:flex;align-items:center;gap:8px;padding:10px;background:rgba(42,127,165,.2);border-radius:7px;}
+    .abadge span{font-size:10px;color:rgba(255,255,255,.5);}
+    .abadge strong{font-size:12px;color:white;display:block;}
+    .main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;}
+    .topbar{background:white;border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+    .ptitle{font-size:15px;font-weight:700;}
+    .tright{display:flex;align-items:center;gap:12px;}
+    .atag{padding:3px 9px;background:rgba(42,127,165,.1);border:1px solid rgba(42,127,165,.2);border-radius:100px;font-size:10px;font-weight:700;color:var(--teal);letter-spacing:.08em;text-transform:uppercase;}
+    .so{font-size:12px;color:var(--muted);cursor:pointer;border:none;background:none;font-family:var(--font);}
+    .content{padding:24px;flex:1;}
+    .page{display:none;}.page.active{display:block;}
+    .sgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+    .sc{background:white;border:1px solid var(--border);border-radius:9px;padding:16px 18px;}
+    .slbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+    .sval{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.02em;}
+    .ssub{font-size:11px;color:var(--muted);margin-top:2px;}
+    .sup{font-size:11px;color:#16a34a;margin-top:2px;font-weight:500;}
+    .card{background:white;border:1px solid var(--border);border-radius:9px;padding:18px;margin-bottom:16px;}
+    .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .ct{font-size:13px;font-weight:700;}
+    table{width:100%;border-collapse:collapse;}
+    th{text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 0 9px;border-bottom:1px solid var(--border);}
+    td{padding:10px 0;font-size:12px;border-bottom:1px solid rgba(42,127,165,.05);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    .pc{display:inline-block;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600;}
+    .pf{background:#f0f0f0;color:#666;}.pp{background:rgba(42,127,165,.1);color:var(--teal);}.pt{background:rgba(26,43,60,.1);color:var(--navy);}.pe{background:rgba(42,127,165,.2);color:var(--teal);}
+    .ab{padding:4px 9px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:var(--font);}
+    .ab-d{background:#fee2e2;color:#dc2626;}.ab-s{background:#dcfce7;color:#16a34a;}.ab-p{background:rgba(42,127,165,.1);color:var(--teal);}
+    .toolbar{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+    .si{flex:1;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);color:var(--navy);outline:none;}
+    .si:focus{border-color:var(--teal);}
+    .fs{padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--navy);outline:none;background:white;cursor:pointer;}
+    .sdot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px;}
+    .da{background:#22c55e;}.di{background:#d1d5db;}.db{background:#ef4444;}
+    .sql-ta{width:100%;min-height:110px;padding:11px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Courier New',monospace;color:var(--navy);outline:none;resize:vertical;}
+    .sql-ta:focus{border-color:var(--teal);}
+    .sql-r{background:var(--off);border-radius:7px;padding:11px;font-size:12px;font-family:'Courier New',monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto;margin-top:9px;display:none;}
+    .hg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+    .hc{background:white;border:1px solid var(--border);border-radius:9px;padding:16px;}
+    .hl{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    .hs{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;}
+    .ok{color:#16a34a;}
+    .mo{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;}
+    .mo.open{display:flex;}
+    .m{background:white;border-radius:12px;padding:24px;width:440px;max-width:90vw;}
+    .m h3{font-size:15px;font-weight:700;margin-bottom:5px;}
+    .m p{font-size:13px;color:var(--muted);margin-bottom:18px;}
+    .mi{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);margin-bottom:9px;outline:none;}
+    .mi:focus{border-color:var(--teal);}
+    .ms{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);margin-bottom:16px;outline:none;background:white;}
+    .ma{display:flex;gap:9px;justify-content:flex-end;}
+    .mc{padding:8px 16px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:white;font-family:var(--font);}
+    .ms2{padding:8px 16px;background:var(--navy);color:white;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);}
+    .ms2:hover{background:var(--teal);}
+    #toast{position:fixed;bottom:22px;right:22px;padding:11px 16px;border-radius:8px;font-size:13px;font-weight:500;display:none;z-index:9999;}
+    #toast.success{background:var(--navy);color:white;}
+    #toast.error{background:#fee2e2;color:#dc2626;border:1px solid #fecaca;}
+    code{background:var(--off);padding:1px 5px;border-radius:3px;font-size:11px;}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="slogo"><img src="../img/logo.png" alt="Grassion" /></div>
+  <div class="stag">Admin Panel</div>
+  <nav class="snav">
+    <button class="ni active" onclick="showPage('overview',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</button>
+    <button class="ni" onclick="showPage('users',this)"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users</button>
+    <button class="ni" onclick="showPage('revenue',this)"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Revenue</button>
+    <button class="ni" onclick="showPage('events',this)"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>PR Events</button>
+    <button class="ni" onclick="showPage('repos',this)"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Repos</button>
+    <button class="ni" onclick="showPage('system',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>System</button>
+    <button class="ni" onclick="showPage('sql',this)"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>SQL Tool</button>
+  </nav>
+  <div class="sfooter">
+    <div class="abadge">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <div><span>Logged in as</span><strong id="aname">Admin</strong></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <span class="ptitle" id="pheading">Overview</span>
+    <div class="tright">
+      <span class="atag">Admin</span>
+      <button class="so" id="sob">Sign out</button>
+    </div>
+  </header>
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="sgrid">
+        <div class="sc"><div class="slbl">Total Users</div><div class="sval" id="s-users">—</div><div class="ssub">All accounts</div></div>
+        <div class="sc"><div class="slbl">Pro</div><div class="sval" id="s-pro">—</div><div class="sup" id="s-pro-mrr">₹0 MRR</div></div>
+        <div class="sc"><div class="slbl">Team</div><div class="sval" id="s-team">—</div><div class="sup" id="s-team-mrr">₹0 MRR</div></div>
+        <div class="sc"><div class="slbl">Total MRR</div><div class="sval" id="s-mrr">₹0</div><div class="ssub">Monthly recurring</div></div>
+        <div class="sc"><div class="slbl">PR Events</div><div class="sval" id="s-events">—</div><div class="ssub">All time</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card"><div class="ch"><span class="ct">Recent Signups</span></div><div id="rsignups">Loading…</div></div>
+        <div class="card"><div class="ch"><span class="ct">Quick Actions</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="ab ab-p" style="padding:9px 13px;font-size:12px;border-radius:7px;text-align:left;" onclick="showPage('users',document.querySelectorAll('.ni')[1])">Manage Users</button>
+            <button class="ab ab-p" style="padding:9px 13px;font-size:12px;border-radius:7px;text-align:left;" onclick="showPage('sql',document.querySelectorAll('.ni')[6])">Run SQL Query</button>
+            <button class="ab ab-p" style="padding:9px 13px;font-size:12px;border-radius:7px;text-align:left;" onclick="loadOverview()">Refresh Stats</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="toolbar">
+        <input type="text" class="si" id="usearch" placeholder="Search by name or email…" oninput="filterUsers()" />
+        <select class="fs" id="pfilter" onchange="filterUsers()">
+          <option value="">All plans</option><option value="free">Free</option><option value="pro">Pro</option><option value="team">Team</option><option value="enterprise">Enterprise AI</option>
+        </select>
+        <button class="ab ab-p" style="padding:8px 13px;white-space:nowrap;" onclick="loadUsers()">Refresh</button>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">All Users</span><span id="ucnt" style="font-size:11px;color:var(--muted);">—</span></div>
+        <table><thead><tr><th>Name / Email</th><th>Plan</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="utbody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:28px 0;">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- REVENUE -->
+    <div class="page" id="page-revenue">
+      <div class="sgrid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="sc"><div class="slbl">MRR</div><div class="sval" id="r-mrr">₹0</div></div>
+        <div class="sc"><div class="slbl">ARR</div><div class="sval" id="r-arr">₹0</div></div>
+        <div class="sc"><div class="slbl">Paying Customers</div><div class="sval" id="r-pay">0</div></div>
+        <div class="sc"><div class="slbl">ARPU</div><div class="sval" id="r-arpu">₹0</div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Revenue by Plan</span></div>
+        <table><thead><tr><th>Plan</th><th>Customers</th><th>Price/mo</th><th>MRR</th></tr></thead>
+        <tbody id="revtbody"></tbody></table>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Paying Customers</span></div>
+        <table><thead><tr><th>Email</th><th>Plan</th><th>Sub Start</th><th>Sub End</th><th>Action</th></tr></thead>
+        <tbody id="paytbody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:22px 0;">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="page" id="page-events">
+      <div class="toolbar">
+        <input type="text" class="si" id="esearch" placeholder="Search by repo or PR title…" oninput="filterEvents()" />
+        <select class="fs" id="estatus" onchange="filterEvents()">
+          <option value="">All statuses</option><option value="open">Open</option><option value="merged">Merged</option><option value="blocked">Blocked</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">All PR Events</span><span id="ecnt" style="font-size:11px;color:var(--muted);">—</span></div>
+        <table><thead><tr><th>PR</th><th>Repo</th><th>Risk</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="etbody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:28px 0;">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- REPOS -->
+    <div class="page" id="page-repos">
+      <div class="card">
+        <div class="ch"><span class="ct">All Connected Repos</span><span id="rcnt" style="font-size:11px;color:var(--muted);">—</span></div>
+        <table><thead><tr><th>Repo</th><th>Added By</th><th>Status</th><th>Added</th></tr></thead>
+        <tbody id="rtbody"><tr><td colspan="4" style="color:var(--muted);text-align:center;padding:28px 0;">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- SYSTEM -->
+    <div class="page" id="page-system">
+      <div class="hg">
+        <div class="hc"><div class="hl">API Server</div><div class="hs ok"><span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>Operational</div></div>
+        <div class="hc"><div class="hl">PostgreSQL</div><div class="hs" id="dbst"><span style="width:7px;height:7px;border-radius:50%;background:#d1d5db;display:inline-block;"></span>Checking…</div></div>
+        <div class="hc"><div class="hl">GitHub Webhooks</div><div class="hs ok"><span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>Receiving</div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Environment Variables</span></div>
+        <table><thead><tr><th>Variable</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td><code>DATABASE_URL</code></td><td><span class="sdot da"></span>Set</td><td style="color:var(--muted);font-size:11px;">PostgreSQL connection</td></tr>
+          <tr><td><code>JWT_SECRET</code></td><td><span class="sdot da"></span>Set</td><td style="color:var(--muted);font-size:11px;">Auth token signing</td></tr>
+          <tr><td><code>RAZORPAY_KEY_ID</code></td><td><span id="rzp1" class="sdot di"></span><span id="rzp1t">Unknown</span></td><td style="color:var(--muted);font-size:11px;">Regenerate if compromised</td></tr>
+          <tr><td><code>RAZORPAY_KEY_SECRET</code></td><td><span id="rzp2" class="sdot di"></span><span id="rzp2t">Unknown</span></td><td style="color:var(--muted);font-size:11px;"></td></tr>
+          <tr><td><code>OPENAI_API_KEY</code></td><td><span id="oai" class="sdot di"></span><span id="oait">Unknown — add this for AI summaries</span></td><td style="color:var(--muted);font-size:11px;">Required for Impact Intelligence</td></tr>
+          <tr><td><code>SMTP_HOST</code></td><td><span id="smtp" class="sdot di"></span><span id="smtpt">Unknown — add this for email</span></td><td style="color:var(--muted);font-size:11px;">Required for email delivery</td></tr>
+        </tbody></table>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">How to Add OpenAI API Key</span></div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.8;">1. Go to <strong>platform.openai.com</strong> → API Keys → Create new secret key<br/>2. Copy the key (starts with <code>sk-</code>)<br/>3. In Railway: go to your app service → Variables → Add variable:<br/><code>OPENAI_API_KEY = sk-your-key-here</code><br/>4. Redeploy. AI summaries and Impact Intelligence will start working immediately.</p>
+      </div>
+    </div>
+
+    <!-- SQL -->
+    <div class="page" id="page-sql">
+      <div class="card">
+        <div class="ch"><span class="ct">SQL Query Tool</span><span style="font-size:11px;color:#dc2626;font-weight:600;">Direct DB access — use carefully</span></div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="ab ab-p" onclick="setSQL('SELECT id, email, name, plan, subscription_status, created_at FROM users ORDER BY created_at DESC LIMIT 20;')">Recent users</button>
+          <button class="ab ab-p" onclick="setSQL(`UPDATE users SET plan='pro', subscription_status='active', subscription_end_date=NOW()+INTERVAL '12 months' WHERE email='EMAIL_HERE';`)">Upgrade to Pro</button>
+          <button class="ab ab-p" onclick="setSQL(`UPDATE users SET plan='free', subscription_status='inactive' WHERE email='EMAIL_HERE';`)">Downgrade</button>
+          <button class="ab ab-p" onclick="setSQL('SELECT plan, COUNT(*) FROM users GROUP BY plan;')">Users by plan</button>
+          <button class="ab ab-p" onclick="setSQL('SELECT repo, COUNT(*) as events FROM pr_events GROUP BY repo ORDER BY events DESC LIMIT 10;')">Top repos</button>
+        </div>
+        <textarea class="sql-ta" id="sqlin" placeholder="SELECT * FROM users LIMIT 10;"></textarea>
+        <div style="display:flex;gap:9px;margin-top:9px;">
+          <button class="ab ab-p" style="padding:8px 16px;font-size:12px;" onclick="runSQL()">Run Query</button>
+          <button class="ab" style="padding:8px 16px;font-size:12px;background:var(--off);color:var(--muted);border:1px solid var(--border);" onclick="document.getElementById('sqlin').value=''">Clear</button>
+        </div>
+        <div class="sql-r" id="sqlr"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="mo" id="emod">
+  <div class="m">
+    <h3>Edit User</h3><p>Change plan or subscription status.</p>
+    <input type="hidden" id="euid" />
+    <input type="text" class="mi" id="eumail" readonly style="background:var(--off);color:var(--muted);" />
+    <select class="ms" id="euplan"><option value="free">Free</option><option value="pro">Pro</option><option value="team">Team</option><option value="enterprise">Enterprise AI</option></select>
+    <select class="ms" id="eustatus"><option value="active">Active</option><option value="inactive">Inactive</option><option value="cancelled">Cancelled</option></select>
+    <div class="ma">
+      <button class="mc" onclick="closeModal()">Cancel</button>
+      <button class="ms2" onclick="saveUser()">Save Changes</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const TK=localStorage.getItem('token'),US=JSON.parse(localStorage.getItem('user')||'null');
+if(!TK){window.location.href='../login.html';}
+document.getElementById('aname').textContent=US?.name||US?.email||'Admin';
+document.getElementById('sob').onclick=()=>{localStorage.clear();window.location.href='../login.html';};
+
+let allU=[],allE=[];
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  const h={overview:'Overview',users:'Users',revenue:'Revenue',events:'PR Events',repos:'Repositories',system:'System Health',sql:'SQL Tool'};
+  document.getElementById('pheading').textContent=h[id]||id;
+  if(id==='users')loadUsers();
+  if(id==='events')loadEvents();
+  if(id==='repos')loadRepos();
+  if(id==='revenue')loadRevenue();
+  if(id==='system')checkSystem();
+}
+
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=type;t.style.display='block';setTimeout(()=>t.style.display='none',4000);}
+
+async function api(path,opts={}){
+  const r=await fetch('/api'+path,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${TK}`,...(opts.headers||{})}});
+  return r.json();
+}
+
+function pc(plan){const m={free:'pf',pro:'pp',team:'pt',enterprise:'pe'};return `<span class="pc ${m[plan]||'pf'}">${plan||'free'}</span>`;}
+function fd(d){if(!d)return '—';return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
+
+async function loadOverview(){
+  try{
+    const[ud,ed]=await Promise.all([api('/admin/users'),api('/admin/pr-events')]);
+    allU=ud.users||ud||[];allE=ed.events||ed||[];
+    const pro=allU.filter(u=>u.plan==='pro'&&u.subscription_status==='active').length;
+    const team=allU.filter(u=>u.plan==='team'&&u.subscription_status==='active').length;
+    const ent=allU.filter(u=>u.plan==='enterprise'&&u.subscription_status==='active').length;
+    const mrr=pro*2900+team*9900+ent*7900;
+    document.getElementById('s-users').textContent=allU.length;
+    document.getElementById('s-pro').textContent=pro;
+    document.getElementById('s-team').textContent=team;
+    document.getElementById('s-mrr').textContent='₹'+mrr.toLocaleString('en-IN');
+    document.getElementById('s-events').textContent=allE.length;
+    document.getElementById('s-pro-mrr').textContent='₹'+(pro*2900).toLocaleString('en-IN')+' MRR';
+    document.getElementById('s-team-mrr').textContent='₹'+(team*9900).toLocaleString('en-IN')+' MRR';
+    const rec=allU.slice(-5).reverse();
+    document.getElementById('rsignups').innerHTML=rec.length?`<table><thead><tr><th>Email</th><th>Plan</th><th>Joined</th></tr></thead><tbody>${rec.map(u=>`<tr><td style="font-size:12px;">${u.email}</td><td>${pc(u.plan)}</td><td style="font-size:11px;color:var(--muted);">${fd(u.created_at)}</td></tr>`).join('')}</tbody></table>`:'<p style="font-size:13px;color:var(--muted);">No users yet.</p>';
+  }catch(e){console.error(e);}
+}
+
+async function loadUsers(){
+  try{const d=await api('/admin/users');allU=d.users||d||[];renderUsers(allU);}
+  catch(e){document.getElementById('utbody').innerHTML='<tr><td colspan="5" style="color:#dc2626;text-align:center;padding:22px 0;">Error loading users</td></tr>';}
+}
+
+function renderUsers(users){
+  document.getElementById('ucnt').textContent=users.length+' users';
+  document.getElementById('utbody').innerHTML=users.length?users.map(u=>`<tr>
+    <td><div style="font-weight:600;font-size:12px;">${u.name||'—'}</div><div style="font-size:11px;color:var(--muted);">${u.email}</div></td>
+    <td>${pc(u.plan)}</td>
+    <td><span class="sdot ${u.subscription_status==='active'?'da':'di'}"></span>${u.subscription_status||'inactive'}</td>
+    <td style="font-size:11px;color:var(--muted);">${fd(u.created_at)}</td>
+    <td style="display:flex;gap:5px;">
+      <button class="ab ab-p" onclick='openEdit(${JSON.stringify(u)})'>Edit</button>
+      <button class="ab ab-d" onclick="blkUser('${u.id}','${u.email}')">Block</button>
+    </td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:28px 0;">No users found.</td></tr>';
+}
+
+function filterUsers(){
+  const q=document.getElementById('usearch').value.toLowerCase();
+  const p=document.getElementById('pfilter').value;
+  renderUsers(allU.filter(u=>(!q||(u.email||'').toLowerCase().includes(q)||(u.name||'').toLowerCase().includes(q))&&(!p||u.plan===p)));
+}
+
+function openEdit(u){
+  document.getElementById('euid').value=u.id;
+  document.getElementById('eumail').value=u.email;
+  document.getElementById('euplan').value=u.plan||'free';
+  document.getElementById('eustatus').value=u.subscription_status||'inactive';
+  document.getElementById('emod').classList.add('open');
+}
+function closeModal(){document.getElementById('emod').classList.remove('open');}
+
+async function saveUser(){
+  const id=document.getElementById('euid').value;
+  const plan=document.getElementById('euplan').value;
+  const status=document.getElementById('eustatus').value;
+  try{
+    await api('/admin/users/'+id,{method:'PUT',body:JSON.stringify({plan,subscription_status:status})});
+    toast('User updated');closeModal();loadUsers();loadOverview();
+  }catch(e){toast('Failed to update','error');}
+}
+
+async function blkUser(id,email){
+  if(!confirm('Block '+email+'?'))return;
+  try{await api('/admin/users/'+id+'/block',{method:'POST'});toast('User blocked');loadUsers();}
+  catch(e){toast('Failed','error');}
+}
+
+async function loadEvents(){
+  try{const d=await api('/admin/pr-events');allE=d.events||d||[];renderEvents(allE);}catch(e){}
+}
+function renderEvents(events){
+  document.getElementById('ecnt').textContent=events.length+' events';
+  const rb=s=>s==null?'—':`<span style="font-weight:700;color:${s>=70?'#dc2626':s>=40?'#d97706':'#16a34a'}">${s}</span>`;
+  document.getElementById('etbody').innerHTML=events.length?events.map(e=>`<tr>
+    <td><a href="${e.pr_url||'#'}" target="_blank" style="color:var(--teal);text-decoration:none;font-size:12px;">#${e.pr_number||'?'} ${(e.pr_title||'').substring(0,35)}</a></td>
+    <td style="font-size:11px;color:var(--muted);">${e.repo||'—'}</td>
+    <td>${rb(e.risk_score)}</td>
+    <td><span class="sdot ${e.status==='blocked'?'db':e.status==='merged'?'da':'di'}"></span>${e.status||'open'}</td>
+    <td style="font-size:11px;color:var(--muted);">${fd(e.created_at)}</td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:28px 0;">No events yet.</td></tr>';
+}
+function filterEvents(){
+  const q=document.getElementById('esearch').value.toLowerCase();
+  const s=document.getElementById('estatus').value;
+  renderEvents(allE.filter(e=>(!q||(e.repo||'').toLowerCase().includes(q)||(e.pr_title||'').toLowerCase().includes(q))&&(!s||e.status===s)));
+}
+
+async function loadRepos(){
+  try{
+    const d=await api('/admin/repos');const repos=d.repos||d||[];
+    document.getElementById('rcnt').textContent=repos.length+' repos';
+    document.getElementById('rtbody').innerHTML=repos.length?repos.map(r=>`<tr>
+      <td style="font-weight:600;font-size:12px;">${r.full_name||r.repo}</td>
+      <td style="font-size:11px;color:var(--muted);">${r.user_email||'—'}</td>
+      <td><span class="sdot da"></span>Active</td>
+      <td style="font-size:11px;color:var(--muted);">${fd(r.created_at)}</td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:28px 0;">No repos yet.</td></tr>';
+  }catch(e){}
+}
+
+async function loadRevenue(){
+  if(!allU.length){const d=await api('/admin/users');allU=d.users||d||[];}
+  const pro=allU.filter(u=>u.plan==='pro'&&u.subscription_status==='active');
+  const team=allU.filter(u=>u.plan==='team'&&u.subscription_status==='active');
+  const ent=allU.filter(u=>u.plan==='enterprise'&&u.subscription_status==='active');
+  const mrr=pro.length*2900+team.length*9900+ent.length*7900;
+  const pay=pro.length+team.length+ent.length;
+  document.getElementById('r-mrr').textContent='₹'+mrr.toLocaleString('en-IN');
+  document.getElementById('r-arr').textContent='₹'+(mrr*12).toLocaleString('en-IN');
+  document.getElementById('r-pay').textContent=pay;
+  document.getElementById('r-arpu').textContent=pay?'₹'+Math.round(mrr/pay).toLocaleString('en-IN'):'₹0';
+  document.getElementById('revtbody').innerHTML=[{plan:'Pro',c:pro.length,p:2900},{plan:'Team',c:team.length,p:9900},{plan:'Enterprise AI',c:ent.length,p:7900}]
+    .map(r=>`<tr><td>${r.plan}</td><td>${r.c}</td><td>₹${r.p.toLocaleString('en-IN')}</td><td style="font-weight:700;color:var(--teal);">₹${(r.c*r.p).toLocaleString('en-IN')}</td></tr>`).join('');
+  const pu=[...pro,...team,...ent];
+  document.getElementById('paytbody').innerHTML=pu.length?pu.map(u=>`<tr>
+    <td style="font-size:12px;">${u.email}</td><td>${pc(u.plan)}</td>
+    <td style="font-size:11px;color:var(--muted);">${fd(u.subscription_start_date)}</td>
+    <td style="font-size:11px;color:var(--muted);">${fd(u.subscription_end_date)}</td>
+    <td><button class="ab ab-p" onclick='openEdit(${JSON.stringify(u)})'>Edit</button></td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:22px 0;">No paying customers yet.</td></tr>';
+}
+
+async function checkSystem(){
+  try{
+    const h=await api('/admin/health');
+    if(h.db){document.getElementById('dbst').innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span><span class="ok"> Connected</span>';}
+    const se=(sid,tid,val)=>{const ok=val&&val!=='missing';document.getElementById(sid).className='sdot '+(ok?'da':'db');document.getElementById(tid).textContent=ok?'Set':'MISSING';if(!ok)document.getElementById(tid).style.color='#dc2626';};
+    if(h.env){se('rzp1','rzp1t',h.env.RAZORPAY_KEY_ID);se('rzp2','rzp2t',h.env.RAZORPAY_KEY_SECRET);se('oai','oait',h.env.OPENAI_API_KEY);se('smtp','smtpt',h.env.SMTP_HOST);}
+  }catch(e){}
+}
+
+function setSQL(q){document.getElementById('sqlin').value=q;}
+async function runSQL(){
+  const q=document.getElementById('sqlin').value.trim();if(!q)return;
+  const r=document.getElementById('sqlr');r.style.display='block';r.textContent='Running…';r.style.color='var(--muted)';
+  try{
+    const d=await api('/admin/sql',{method:'POST',body:JSON.stringify({query:q})});
+    if(d.error){r.textContent='Error: '+d.error;r.style.color='#dc2626';}
+    else{r.textContent=JSON.stringify(d.rows||d,null,2);r.style.color='var(--navy)';}
+  }catch(e){r.textContent='Network error: '+e.message;r.style.color='#dc2626';}
+}
+
+loadOverview();
+</script>
+</body>
+</html>

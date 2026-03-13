@@ -3,94 +3,279 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contact — Grassion</title>
-  <link rel="stylesheet" href="/css/styles.css" />
-  <canvas id="water-canvas"></canvas>
+  <title>Contact & Work With Us — Grassion</title>
+  <link rel="icon" type="image/png" href="img/logo-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; }
+    .contact-info { display:flex; flex-direction:column; gap:28px; }
+    .contact-item { display:flex; gap:16px; align-items:flex-start; }
+    .contact-icon { width:42px; height:42px; background:rgba(42,127,165,0.08); border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .contact-icon svg { width:18px; height:18px; stroke:var(--teal); fill:none; stroke-width:1.8; }
+    .contact-item h4 { font-size:13px; font-weight:700; margin-bottom:4px; }
+    .contact-item p, .contact-item a { font-size:13px; color:var(--text-muted); text-decoration:none; line-height:1.6; }
+    .contact-item a:hover { color:var(--teal); }
+
+    .form-card { background:white; border:1px solid var(--border); border-radius:14px; padding:32px; }
+    .form-card h3 { font-size:18px; font-weight:700; margin-bottom:6px; letter-spacing:-0.01em; }
+    .form-card p { font-size:13px; color:var(--text-muted); margin-bottom:24px; }
+
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .g-form .form-group { display:flex; flex-direction:column; gap:5px; }
+    .submit-btn { padding:12px 26px; background:var(--navy); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--font); transition:background 0.2s; width:100%; }
+    .submit-btn:hover { background:var(--teal); }
+
+    .success-msg { display:none; padding:14px 18px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:8px; font-size:13px; color:#16a34a; font-weight:500; margin-top:14px; }
+
+    /* WORK WITH US */
+    .work-section { background:var(--off-white); }
+    .roles-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:40px; }
+    .role-card { background:white; border:1px solid var(--border); border-radius:12px; padding:26px 22px; transition:transform 0.3s, box-shadow 0.3s; position:relative; overflow:hidden; }
+    .role-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:2px; background:linear-gradient(90deg,var(--teal),var(--navy)); transform:scaleX(0); transform-origin:left; transition:transform 0.3s; }
+    .role-card:hover::before { transform:scaleX(1); }
+    .role-card:hover { transform:translateY(-3px); box-shadow:0 10px 32px rgba(42,127,165,0.09); }
+    .role-chip { display:inline-block; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px; }
+    .chip-remote { background:rgba(34,197,94,0.1); color:#16a34a; }
+    .chip-hybrid { background:rgba(42,127,165,0.1); color:var(--teal); }
+    .chip-full { background:rgba(26,43,60,0.08); color:var(--navy); }
+    .role-card h3 { font-size:15px; font-weight:700; margin-bottom:6px; letter-spacing:-0.01em; }
+    .role-card p { font-size:12px; color:var(--text-muted); line-height:1.7; margin-bottom:16px; }
+    .role-card a { font-size:12px; font-weight:600; color:var(--teal); text-decoration:none; }
+    .role-card a:hover { text-decoration:underline; }
+
+    .perks-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:40px; }
+    .perk-card { background:white; border:1px solid var(--border); border-radius:10px; padding:20px 18px; text-align:center; }
+    .perk-icon { font-size:22px; margin-bottom:10px; }
+    .perk-card h4 { font-size:13px; font-weight:700; margin-bottom:5px; }
+    .perk-card p { font-size:12px; color:var(--text-muted); line-height:1.5; }
+
+    @media(max-width:900px) {
+      .contact-grid { grid-template-columns:1fr; }
+      .roles-grid { grid-template-columns:1fr 1fr; }
+      .perks-grid { grid-template-columns:1fr 1fr; }
+      .form-row { grid-template-columns:1fr; }
+    }
+    @media(max-width:560px) {
+      .roles-grid, .perks-grid { grid-template-columns:1fr; }
+    }
+  </style>
 </head>
 <body>
-<nav class="nav">
-  <div class="nav-inner">
-    <a href="/" class="nav-logo"><div class="nav-logo-icon">🛡</div>Grass<span>ion</span></a>
-    <ul class="nav-links">
-      <li><a href="/#features">Features</a></li>
-      <li><a href="/#pricing">Pricing</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/contact.html" class="active">Contact</a></li>
-    </ul>
-    <div class="nav-actions">
-      <button class="theme-toggle" aria-label="Toggle dark mode"><span class="theme-icon">🌙</span></button>
-      <a href="/" class="btn btn-primary btn-sm">Get started</a>
-    </div>
+
+<nav>
+  <div class="nav-logo"><a href="/"><img src="img/logo.png" alt="Grassion" /></a></div>
+  <ul class="nav-links">
+    <li><a href="/#how">How it works</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="team.html">About</a></li>
+    <li><a href="/#pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="login.html" class="btn-ghost">Sign in</a>
+    <a href="signup.html" class="btn-primary-sm">Get started free</a>
   </div>
 </nav>
 
-<main style="padding-top: var(--nav-h);">
-  <section style="padding: 100px 0;">
-    <div class="container">
-      <div style="max-width:640px; margin: 0 auto;">
-        <div class="label-tag reveal">📬 Get in touch</div>
-        <h1 class="display-2 reveal reveal-delay-1" style="margin-bottom:12px;">Talk to us</h1>
-        <p class="reveal reveal-delay-2" style="color:var(--text-2);margin-bottom:48px;font-size:1rem;line-height:1.7;">Have a question, want a demo, or need enterprise pricing? We reply within 24 hours.</p>
+<!-- CONTACT HERO -->
+<div class="page-hero" style="background:var(--off-white);">
+  <div class="g-badge" style="margin-bottom:18px;"><span class="g-badge-dot"></span>Get in touch</div>
+  <h1>We'd love to<br />hear from you.</h1>
+  <p>Questions, demos, enterprise deals, or just want to say hello — we respond to every message personally.</p>
+</div>
 
-        <div class="glass reveal reveal-delay-2" style="padding:40px;">
-          <form id="form-contact" style="display:flex;flex-direction:column;gap:20px;">
-            <div class="grid-2">
-              <div class="input-wrap">
-                <label class="input-label">Name</label>
-                <input type="text" name="name" placeholder="Your name" required />
-              </div>
-              <div class="input-wrap">
-                <label class="input-label">Email</label>
-                <input type="email" name="email" placeholder="you@company.com" required />
-              </div>
-            </div>
-            <div class="input-wrap">
-              <label class="input-label">Subject</label>
-              <input type="text" name="subject" placeholder="What's on your mind?" />
-            </div>
-            <div class="input-wrap">
-              <label class="input-label">Message</label>
-              <textarea name="message" placeholder="Tell us more..." required rows="5"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary btn-lg">Send message →</button>
-          </form>
+<!-- CONTACT SECTION -->
+<section style="padding-top:36px;padding-bottom:72px;">
+  <div class="contact-grid">
+    <div class="contact-info reveal">
+      <div class="contact-item">
+        <div class="contact-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <div>
+          <h4>Email</h4>
+          <a href="mailto:hello@grassion.com">hello@grassion.com</a>
+          <p>General questions, demos, partnerships</p>
         </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div>
+          <h4>Location</h4>
+          <p>Bhubaneswar, Odisha, India</p>
+          <p>Remote-first team</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.37a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16a2 2 0 0 1 .27.92z"/></svg></div>
+        <div>
+          <h4>Enterprise & Partnerships</h4>
+          <a href="mailto:enterprise@grassion.com">enterprise@grassion.com</a>
+          <p>Custom pricing, white-label, integrations</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div>
+          <h4>Support</h4>
+          <a href="mailto:support@grassion.com">support@grassion.com</a>
+          <p>Bug reports, account issues, webhook help</p>
+        </div>
+      </div>
+      <div style="padding:22px 24px;background:rgba(42,127,165,0.05);border:1px solid var(--border);border-radius:12px;">
+        <p style="font-size:13px;font-weight:600;margin-bottom:6px;">Typical response time</p>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6;">Pro & Enterprise customers: under 4 hours.<br/>Free plan: within 24 hours.<br/>We're humans, not bots. Every reply is real.</p>
+      </div>
+    </div>
 
-        <div class="grid-2 reveal" style="margin-top:32px;">
-          <div class="glass" style="padding:24px;">
-            <div style="font-size:1.5rem;margin-bottom:10px;">✉️</div>
-            <div style="font-size:0.88rem;font-weight:600;margin-bottom:4px;">Email</div>
-            <a href="mailto:info@grassion.com" style="font-size:0.85rem;color:var(--accent);text-decoration:none;">info@grassion.com</a>
+    <div class="form-card reveal">
+      <h3>Send us a message</h3>
+      <p>Tell us who you are and what you need — we'll get back to you fast.</p>
+      <div class="g-form" id="contact-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="g-label">First name</label>
+            <input type="text" class="g-input" id="fname" placeholder="Sai" />
           </div>
-          <div class="glass" style="padding:24px;">
-            <div style="font-size:1.5rem;margin-bottom:10px;">⚡</div>
-            <div style="font-size:0.88rem;font-weight:600;margin-bottom:4px;">Response time</div>
-            <div style="font-size:0.85rem;color:var(--text-2);">Within 24 hours</div>
+          <div class="form-group">
+            <label class="g-label">Last name</label>
+            <input type="text" class="g-input" id="lname" placeholder="Snata" />
           </div>
+        </div>
+        <div class="form-group">
+          <label class="g-label">Work email</label>
+          <input type="email" class="g-input" id="email" placeholder="you@company.com" />
+        </div>
+        <div class="form-group">
+          <label class="g-label">Company / Team name</label>
+          <input type="text" class="g-input" id="company" placeholder="Acme Corp" />
+        </div>
+        <div class="form-group">
+          <label class="g-label">What can we help with?</label>
+          <select class="g-select" id="subject">
+            <option value="">Select a topic</option>
+            <option value="demo">Request a demo</option>
+            <option value="enterprise">Enterprise pricing</option>
+            <option value="partnership">Partnership / Integration</option>
+            <option value="support">Technical support</option>
+            <option value="press">Press / Media</option>
+            <option value="other">Something else</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="g-label">Message</label>
+          <textarea class="g-textarea" id="message" placeholder="Tell us more…"></textarea>
+        </div>
+        <button class="submit-btn" onclick="submitForm()">Send message</button>
+        <div class="success-msg" id="success-msg">
+          ✓ Message received! We'll get back to you within 24 hours.
         </div>
       </div>
     </div>
-  </section>
-</main>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- WORK WITH US -->
+<section class="work-section" id="work-with-us">
+  <div class="section-label reveal">Work with us</div>
+  <h2 class="section-title reveal">Join the team building<br />the future of code safety.</h2>
+  <p class="section-sub reveal">We're a small, focused team shipping fast from Odisha. Remote-first. High ownership. Real impact.</p>
+
+  <div class="roles-grid">
+    <div class="role-card reveal">
+      <span class="role-chip chip-remote">Remote</span>
+      <h3>Full-Stack Engineer</h3>
+      <p>Build the core product — webhook processing, AI pipeline, dashboard features. Node.js, PostgreSQL, React. You'll own entire features, not tasks.</p>
+      <a href="mailto:careers@grassion.com?subject=Full-Stack Engineer Application">Apply → careers@grassion.com</a>
+    </div>
+    <div class="role-card reveal">
+      <span class="role-chip chip-remote">Remote</span>
+      <h3>AI / ML Engineer</h3>
+      <p>Own the Impact Intelligence engine. Design prompts, fine-tune models, build the blast radius mapping system. OpenAI API, Python, prompt engineering.</p>
+      <a href="mailto:careers@grassion.com?subject=AI Engineer Application">Apply → careers@grassion.com</a>
+    </div>
+    <div class="role-card reveal">
+      <span class="role-chip chip-hybrid">Hybrid · BBSR</span>
+      <h3>Growth & Partnerships</h3>
+      <p>Drive revenue from zero to 1 crore. Own outreach to Indian SaaS companies, manage partnerships, run content and community. You close deals.</p>
+      <a href="mailto:careers@grassion.com?subject=Growth Application">Apply → careers@grassion.com</a>
+    </div>
+    <div class="role-card reveal">
+      <span class="role-chip chip-remote">Remote</span>
+      <h3>Developer Advocate</h3>
+      <p>Write technical blogs, build demos, speak at meetups, own our Twitter/LinkedIn presence. You live in developer communities and make engineers love Grassion.</p>
+      <a href="mailto:careers@grassion.com?subject=DevRel Application">Apply → careers@grassion.com</a>
+    </div>
+    <div class="role-card reveal">
+      <span class="role-chip chip-hybrid">Hybrid · BBSR</span>
+      <h3>Customer Success</h3>
+      <p>Onboard teams, resolve issues, own NPS. You're the bridge between our users and the product. Deep empathy + technical curiosity required.</p>
+      <a href="mailto:careers@grassion.com?subject=CS Application">Apply → careers@grassion.com</a>
+    </div>
+    <div class="role-card reveal">
+      <span class="role-chip chip-remote">Open</span>
+      <h3>Don't see your role?</h3>
+      <p>If you're exceptional at something and believe in what we're building, write to us. We'll create a role for the right person.</p>
+      <a href="mailto:careers@grassion.com?subject=Open Application">Introduce yourself →</a>
+    </div>
+  </div>
+
+  <div style="margin-top:60px;">
+    <div class="section-label reveal">Why Grassion</div>
+    <h2 class="section-title reveal">What you actually get.</h2>
+    <div class="perks-grid" style="margin-top:32px;">
+      <div class="perk-card reveal">
+        <div class="perk-icon">🏗️</div>
+        <h4>Build from 0</h4>
+        <p>Ship features that real engineering teams use every day. Your work matters immediately.</p>
+      </div>
+      <div class="perk-card reveal">
+        <div class="perk-icon">💰</div>
+        <h4>Equity + Salary</h4>
+        <p>Competitive INR salary, meaningful equity at pre-Series A valuation. You're building this too.</p>
+      </div>
+      <div class="perk-card reveal">
+        <div class="perk-icon">🌏</div>
+        <h4>Remote-first</h4>
+        <p>Work from anywhere in India. No mandatory face time. Async-friendly, results-driven culture.</p>
+      </div>
+      <div class="perk-card reveal">
+        <div class="perk-icon">⚡</div>
+        <h4>Move fast</h4>
+        <p>No six-layer approvals. Ship in days, not quarters. Ideas from anyone become features fast.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <footer>
-  <div class="container">
-    <div class="footer-bottom">
-      <span>© 2025 Grassion.</span>
-      <a href="/" style="color:var(--accent);">← Back to home</a>
-    </div>
+  <div class="footer-logo"><img src="img/logo.png" alt="Grassion" /></div>
+  <p>© 2026 Grassion. Built in Odisha, for the world.</p>
+  <div class="footer-links">
+    <a href="privacy.html">Privacy</a>
+    <a href="contact.html" class="active">Contact</a>
+    <a href="team.html">Team</a>
+    <a href="contact.html#work-with-us">Work with us</a>
   </div>
 </footer>
 
-<script src="/js/app.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  bindForm('form-contact', async fd => {
-    await API.sendContact(fd.get('name'), fd.get('email'), fd.get('message'), fd.get('subject'));
-    Toast.show('Message sent! We\'ll reply within 24 hours.', 'success');
-    document.getElementById('form-contact').reset();
-  });
-});
+function submitForm(){
+  const fname=document.getElementById('fname').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const msg=document.getElementById('message').value.trim();
+  if(!fname||!email||!msg){alert('Please fill in your name, email, and message.');return;}
+  // In production: POST to /api/contact
+  // For now: show success
+  document.getElementById('success-msg').style.display='block';
+  document.querySelector('.submit-btn').textContent='Sent ✓';
+  document.querySelector('.submit-btn').style.background='#16a34a';
+  document.querySelector('.submit-btn').disabled=true;
+}
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const s=e.target.parentElement.querySelectorAll('.reveal');s.forEach((el,i)=>setTimeout(()=>el.classList.add('visible'),i*80));}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+if(window.location.hash==='#work-with-us'){setTimeout(()=>document.getElementById('work-with-us')?.scrollIntoView({behavior:'smooth'}),400);}
 </script>
 </body>
 </html>
