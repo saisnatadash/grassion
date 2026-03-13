@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Grassion</title>
+  <link rel="icon" type="image/png" href="img/logo-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #1a2b3c;
+      --navy-mid: #243447;
+      --teal: #2a7fa5;
+      --teal-light: #3a9bc4;
+      --white: #ffffff;
+      --off-white: #f4f7fa;
+      --border: rgba(42, 127, 165, 0.15);
+      --text-muted: #6b8099;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--off-white);
+      color: var(--navy);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background blobs */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(60px);
+      opacity: 0.18;
+    }
+    .bg-blob-1 {
+      width: 500px; height: 500px;
+      background: var(--teal);
+      top: -100px; left: -100px;
+    }
+    .bg-blob-2 {
+      width: 400px; height: 400px;
+      background: var(--navy);
+      bottom: -80px; right: -80px;
+    }
+
+    /* Card */
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 44px;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 20px 60px rgba(26, 43, 60, 0.08);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .logo {
+      display: block;
+      margin-bottom: 32px;
+    }
+
+    .logo img { height: 28px; }
+
+    h1 {
+      
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--navy-mid);
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 14px;
+      font-family: var(--font);
+      color: var(--navy);
+      background: white;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(42, 127, 165, 0.1);
+    }
+
+    input::placeholder { color: var(--text-muted); }
+
+    .forgot {
+      display: block;
+      text-align: right;
+      font-size: 12px;
+      color: var(--teal);
+      text-decoration: none;
+      margin-top: 6px;
+      transition: opacity 0.2s;
+    }
+    .forgot:hover { opacity: 0.75; }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover { background: var(--teal); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { background: #b0bec5; cursor: not-allowed; transform: none; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .divider span { font-size: 12px; color: var(--text-muted); }
+
+    .signup-link {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .signup-link a {
+      color: var(--teal);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .signup-link a:hover { text-decoration: underline; }
+
+    /* Error / success */
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .alert.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .alert.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .back-home {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+      z-index: 20;
+    }
+    .back-home:hover { color: var(--navy); }
+    .back-home svg { width: 14px; height: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+
+<a href="index.html" class="back-home">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+  Back to home
+</a>
+
+<div class="card">
+  <a href="index.html" class="logo">
+    <img src="img/logo.png" alt="Grassion" />
+  </a>
+
+  <h1>Welcome back</h1>
+  <p class="subtitle">Sign in to your Grassion account</p>
+
+  <div class="alert" id="alert"></div>
+
+  <div class="form-group">
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="you@company.com" autocomplete="email" />
+  </div>
+
+  <div class="form-group">
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+    <a href="#" class="forgot">Forgot password?</a>
+  </div>
+
+  <button class="btn" id="login-btn" onclick="doLogin()">
+    <span id="btn-text">Sign in</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <div class="divider"><span>Don't have an account?</span></div>
+
+  <p class="signup-link">
+    <a href="signup.html">Create a free account →</a>
+  </p>
+</div>
+
+<script>
+  // If already logged in, redirect to dashboard
+  if (localStorage.getItem('token')) {
+    window.location.href = 'dashboard.html';
+  }
+
+  // Allow Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  function showAlert(msg, type = 'error') {
+    const el = document.getElementById('alert');
+    el.textContent = msg;
+    el.className = 'alert ' + type;
+    el.style.display = 'block';
+  }
+
+  function hideAlert() {
+    document.getElementById('alert').style.display = 'none';
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('login-btn');
+    const text = document.getElementById('btn-text');
+    const spinner = document.getElementById('spinner');
+    btn.disabled = on;
+    text.textContent = on ? 'Signing in…' : 'Sign in';
+    spinner.style.display = on ? 'block' : 'none';
+  }
+
+  async function doLogin() {
+    hideAlert();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!email) { showAlert('Please enter your email.'); return; }
+    if (!password) { showAlert('Please enter your password.'); return; }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user || { email }));
+        showAlert('Login successful! Redirecting…', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 800);
+      } else {
+        showAlert(data.error || data.message || 'Invalid email or password.');
+      }
+    } catch (e) {
+      showAlert('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+</script>
+</body>
+</html>
