@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PR Events — Grassion</title>
+  <link rel="icon" type="image/png" href="img/logo-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{--navy:#1a2b3c;--navy-mid:#243447;--teal:#2a7fa5;--tl:#3a9bc4;--off:#f4f7fa;--border:rgba(42,127,165,0.15);--muted:#6b8099;--font:'Inter',sans-serif;--sw:220px;}
+    *{margin:0;padding:0;box-sizing:border-box;}html,body{height:100%;}
+    body{font-family:var(--font);background:var(--off);color:var(--navy);display:flex;min-height:100vh;overflow-x:hidden;overflow-y:auto;}
+    .sidebar{width:var(--sw);background:white;border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;overflow-y:auto;}
+    .slogo{padding:22px 18px 18px;border-bottom:1px solid var(--border);}.slogo img{height:28px;}
+    .snav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;}
+    .ni{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;text-decoration:none;color:var(--muted);font-size:13px;font-weight:500;transition:background .15s,color .15s;}
+    .ni svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;}
+    .ni:hover{background:var(--off);color:var(--navy);}.ni.active{background:rgba(42,127,165,.1);color:var(--teal);}
+    .sbottom{padding:14px 10px;border-top:1px solid var(--border);}
+    .ucard{background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-radius:9px;padding:14px;color:white;}
+    .ucard p{font-size:11px;opacity:.6;margin-bottom:3px;}.ucard strong{font-size:12px;font-weight:600;display:block;margin-bottom:10px;}
+    .ubtn{display:block;text-align:center;padding:7px;background:var(--teal);color:white;border-radius:5px;font-size:11px;font-weight:600;text-decoration:none;}
+    .main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-y:auto;}
+    .topbar{background:white;border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+    .ptitle{font-size:15px;font-weight:700;}.tright{display:flex;align-items:center;gap:14px;}
+    .pbadge{padding:3px 9px;background:var(--off);border:1px solid var(--border);border-radius:100px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;}
+    .pbadge.pro{background:rgba(42,127,165,.1);color:var(--teal);}
+    .uname{font-size:13px;font-weight:500;}.so{font-size:12px;color:var(--muted);text-decoration:none;}
+    .content{padding:28px;flex:1;}
+    h1{font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.02em;}
+    .sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+    .events-list{display:flex;flex-direction:column;gap:12px;}
+    .event-card{background:white;border:1px solid var(--border);border-radius:10px;padding:18px 20px;}
+    .event-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+    .event-title{font-size:14px;font-weight:700;}
+    .event-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+    .risk{padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;flex-shrink:0;}
+    .risk.low{background:#e8f5e9;color:#2e7d32;}
+    .risk.medium{background:#fff8e1;color:#f57f17;}
+    .risk.high{background:#ffebee;color:#c62828;}
+    .event-summary{font-size:12px;color:var(--muted);line-height:1.6;background:var(--off);border-radius:7px;padding:10px 12px;}
+    .event-footer{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;}
+    .event-repo{font-size:11px;color:var(--teal);font-weight:600;}
+    .event-time{font-size:11px;color:var(--muted);}
+    .event-author{font-size:11px;color:var(--muted);}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--muted);background:white;border:1px solid var(--border);border-radius:10px;}
+    .empty-state svg{width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.5;margin:0 auto 16px;display:block;}
+    .empty-state h3{font-size:15px;color:var(--navy-mid);margin-bottom:8px;}
+    .empty-state p{font-size:13px;line-height:1.6;}
+    .loading{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+    @media(max-width:768px){
+      .sidebar{position:relative;width:100%;height:auto;flex-direction:row;border-right:none;border-bottom:1px solid var(--border);}
+      .slogo{padding:12px 14px;border-bottom:none;}.snav{flex-direction:row;padding:8px;overflow-x:auto;flex-wrap:nowrap;}
+      .ni{white-space:nowrap;font-size:12px;padding:7px 10px;}.sbottom{display:none;}.main{margin-left:0;}
+    }
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="slogo"><a href="/"><img src="img/logo.png" alt="Grassion" /></a></div>
+  <nav class="snav">
+    <a href="dashboard.html" class="ni"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+    <a href="repositories.html" class="ni"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Repositories</a>
+    <a href="pr-events.html" class="ni active"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>PR Events</a>
+    <a href="notifications.html" class="ni"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
+    <a href="settings.html" class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+  </nav>
+  <div class="sbottom">
+    <div class="ucard" id="upgrade-card">
+      <p>You're on</p><strong>Free Plan</strong>
+      <a href="upgrade.html" class="ubtn">Upgrade to Pro →</a>
+    </div>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <span class="ptitle">PR Events</span>
+    <div class="tright">
+      <span class="pbadge" id="plan-badge">Free</span>
+      <span class="uname" id="user-name">—</span>
+      <a href="#" class="so" id="sign-out-btn">Sign out</a>
+    </div>
+  </header>
+  <div class="content">
+    <h1>PR Events</h1>
+    <p class="sub">Every pull request Grassion has reviewed, with AI risk analysis.</p>
+    <div id="events-container"><div class="loading">Loading events…</div></div>
+  </div>
+</div>
+<script>
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  if (!token) { window.location.replace('login.html'); }
+  if (user) {
+    document.getElementById('user-name').textContent = user.name || user.email;
+    if (user.plan && user.plan !== 'free') {
+      document.getElementById('plan-badge').textContent = user.plan.charAt(0).toUpperCase() + user.plan.slice(1);
+      document.getElementById('plan-badge').classList.add('pro');
+      document.getElementById('upgrade-card').style.display = 'none';
+    }
+  }
+  document.getElementById('sign-out-btn').addEventListener('click', e => { e.preventDefault(); localStorage.clear(); window.location.href = 'login.html'; });
+
+  async function loadEvents() {
+    const c = document.getElementById('events-container');
+    try {
+      const r = await fetch('/api/github/events', { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) { c.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3>Could not load events</h3><p>Make sure your repos are connected and webhooks are set up.</p></div>'; return; }
+      const events = await r.json();
+      if (!events.length) {
+        c.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg><h3>No PR events yet</h3><p>Once you connect a repo and set up the webhook, every pull request will appear here with AI risk analysis.</p></div>';
+        return;
+      }
+      c.innerHTML = '<div class="events-list">' + events.map(function(e) {
+        var risk = e.risk_level || 'low';
+        var time = e.created_at ? new Date(e.created_at).toLocaleString('en-IN') : '';
+        return '<div class="event-card">' +
+          '<div class="event-top">' +
+            '<div><div class="event-title">PR #' + e.pr_number + ': ' + (e.pr_title||'') + '</div>' +
+            '<div class="event-meta">by ' + (e.pr_author||'unknown') + ' · ' + (e.action||'') + '</div></div>' +
+            '<span class="risk ' + risk + '">' + risk + ' risk</span>' +
+          '</div>' +
+          (e.ai_summary ? '<div class="event-summary">' + e.ai_summary + '</div>' : '') +
+          '<div class="event-footer">' +
+            '<span class="event-repo">' + (e.github_repo||'') + '</span>' +
+            '<span class="event-time">' + time + '</span>' +
+          '</div></div>';
+      }).join('') + '</div>';
+    } catch(err) { c.innerHTML = '<div class="empty-state"><h3>Error loading events</h3><p>' + err.message + '</p></div>'; }
+  }
+  loadEvents();
+</script>
+</body>
+</html>
