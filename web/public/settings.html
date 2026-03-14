@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- INSTANT AUTH GUARD - prevents login page flash -->
+  <script>if(!localStorage.getItem("token")){document.documentElement.style.display="none";window.location.replace("login.html");}<\/script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Grassion</title>
+  <link rel="icon" type="image/png" href="img/logo-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{--navy:#1a2b3c;--navy-mid:#243447;--teal:#2a7fa5;--tl:#3a9bc4;--w:#fff;--off:#f4f7fa;--border:rgba(42,127,165,0.15);--muted:#6b8099;--font:'Inter',sans-serif;--sw:220px;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{height:100%;}
+    body{font-family:var(--font);background:var(--off);color:var(--navy);display:flex;min-height:100vh;overflow-x:hidden;overflow-y:auto;}
+    .sidebar{width:var(--sw);background:white;border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;overflow-y:auto;}
+    .slogo{padding:22px 18px 18px;border-bottom:1px solid var(--border);}
+    .slogo img{height:28px;}
+    .snav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;}
+    .ni{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;text-decoration:none;color:var(--muted);font-size:13px;font-weight:500;transition:background .15s,color .15s;}
+    .ni svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;}
+    .ni:hover{background:var(--off);color:var(--navy);}
+    .ni.active{background:rgba(42,127,165,.1);color:var(--teal);}
+    .sbottom{padding:14px 10px;border-top:1px solid var(--border);}
+    .ucard{background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-radius:9px;padding:14px;color:white;}
+    .ucard p{font-size:11px;opacity:.6;margin-bottom:3px;}
+    .ucard strong{font-size:12px;font-weight:600;display:block;margin-bottom:10px;}
+    .ubtn{display:block;text-align:center;padding:7px;background:var(--teal);color:white;border-radius:5px;font-size:11px;font-weight:600;text-decoration:none;}
+    .main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-y:auto;}
+    .topbar{background:white;border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+    .ptitle{font-size:15px;font-weight:700;}
+    .tright{display:flex;align-items:center;gap:14px;}
+    .pbadge{padding:3px 9px;background:var(--off);border:1px solid var(--border);border-radius:100px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+    .uname{font-size:13px;font-weight:500;}
+    .so{font-size:12px;color:var(--muted);text-decoration:none;}
+    .content{padding:28px;flex:1;max-width:700px;}
+    h1{font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.02em;}
+    .sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+    .section-card{background:white;border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden;}
+    .section-head{padding:16px 20px;border-bottom:1px solid var(--border);}
+    .section-head h2{font-size:14px;font-weight:700;}
+    .section-head p{font-size:12px;color:var(--muted);margin-top:2px;}
+    .field-row{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
+    .field-row:last-child{border-bottom:none;}
+    .field-label{font-size:12px;font-weight:600;color:var(--navy);}
+    .field-input{padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);color:var(--navy);outline:none;transition:border-color .2s;width:100%;}
+    .field-input:focus{border-color:var(--teal);}
+    .field-input:disabled{background:var(--off);color:var(--muted);cursor:not-allowed;}
+    .field-hint{font-size:11px;color:var(--muted);}
+    .save-row{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;}
+    .save-btn{padding:9px 20px;background:var(--navy);color:white;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .2s;}
+    .save-btn:hover{background:var(--teal);}
+    .save-btn:disabled{opacity:.6;cursor:not-allowed;}
+    .danger-btn{padding:9px 20px;background:#ffebee;color:#c62828;border:1px solid #ffcdd2;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);}
+    .danger-btn:hover{background:#ffcdd2;}
+    .success-msg{font-size:12px;color:#2e7d32;display:none;}
+    .token-display{display:flex;gap:8px;align-items:center;}
+    .token-display input{flex:1;font-family:monospace;font-size:12px;}
+    .copy-btn{padding:9px 14px;background:var(--off);border:1px solid var(--border);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+    .copy-btn:hover{background:var(--border);}
+    @media(max-width:768px){
+      .sidebar{position:relative;width:100%;height:auto;flex-direction:row;border-right:none;border-bottom:1px solid var(--border);}
+      .slogo{padding:12px 14px;border-bottom:none;}
+      .snav{flex-direction:row;padding:8px;overflow-x:auto;flex-wrap:nowrap;}
+      .ni{white-space:nowrap;font-size:12px;padding:7px 10px;}
+      .sbottom{display:none;}
+      .main{margin-left:0;}
+      .content{max-width:100%;}
+    }
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="slogo"><a href="/"><img src="img/logo.png" alt="Grassion" /></a></div>
+  <nav class="snav">
+    <a href="dashboard.html" class="ni"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+    <a href="repositories.html" class="ni"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Repositories</a>
+    <a href="pr-events.html" class="ni"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>PR Events</a>
+    <a href="notifications.html" class="ni"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
+    <a href="settings.html" class="ni active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+  </nav>
+  <div class="sbottom">
+    <div class="ucard" id="upgrade-card">
+      <p>You're on</p><strong>Free Plan</strong>
+      <a href="upgrade.html" class="ubtn">Upgrade to Pro →</a>
+    </div>
+    <a href="#" id="sidebar-signout" style="display:flex;align-items:center;gap:8px;padding:10px 11px;margin-top:8px;border-radius:7px;text-decoration:none;color:#c62828;font-size:13px;font-weight:600;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign out
+    </a>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <span class="ptitle">Settings</span>
+    <div class="tright">
+      <span class="pbadge" id="plan-badge">Free</span>
+      <span class="uname" id="user-name">—</span>
+    </div>
+  </header>
+  <div class="content">
+    <h1>Settings</h1>
+    <p class="sub">Manage your account, profile, and integrations.</p>
+
+    <!-- Profile -->
+    <div class="section-card">
+      <div class="section-head"><h2>Profile</h2><p>Update your name and email</p></div>
+      <div class="field-row">
+        <label class="field-label">Full name</label>
+        <input class="field-input" id="field-name" type="text" placeholder="Your name" />
+      </div>
+      <div class="field-row">
+        <label class="field-label">Email address</label>
+        <input class="field-input" id="field-email" type="email" placeholder="you@example.com" />
+        <span class="field-hint">Used for notifications and login</span>
+      </div>
+      <div class="save-row">
+        <button class="save-btn" id="save-profile-btn" onclick="saveProfile()">Save changes</button>
+        <span class="success-msg" id="profile-saved">✓ Saved!</span>
+      </div>
+    </div>
+
+    <!-- Change password -->
+    <div class="section-card">
+      <div class="section-head"><h2>Change Password</h2><p>Update your login password</p></div>
+      <div class="field-row">
+        <label class="field-label">Current password</label>
+        <input class="field-input" id="field-cur-pass" type="password" placeholder="••••••••" />
+      </div>
+      <div class="field-row">
+        <label class="field-label">New password</label>
+        <input class="field-input" id="field-new-pass" type="password" placeholder="Min 8 characters" />
+      </div>
+      <div class="field-row">
+        <label class="field-label">Confirm new password</label>
+        <input class="field-input" id="field-confirm-pass" type="password" placeholder="Repeat new password" />
+      </div>
+      <div class="save-row">
+        <button class="save-btn" onclick="changePassword()">Update password</button>
+        <span class="success-msg" id="pass-saved">✓ Password updated!</span>
+      </div>
+    </div>
+
+    <!-- GitHub token -->
+    <div class="section-card">
+      <div class="section-head"><h2>GitHub Integration</h2><p>Your GitHub access token for Grassion</p></div>
+      <div class="field-row">
+        <label class="field-label">Webhook URL</label>
+        <div class="token-display">
+          <input class="field-input" value="https://grassion.com/api/github/webhook" disabled />
+          <button class="copy-btn" onclick="copy('https://grassion.com/api/github/webhook', this)">Copy</button>
+        </div>
+        <span class="field-hint">Add this as the Payload URL in your GitHub repo webhooks</span>
+      </div>
+      <div class="field-row">
+        <label class="field-label">Webhook secret</label>
+        <div class="token-display">
+          <input class="field-input" id="webhook-secret" value="••••••••••••" type="password" disabled />
+          <button class="copy-btn" onclick="toggleSecret(this)">Show</button>
+        </div>
+        <span class="field-hint">Use this as the webhook secret in GitHub settings</span>
+      </div>
+    </div>
+
+    <!-- Plan -->
+    <div class="section-card">
+      <div class="section-head"><h2>Plan & Billing</h2><p>Your current subscription</p></div>
+      <div class="field-row">
+        <label class="field-label">Current plan</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:4px;">
+          <span id="plan-display" style="font-size:14px;font-weight:600;color:var(--navy);">Free</span>
+          <a href="upgrade.html" style="padding:8px 16px;background:var(--teal);color:white;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;">Upgrade plan →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="section-card" style="border-color:#ffcdd2;">
+      <div class="section-head" style="border-bottom-color:#ffcdd2;"><h2 style="color:#c62828;">Danger Zone</h2><p>Irreversible actions — proceed carefully</p></div>
+      <div class="field-row">
+        <label class="field-label" style="color:#c62828;">Delete account</label>
+        <p class="field-hint" style="margin-bottom:10px;">This will permanently delete your account, all repositories, and PR history. This cannot be undone.</p>
+        <button class="danger-btn" onclick="deleteAccount()">Delete my account</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  if (!token) { window.location.replace('login.html'); }
+
+  if (user) {
+    document.getElementById('user-name').textContent = user.name || user.email;
+    document.getElementById('field-name').value = user.name || '';
+    document.getElementById('field-email').value = user.email || '';
+    if (user.plan) {
+      const planLabel = user.plan.charAt(0).toUpperCase() + user.plan.slice(1);
+      document.getElementById('plan-display').textContent = planLabel;
+      if (user.plan !== 'free') {
+        document.getElementById('plan-badge').textContent = planLabel;
+        document.getElementById('upgrade-card').style.display = 'none';
+      }
+    }
+  }
+
+  document.getElementById('sign-out-btn').addEventListener('click', e => {
+    e.preventDefault(); localStorage.clear(); window.location.href = 'login.html';
+  });
+  document.getElementById('sidebar-signout').addEventListener('click', e => {
+    e.preventDefault(); localStorage.clear(); window.location.href = 'login.html';
+  });
+
+  async function saveProfile() {
+    const name = document.getElementById('field-name').value.trim();
+    const email = document.getElementById('field-email').value.trim();
+    if (!name || !email) { alert('Please fill in all fields.'); return; }
+    const btn = document.getElementById('save-profile-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const r = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name, email })
+      });
+      if (r.ok) {
+        const updated = { ...user, name, email };
+        localStorage.setItem('user', JSON.stringify(updated));
+        document.getElementById('user-name').textContent = name;
+        const msg = document.getElementById('profile-saved');
+        msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 3000);
+      } else {
+        const d = await r.json();
+        alert(d.message || 'Failed to save profile.');
+      }
+    } catch (e) { alert('Network error. Please try again.'); }
+    btn.disabled = false; btn.textContent = 'Save changes';
+  }
+
+  async function changePassword() {
+    const cur = document.getElementById('field-cur-pass').value;
+    const nw = document.getElementById('field-new-pass').value;
+    const conf = document.getElementById('field-confirm-pass').value;
+    if (!cur || !nw || !conf) { alert('Please fill in all password fields.'); return; }
+    if (nw !== conf) { alert('New passwords do not match.'); return; }
+    if (nw.length < 8) { alert('New password must be at least 8 characters.'); return; }
+    try {
+      const r = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: cur, newPassword: nw })
+      });
+      if (r.ok) {
+        document.getElementById('field-cur-pass').value = '';
+        document.getElementById('field-new-pass').value = '';
+        document.getElementById('field-confirm-pass').value = '';
+        const msg = document.getElementById('pass-saved');
+        msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 3000);
+      } else {
+        const d = await r.json();
+        alert(d.message || 'Failed to update password.');
+      }
+    } catch (e) { alert('Network error. Please try again.'); }
+  }
+
+  function copy(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent; btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+  }
+
+  function toggleSecret(btn) {
+    const input = document.getElementById('webhook-secret');
+    if (btn.textContent === 'Show') {
+      // fetch real secret from server
+      fetch('/api/github/webhook-secret', { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json()).then(d => {
+          if (d.secret) { input.type = 'text'; input.value = d.secret; btn.textContent = 'Hide'; }
+        }).catch(() => { input.type = 'text'; btn.textContent = 'Hide'; });
+    } else {
+      input.type = 'password'; input.value = '••••••••••••'; btn.textContent = 'Show';
+    }
+  }
+
+  async function saveSlack() {
+    const url = document.getElementById('slack-webhook').value.trim();
+    const minRisk = document.getElementById('slack-min-risk').value;
+    if (!url) { alert('Please enter a Slack webhook URL.'); return; }
+    try {
+      const r = await fetch('/api/slack/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ webhook_url: url, min_risk: minRisk })
+      });
+      if (r.ok) { const m = document.getElementById('slack-saved'); m.style.display='inline'; setTimeout(()=>m.style.display='none',3000); }
+      else { const d=await r.json(); alert(d.error||'Failed to save.'); }
+    } catch(e) { alert('Network error.'); }
+  }
+
+  async function testSlack() {
+    const url = document.getElementById('slack-webhook').value.trim();
+    if (!url) { alert('Enter a webhook URL first.'); return; }
+    try {
+      const r = await fetch('/api/slack/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ webhook_url: url })
+      });
+      if (r.ok) alert('Test notification sent! Check your Slack channel.');
+      else { const d=await r.json(); alert(d.error||'Test failed.'); }
+    } catch(e) { alert('Network error.'); }
+  }
+
+  async function loadSlackConfig() {
+    try {
+      const r = await fetch('/api/slack/webhook', { headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.webhook_url) document.getElementById('slack-webhook').value = d.webhook_url;
+        if (d.min_risk_level) document.getElementById('slack-min-risk').value = d.min_risk_level;
+      }
+    } catch(e) {}
+  }
+  loadSlackConfig();
+
+  function deleteAccount() {
+    if (!confirm('Are you sure? This will permanently delete your account and all data. This CANNOT be undone.')) return;
+    if (!confirm('Last chance — are you absolutely sure?')) return;
+    fetch('/api/auth/delete-account', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      .then(() => { localStorage.clear(); window.location.href = '/'; })
+      .catch(() => alert('Failed to delete account. Please contact support.'));
+  }
+</script>
+</body>
+</html>
