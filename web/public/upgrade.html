@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  
+</head>
+<body>
+<aside class="sidebar">
+  <div class="slogo"><a href="/"><img src="img/logo.png" alt="Grassion" /></a></div>
+  <nav class="snav">
+    <a href="dashboard.html" class="ni"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+    <a href="repositories.html" class="ni"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Repositories</a>
+    <a href="pr-events.html" class="ni"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>PR Events</a>
+    <a href="notifications.html" class="ni"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
+    <a href="settings.html" class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+  </nav>
+  <div class="sbottom" style="padding:14px 10px;">
+    <a href="dashboard.html" style="font-size:12px;color:var(--muted);text-decoration:none;">← Back to dashboard</a>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <span class="ptitle">Upgrade Plan</span>
+    <div class="tright">
+      <span class="pbadge" id="plan-badge">Free</span>
+      <span class="uname" id="user-name">—</span>
+      <a href="#" class="so" id="sign-out-btn">Sign out</a>
+    </div>
+  </header>
+  <div class="content">
+    <h1>Choose your plan</h1>
+    <p class="sub">Upgrade anytime. Cancel anytime. All plans include a 14-day free trial.</p>
+    <div class="plans">
+      <!-- FREE -->
+      <div class="pc">
+        <div class="pname">Free</div>
+        <div class="pprice">₹0 <small>/ forever</small></div>
+        <p class="pdesc">For solo devs and OSS projects.</p>
+        <ul class="pfeats">
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>3 public repos</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>50 PR events/mo</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Basic AI summaries</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Community support</li>
+        </ul>
+        <span class="pbtn pb-dis" id="free-btn">Your current plan</span>
+      </div>
+      <!-- PRO -->
+      <div class="pc featured">
+        <div class="chip">Most popular</div>
+        <div class="pname">Pro</div>
+        <div class="pprice">₹2,900 <small>/ mo</small></div>
+        <p class="pdesc">For growing teams shipping daily.</p>
+        <ul class="pfeats">
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited private repos</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited PR events</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>AI summaries + risk scoring</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Auto-block dangerous merges</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Incident trace + audit log</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Priority support</li>
+        </ul>
+        <button class="pbtn pb-navy" id="pro-btn" onclick="pay('pro',290000)">Upgrade to Pro</button>
+      </div>
+      <!-- TEAM -->
+      <div class="pc">
+        <div class="pname">Team</div>
+        <div class="pprice">₹9,900 <small>/ mo</small></div>
+        <p class="pdesc">For orgs needing compliance.</p>
+        <ul class="pfeats">
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Everything in Pro</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited seats</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>SOC2 audit logs</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Slack integration</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Custom rule builder</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dedicated onboarding</li>
+        </ul>
+        <button class="pbtn pb-ghost" onclick="pay('team',990000)">Upgrade to Team</button>
+      </div>
+      <!-- ENTERPRISE AI -->
+      <div class="pc elite">
+        <div class="chip ghost">New</div>
+        <div class="pname">Enterprise AI</div>
+        <div class="pprice">₹7,900 <small>/ mo</small></div>
+        <p class="pdesc">Impact Intelligence — blast radius, revenue risk, SLA predictor.</p>
+        <ul class="pfeats">
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Everything in Team</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Impact Intelligence</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Blast radius mapping</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Revenue at risk scoring</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>SLA breach predictor</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dedicated CSM</li>
+        </ul>
+        <!-- FIX: was opening blank tab, now properly opens email -->
+        <a href="/cdn-cgi/l/email-protection#3c54595050537c5b4e5d4f4f555352125f5351034f495e56595f4801795248594e4c4e554f59190e0c7d75190e0c6c505d52190e0c79524d49554e45" class="pbtn pb-teal">Contact us</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // FIX: replace() prevents back-button flash to login
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  if (!token) { window.location.replace('login.html'); }
+
+  if (user) {
+    document.getElementById('user-name').textContent = user.name || user.email;
+    if (user.plan && user.plan !== 'free') {
+      const b = document.getElementById('plan-badge');
+      b.textContent = user.plan.charAt(0).toUpperCase() + user.plan.slice(1);
+      b.classList.add('pro');
+      document.getElementById('free-btn').textContent = 'Current plan';
+      const pb = document.getElementById('pro-btn');
+      if (pb && user.plan === 'pro') { pb.textContent = 'Current plan'; pb.className = 'pbtn pb-dis'; pb.disabled = true; }
+    }
+  }
+
+  document.getElementById('sign-out-btn').addEventListener('click', e => {
+    e.preventDefault(); localStorage.clear(); window.location.href = 'login.html';
+  });
+
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = type; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 5000);
+  }
+
+  async function pay(plan, amount) {
+    try {
+      // FIX: was /api/payment/create-order — server route is /api/billing/create-order
+      const r = await fetch('/api/billing/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ plan, amount })
+      });
+
+      // FIX: Check if response is actually JSON before parsing
+      const contentType = r.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response. Check billing route in Railway logs.');
+      }
+
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || 'Order creation failed');
+
+      const opts = {
+        key: d.key || d.key_id,
+        amount: d.amount,
+        currency: 'INR',
+        name: 'Grassion',
+        description: `Grassion ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+        order_id: d.order_id,
+        handler: async resp => {
+          // FIX: was /api/payment/verify — correct route is /api/billing/verify
+          const vr = await fetch('/api/billing/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ ...resp, plan })
+          });
+          if (vr.ok) {
+            toast('Payment successful! Your plan has been upgraded.');
+            const ud = JSON.parse(localStorage.getItem('user') || '{}');
+            ud.plan = plan; localStorage.setItem('user', JSON.stringify(ud));
+            setTimeout(() => window.location.href = 'dashboard.html', 2000);
+          } else {
+            toast('Payment verification failed. Contact support.', 'error');
+          }
+        },
+        prefill: { email: user?.email || '
