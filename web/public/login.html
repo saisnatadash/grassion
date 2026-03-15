@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Grassion</title>
+  <link rel="icon" type="image/png" href="img/logo-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{--navy:#1a2b3c;--teal:#2a7fa5;--border:rgba(42,127,165,0.15);--muted:#6b8099;--font:'Inter',sans-serif;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    /* SCROLL FIX */
+    html{height:100%;overflow-y:auto;}
+    body{font-family:var(--font);background:linear-gradient(135deg,#f0f4f8 0%,#e8f0f7 100%);min-height:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
+    .back{position:fixed;top:20px;left:24px;font-size:13px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;z-index:10;}
+    .back:hover{color:var(--teal);}
+    .back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+    .card{background:white;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(42,127,165,0.12);margin:auto;}
+    .logo{display:flex;align-items:center;gap:9px;margin-bottom:28px;}
+    .logo img{height:28px;}
+    h1{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px;letter-spacing:-.02em;}
+    .sub{font-size:13px;color:var(--muted);margin-bottom:26px;}
+    .field{margin-bottom:14px;}
+    .field label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;}
+    .field input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font);color:var(--navy);outline:none;transition:border-color .2s;}
+    .field input:focus{border-color:var(--teal);}
+    .forgot{font-size:11px;color:var(--teal);text-decoration:none;float:right;margin-top:-18px;margin-bottom:8px;display:block;}
+    .btn{width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .2s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn:hover{background:var(--teal);}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
+    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+    .signup-link{text-align:center;font-size:13px;color:var(--muted);}
+    .signup-link a{color:var(--teal);font-weight:600;text-decoration:none;}
+    .err{background:#ffebee;color:#c62828;border:1px solid #ffcdd2;border-radius:7px;padding:10px 14px;font-size:12px;margin-bottom:14px;display:none;}
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:480px){.card{padding:28px 20px;}}
+  </style>
+</head>
+<body>
+<a href="/" class="back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back to home</a>
+
+<div class="card">
+  <div class="logo"><img src="img/logo.png" alt="Grassion" /></div>
+  <h1>Welcome back</h1>
+  <p class="sub">Sign in to your Grassion account.</p>
+
+  <div class="err" id="err-msg"></div>
+
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@company.com" autocomplete="email" />
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Your password" autocomplete="current-password" />
+  </div>
+
+  <button class="btn" id="submit-btn" onclick="login()">Sign in</button>
+
+  <div class="divider">or</div>
+  <div class="signup-link">Don't have an account? <a href="signup.html">Get started free</a></div>
+</div>
+
+<script>
+  if (localStorage.getItem('token')) window.location.replace('dashboard.html');
+
+  async function login() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const err = document.getElementById('err-msg');
+    const btn = document.getElementById('submit-btn');
+
+    err.style.display = 'none';
+
+    if (!email) { err.textContent = 'Please enter your email.'; err.style.display = 'block'; return; }
+    if (!password) { err.textContent = 'Please enter your password.'; err.style.display = 'block'; return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Signing in...';
+
+    try {
+      const r = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const d = await r.json();
+
+      if (r.ok && d.token) {
+        localStorage.setItem('token', d.token);
+        localStorage.setItem('user', JSON.stringify(d.user || { email, plan: 'free' }));
+        window.location.replace('dashboard.html');
+      } else {
+        err.textContent = d.message || d.error || 'Invalid email or password.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      }
+    } catch(e) {
+      err.textContent = 'Network error. Please try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>

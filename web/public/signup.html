@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up — Grassion</title>
+  <link rel="icon" type="image/png" href="img/logo-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{--navy:#1a2b3c;--teal:#2a7fa5;--teal-light:#3a9bc4;--border:rgba(42,127,165,0.15);--muted:#6b8099;--font:'Inter',sans-serif;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    /* SCROLL FIX - critical */
+    html{height:100%;overflow-y:auto;}
+    body{font-family:var(--font);background:linear-gradient(135deg,#f0f4f8 0%,#e8f0f7 100%);min-height:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
+    .back{position:fixed;top:20px;left:24px;font-size:13px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;z-index:10;}
+    .back:hover{color:var(--teal);}
+    .back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+    .card{background:white;border-radius:16px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(42,127,165,0.12);margin:auto;}
+    .logo{display:flex;align-items:center;gap:9px;margin-bottom:24px;}
+    .logo img{height:28px;}
+    .logo span{font-size:14px;font-weight:700;color:var(--navy);}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(42,127,165,0.07);border:1px solid rgba(42,127,165,0.2);border-radius:100px;font-size:11px;font-weight:600;color:var(--teal);margin-bottom:20px;}
+    .badge-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);}
+    h1{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px;letter-spacing:-.02em;}
+    .sub{font-size:13px;color:var(--muted);margin-bottom:22px;}
+    .features{list-style:none;margin-bottom:24px;display:flex;flex-direction:column;gap:6px;}
+    .features li{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+    .features li svg{width:13px;height:13px;stroke:var(--teal);fill:none;stroke-width:2.5;flex-shrink:0;}
+    .field{margin-bottom:14px;}
+    .field label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;}
+    .field input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font);color:var(--navy);outline:none;transition:border-color .2s;}
+    .field input:focus{border-color:var(--teal);}
+    .strength{display:flex;gap:4px;margin-top:6px;}
+    .strength-bar{flex:1;height:3px;border-radius:2px;background:#e5e7eb;transition:background .3s;}
+    .strength-label{font-size:11px;margin-top:4px;font-weight:600;}
+    .btn{width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .2s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn:hover{background:var(--teal);}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
+    .btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+    .terms{font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6;}
+    .terms a{color:var(--teal);text-decoration:none;}
+    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+    .signin-link{text-align:center;font-size:13px;color:var(--muted);}
+    .signin-link a{color:var(--teal);font-weight:600;text-decoration:none;}
+    .err{background:#ffebee;color:#c62828;border:1px solid #ffcdd2;border-radius:7px;padding:10px 14px;font-size:12px;margin-bottom:14px;display:none;}
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:480px){.card{padding:28px 20px;}}
+  </style>
+</head>
+<body>
+<a href="/" class="back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back to home</a>
+
+<div class="card">
+  <div class="logo">
+    <img src="img/logo.png" alt="Grassion" />
+  </div>
+  <div class="badge"><span class="badge-dot"></span>Free — no credit card required</div>
+  <h1>Start protecting your PRs</h1>
+  <p class="sub">Set up in under 5 minutes.</p>
+  <ul class="features">
+    <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>3 repos, 50 PR events / month free</li>
+    <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>AI PR summaries + risk scoring</li>
+    <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Auto-block dangerous merges</li>
+  </ul>
+
+  <div class="err" id="err-msg"></div>
+
+  <div class="field">
+    <label>Full name</label>
+    <input type="text" id="name" placeholder="Your name" autocomplete="name" />
+  </div>
+  <div class="field">
+    <label>Work email</label>
+    <input type="email" id="email" placeholder="you@company.com" autocomplete="email" />
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Min. 8 characters" autocomplete="new-password" oninput="checkStrength(this.value)" />
+    <div class="strength">
+      <div class="strength-bar" id="s1"></div>
+      <div class="strength-bar" id="s2"></div>
+      <div class="strength-bar" id="s3"></div>
+    </div>
+    <div class="strength-label" id="strength-label" style="color:var(--muted)"></div>
+  </div>
+
+  <button class="btn" id="submit-btn" onclick="signup()">
+    <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    Create free account
+  </button>
+
+  <p class="terms">By signing up, you agree to our <a href="privacy.html">Privacy Policy</a> and Terms of Service.</p>
+
+  <div class="divider">or</div>
+  <div class="signin-link">Already have an account? <a href="login.html">Sign in</a></div>
+</div>
+
+<script>
+  // If already logged in, go to dashboard
+  if (localStorage.getItem('token')) window.location.replace('dashboard.html');
+
+  function checkStrength(val) {
+    const bars = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
+    const lbl = document.getElementById('strength-label');
+    const colors = ['#f56565', '#ecc94b', '#48bb78'];
+    const labels = ['Weak', 'Good', 'Strong'];
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (val.length >= 12 || /[0-9]/.test(val)) score++;
+    if (/[^a-zA-Z0-9]/.test(val) || (val.length >= 8 && /[A-Z]/.test(val))) score++;
+    bars.forEach((b, i) => { b.style.background = i < score ? colors[score-1] : '#e5e7eb'; });
+    lbl.textContent = score > 0 ? labels[score-1] : '';
+    lbl.style.color = score > 0 ? colors[score-1] : 'var(--muted)';
+  }
+
+  async function signup() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const err = document.getElementById('err-msg');
+    const btn = document.getElementById('submit-btn');
+
+    err.style.display = 'none';
+
+    if (!name) { err.textContent = 'Please enter your name.'; err.style.display = 'block'; return; }
+    if (!email || !email.includes('@')) { err.textContent = 'Please enter a valid email.'; err.style.display = 'block'; return; }
+    if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; err.style.display = 'block'; return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Creating account...';
+
+    try {
+      const r = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const d = await r.json();
+
+      if (r.ok && d.token) {
+        localStorage.setItem('token', d.token);
+        localStorage.setItem('user', JSON.stringify(d.user || { name, email, plan: 'free' }));
+        window.location.replace('dashboard.html');
+      } else {
+        err.textContent = d.message || d.error || 'Registration failed. Please try again.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Create free account';
+      }
+    } catch(e) {
+      err.textContent = 'Network error. Please check your connection and try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Create free account';
+    }
+  }
+
+  // Allow Enter key
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') signup(); });
+</script>
+</body>
+</html>
