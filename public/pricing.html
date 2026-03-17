@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — Grassion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--green:#16a34a;--text:#0f172a;--text-light:#64748b;--border:#e2e8f0;--bg:#f8fafc}
+    body{font-family:'DM Sans',sans-serif;color:var(--text);background:#fff}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:20px 60px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:100}
+    .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--blue);text-decoration:none}
+    .nav-links{display:flex;gap:24px;align-items:center}
+    .nav-links a{text-decoration:none;color:var(--text-light);font-size:15px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;border:none;font-family:'DM Sans',sans-serif}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-primary:hover{background:var(--blue-dark)}
+    .btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}
+    .btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+    .hero{padding:80px 60px 60px;text-align:center}
+    .tag{font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;display:inline-block}
+    h1{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;letter-spacing:-2px;margin-bottom:16px}
+    .lead{font-size:18px;color:var(--text-light);max-width:480px;margin:0 auto}
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:60px auto;padding:0 60px}
+    .plan{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:32px;transition:all 0.2s}
+    .plan:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.08)}
+    .plan.featured{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 12px 40px rgba(37,99,235,0.15)}
+    .plan-badge{background:var(--blue);color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:16px}
+    .plan-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px}
+    .plan-price{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--blue);line-height:1}
+    .plan-price span{font-size:16px;color:var(--text-light);font-family:'DM Sans',sans-serif}
+    .plan-desc{font-size:14px;color:var(--text-light);margin:12px 0 24px}
+    .plan-features{list-style:none;margin-bottom:28px}
+    .plan-features li{padding:9px 0;font-size:14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bg)}
+    .ck{color:var(--green)}.cx{color:var(--text-light)}
+    .faq{padding:60px;background:var(--bg)}
+    .faq h2{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:40px;text-align:center}
+    .faq-item{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:12px}
+    .faq-q{font-size:16px;font-weight:600;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between}
+    .faq-a{font-size:15px;color:var(--text-light);line-height:1.7}
+    footer{padding:32px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--text-light)}
+    .footer-links{display:flex;gap:24px}
+    .footer-links a{color:var(--text-light);text-decoration:none}
+    @media(max-width:768px){nav,footer,.hero,.faq{padding:20px 24px}.pricing-grid{grid-template-columns:1fr;padding:0 24px}h1{font-size:36px}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Grassion</a>
+  <div class="nav-links">
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+    <a href="/auth/github" class="btn btn-primary">Connect GitHub</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="tag">Pricing</div>
+  <h1>Simple, honest pricing.</h1>
+  <p class="lead">Start free. No credit card required. Upgrade when you need full protection.</p>
+</section>
+
+<div class="pricing-grid">
+  <div class="plan">
+    <div class="plan-name">Free</div>
+    <div class="plan-price">₹0</div>
+    <div class="plan-desc">Try Grassion on your first repo. No card needed.</div>
+    <ul class="plan-features">
+      <li><span class="ck">✓</span> 1 GitHub repo</li>
+      <li><span class="ck">✓</span> 3 scans per month</li>
+      <li><span class="ck">✓</span> Full vulnerability report</li>
+      <li><span class="ck">✓</span> Auth gap detection</li>
+      <li><span class="cx">—</span> Auto PR raising</li>
+      <li><span class="cx">—</span> Continuous Protection</li>
+      <li><span class="cx">—</span> Email alerts</li>
+    </ul>
+    <a href="/auth/github" class="btn btn-outline" style="width:100%;justify-content:center">Get started free</a>
+  </div>
+  <div class="plan featured">
+    <div class="plan-badge">Most Popular</div>
+    <div class="plan-name">Pro</div>
+    <div class="plan-price">₹4,900<span>/mo</span></div>
+    <div class="plan-desc">Full security automation for serious teams.</div>
+    <ul class="plan-features">
+      <li><span class="ck">✓</span> Unlimited repos</li>
+      <li><span class="ck">✓</span> Unlimited scans</li>
+      <li><span class="ck">✓</span> Full vulnerability reports</li>
+      <li><span class="ck">✓</span> Auto PR raising</li>
+      <li><span class="ck">✓</span> Continuous Protection 24/7</li>
+      <li><span class="ck">✓</span> Email alerts on every scan</li>
+      <li><span class="ck">✓</span> Priority support</li>
+    </ul>
+    <a href="/auth/github" class="btn btn-primary" style="width:100%;justify-content:center">Start Pro — ₹4,900/mo</a>
+  </div>
+  <div class="plan">
+    <div class="plan-name">Enterprise</div>
+    <div class="plan-price" style="font-size:32px;padding-top:6px">Custom</div>
+    <div class="plan-desc">For large engineering teams with specific needs.</div>
+    <ul class="plan-features">
+      <li><span class="ck">✓</span> Everything in Pro</li>
+      <li><span class="ck">✓</span> Custom integrations</li>
+      <li><span class="ck">✓</span> SLA guarantee</li>
+      <li><span class="ck">✓</span> Dedicated support channel</li>
+      <li><span class="ck">✓</span> On-premise option</li>
+      <li><span class="ck">✓</span> Custom reporting</li>
+      <li><span class="ck">✓</span> Team onboarding</li>
+    </ul>
+    <a href="/contact" class="btn btn-outline" style="width:100%;justify-content:center">Contact us</a>
+  </div>
+</div>
+
+<section class="faq">
+  <h2>Frequently asked questions</h2>
+  <div class="faq-item"><div class="faq-q">What does "Continuous Protection" mean?</div><div class="faq-a">Continuous Protection watches your GitHub repo 24/7. Every time you push a commit, Grassion automatically scans the changed files. If it finds an unprotected endpoint, it raises a fix PR immediately — without you doing anything.</div></div>
+  <div class="faq-item"><div class="faq-q">What frameworks does Grassion support?</div><div class="faq-a">Currently Grassion works best with Node.js/Express applications. Support for Django, FastAPI, Rails, and Laravel is coming soon.</div></div>
+  <div class="faq-item"><div class="faq-q">Is my code stored anywhere?</div><div class="faq-a">No. Grassion reads your code temporarily to analyze it, but never stores your source code on our servers. Only scan metadata and results are stored.</div></div>
+  <div class="faq-item"><div class="faq-q">Can I cancel anytime?</div><div class="faq-a">Yes. Cancel anytime from your dashboard. Your Pro features remain active until the end of your billing period.</div></div>
+  <div class="faq-item"><div class="faq-q">What payment methods do you accept?</div><div class="faq-a">We accept all major credit/debit cards, UPI, net banking, and wallets through Razorpay.</div></div>
+</section>
+
+<footer>
+  <a href="/" class="logo">Grassion</a>
+  <span>© 2026 Grassion.</span>
+  <div class="footer-links">
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+  </div>
+</footer>
+</body>
+</html>

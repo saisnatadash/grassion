@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Grassion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--text:#0f172a;--text-light:#64748b;--border:#e2e8f0;--bg:#f8fafc;--green:#16a34a}
+    body{font-family:'DM Sans',sans-serif;color:var(--text);background:#fff}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:20px 60px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:100}
+    .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--blue);text-decoration:none}
+    .nav-links{display:flex;gap:24px;align-items:center}
+    .nav-links a{text-decoration:none;color:var(--text-light);font-size:15px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;border:none;font-family:'DM Sans',sans-serif}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-primary:hover{background:var(--blue-dark)}
+    .main{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 65px)}
+    .left{padding:80px 60px;background:var(--bg)}
+    .right{padding:80px 60px}
+    .tag{font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px}
+    h1{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:20px}
+    .lead{font-size:17px;color:var(--text-light);line-height:1.7;margin-bottom:40px}
+    .contact-item{display:flex;align-items:flex-start;gap:14px;margin-bottom:24px}
+    .contact-icon{width:44px;height:44px;background:var(--blue-light);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .contact-label{font-size:13px;color:var(--text-light);margin-bottom:2px}
+    .contact-value{font-size:15px;font-weight:500}
+    .contact-value a{color:var(--text);text-decoration:none}
+    .form-group{margin-bottom:18px}
+    .form-group label{display:block;font-size:14px;font-weight:500;margin-bottom:6px}
+    .form-group input,.form-group textarea,.form-group select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;background:#fff}
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--blue)}
+    .form-group textarea{min-height:120px;resize:vertical}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    footer{padding:32px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--text-light)}
+    .footer-links{display:flex;gap:24px}
+    .footer-links a{color:var(--text-light);text-decoration:none}
+    @media(max-width:768px){nav,footer{padding:16px 24px}.main{grid-template-columns:1fr}.left,.right{padding:40px 24px}.form-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Grassion</a>
+  <div class="nav-links">
+    <a href="/about">About</a>
+    <a href="/pricing">Pricing</a>
+    <a href="/auth/github" class="btn btn-primary">Connect GitHub</a>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="left">
+    <div class="tag">Get in touch</div>
+    <h1>We'd love to hear from you.</h1>
+    <p class="lead">Whether you have a question, want to explore Enterprise, or just want to say hello — we're here.</p>
+    <div class="contact-item">
+      <div class="contact-icon">📧</div>
+      <div><div class="contact-label">Email us</div><div class="contact-value"><a href="mailto:sai@grassion.com">sai@grassion.com</a></div></div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-icon">🐦</div>
+      <div><div class="contact-label">Twitter / X</div><div class="contact-value"><a href="https://twitter.com/grassion_hq" target="_blank">@grassion_hq</a></div></div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-icon">💼</div>
+      <div><div class="contact-label">Enterprise inquiry</div><div class="contact-value">Fill the form and we'll respond within 24 hours.</div></div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-icon">📍</div>
+      <div><div class="contact-label">Based in</div><div class="contact-value">Bhubaneswar, India 🇮🇳</div></div>
+    </div>
+  </div>
+  <div class="right">
+    <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:24px">Send us a message</h2>
+    <form onsubmit="submitContact(event)">
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><input type="text" placeholder="Sai" required></div>
+        <div class="form-group"><label>Last Name</label><input type="text" placeholder="Kumar"></div>
+      </div>
+      <div class="form-group"><label>Work Email</label><input type="email" id="contactEmail" placeholder="you@company.com" required></div>
+      <div class="form-group"><label>Company / GitHub</label><input type="text" placeholder="Startup name or @github"></div>
+      <div class="form-group">
+        <label>What can we help with?</label>
+        <select>
+          <option value="">Select a topic...</option>
+          <option>General question</option>
+          <option>Enterprise pricing</option>
+          <option>Bug report</option>
+          <option>Feature request</option>
+          <option>Partnership</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Message</label><textarea placeholder="Tell us what you're building or what you need..." required></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:16px">Send Message</button>
+      <p id="contactSuccess" style="color:var(--green);text-align:center;margin-top:12px;display:none">✓ Message sent! We'll get back to you within 24 hours.</p>
+    </form>
+  </div>
+</div>
+
+<footer>
+  <a href="/" class="logo">Grassion</a>
+  <span>© 2026 Grassion. Zero-Touch Codebase Security.</span>
+  <div class="footer-links">
+    <a href="/about">About</a>
+    <a href="/pricing">Pricing</a>
+  </div>
+</footer>
+
+<script>
+async function submitContact(e) {
+  e.preventDefault();
+  const email = document.getElementById('contactEmail').value;
+  await fetch('/api/waitlist', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
+  document.getElementById('contactSuccess').style.display = 'block';
+  e.target.reset();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Grassion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--blue:#2563eb;--green:#16a34a;--red:#dc2626;--text:#0f172a;--text-light:#64748b;--border:#e2e8f0;--bg:#f8fafc}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:#fff;border-bottom:1px solid var(--border)}
+    .logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--blue);text-decoration:none}
+    .admin-tag{background:#fef2f2;color:var(--red);font-size:12px;font-weight:600;padding:4px 10px;border-radius:100px}
+    .main{padding:32px}
+    h1{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:24px}
+    .stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-bottom:32px}
+    .stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+    .stat-n{font-family:'Syne',sans-serif;font-size:28px;font-weight:800}
+    .stat-l{font-size:12px;color:var(--text-light);margin-top:4px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+    .card-title{font-size:15px;font-weight:600;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+    td{padding:12px;font-size:13px;border-bottom:1px solid var(--border)}
+    tr:hover td{background:var(--bg)}
+    .badge{display:inline-flex;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:600}
+    .badge-pro{background:#fef3c7;color:#d97706}
+    .badge-free{background:var(--bg);color:var(--text-light)}
+    @media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.main{padding:20px}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Grassion</a>
+  <span class="admin-tag">🔒 Admin Panel</span>
+  <a href="/dashboard" style="font-size:14px;color:var(--text-light);text-decoration:none">← Dashboard</a>
+</nav>
+<div class="main">
+  <h1>Admin Panel</h1>
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-n" id="aTotalUsers">—</div><div class="stat-l">Total Users</div></div>
+    <div class="stat"><div class="stat-n" id="aProUsers" style="color:var(--blue)">—</div><div class="stat-l">Pro Users</div></div>
+    <div class="stat"><div class="stat-n" id="aScans">—</div><div class="stat-l">Total Scans</div></div>
+    <div class="stat"><div class="stat-n" id="aPRs" style="color:var(--green)">—</div><div class="stat-l">PRs Raised</div></div>
+    <div class="stat"><div class="stat-n" id="aRevenue" style="color:var(--green)">—</div><div class="stat-l">Revenue (₹)</div></div>
+    <div class="stat"><div class="stat-n" id="aWaitlist">—</div><div class="stat-l">Waitlist</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">👥 All Users</div>
+    <table>
+      <thead><tr><th>GitHub</th><th>Email</th><th>Plan</th><th>Scans</th><th>Location</th><th>Last Seen</th><th>Joined</th></tr></thead>
+      <tbody id="usersTable"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">🔍 Recent Scans</div>
+    <table>
+      <thead><tr><th>User</th><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th></tr></thead>
+      <tbody id="scansTable"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<script>
+async function loadAdmin() {
+  const stats = await fetch('/api/admin/stats').then(r=>r.json());
+  document.getElementById('aTotalUsers').textContent = stats.totalUsers;
+  document.getElementById('aProUsers').textContent = stats.proUsers;
+  document.getElementById('aScans').textContent = stats.totalScans;
+  document.getElementById('aPRs').textContent = stats.prsRaised;
+  document.getElementById('aRevenue').textContent = '₹'+(stats.revenue||0).toLocaleString();
+  document.getElementById('aWaitlist').textContent = stats.waitlist;
+  const users = await fetch('/api/admin/users').then(r=>r.json());
+  document.getElementById('usersTable').innerHTML = users.users.map(u=>`
+    <tr><td><a href="https://github.com/${u.github_username}" target="_blank">@${u.github_username}</a></td>
+    <td>${u.email||'—'}</td>
+    <td><span class="badge badge-${u.plan}">${u.plan.toUpperCase()}</span></td>
+    <td>${u.scans_used||0}</td><td>${u.location||'—'}</td>
+    <td>${u.last_seen?new Date(u.last_seen).toLocaleDateString():'—'}</td>
+    <td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`).join('');
+  const scans = await fetch('/api/admin/scans').then(r=>r.json());
+  document.getElementById('scansTable').innerHTML = scans.scans.map(s=>`
+    <tr><td>@${s.github_username}</td><td>${s.repo_name}</td>
+    <td>${s.total_issues}</td>
+    <td>${s.pr_raised?`<a href="${s.pr_url}" target="_blank">View PR</a>`:'—'}</td>
+    <td>${new Date(s.created_at).toLocaleDateString()}</td></tr>`).join('');
+}
+loadAdmin();
+</script>
+</body>
+</html>
