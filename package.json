@@ -1,0 +1,32 @@
+{
+  "name": "grassion",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saisnatadash/grassion.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/saisnatadash/grassion/issues"
+  },
+  "homepage": "https://github.com/saisnatadash/grassion#readme",
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "axios": "^1.13.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "nodemailer": "^8.0.2",
+    "openai": "^6.31.0",
+    "pg": "^8.20.0",
+    "razorpay": "^2.9.6"
+  }
+}
