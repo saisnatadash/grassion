@@ -1,457 +1,567 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Grassion</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--green:#16a34a;--green-light:#f0fdf4;--red:#dc2626;--red-light:#fef2f2;--text:#0f172a;--text-light:#64748b;--border:#e2e8f0;--white:#fff;--bg:#f8fafc}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
-    .layout{display:flex;min-height:100vh}
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1b2a;--navy-2:#112236;--navy-3:#1a3352;
+  --teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;
+  --green:#10b981;--green-light:#f0fdf4;
+  --red:#ef4444;--red-light:#fef2f2;
+  --yellow:#f59e0b;--yellow-light:#fffbeb;
+  --white:#fff;--off-white:#f0f4f8;
+  --text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;
+  --border:rgba(13,27,42,0.08);--border-teal:rgba(42,159,214,0.2);
+  --glass:rgba(255,255,255,0.7);
+  --shadow:0 4px 20px rgba(13,27,42,0.08);
+  --shadow-teal:0 8px 32px rgba(42,159,214,0.15);
+}
+html{cursor:none}
+body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-    /* SIDEBAR */
-    .sidebar{width:240px;background:#fff;border-right:1px solid var(--border);padding:0;position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50}
-    .sidebar-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--blue);padding:20px 24px;border-bottom:1px solid var(--border);text-decoration:none;display:block}
-    .sidebar-nav{padding:12px 0;flex:1;overflow-y:auto}
-    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;font-size:14px;color:var(--text-light);cursor:pointer;transition:all 0.15s;text-decoration:none;border-left:3px solid transparent}
-    .nav-item:hover{background:var(--bg);color:var(--text)}
-    .nav-item.active{color:var(--blue);background:var(--blue-light);border-left-color:var(--blue);font-weight:500}
-    .sidebar-bottom{padding:16px 24px;border-top:1px solid var(--border)}
-    .user-info{display:flex;align-items:center;gap:10px}
-    .user-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue-light)}
-    .user-name{font-size:14px;font-weight:500}
-    .user-plan{font-size:11px;background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:100px;font-weight:600;display:inline-block;margin-top:2px}
-    .user-plan.pro{background:#fef3c7;color:#d97706}
+/* CURSOR */
+.cursor-dot{width:8px;height:8px;background:var(--teal);border-radius:50%;position:fixed;pointer-events:none;z-index:9999}
+.cursor-ring{width:28px;height:28px;border:1.5px solid var(--teal);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;opacity:0.5;transition:all 0.12s ease}
 
-    /* MAIN */
-    .main{margin-left:240px;flex:1;padding:32px;max-width:calc(100vw - 240px)}
-    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
-    .page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800}
-    .page-sub{font-size:15px;color:var(--text-light);margin-top:4px}
+/* LAYOUT */
+.layout{display:flex;min-height:100vh}
 
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'DM Sans',sans-serif}
-    .btn-primary{background:var(--blue);color:#fff}
-    .btn-primary:hover{background:var(--blue-dark)}
-    .btn-primary:disabled{opacity:0.6;cursor:not-allowed}
-    .btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}
-    .btn-outline:hover{border-color:var(--blue);color:var(--blue)}
-    .btn-green{background:var(--green);color:#fff}
-    .btn-white{background:#fff;color:var(--blue);font-weight:600}
+/* SIDEBAR */
+.sidebar{width:248px;background:#fff;border-right:1px solid var(--border);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50;transition:transform 0.3s}
+.sidebar-header{padding:20px 20px 0}
+.sidebar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;padding:0 0 20px;border-bottom:1px solid var(--border)}
+.sidebar-logo img{height:28px}
+.sidebar-logo-text{font-family:'Clash Display',sans-serif;font-size:17px;font-weight:600;color:var(--navy)}
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.nav-section-label{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;padding:0 8px;margin:16px 0 8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;font-size:14px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.15s;text-decoration:none;border:none;background:none;width:100%;font-family:'Satoshi',sans-serif}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;opacity:0.6}
+.nav-item:hover{background:var(--off-white);color:var(--text)}
+.nav-item:hover svg{opacity:0.8}
+.nav-item.active{background:var(--teal-light);color:var(--teal-2);font-weight:600}
+.nav-item.active svg{opacity:1;color:var(--teal)}
+.nav-item.danger{color:var(--red)}
+.nav-item.danger svg{color:var(--red)}
+.sidebar-bottom{padding:16px 12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--off-white);margin-bottom:10px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--navy-2),var(--teal-2));display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--navy)}
+.user-plan-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;letter-spacing:0.3px}
+.plan-free{background:var(--off-white);color:var(--text-light);border:1px solid var(--border)}
+.plan-pro{background:var(--yellow-light);color:var(--yellow)}
 
-    /* UPGRADE BANNER */
-    .upgrade-banner{background:linear-gradient(135deg,#1d4ed8,#2563eb);border-radius:12px;padding:20px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px}
-    .upgrade-banner h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
-    .upgrade-banner p{font-size:13px;opacity:0.8;margin-top:2px}
+/* MAIN */
+.main{margin-left:248px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{padding:16px 32px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.topbar-title{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy)}
+.topbar-sub{font-size:13px;color:var(--text-light);margin-top:2px}
+.content{padding:28px 32px;flex:1}
 
-    /* STATS */
-    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
-    .stat-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;transition:all 0.2s}
-    .stat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.06);transform:translateY(-2px)}
-    .stat-label{font-size:12px;color:var(--text-light);font-weight:500;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
-    .stat-value{font-family:'Syne',sans-serif;font-size:30px;font-weight:800}
-    .stat-sub{font-size:12px;color:var(--text-light);margin-top:4px}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'Satoshi',sans-serif}
+.btn svg{width:15px;height:15px;flex-shrink:0}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-3)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-teal:hover{background:var(--teal-2)}
+.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:var(--off-white);color:var(--text-mid)}
+.btn-ghost:hover{color:var(--text)}
+.btn-danger{background:var(--red-light);color:var(--red)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center;padding:12px}
 
-    /* CARD */
-    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
-    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-    .card-title{font-size:15px;font-weight:600}
+/* CARDS */
+.card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:22px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-title{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;color:var(--navy)}
+.card-sub{font-size:13px;color:var(--text-light);margin-top:2px}
 
-    /* REPO */
-    .repo-search{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:16px;outline:none;transition:border-color 0.2s}
-    .repo-search:focus{border-color:var(--blue)}
-    .repo-list{display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto}
-    .repo-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s}
-    .repo-item:hover{border-color:var(--blue);background:var(--blue-light)}
-    .repo-item.selected{border-color:var(--blue);background:var(--blue-light)}
-    .repo-name{font-size:14px;font-weight:500}
-    .repo-meta{font-size:12px;color:var(--text-light);margin-top:2px}
-    .repo-lang{font-size:11px;padding:2px 8px;border-radius:100px;background:var(--bg);color:var(--text-light)}
+/* UPGRADE BANNER */
+.upgrade-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-3) 100%);border-radius:14px;padding:20px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;position:relative;overflow:hidden}
+.upgrade-banner::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(42,159,214,0.1);border-radius:50%}
+.upgrade-banner h3{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;position:relative}
+.upgrade-banner p{font-size:13px;opacity:0.7;margin-top:3px;position:relative}
+.btn-upgrade{background:var(--teal);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Satoshi',sans-serif;white-space:nowrap;transition:all 0.2s}
+.btn-upgrade:hover{background:var(--teal-2)}
 
-    /* SCAN */
-    .scan-action{display:none;margin-bottom:24px}
-    .scan-bar{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px 20px}
-    .scan-bar-info{font-weight:600;font-size:15px}
-    .scan-bar-sub{font-size:13px;color:var(--text-light);margin-top:2px}
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:20px;transition:all 0.2s}
+.stat-card:hover{border-color:var(--border-teal);box-shadow:var(--shadow-teal)}
+.stat-label{font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
+.stat-value{font-family:'Clash Display',sans-serif;font-size:32px;font-weight:700;color:var(--navy);line-height:1}
+.stat-value.red{color:var(--red)}
+.stat-value.green{color:var(--green)}
+.stat-value.teal{color:var(--teal)}
+.stat-sub{font-size:12px;color:var(--text-light);margin-top:6px}
 
-    .scan-loading{display:none;text-align:center;padding:48px}
-    .spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-steps{display:flex;flex-direction:column;gap:8px;max-width:280px;margin:0 auto;text-align:left}
-    .loading-step{font-size:14px;color:var(--text-light);display:flex;align-items:center;gap:8px}
-    .loading-step.done{color:var(--green)}
-    .loading-step.active{color:var(--blue);font-weight:500}
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--off-white);border-radius:10px;padding:4px;margin-bottom:24px;width:fit-content}
+.tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.2s;border:none;background:none;font-family:'Satoshi',sans-serif}
+.tab.active{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
 
-    /* RESULTS */
-    .results-section{display:none;margin-bottom:24px}
-    .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-    .results-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700}
-    .issue-card{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
-    .issue-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--red-light);border-bottom:1px solid #fee2e2}
-    .issue-file{font-size:14px;font-weight:600;font-family:monospace}
-    .issue-count{font-size:12px;color:var(--red);font-weight:600}
-    .issue-body{padding:12px 16px}
-    .endpoint-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
-    .endpoint-item:last-child{border-bottom:none}
-    .method{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:monospace}
-    .m-get{background:#dcfce7;color:#16a34a}.m-post{background:#dbeafe;color:#2563eb}
-    .m-put{background:#fef9c3;color:#ca8a04}.m-delete{background:#fee2e2;color:#dc2626}
-    .m-patch{background:#f3e8ff;color:#9333ea}
-    .ep-path{font-family:monospace}
-    .ep-issue{color:var(--red);font-size:12px;margin-left:auto}
+/* REPO LIST */
+.repo-search{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Satoshi',sans-serif;outline:none;transition:all 0.2s;background:#fff;color:var(--text);margin-bottom:14px}
+.repo-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,159,214,0.08)}
+.repo-list{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto}
+.repo-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s}
+.repo-item:hover,.repo-item.selected{border-color:var(--teal);background:var(--teal-light)}
+.repo-name{font-size:14px;font-weight:500;color:var(--navy)}
+.repo-meta{font-size:12px;color:var(--text-light);margin-top:2px}
+.repo-lang{font-size:11px;padding:3px 9px;border-radius:100px;background:var(--off-white);color:var(--text-mid);font-weight:500}
 
-    /* HISTORY */
-    table{width:100%;border-collapse:collapse}
-    th{text-align:left;padding:10px 16px;font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
-    td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
-    tr:last-child td{border-bottom:none}
-    tr:hover td{background:var(--bg)}
-    .badge{display:inline-flex;align-items:center;font-size:12px;padding:3px 8px;border-radius:100px;font-weight:500}
-    .badge-red{background:var(--red-light);color:var(--red)}
-    .badge-green{background:var(--green-light);color:var(--green)}
-    .badge-gray{background:var(--bg);color:var(--text-light)}
+/* SCAN STATES */
+.scan-selected{display:none;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.loading-state{display:none;text-align:center;padding:48px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-steps{display:flex;flex-direction:column;gap:8px;max-width:260px;margin:0 auto;text-align:left}
+.ls{font-size:13px;color:var(--text-light);display:flex;align-items:center;gap:8px;padding:6px 0}
+.ls.active{color:var(--teal);font-weight:500}
+.ls.done{color:var(--green)}
+.ls svg{width:14px;height:14px;flex-shrink:0}
 
-    /* REFERRAL */
-    .ref-box{background:var(--blue-light);border:1.5px solid #bfdbfe;border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-    .ref-code{font-family:monospace;font-size:20px;font-weight:700;color:var(--blue);letter-spacing:2px;background:#fff;padding:8px 16px;border-radius:8px;border:1.5px solid #bfdbfe}
+/* RESULTS */
+.results-wrap{display:none;margin-bottom:24px}
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.results-title{font-family:'Clash Display',sans-serif;font-size:19px;font-weight:700;color:var(--navy)}
+.issue-card{border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}
+.issue-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--red-light);border-bottom:1px solid rgba(239,68,68,0.1)}
+.issue-file{font-size:13px;font-weight:600;font-family:'Satoshi',monospace;color:var(--navy)}
+.issue-count{font-size:12px;color:var(--red);font-weight:700}
+.issue-body{padding:12px 16px}
+.endpoint-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.endpoint-row:last-child{border-bottom:none}
+.method{font-size:10px;font-weight:800;padding:3px 7px;border-radius:4px;font-family:'Satoshi',monospace;letter-spacing:0.5px}
+.m-get{background:#dcfce7;color:#16a34a}
+.m-post{background:#dbeafe;color:#2563eb}
+.m-put{background:#fef9c3;color:#ca8a04}
+.m-delete{background:#fee2e2;color:var(--red)}
+.m-patch{background:#f3e8ff;color:#9333ea}
+.ep-path{font-family:monospace;color:var(--text)}
+.ep-issue{color:var(--red);font-size:12px;margin-left:auto}
 
-    /* TABS */
-    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px}
-    .tab{padding:10px 20px;font-size:14px;font-weight:500;color:var(--text-light);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s}
-    .tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-    .tab-content{display:none}
-    .tab-content.active{display:block}
+/* HISTORY TABLE */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border)}
+.data-table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text-mid)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tbody tr:hover td{background:var(--off-white)}
+.badge{display:inline-flex;align-items:center;font-size:11px;padding:3px 9px;border-radius:100px;font-weight:600;letter-spacing:0.2px}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-gray{background:var(--off-white);color:var(--text-light)}
+.badge-teal{background:var(--teal-light);color:var(--teal-2)}
 
-    @media(max-width:768px){
-      .sidebar{display:none}
-      .main{margin-left:0;max-width:100vw;padding:20px}
-      .stats-grid{grid-template-columns:repeat(2,1fr)}
-      .upgrade-banner{flex-direction:column}
-    }
-  </style>
+/* REFERRAL */
+.ref-box{background:linear-gradient(135deg,var(--teal-light),#e0f2fe);border:1.5px solid var(--border-teal);border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.ref-code-display{font-family:'Clash Display',monospace;font-size:24px;font-weight:700;color:var(--teal-2);letter-spacing:3px;background:#fff;padding:10px 20px;border-radius:10px;border:1.5px solid var(--border-teal)}
+
+/* RAZORPAY */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .main{margin-left:0}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
 </head>
 <body>
+<div class="cursor-dot" id="cDot"></div>
+<div class="cursor-ring" id="cRing"></div>
+
 <div class="layout">
-  <aside class="sidebar">
-    <a href="/" class="sidebar-logo">Grassion</a>
-    <nav class="sidebar-nav">
-      <a class="nav-item active" href="/dashboard">🏠 Dashboard</a>
-      <a class="nav-item" href="#" onclick="switchTab('history')">📋 Scan History</a>
-      <a class="nav-item" href="#" onclick="switchTab('referral')">🎁 Refer & Earn</a>
-      <a class="nav-item" href="/pricing">⚡ Upgrade to Pro</a>
-      <a class="nav-item" href="/about">ℹ️ About</a>
-      <a class="nav-item" href="/contact">📧 Contact</a>
-    </nav>
-    <div class="sidebar-bottom">
-      <div class="user-info">
-        <img class="user-avatar" id="userAvatar" src="" alt="">
-        <div>
-          <div class="user-name" id="userName">Loading...</div>
-          <span class="user-plan" id="userPlan">FREE</span>
-        </div>
-      </div>
-      <a href="/auth/logout" style="display:block;margin-top:12px;font-size:13px;color:var(--text-light);text-decoration:none">Sign out →</a>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="page-header">
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <a href="/" class="sidebar-logo">
+      <img src="/img/logo.png" alt="" onerror="this.style.display='none'">
+      <span class="sidebar-logo-text">Grassion</span>
+    </a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <button class="nav-item active" onclick="showTab('scan')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="showTab('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Scan History
+    </button>
+    <button class="nav-item" onclick="showTab('referral')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Refer & Earn
+    </button>
+    <div class="nav-section-label">Account</div>
+    <button class="nav-item" onclick="showTab('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar" id="sideAvatar">S</div>
       <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-sub">Scan your repos and fix security gaps automatically.</p>
+        <div class="user-name" id="sideUsername">Loading...</div>
+        <span class="user-plan-badge plan-free" id="sidePlan">Free</span>
       </div>
     </div>
+    <button class="nav-item" id="upgradeNavBtn" onclick="startPayment()" style="display:none;background:rgba(42,159,214,0.08);color:var(--teal);margin-bottom:4px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"/><path d="M21 3L13 11 9 7 3 13"/></svg>
+      Upgrade to Pro
+    </button>
+    <a href="/auth/logout" class="nav-item danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign out
+    </a>
+  </div>
+</aside>
 
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-sub" id="pageSub">Scan repos and fix security gaps automatically</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="topPlanBadge" style="font-size:12px;color:var(--text-light)"></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- UPGRADE BANNER -->
     <div class="upgrade-banner" id="upgradeBanner" style="display:none">
       <div>
-        <h3>⚡ Upgrade to Pro — ₹4,900/month</h3>
-        <p>Auto PR raising + Continuous Protection watching every commit 24/7.</p>
+        <h3>Upgrade to Pro — ₹4,900/month</h3>
+        <p>Auto PR raising + Continuous Protection watching every commit 24/7</p>
       </div>
-      <button class="btn btn-white" onclick="startPayment()">Upgrade Now</button>
+      <button class="btn-upgrade" onclick="startPayment()">Upgrade now</button>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-label">Total Scans</div><div class="stat-value" id="totalScans">0</div><div class="stat-sub">All time</div></div>
-      <div class="stat-card"><div class="stat-label">Issues Found</div><div class="stat-value" id="totalIssues" style="color:var(--red)">0</div><div class="stat-sub">Auth gaps detected</div></div>
-      <div class="stat-card"><div class="stat-label">PRs Raised</div><div class="stat-value" id="totalPRs" style="color:var(--green)">0</div><div class="stat-sub">Auto-fixed</div></div>
-      <div class="stat-card"><div class="stat-label">Scans Remaining</div><div class="stat-value" id="scansLeft">3</div><div class="stat-sub" id="scansLeftSub">Free tier</div></div>
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Scans</div><div class="stat-value" id="stScans">0</div><div class="stat-sub">All time</div></div>
+      <div class="stat-card"><div class="stat-label">Issues Found</div><div class="stat-value red" id="stIssues">0</div><div class="stat-sub">Auth gaps detected</div></div>
+      <div class="stat-card"><div class="stat-label">PRs Raised</div><div class="stat-value green" id="stPRs">0</div><div class="stat-sub">Auto-fixed</div></div>
+      <div class="stat-card"><div class="stat-label">Scans Left</div><div class="stat-value teal" id="stLeft">3</div><div class="stat-sub" id="stLeftSub">Free tier</div></div>
     </div>
 
+    <!-- TABS -->
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('scan')">🔍 New Scan</div>
-      <div class="tab" onclick="switchTab('history')">📋 History</div>
-      <div class="tab" onclick="switchTab('referral')">🎁 Referral</div>
+      <button class="tab active" onclick="showTab('scan')">New Scan</button>
+      <button class="tab" onclick="showTab('history')">History</button>
+      <button class="tab" onclick="showTab('referral')">Referral</button>
+      <button class="tab" onclick="showTab('settings')">Settings</button>
     </div>
 
     <!-- SCAN TAB -->
-    <div class="tab-content active" id="tab-scan">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Select a repository to scan</div>
-          <span style="font-size:13px;color:var(--text-light)" id="repoCount"></span>
-        </div>
-        <input type="text" class="repo-search" placeholder="Search repositories..." id="repoSearch" oninput="filterRepos()">
-        <div class="repo-list" id="repoList"><div style="text-align:center;padding:32px;color:var(--text-light)">Loading repositories...</div></div>
+    <div class="tab-pane active" id="tab-scan">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div><div class="card-title">Select a repository</div><div class="card-sub" id="repoCount">Loading...</div></div></div>
+        <input type="text" class="repo-search" placeholder="Search repositories..." oninput="filterRepos(this.value)">
+        <div class="repo-list" id="repoList"><div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">Loading repositories...</div></div>
       </div>
 
-      <div class="scan-action" id="scanAction">
-        <div class="scan-bar">
-          <div><div class="scan-bar-info" id="selectedRepoName">No repo selected</div><div class="scan-bar-sub">Click Scan Now to find auth gaps</div></div>
-          <button class="btn btn-primary" onclick="startScan()">🛡️ Scan Now</button>
-        </div>
+      <div id="scanSelected" style="display:none;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div><div style="font-weight:600;font-size:15px;color:var(--navy)" id="selectedName">—</div><div style="font-size:13px;color:var(--text-light);margin-top:2px">Ready to scan for auth gaps</div></div>
+        <button class="btn btn-primary" onclick="startScan()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Scan now
+        </button>
       </div>
 
-      <div class="scan-loading" id="scanLoading">
+      <div class="loading-state" id="loadingState">
         <div class="spinner"></div>
         <div class="loading-steps">
-          <div class="loading-step" id="ls1">⏳ Reading route files...</div>
-          <div class="loading-step" id="ls2">⏳ Analyzing endpoints...</div>
-          <div class="loading-step" id="ls3">⏳ Detecting auth gaps...</div>
-          <div class="loading-step" id="ls4">⏳ Preparing results...</div>
+          <div class="ls" id="ls1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Reading route files...</div>
+          <div class="ls" id="ls2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Analyzing endpoints...</div>
+          <div class="ls" id="ls3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Detecting auth gaps...</div>
+          <div class="ls" id="ls4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Preparing results...</div>
         </div>
       </div>
 
-      <div class="results-section" id="resultsSection">
+      <div class="results-wrap" id="resultsWrap">
         <div class="results-header">
           <div class="results-title" id="resultsTitle">Scan Results</div>
-          <button class="btn btn-green" id="raisePRBtn" onclick="raisePR()">🔧 Raise Fix PR</button>
+          <button class="btn btn-green" id="prBtn" onclick="raisePR()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
+            Raise fix PR
+          </button>
         </div>
         <div id="issuesList"></div>
       </div>
     </div>
 
     <!-- HISTORY TAB -->
-    <div class="tab-content" id="tab-history">
+    <div class="tab-pane" id="tab-history">
       <div class="card">
-        <div class="card-header"><div class="card-title">📋 Scan History</div></div>
-        <table>
-          <thead><tr><th>Repository</th><th>Issues</th><th>PR Status</th><th>Date</th><th>Action</th></tr></thead>
-          <tbody id="historyBody"><tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-light)">No scans yet. Run your first scan.</td></tr></tbody>
+        <div class="card-header"><div class="card-title">Scan History</div><button class="btn btn-ghost btn-sm" onclick="loadHistory()">Refresh</button></div>
+        <table class="data-table">
+          <thead><tr><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-light)">No scans yet.</td></tr></tbody>
         </table>
       </div>
     </div>
 
     <!-- REFERRAL TAB -->
-    <div class="tab-content" id="tab-referral">
-      <div class="card">
-        <div class="card-header"><div class="card-title">🎁 Refer & Earn</div></div>
-        <p style="color:var(--text-light);margin-bottom:20px">Share your referral code. Both you and your friend get 10 bonus scans when they sign up.</p>
+    <div class="tab-pane" id="tab-referral">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Your referral code</div></div>
+        <p style="font-size:14px;color:var(--text-mid);margin-bottom:20px">Share your code. Both you and your friend get 10 bonus scans when they sign up.</p>
         <div class="ref-box">
-          <div>
-            <div style="font-size:13px;color:var(--text-light);margin-bottom:6px">Your referral code</div>
-            <div class="ref-code" id="refCode">Loading...</div>
-          </div>
-          <button class="btn btn-primary" onclick="copyRef()">Copy Link</button>
+          <div><div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;font-weight:500">Referral code</div><div class="ref-code-display" id="refCode">—</div></div>
+          <button class="btn btn-teal" onclick="copyRef()">Copy link</button>
         </div>
-        <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px">
-          <div style="font-size:14px;font-weight:500;margin-bottom:8px">Have a referral code?</div>
-          <div style="display:flex;gap:8px">
-            <input type="text" id="refInput" placeholder="Enter code e.g. ABC123" style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
-            <button class="btn btn-primary" onclick="applyRef()">Apply</button>
-          </div>
-          <p id="refMsg" style="font-size:13px;margin-top:8px;display:none"></p>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Apply a referral code</div></div>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="refInput" class="repo-search" placeholder="Enter code e.g. ABC123" style="margin-bottom:0;flex:1">
+          <button class="btn btn-primary" onclick="applyRef()">Apply</button>
         </div>
+        <p id="refMsg" style="font-size:13px;margin-top:12px;display:none"></p>
       </div>
     </div>
 
-  </main>
+    <!-- SETTINGS TAB -->
+    <div class="tab-pane" id="tab-settings">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Account</div></div>
+        <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--off-white);border-radius:10px">
+          <div class="user-avatar" id="settingsAvatar" style="width:56px;height:56px;font-size:20px">S</div>
+          <div><div style="font-weight:600;font-size:16px;color:var(--navy)" id="settingsName">—</div><div style="font-size:13px;color:var(--text-light)" id="settingsEmail">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div><div class="card-title">Plan & Billing</div><div class="card-sub" id="planDesc">Free plan</div></div></div>
+        <div id="planUpgradeArea">
+          <p style="font-size:14px;color:var(--text-mid);margin-bottom:16px">Upgrade to Pro for unlimited repos, auto PR raising, and 24/7 Continuous Protection.</p>
+          <button class="btn btn-teal" onclick="startPayment()">Upgrade to Pro — ₹4,900/month</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title" style="color:var(--red)">Danger zone</div></div>
+        <p style="font-size:13px;color:var(--text-mid);margin-bottom:16px">Signing out will end your current session.</p>
+        <a href="/auth/logout" class="btn btn-danger">Sign out</a>
+      </div>
+    </div>
+
+  </div>
+</main>
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-let selectedRepo = null, scanResults = null, allRepos = [], currentPlan = 'free';
+// CURSOR
+const cDot=document.getElementById('cDot'),cRing=document.getElementById('cRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cDot.style.cssText=`left:${mx-4}px;top:${my-4}px`;});
+(function tick(){rx+=(mx-rx)*0.15;ry+=(my-ry)*0.15;cRing.style.cssText=`left:${rx-14}px;top:${ry-14}px`;requestAnimationFrame(tick);})();
 
-async function loadUser() {
-  const res = await fetch('/auth/me');
-  const { user } = await res.json();
-  if (!user) return window.location.href = '/';
-  document.getElementById('userName').textContent = user.username;
-  document.getElementById('userAvatar').src = user.avatar;
-  currentPlan = user.plan || 'free';
-  if (currentPlan !== 'pro') {
-    document.getElementById('upgradeBanner').style.display = 'flex';
+let selectedRepo=null,scanResults=null,allRepos=[],currentUser=null;
+
+async function init(){
+  const res=await fetch('/auth/me');
+  const {user}=await res.json();
+  if(!user){window.location.href='/';return;}
+  currentUser=user;
+  document.getElementById('sideUsername').textContent=user.username;
+  document.getElementById('sideAvatar').textContent=user.username[0].toUpperCase();
+  document.getElementById('settingsAvatar').textContent=user.username[0].toUpperCase();
+  document.getElementById('settingsName').textContent=user.username;
+  document.getElementById('settingsEmail').textContent=user.email||'—';
+  if(user.plan==='pro'){
+    document.getElementById('sidePlan').textContent='Pro';
+    document.getElementById('sidePlan').className='user-plan-badge plan-pro';
+    document.getElementById('stLeft').textContent='∞';
+    document.getElementById('stLeftSub').textContent='Pro — Unlimited';
+    document.getElementById('planDesc').textContent='Pro plan — active';
+    document.getElementById('planUpgradeArea').innerHTML='<p style="color:var(--green);font-size:14px;font-weight:500">You\'re on Pro. Thank you!</p>';
   } else {
-    document.getElementById('userPlan').textContent = 'PRO';
-    document.getElementById('userPlan').classList.add('pro');
-    document.getElementById('scansLeftSub').textContent = 'Pro — Unlimited';
-    document.getElementById('scansLeft').textContent = '∞';
+    document.getElementById('upgradeBanner').style.display='flex';
+    document.getElementById('upgradeNavBtn').style.display='flex';
+    document.getElementById('topPlanBadge').textContent='Free plan';
   }
+  loadRepos();
+  loadHistory();
+  loadReferral();
 }
 
-async function loadRepos() {
-  const res = await fetch('/api/repos');
-  const { repos } = await res.json();
-  allRepos = repos;
-  document.getElementById('repoCount').textContent = `${repos.length} repos`;
-  renderRepos(repos);
+async function loadRepos(){
+  const res=await fetch('/api/repos');
+  const {repos}=await res.json();
+  allRepos=repos||[];
+  document.getElementById('repoCount').textContent=`${allRepos.length} repositories`;
+  renderRepos(allRepos);
 }
 
-function renderRepos(repos) {
-  const list = document.getElementById('repoList');
-  if (!repos.length) { list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-light)">No repos found.</div>'; return; }
-  list.innerHTML = repos.map(r => `
+function renderRepos(repos){
+  const el=document.getElementById('repoList');
+  if(!repos.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">No repositories found.</div>';return;}
+  el.innerHTML=repos.map(r=>`
     <div class="repo-item" onclick="selectRepo('${r.fullName}','${r.name}')" id="ri-${r.id}">
       <div><div class="repo-name">${r.name}</div><div class="repo-meta">${r.fullName} · ${new Date(r.updatedAt).toLocaleDateString()}</div></div>
-      <span class="repo-lang">${r.language||'Unknown'}</span>
+      <span class="repo-lang">${r.language||'—'}</span>
     </div>`).join('');
 }
 
-function filterRepos() {
-  const q = document.getElementById('repoSearch').value.toLowerCase();
-  renderRepos(allRepos.filter(r => r.name.toLowerCase().includes(q) || r.fullName.toLowerCase().includes(q)));
+function filterRepos(q){renderRepos(allRepos.filter(r=>r.name.toLowerCase().includes(q.toLowerCase())||r.fullName.toLowerCase().includes(q.toLowerCase())));}
+
+function selectRepo(full,name){
+  selectedRepo=full;
+  document.querySelectorAll('.repo-item').forEach(e=>e.classList.remove('selected'));
+  const el=document.getElementById('scanSelected');
+  el.style.display='flex';
+  document.getElementById('selectedName').textContent=full;
 }
 
-function selectRepo(full, name) {
-  selectedRepo = full;
-  document.querySelectorAll('.repo-item').forEach(e => e.classList.remove('selected'));
-  document.getElementById('scanAction').style.display = 'block';
-  document.getElementById('selectedRepoName').textContent = full;
-}
-
-async function startScan() {
-  if (!selectedRepo) return;
-  const [owner, repo] = selectedRepo.split('/');
-  document.getElementById('scanAction').style.display = 'none';
-  document.getElementById('resultsSection').style.display = 'none';
-  document.getElementById('scanLoading').style.display = 'block';
-  const steps = ['ls1','ls2','ls3','ls4'];
-  let si = 0;
-  const iv = setInterval(() => {
-    if (si > 0) { document.getElementById(steps[si-1]).textContent = '✅ ' + document.getElementById(steps[si-1]).textContent.slice(2); document.getElementById(steps[si-1]).className = 'loading-step done'; }
-    if (si < steps.length) { document.getElementById(steps[si]).className = 'loading-step active'; }
+async function startScan(){
+  if(!selectedRepo)return;
+  const[owner,repo]=selectedRepo.split('/');
+  document.getElementById('scanSelected').style.display='none';
+  document.getElementById('resultsWrap').style.display='none';
+  document.getElementById('loadingState').style.display='block';
+  const steps=['ls1','ls2','ls3','ls4'];
+  let si=0;
+  const iv=setInterval(()=>{
+    if(si>0){const prev=document.getElementById(steps[si-1]);prev.className='ls done';prev.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'+prev.textContent.trim();}
+    if(si<steps.length){document.getElementById(steps[si]).className='ls active';}
     si++;
-  }, 2500);
-  try {
-    const res = await fetch('/api/scanner/scan', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({owner,repo}) });
-    const data = await res.json();
+  },2500);
+  try{
+    const res=await fetch('/api/scanner/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner,repo})});
+    const data=await res.json();
     clearInterval(iv);
-    document.getElementById('scanLoading').style.display = 'none';
-    if (data.upgrade) { alert('Free scan limit reached. Upgrade to Pro for unlimited scans.'); startPayment(); return; }
-    scanResults = data.results;
-    showResults(data.results, data.totalIssues);
-    document.getElementById('totalScans').textContent = parseInt(document.getElementById('totalScans').textContent) + 1;
-    document.getElementById('totalIssues').textContent = parseInt(document.getElementById('totalIssues').textContent) + data.totalIssues;
-    loadHistory();
-  } catch (err) {
-    clearInterval(iv);
-    document.getElementById('scanLoading').style.display = 'none';
-    alert('Scan failed. Please try again.');
-  }
+    document.getElementById('loadingState').style.display='none';
+    if(data.upgrade){alert('Scan limit reached. Upgrade to Pro.');startPayment();return;}
+    scanResults=data.results;
+    showResults(data.results,data.totalIssues);
+    document.getElementById('stScans').textContent=parseInt(document.getElementById('stScans').textContent)+1;
+    document.getElementById('stIssues').textContent=parseInt(document.getElementById('stIssues').textContent)+data.totalIssues;
+  }catch(e){clearInterval(iv);document.getElementById('loadingState').style.display='none';alert('Scan failed. Please try again.');}
 }
 
-function showResults(results, total) {
-  const section = document.getElementById('resultsSection');
-  section.style.display = 'block';
-  document.getElementById('resultsTitle').textContent = `Found ${total} issue${total!==1?'s':''} in ${selectedRepo}`;
-  const list = document.getElementById('issuesList');
-  if (!results.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--green);font-size:16px">✅ No auth gaps found! Your codebase looks secure.</div>';
-    document.getElementById('raisePRBtn').style.display = 'none';
+function showResults(results,total){
+  document.getElementById('resultsWrap').style.display='block';
+  document.getElementById('resultsTitle').textContent=total>0?`Found ${total} issue${total!==1?'s':''} in ${selectedRepo}`:`No issues found in ${selectedRepo}`;
+  const list=document.getElementById('issuesList');
+  if(!results.length){
+    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--green);font-size:15px;font-weight:500">No auth gaps found. Your codebase looks secure.</div>';
+    document.getElementById('prBtn').style.display='none';
     return;
   }
-  if (currentPlan !== 'pro') {
-    document.getElementById('raisePRBtn').textContent = '🔒 Upgrade to Raise PR';
-    document.getElementById('raisePRBtn').onclick = startPayment;
-    document.getElementById('raisePRBtn').className = 'btn btn-primary';
+  if(currentUser?.plan!=='pro'){
+    const btn=document.getElementById('prBtn');
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Upgrade to raise PR';
+    btn.onclick=startPayment;
+    btn.className='btn btn-primary';
   }
-  list.innerHTML = results.map(r => `
+  list.innerHTML=results.map(r=>`
     <div class="issue-card">
-      <div class="issue-header"><span class="issue-file">📄 ${r.file}</span><span class="issue-count">${r.issues.length} issue${r.issues.length>1?'s':''}</span></div>
-      <div class="issue-body">${r.issues.map(i => `
-        <div class="endpoint-item">
+      <div class="issue-head"><span class="issue-file">${r.file}</span><span class="issue-count">${r.issues.length} issue${r.issues.length>1?'s':''}</span></div>
+      <div class="issue-body">${r.issues.map(i=>`
+        <div class="endpoint-row">
           <span class="method m-${i.method.toLowerCase()}">${i.method}</span>
           <span class="ep-path">${i.endpoint}</span>
-          <span class="ep-issue">⚠️ ${i.issue}</span>
+          <span class="ep-issue">${i.issue}</span>
         </div>`).join('')}
       </div>
     </div>`).join('');
 }
 
-async function raisePR() {
-  if (!scanResults || !selectedRepo) return;
-  const [owner, repo] = selectedRepo.split('/');
-  const btn = document.getElementById('raisePRBtn');
-  btn.textContent = '⏳ Raising PR...'; btn.disabled = true;
-  try {
-    const res = await fetch('/api/scanner/raise-pr', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({owner,repo,results:scanResults}) });
-    const data = await res.json();
-    if (data.prUrl) {
-      btn.textContent = '✅ PR Raised!'; btn.style.background = '#16a34a';
-      document.getElementById('totalPRs').textContent = parseInt(document.getElementById('totalPRs').textContent) + 1;
-      setTimeout(() => window.open(data.prUrl, '_blank'), 500);
+async function raisePR(){
+  if(!scanResults||!selectedRepo)return;
+  const[owner,repo]=selectedRepo.split('/');
+  const btn=document.getElementById('prBtn');
+  btn.textContent='Raising PR...';btn.disabled=true;
+  try{
+    const res=await fetch('/api/scanner/raise-pr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner,repo,results:scanResults})});
+    const data=await res.json();
+    if(data.prUrl){
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> PR Raised';
+      btn.style.background='var(--green)';btn.disabled=false;
+      document.getElementById('stPRs').textContent=parseInt(document.getElementById('stPRs').textContent)+1;
+      setTimeout(()=>window.open(data.prUrl,'_blank'),400);
     }
-  } catch { btn.textContent = '🔧 Raise Fix PR'; btn.disabled = false; alert('Failed. Try again.'); }
+  }catch(e){btn.textContent='Raise fix PR';btn.disabled=false;}
 }
 
-async function loadHistory() {
-  const res = await fetch('/api/scanner/history');
-  const { scans } = await res.json();
-  const tbody = document.getElementById('historyBody');
-  if (!scans.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">No scans yet.</td></tr>'; return; }
-  tbody.innerHTML = scans.map(s => `
+async function loadHistory(){
+  const res=await fetch('/api/scanner/history');
+  const{scans}=await res.json();
+  const tbody=document.getElementById('historyBody');
+  if(!scans?.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">No scans yet.</td></tr>';return;}
+  tbody.innerHTML=scans.map(s=>`
     <tr>
-      <td>${s.repo_name}</td>
+      <td style="color:var(--navy);font-weight:500">${s.repo_name}</td>
       <td><span class="badge ${s.total_issues>0?'badge-red':'badge-green'}">${s.total_issues} issues</span></td>
       <td><span class="badge ${s.pr_raised?'badge-green':'badge-gray'}">${s.pr_raised?'PR Raised':'Pending'}</span></td>
       <td>${new Date(s.created_at).toLocaleDateString()}</td>
-      <td>${s.pr_url?`<a href="${s.pr_url}" target="_blank" style="color:var(--blue);text-decoration:none;font-size:13px">View PR →</a>`:'-'}</td>
+      <td>${s.pr_url?`<a href="${s.pr_url}" target="_blank" style="color:var(--teal);font-size:12px;font-weight:500;text-decoration:none">View PR</a>`:'—'}</td>
     </tr>`).join('');
 }
 
-async function loadReferral() {
-  const res = await fetch('/api/referral/my-code');
-  const { code } = await res.json();
-  document.getElementById('refCode').textContent = code || 'N/A';
+async function loadReferral(){
+  const res=await fetch('/api/referral/my-code');
+  const{code}=await res.json();
+  document.getElementById('refCode').textContent=code||'—';
 }
 
-async function copyRef() {
-  const code = document.getElementById('refCode').textContent;
-  const link = `https://grassion.com/?ref=${code}`;
-  await navigator.clipboard.writeText(link);
+function copyRef(){
+  const code=document.getElementById('refCode').textContent;
+  navigator.clipboard.writeText(`https://grassion.com/?ref=${code}`);
   alert('Referral link copied!');
 }
 
-async function applyRef() {
-  const code = document.getElementById('refInput').value.trim();
-  if (!code) return;
-  const res = await fetch('/api/referral/apply', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code}) });
-  const data = await res.json();
-  const msg = document.getElementById('refMsg');
-  msg.style.display = 'block';
-  msg.style.color = data.success ? 'var(--green)' : 'var(--red)';
-  msg.textContent = data.message || data.error;
+async function applyRef(){
+  const code=document.getElementById('refInput').value.trim();
+  if(!code)return;
+  const res=await fetch('/api/referral/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+  const data=await res.json();
+  const msg=document.getElementById('refMsg');
+  msg.style.display='block';
+  msg.style.color=data.success?'var(--green)':'var(--red)';
+  msg.textContent=data.message||data.error;
 }
 
-async function startPayment() {
-  const res = await fetch('/api/payments/create-order', { method:'POST' });
-  const { order, key } = await res.json();
-  const options = {
-    key, amount: order.amount, currency: 'INR',
-    name: 'Grassion', description: 'Pro Plan — Monthly', order_id: order.id,
-    handler: async function(response) {
-      const vr = await fetch('/api/payments/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(response) });
-      const vd = await vr.json();
-      if (vd.success) { alert('🎉 Welcome to Pro!'); location.reload(); }
+async function startPayment(){
+  const res=await fetch('/api/payments/create-order',{method:'POST'});
+  const{order,key}=await res.json();
+  new Razorpay({
+    key,amount:order.amount,currency:'INR',name:'Grassion',
+    description:'Pro Plan — Monthly',order_id:order.id,
+    handler:async function(r){
+      const vr=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});
+      const vd=await vr.json();
+      if(vd.success){location.reload();}
     },
-    theme: { color: '#2563eb' }
-  };
-  new Razorpay(options).open();
+    theme:{color:'#2a9fd6'}
+  }).open();
 }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => { t.classList.remove('active'); });
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.querySelector(`#tab-${name}`).classList.add('active');
-  const tabs = ['scan','history','referral'];
-  document.querySelectorAll('.tab')[tabs.indexOf(name)]?.classList.add('active');
-  if (name === 'history') loadHistory();
-  if (name === 'referral') loadReferral();
+function showTab(name){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`tab-${name}`)?.classList.add('active');
+  const titles={scan:'Dashboard',history:'Scan History',referral:'Refer & Earn',settings:'Settings'};
+  const subs={scan:'Scan repos and fix security gaps automatically',history:'View all your past scans',referral:'Share Grassion and earn bonus scans',settings:'Manage your account and billing'};
+  document.getElementById('pageTitle').textContent=titles[name]||'Dashboard';
+  document.getElementById('pageSub').textContent=subs[name]||'';
+  if(name==='history')loadHistory();
+  if(name==='referral')loadReferral();
 }
 
-loadUser();
-loadRepos();
-loadHistory();
+init();
 </script>
 </body>
 </html>

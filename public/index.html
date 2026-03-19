@@ -1,393 +1,598 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grassion — Ship fearlessly.</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--blue-mid:#dbeafe;
-      --green:#16a34a;--red:#dc2626;--text:#0f172a;--text-light:#64748b;
-      --border:#e2e8f0;--white:#fff;--bg:#f8fafc;--card:#fff;
-    }
-    html{scroll-behavior:smooth}
-    body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);line-height:1.6;overflow-x:hidden}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grassion — Zero-Touch Codebase Security</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1b2a;
+  --navy-2:#112236;
+  --navy-3:#1a3352;
+  --teal:#2a9fd6;
+  --teal-2:#1e8ab8;
+  --teal-light:#e8f6fd;
+  --teal-glow:rgba(42,159,214,0.15);
+  --white:#ffffff;
+  --off-white:#f0f4f8;
+  --text:#0d1b2a;
+  --text-mid:#4a6075;
+  --text-light:#7a95aa;
+  --border:rgba(42,159,214,0.15);
+  --border-soft:rgba(13,27,42,0.08);
+  --glass:rgba(255,255,255,0.7);
+  --glass-border:rgba(42,159,214,0.2);
+  --shadow:0 20px 60px rgba(13,27,42,0.1);
+  --shadow-teal:0 8px 32px rgba(42,159,214,0.2);
+}
 
-    /* CURSOR */
-    .cursor{width:12px;height:12px;background:var(--blue);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transition:transform 0.1s;mix-blend-mode:multiply}
-    .cursor-ring{width:36px;height:36px;border:2px solid var(--blue);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transition:all 0.15s ease;opacity:0.5}
-    body:hover .cursor{opacity:1}
+html{scroll-behavior:smooth;cursor:none}
+body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
-    /* CANVAS */
-    #particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.4}
+/* CUSTOM CURSOR */
+.cursor-dot{width:8px;height:8px;background:var(--teal);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transition:transform 0.1s}
+.cursor-trail{position:fixed;pointer-events:none;z-index:9998;border-radius:50%;transform:translate(-50%,-50%)}
 
-    /* NAV */
-    nav{display:flex;align-items:center;justify-content:space-between;padding:20px 60px;background:rgba(255,255,255,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
-    .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--blue);text-decoration:none;letter-spacing:-0.5px}
-    .nav-links{display:flex;gap:28px;align-items:center}
-    .nav-links a{text-decoration:none;color:var(--text-light);font-size:15px;transition:color 0.2s}
-    .nav-links a:hover{color:var(--text)}
+/* WEBGL CANVAS */
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.6}
 
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'DM Sans',sans-serif}
-    .btn-primary{background:var(--blue);color:#fff}
-    .btn-primary:hover{background:var(--blue-dark);transform:translateY(-1px);box-shadow:0 8px 25px rgba(37,99,235,0.3)}
-    .btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}
-    .btn-outline:hover{border-color:var(--blue);color:var(--blue)}
-    .btn-github{background:#24292f;color:#fff}
-    .btn-github:hover{background:#1a1f25;transform:translateY(-1px)}
-    .btn-lg{padding:14px 28px;font-size:16px;border-radius:10px}
-    .btn-white{background:#fff;color:var(--blue);font-weight:600}
-    .btn-white:hover{background:#f0f9ff}
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;display:flex;align-items:center;justify-content:space-between;background:rgba(240,244,248,0.85);backdrop-filter:blur(24px);border-bottom:1px solid var(--border-soft)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo img{height:32px}
+.nav-logo-text{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:600;color:var(--navy);letter-spacing:-0.3px}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{text-decoration:none;color:var(--text-mid);font-size:14px;font-weight:500;letter-spacing:0.1px;transition:color 0.2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--teal);transition:width 0.3s}
+.nav-links a:hover{color:var(--navy)}
+.nav-links a:hover::after{width:100%}
+.nav-cta{display:flex;gap:10px;align-items:center}
 
-    /* HERO */
-    .hero{position:relative;padding:120px 60px 80px;text-align:center;z-index:1}
-    .badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-light);color:var(--blue);padding:6px 16px;border-radius:100px;font-size:13px;font-weight:500;margin-bottom:28px;border:1px solid var(--blue-mid)}
-    .hero h1{font-family:'Syne',sans-serif;font-size:72px;font-weight:800;line-height:1.05;letter-spacing:-3px;margin-bottom:24px;max-width:800px;margin-left:auto;margin-right:auto}
-    .hero h1 .word{display:inline-block;opacity:0;transform:translateY(30px);animation:wordReveal 0.6s forwards}
-    .hero h1 .blue{color:var(--blue)}
-    @keyframes wordReveal{to{opacity:1;transform:translateY(0)}}
-    .hero p{font-size:20px;color:var(--text-light);max-width:560px;margin:0 auto 40px;opacity:0;animation:fadeUp 0.8s 1.2s forwards}
-    @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
-    .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp 0.8s 1.5s forwards}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.25s;border:none;font-family:'Satoshi',sans-serif;letter-spacing:0.1px;white-space:nowrap}
+.btn svg{width:16px;height:16px;flex-shrink:0}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-3);transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--border-soft)}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-teal:hover{background:var(--teal-2);transform:translateY(-1px);box-shadow:var(--shadow-teal)}
+.btn-ghost{background:rgba(255,255,255,0.6);color:var(--navy);border:1.5px solid var(--glass-border)}
+.btn-ghost:hover{background:#fff;box-shadow:var(--shadow-teal)}
+.btn-lg{padding:13px 26px;font-size:15px;border-radius:10px}
+.btn-github{background:var(--navy-2);color:#fff;border:1px solid rgba(255,255,255,0.1)}
+.btn-github:hover{background:var(--navy);transform:translateY(-1px)}
 
-    /* DEMO */
-    .demo-section{padding:0 60px 80px;max-width:860px;margin:0 auto;position:relative;z-index:1}
-    .demo-card{background:#0d1117;border-radius:16px;overflow:hidden;border:1px solid #30363d;box-shadow:0 30px 80px rgba(0,0,0,0.2)}
-    .demo-header{padding:14px 20px;background:#161b22;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:8px}
-    .dot{width:12px;height:12px;border-radius:50%}
-    .dot-r{background:#ff5f57}.dot-y{background:#ffbd2e}.dot-g{background:#28ca41}
-    .demo-title{color:#8b949e;font-size:13px;margin-left:8px;font-family:monospace}
-    .demo-body{padding:20px}
-    .demo-line{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #21262d;opacity:0;animation:fadeIn 0.4s forwards}
-    .demo-line:last-child{border-bottom:none}
-    .demo-line:nth-child(1){animation-delay:0.3s}
-    .demo-line:nth-child(2){animation-delay:0.8s}
-    .demo-line:nth-child(3){animation-delay:1.3s}
-    .demo-line:nth-child(4){animation-delay:1.8s}
-    .demo-line:nth-child(5){animation-delay:2.3s}
-    @keyframes fadeIn{to{opacity:1}}
-    .ds{font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap;font-family:monospace}
-    .ds-scan{background:#1f6feb22;color:#58a6ff}
-    .ds-found{background:#da363322;color:#f85149}
-    .ds-fix{background:#23863622;color:#3fb950}
-    .ds-pr{background:#8957e522;color:#d2a8ff}
-    .dt{color:#c9d1d9;font-size:13px;font-family:monospace;line-height:1.5}
-    .dt span{color:#f0883e}
+/* HERO */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 64px 80px;z-index:1;overflow:hidden}
+.hero-inner{max-width:760px;text-align:center;position:relative;z-index:2}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;background:rgba(255,255,255,0.8);border:1.5px solid var(--glass-border);border-radius:100px;font-size:12px;font-weight:500;color:var(--teal-2);letter-spacing:0.3px;margin-bottom:32px;backdrop-filter:blur(10px)}
+.hero-badge-dot{width:6px;height:6px;background:var(--teal);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.hero h1{font-family:'Clash Display',sans-serif;font-size:68px;font-weight:700;line-height:1.05;letter-spacing:-2.5px;color:var(--navy);margin-bottom:20px}
+.hero h1 .line{display:block;overflow:hidden}
+.hero h1 .word{display:inline-block;transform:translateY(100%);opacity:0;animation:slideUp 0.8s cubic-bezier(0.16,1,0.3,1) forwards}
+.hero h1 .accent{color:var(--teal)}
+@keyframes slideUp{to{transform:translateY(0);opacity:1}}
+.hero-sub{font-size:18px;color:var(--text-mid);max-width:480px;margin:0 auto 40px;line-height:1.65;opacity:0;animation:fadeIn 0.8s 1.2s forwards}
+@keyframes fadeIn{to{opacity:1}}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeIn 0.8s 1.5s forwards}
+.hero-proof{margin-top:48px;display:flex;align-items:center;gap:24px;justify-content:center;opacity:0;animation:fadeIn 0.8s 1.8s forwards}
+.proof-stat{text-align:center}
+.proof-num{font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700;color:var(--navy)}
+.proof-label{font-size:12px;color:var(--text-light);letter-spacing:0.5px;text-transform:uppercase;margin-top:2px}
+.proof-divider{width:1px;height:36px;background:var(--border-soft)}
 
-    /* STATS */
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin:0 60px 80px;border-radius:12px;overflow:hidden;border:1px solid var(--border);position:relative;z-index:1}
-    .stat{background:#fff;padding:32px;text-align:center}
-    .stat-n{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--blue)}
-    .stat-l{font-size:14px;color:var(--text-light);margin-top:4px}
+/* FLOATING ELEMENTS */
+.float-el{position:absolute;pointer-events:none;z-index:1}
+.float-1{top:15%;right:8%;width:180px;height:180px;background:rgba(42,159,214,0.06);border:1px solid var(--glass-border);border-radius:24px;transform:rotate(15deg);animation:float1 8s ease-in-out infinite;backdrop-filter:blur(10px)}
+.float-2{top:55%;left:4%;width:120px;height:120px;background:rgba(255,255,255,0.5);border:1px solid var(--glass-border);border-radius:50%;animation:float2 10s ease-in-out infinite;backdrop-filter:blur(10px)}
+.float-3{bottom:20%;right:12%;width:80px;height:80px;background:rgba(42,159,214,0.08);border:1px solid var(--glass-border);border-radius:16px;transform:rotate(-10deg);animation:float3 7s ease-in-out infinite}
+.float-4{top:30%;left:6%;width:60px;height:60px;background:rgba(255,255,255,0.6);border:1px solid var(--glass-border);border-radius:12px;animation:float2 9s ease-in-out infinite 2s}
+@keyframes float1{0%,100%{transform:rotate(15deg) translateY(0)}50%{transform:rotate(15deg) translateY(-20px)}}
+@keyframes float2{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-15px) rotate(5deg)}}
+@keyframes float3{0%,100%{transform:rotate(-10deg) translateY(0)}50%{transform:rotate(-10deg) translateY(-12px)}}
 
-    /* SECTIONS */
-    .section{padding:80px 60px;position:relative;z-index:1}
-    .section-tag{font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
-    .section h2{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;letter-spacing:-1.5px;margin-bottom:16px;line-height:1.1}
-    .section>p{font-size:18px;color:var(--text-light);max-width:520px}
+/* TERMINAL DEMO */
+.demo-section{padding:0 64px 100px;position:relative;z-index:1}
+.demo-wrap{max-width:840px;margin:0 auto}
+.section-label{font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.demo-card{background:var(--navy);border-radius:20px;overflow:hidden;box-shadow:0 40px 80px rgba(13,27,42,0.2),0 0 0 1px rgba(42,159,214,0.1);position:relative}
+.demo-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(42,159,214,0.05) 0%,transparent 60%);pointer-events:none}
+.demo-bar{padding:16px 20px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px}
+.demo-dots{display:flex;gap:6px}
+.demo-dot{width:10px;height:10px;border-radius:50%}
+.demo-dot-r{background:#ff5f57}
+.demo-dot-y{background:#ffbd2e}
+.demo-dot-g{background:#28ca41}
+.demo-title{margin-left:12px;font-family:'Satoshi',sans-serif;font-size:12px;color:rgba(255,255,255,0.3);font-weight:400}
+.demo-body{padding:28px}
+.demo-line{display:flex;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);opacity:0;animation:lineIn 0.4s forwards}
+.demo-line:last-child{border-bottom:none}
+.demo-line:nth-child(1){animation-delay:0.3s}
+.demo-line:nth-child(2){animation-delay:0.9s}
+.demo-line:nth-child(3){animation-delay:1.5s}
+.demo-line:nth-child(4){animation-delay:2.1s}
+.demo-line:nth-child(5){animation-delay:2.7s}
+@keyframes lineIn{to{opacity:1}}
+.demo-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;white-space:nowrap;font-family:'Satoshi',sans-serif;letter-spacing:0.5px;flex-shrink:0;margin-top:2px}
+.tag-scan{background:rgba(42,159,214,0.15);color:#5bb8e8}
+.tag-found{background:rgba(239,68,68,0.15);color:#f87171}
+.tag-fix{background:rgba(34,197,94,0.15);color:#4ade80}
+.tag-pr{background:rgba(168,85,247,0.15);color:#c084fc}
+.tag-done{background:rgba(34,197,94,0.15);color:#4ade80}
+.demo-text{font-family:'Satoshi',sans-serif;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5}
+.demo-text em{color:#5bb8e8;font-style:normal}
+.demo-text strong{color:rgba(255,255,255,0.9);font-weight:500}
 
-    .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:48px}
-    .step{padding:28px;border:1.5px solid var(--border);border-radius:14px;background:#fff;transition:all 0.25s;cursor:default}
-    .step:hover{border-color:var(--blue);box-shadow:0 8px 30px rgba(37,99,235,0.1);transform:translateY(-4px)}
-    .step-n{width:40px;height:40px;background:var(--blue-light);color:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;margin-bottom:16px;font-family:'Syne',sans-serif}
-    .step h3{font-size:16px;font-weight:600;margin-bottom:8px}
-    .step p{font-size:14px;color:var(--text-light)}
+/* STATS BAR */
+.stats-bar{padding:0 64px;margin-bottom:100px;position:relative;z-index:1}
+.stats-inner{max-width:840px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,0.7);backdrop-filter:blur(20px);border:1.5px solid var(--glass-border);border-radius:16px;overflow:hidden}
+.stat-item{padding:32px 28px;text-align:center;border-right:1px solid var(--border-soft)}
+.stat-item:last-child{border-right:none}
+.stat-num{font-family:'Clash Display',sans-serif;font-size:36px;font-weight:700;color:var(--navy);letter-spacing:-1px}
+.stat-lbl{font-size:12px;color:var(--text-light);margin-top:4px;letter-spacing:0.3px}
 
-    /* PRICING */
-    .pricing{padding:80px 60px;background:var(--bg)}
-    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:48px auto 0}
-    .plan{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:32px;transition:all 0.2s}
-    .plan:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.08)}
-    .plan.featured{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 12px 40px rgba(37,99,235,0.15)}
-    .plan-badge{background:var(--blue);color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:16px}
-    .plan-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px}
-    .plan-price{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--blue);line-height:1}
-    .plan-price span{font-size:16px;color:var(--text-light);font-family:'DM Sans',sans-serif}
-    .plan-desc{font-size:14px;color:var(--text-light);margin:12px 0 24px}
-    .plan-features{list-style:none;margin-bottom:28px}
-    .plan-features li{padding:9px 0;font-size:14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bg)}
-    .ck{color:var(--green)}.cx{color:var(--text-light)}
+/* HOW IT WORKS */
+.section{padding:80px 64px;position:relative;z-index:1}
+.section-header{max-width:560px;margin-bottom:60px}
+.section-header h2{font-family:'Clash Display',sans-serif;font-size:44px;font-weight:700;letter-spacing:-1.5px;line-height:1.1;color:var(--navy);margin-bottom:16px}
+.section-header p{font-size:17px;color:var(--text-mid);line-height:1.7}
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.step-card{background:rgba(255,255,255,0.7);backdrop-filter:blur(16px);border:1.5px solid var(--border-soft);border-radius:16px;padding:28px;transition:all 0.3s;position:relative;overflow:hidden}
+.step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--teal),transparent);opacity:0;transition:opacity 0.3s}
+.step-card:hover{border-color:var(--glass-border);box-shadow:var(--shadow-teal);transform:translateY(-4px)}
+.step-card:hover::before{opacity:1}
+.step-num{font-family:'Clash Display',sans-serif;font-size:48px;font-weight:700;color:rgba(42,159,214,0.12);line-height:1;margin-bottom:16px}
+.step-icon{width:40px;height:40px;background:var(--teal-light);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.step-icon svg{width:20px;height:20px;color:var(--teal)}
+.step-card h3{font-family:'Clash Display',sans-serif;font-size:17px;font-weight:600;color:var(--navy);margin-bottom:8px}
+.step-card p{font-size:14px;color:var(--text-mid);line-height:1.6}
 
-    /* REFERRAL */
-    .referral-section{padding:0 60px 80px;position:relative;z-index:1}
-    .referral-card{background:linear-gradient(135deg,var(--blue-light),#e0f2fe);border:1.5px solid var(--blue-mid);border-radius:16px;padding:48px;display:flex;align-items:center;justify-content:space-between;gap:32px}
-    .referral-card h3{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:8px}
-    .referral-card p{color:var(--text-light);font-size:16px}
+/* PRICING */
+.pricing-section{padding:80px 64px;background:linear-gradient(180deg,var(--off-white) 0%,rgba(42,159,214,0.04) 100%);position:relative;z-index:1}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:60px auto 0}
+.plan-card{background:rgba(255,255,255,0.8);backdrop-filter:blur(20px);border:1.5px solid var(--border-soft);border-radius:20px;padding:36px;transition:all 0.3s;position:relative}
+.plan-card:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
+.plan-card.featured{border-color:var(--teal);background:rgba(255,255,255,0.95);box-shadow:0 0 0 1px var(--teal),var(--shadow-teal)}
+.plan-featured-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:100px;letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap}
+.plan-name{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:600;color:var(--navy);margin-bottom:8px}
+.plan-price{font-family:'Clash Display',sans-serif;font-size:44px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:4px}
+.plan-price sup{font-size:20px;vertical-align:top;margin-top:8px}
+.plan-price-suffix{font-size:15px;color:var(--text-light);font-family:'Satoshi',sans-serif;font-weight:400}
+.plan-desc{font-size:14px;color:var(--text-mid);margin:14px 0 24px}
+.plan-features{list-style:none;margin-bottom:28px}
+.plan-features li{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14px;color:var(--text-mid);border-bottom:1px solid var(--border-soft)}
+.plan-features li:last-child{border-bottom:none}
+.feat-icon{width:18px;height:18px;flex-shrink:0}
+.feat-yes{color:var(--teal)}
+.feat-no{color:var(--text-light);opacity:0.5}
 
-    /* WAITLIST */
-    .waitlist{padding:80px 60px;background:var(--text);color:#fff;text-align:center;position:relative;z-index:1}
-    .waitlist h2{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;margin-bottom:12px;color:#fff;letter-spacing:-1.5px}
-    .waitlist p{color:#94a3b8;font-size:18px;margin-bottom:32px}
-    .wl-form{display:flex;gap:12px;justify-content:center;max-width:480px;margin:0 auto}
-    .wl-form input{flex:1;padding:13px 16px;border-radius:8px;border:1px solid #374151;background:#1e293b;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s}
-    .wl-form input:focus{border-color:var(--blue)}
+/* TEAM */
+.team-section{padding:80px 64px;position:relative;z-index:1}
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:60px}
+.team-card{background:rgba(255,255,255,0.7);backdrop-filter:blur(16px);border:1.5px solid var(--border-soft);border-radius:20px;padding:32px;text-align:center;transition:all 0.3s}
+.team-card:hover{border-color:var(--glass-border);box-shadow:var(--shadow-teal);transform:translateY(-4px)}
+.team-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 16px;background:linear-gradient(135deg,var(--navy-2),var(--teal-2));display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700;color:#fff;border:3px solid var(--glass-border)}
+.team-name{font-family:'Clash Display',sans-serif;font-size:19px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.team-role{font-size:13px;color:var(--teal);font-weight:500;letter-spacing:0.3px;margin-bottom:12px}
+.team-bio{font-size:13px;color:var(--text-mid);line-height:1.6}
+.team-awards{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px}
+.award-tag{font-size:11px;color:var(--text-mid);background:var(--off-white);border:1px solid var(--border-soft);border-radius:100px;padding:3px 10px}
 
-    /* MODAL */
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
-    .modal-overlay.open{display:flex}
-    .modal{background:#fff;border-radius:20px;padding:40px;max-width:500px;width:100%;position:relative;animation:modalIn 0.3s ease}
-    @keyframes modalIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
-    .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-light);line-height:1}
-    .modal h3{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px}
-    .modal p{color:var(--text-light);margin-bottom:24px}
-    .form-group{margin-bottom:16px}
-    .form-group label{display:block;font-size:14px;font-weight:500;margin-bottom:6px}
-    .form-group input,.form-group textarea,.form-group select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;background:#fff}
-    .form-group input:focus,.form-group textarea:focus{border-color:var(--blue)}
-    .form-group textarea{min-height:100px;resize:vertical}
+/* FEEDBACK BUTTON */
+.feedback-float{position:fixed;bottom:32px;right:32px;z-index:200}
+.feedback-btn{background:var(--navy);color:#fff;border:none;border-radius:12px;padding:12px 18px;font-family:'Satoshi',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(13,27,42,0.2);transition:all 0.25s;letter-spacing:0.2px}
+.feedback-btn:hover{background:var(--teal);transform:translateY(-2px)}
+.feedback-btn svg{width:16px;height:16px}
 
-    /* FOOTER */
-    footer{padding:40px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--text-light);position:relative;z-index:1}
-    .footer-links{display:flex;gap:24px}
-    .footer-links a{color:var(--text-light);text-decoration:none;transition:color 0.2s}
-    .footer-links a:hover{color:var(--text)}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(13,27,42,0.6);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:24px;padding:44px;max-width:480px;width:100%;position:relative;animation:modalIn 0.35s cubic-bezier(0.16,1,0.3,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{position:absolute;top:20px;right:20px;background:var(--off-white);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);transition:all 0.2s}
+.modal-close:hover{background:var(--border-soft);color:var(--navy)}
+.modal h3{font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.modal p{font-size:14px;color:var(--text-mid);margin-bottom:24px;line-height:1.6}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:var(--navy);margin-bottom:6px}
+.form-input{width:100%;padding:12px 14px;border:1.5px solid var(--border-soft);border-radius:10px;font-size:14px;font-family:'Satoshi',sans-serif;outline:none;transition:all 0.2s;background:#fff;color:var(--navy)}
+.form-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,159,214,0.1)}
+.form-input::placeholder{color:var(--text-light)}
+textarea.form-input{min-height:100px;resize:vertical}
+select.form-input{cursor:pointer}
 
-    /* SCROLL REVEAL */
-    .reveal{opacity:0;transform:translateY(40px);transition:all 0.7s ease}
-    .reveal.visible{opacity:1;transform:translateY(0)}
+/* CONTACT SECTION */
+.contact-section{padding:80px 64px;position:relative;z-index:1}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:60px}
+.contact-panel{background:rgba(255,255,255,0.7);backdrop-filter:blur(16px);border:1.5px solid var(--border-soft);border-radius:20px;padding:36px}
+.contact-panel h3{font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.contact-panel p{font-size:14px;color:var(--text-mid);margin-bottom:24px;line-height:1.6}
 
-    /* RESPONSIVE */
-    @media(max-width:768px){
-      nav{padding:16px 24px}
-      .nav-links a:not(:last-child){display:none}
-      .hero{padding:80px 24px 40px}
-      .hero h1{font-size:42px;letter-spacing:-1.5px}
-      .hero p{font-size:17px}
-      .demo-section,.section,.pricing,.referral-section,.waitlist{padding:40px 24px}
-      .stats{margin:0 24px 40px;grid-template-columns:1fr}
-      .steps,.pricing-grid{grid-template-columns:1fr}
-      .referral-card{flex-direction:column;padding:32px}
-      footer{flex-direction:column;gap:16px;padding:24px;text-align:center}
-    }
-  </style>
+/* FOOTER */
+footer{background:var(--navy);padding:64px;position:relative;z-index:1}
+.footer-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
+.footer-brand img{height:28px;margin-bottom:14px}
+.footer-brand p{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;max-width:220px}
+.footer-col h4{font-family:'Clash Display',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;margin-bottom:10px;transition:color 0.2s}
+.footer-col a:hover{color:rgba(255,255,255,0.8)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.3)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion),not all and (min-width:1px){.reveal{opacity:1;transform:none}}
+
+/* RESPONSIVE */
+@media(max-width:1024px){.steps-grid,.pricing-grid,.team-grid{grid-template-columns:1fr 1fr}.footer-top{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){
+  nav,.hero,.section,.demo-section,.stats-bar,.pricing-section,.team-section,.contact-section,footer{padding-left:24px;padding-right:24px}
+  .hero h1{font-size:40px;letter-spacing:-1.5px}
+  .steps-grid,.pricing-grid,.team-grid,.contact-grid,.footer-top{grid-template-columns:1fr}
+  .stats-inner{grid-template-columns:repeat(2,1fr)}
+  .stats-inner .stat-item:nth-child(2){border-right:none}
+  .stats-inner .stat-item:nth-child(3){border-top:1px solid var(--border-soft);border-right:1px solid var(--border-soft)}
+}
+</style>
 </head>
 <body>
 
-<canvas id="particles"></canvas>
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
+<canvas id="bg-canvas"></canvas>
+<div class="cursor-dot" id="cursorDot"></div>
 
-<!-- CONTACT/EARLY ACCESS MODAL -->
-<div class="modal-overlay" id="contactModal">
+<!-- FEEDBACK FLOAT -->
+<div class="feedback-float">
+  <button class="feedback-btn" onclick="openModal('feedbackModal')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Share feedback
+  </button>
+</div>
+
+<!-- FEEDBACK MODAL -->
+<div class="modal-overlay" id="feedbackModal">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal('contactModal')">×</button>
-    <h3>Get Early Access</h3>
-    <p>Join the waitlist for Continuous Protection Mode — Grassion watching every commit 24/7.</p>
-    <div class="form-group"><label>Your Name</label><input type="text" placeholder="Sai Kumar" id="modalName"></div>
-    <div class="form-group"><label>Work Email</label><input type="email" placeholder="you@company.com" id="modalEmail"></div>
-    <div class="form-group"><label>Company / Project</label><input type="text" placeholder="Startup or GitHub username" id="modalCompany"></div>
-    <div class="form-group"><label>Message (optional)</label><textarea placeholder="Tell us about your stack..."></textarea></div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px" onclick="submitEarlyAccess()">Request Early Access</button>
-    <p id="modalSuccess" style="color:var(--green);margin-top:12px;display:none;text-align:center">✓ You're on the list! We'll be in touch.</p>
+    <button class="modal-close" onclick="closeModal('feedbackModal')">×</button>
+    <h3>Share your thoughts</h3>
+    <p>Help us build a better product. Your feedback goes directly to the team.</p>
+    <div class="form-group"><label>Your name</label><input type="text" class="form-input" placeholder="Sai Kumar"></div>
+    <div class="form-group"><label>Email</label><input type="email" class="form-input" id="fbEmail" placeholder="you@company.com"></div>
+    <div class="form-group"><label>Message</label><textarea class="form-input" placeholder="What's on your mind?"></textarea></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px" onclick="submitFeedback()">Send feedback</button>
+    <p id="fbSuccess" style="color:var(--teal);text-align:center;margin-top:12px;display:none;font-size:13px">Thank you! We received your feedback.</p>
+  </div>
+</div>
+
+<!-- EARLY ACCESS MODAL -->
+<div class="modal-overlay" id="earlyModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('earlyModal')">×</button>
+    <h3>Request early access</h3>
+    <p>Be among the first to get Continuous Protection Mode — Grassion watching every commit automatically.</p>
+    <div class="form-group"><label>Name</label><input type="text" class="form-input" placeholder="Your name"></div>
+    <div class="form-group"><label>Email</label><input type="email" class="form-input" id="earlyEmail" placeholder="you@company.com"></div>
+    <div class="form-group"><label>Company or GitHub</label><input type="text" class="form-input" placeholder="startup or @github"></div>
+    <div class="form-group"><label>Message (optional)</label><textarea class="form-input" placeholder="Tell us about your stack..."></textarea></div>
+    <button class="btn btn-teal" style="width:100%;justify-content:center;padding:13px" onclick="submitEarly()">Request access</button>
+    <p id="earlySuccess" style="color:var(--teal);text-align:center;margin-top:12px;display:none;font-size:13px">You're on the list.</p>
   </div>
 </div>
 
 <nav>
-  <a href="/" class="logo">Grassion</a>
+  <a href="/" class="nav-logo">
+    <img src="/img/logo.png" alt="Grassion" onerror="this.style.display='none'">
+    <span class="nav-logo-text">Grassion</span>
+  </a>
   <div class="nav-links">
     <a href="#how-it-works">How it works</a>
     <a href="/about">About</a>
     <a href="/pricing">Pricing</a>
     <a href="/contact">Contact</a>
-    <a href="/auth/github" class="btn btn-primary">Connect GitHub</a>
+  </div>
+  <div class="nav-cta">
+    <a href="/auth/github" class="btn btn-outline">Sign in</a>
+    <a href="/auth/github" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      Connect GitHub
+    </a>
   </div>
 </nav>
 
+<!-- FLOATING ELEMENTS -->
+<div class="float-el float-1"></div>
+<div class="float-el float-2"></div>
+<div class="float-el float-3"></div>
+<div class="float-el float-4"></div>
+
+<!-- HERO -->
 <section class="hero">
-  <div class="badge">🛡️ Zero-Touch Codebase Security</div>
-  <h1>
-    <span class="word" style="animation-delay:0.1s">Ship</span>
-    <span class="word blue" style="animation-delay:0.25s"> fearlessly.</span><br>
-    <span class="word" style="animation-delay:0.4s">Stop</span>
-    <span class="word" style="animation-delay:0.55s"> security</span>
-    <span class="word" style="animation-delay:0.7s"> gaps</span><br>
-    <span class="word" style="animation-delay:0.85s">before</span>
-    <span class="word blue" style="animation-delay:1.0s"> hackers</span>
-    <span class="word" style="animation-delay:1.1s"> do.</span>
-  </h1>
-  <p>Grassion scans your GitHub repo, finds unprotected API endpoints, and raises the fix PR automatically.</p>
-  <div class="hero-cta">
-    <a href="/auth/github" class="btn btn-github btn-lg">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-      Connect GitHub Free
-    </a>
-    <button class="btn btn-outline btn-lg" onclick="openModal('contactModal')">Get Early Access</button>
-  </div>
-</section>
-
-<section class="demo-section">
-  <div class="demo-card">
-    <div class="demo-header">
-      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
-      <span class="demo-title">grassion — scanning myapp/backend</span>
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Zero-Touch Codebase Security
     </div>
-    <div class="demo-body">
-      <div class="demo-line"><span class="ds ds-scan">SCAN</span><span class="dt">Analyzing <span>routes/api.js</span>, <span>controllers/user.js</span>, <span>handlers/payment.js</span>...</span></div>
-      <div class="demo-line"><span class="ds ds-found">FOUND</span><span class="dt">3 unprotected endpoints — <span>POST /api/users</span>, <span>DELETE /api/orders/:id</span>, <span>GET /api/admin/stats</span></span></div>
-      <div class="demo-line"><span class="ds ds-fix">FIX</span><span class="dt">Generating JWT auth middleware in your codebase style...</span></div>
-      <div class="demo-line"><span class="ds ds-pr">PR</span><span class="dt">Raised PR #47 — <span>"fix: add auth to 3 unprotected endpoints"</span></span></div>
-      <div class="demo-line"><span class="ds ds-fix">DONE</span><span class="dt">Scan complete in <span>42 seconds</span>. Your codebase is protected. 🛡️</span></div>
+    <h1>
+      <span class="line"><span class="word" style="animation-delay:0.1s">Security</span> <span class="word accent" style="animation-delay:0.25s">gaps</span></span>
+      <span class="line"><span class="word" style="animation-delay:0.4s">fixed</span> <span class="word" style="animation-delay:0.55s">before</span></span>
+      <span class="line"><span class="word" style="animation-delay:0.7s">you</span> <span class="word" style="animation-delay:0.85s">blink.</span></span>
+    </h1>
+    <p class="hero-sub">Grassion scans your GitHub repo, finds unprotected API endpoints, and raises the fix PR — automatically. No configuration. No security team needed.</p>
+    <div class="hero-actions">
+      <a href="/auth/github" class="btn btn-github btn-lg">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Start free — GitHub
+      </a>
+      <button class="btn btn-ghost btn-lg" onclick="openModal('earlyModal')">Request early access</button>
+    </div>
+    <div class="hero-proof">
+      <div class="proof-stat"><div class="proof-num">60s</div><div class="proof-label">Avg scan time</div></div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat"><div class="proof-num">100%</div><div class="proof-label">Auto PR raising</div></div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat"><div class="proof-num">24/7</div><div class="proof-label">Continuous watch</div></div>
     </div>
   </div>
 </section>
 
-<div class="stats reveal">
-  <div class="stat"><div class="stat-n">60s</div><div class="stat-l">Average scan time</div></div>
-  <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Automatic PR generation</div></div>
-  <div class="stat"><div class="stat-n">24/7</div><div class="stat-l">Continuous protection (Pro)</div></div>
+<!-- DEMO -->
+<section class="demo-section reveal">
+  <div class="demo-wrap">
+    <div class="section-label">Live scan</div>
+    <div class="demo-card">
+      <div class="demo-bar">
+        <div class="demo-dots"><div class="demo-dot demo-dot-r"></div><div class="demo-dot demo-dot-y"></div><div class="demo-dot demo-dot-g"></div></div>
+        <span class="demo-title">grassion — scanning myapp/api-server</span>
+      </div>
+      <div class="demo-body">
+        <div class="demo-line"><span class="demo-tag tag-scan">SCAN</span><span class="demo-text">Traversing <em>routes/api.js</em>, <em>controllers/user.js</em>, <em>handlers/payment.js</em></span></div>
+        <div class="demo-line"><span class="demo-tag tag-found">FOUND</span><span class="demo-text"><strong>3 unprotected endpoints</strong> — <em>POST /api/users</em>, <em>DELETE /api/orders/:id</em>, <em>GET /api/admin/stats</em></span></div>
+        <div class="demo-line"><span class="demo-tag tag-fix">FIX</span><span class="demo-text">Generating JWT middleware in your codebase style...</span></div>
+        <div class="demo-line"><span class="demo-tag tag-pr">PR</span><span class="demo-text">Opened <strong>PR #47</strong> <em>"fix: add auth middleware to 3 exposed endpoints"</em></span></div>
+        <div class="demo-line"><span class="demo-tag tag-done">DONE</span><span class="demo-text">Scan complete in <strong>38 seconds</strong>. Codebase protected.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar reveal">
+  <div class="stats-inner">
+    <div class="stat-item"><div class="stat-num">38s</div><div class="stat-lbl">Average scan time</div></div>
+    <div class="stat-item"><div class="stat-num">100%</div><div class="stat-lbl">PR auto-generation</div></div>
+    <div class="stat-item"><div class="stat-num">24/7</div><div class="stat-lbl">Continuous protection</div></div>
+    <div class="stat-item"><div class="stat-num">0</div><div class="stat-lbl">Manual effort needed</div></div>
+  </div>
 </div>
 
+<!-- HOW IT WORKS -->
 <section class="section reveal" id="how-it-works">
-  <div class="section-tag">How it works</div>
-  <h2>From exposed to protected<br>in under 60 seconds.</h2>
-  <p>No configuration. No security expertise needed. Just connect your repo and watch it work.</p>
-  <div class="steps">
-    <div class="step"><div class="step-n">1</div><h3>Connect GitHub</h3><p>Sign in with GitHub and select the repo you want to protect.</p></div>
-    <div class="step"><div class="step-n">2</div><h3>Grassion Scans</h3><p>Our engine reads your route files and finds endpoints missing authentication.</p></div>
-    <div class="step"><div class="step-n">3</div><h3>Fix Generated</h3><p>GPT-4 writes the correct auth middleware in your exact code style.</p></div>
-    <div class="step"><div class="step-n">4</div><h3>PR Raised</h3><p>Grassion opens a real PR in your repo. You just review and merge.</p></div>
+  <div class="section-header">
+    <div class="section-label">How it works</div>
+    <h2>From exposed to protected in under 60 seconds.</h2>
+    <p>No configuration. No security expertise needed.</p>
+  </div>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/></svg></div>
+      <h3>Connect GitHub</h3>
+      <p>Sign in and select the repo you want to protect. Takes 30 seconds.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+      <h3>Grassion Scans</h3>
+      <p>Our engine reads your route files and finds every endpoint missing authentication.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+      <h3>Fix Generated</h3>
+      <p>GPT-4 writes the correct auth middleware in your exact code style.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></div>
+      <h3>PR Raised</h3>
+      <p>Grassion opens a real PR in your repo. You review and merge.</p>
+    </div>
   </div>
 </section>
 
-<section class="pricing reveal" id="pricing">
+<!-- PRICING -->
+<section class="pricing-section reveal" id="pricing">
   <div style="text-align:center">
-    <div class="section-tag" style="display:inline-block">Pricing</div>
-    <h2 style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;letter-spacing:-1.5px;margin-bottom:12px">Simple, honest pricing.</h2>
-    <p style="color:var(--text-light);font-size:18px">Start free. Upgrade when you need 24/7 protection.</p>
+    <div class="section-label" style="display:inline-block">Pricing</div>
+    <h2 style="font-family:'Clash Display',sans-serif;font-size:44px;font-weight:700;letter-spacing:-1.5px;color:var(--navy);margin-bottom:12px">Simple, honest pricing.</h2>
+    <p style="color:var(--text-mid);font-size:17px">Start free. No card required.</p>
   </div>
   <div class="pricing-grid">
-    <div class="plan">
+    <div class="plan-card">
       <div class="plan-name">Free</div>
-      <div class="plan-price">₹0</div>
+      <div class="plan-price"><sup>₹</sup>0</div>
       <div class="plan-desc">Try Grassion on your first repo.</div>
       <ul class="plan-features">
-        <li><span class="ck">✓</span> 1 repo</li>
-        <li><span class="ck">✓</span> 3 scans/month</li>
-        <li><span class="ck">✓</span> View vulnerability report</li>
-        <li><span class="cx">—</span> Auto PR raising</li>
-        <li><span class="cx">—</span> Continuous protection</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 1 repository</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 3 scans per month</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Full vulnerability report</li>
+        <li><svg class="feat-icon feat-no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Auto PR raising</li>
+        <li><svg class="feat-icon feat-no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Continuous protection</li>
       </ul>
-      <a href="/auth/github" class="btn btn-outline" style="width:100%;justify-content:center">Get started free</a>
+      <a href="/auth/github" class="btn btn-outline" style="width:100%;justify-content:center">Get started</a>
     </div>
-    <div class="plan featured">
-      <div class="plan-badge">Most Popular</div>
+    <div class="plan-card featured">
+      <div class="plan-featured-badge">Most Popular</div>
       <div class="plan-name">Pro</div>
-      <div class="plan-price">₹4,900<span>/mo</span></div>
+      <div class="plan-price"><sup>₹</sup>4,900<span class="plan-price-suffix">/mo</span></div>
       <div class="plan-desc">Full protection for serious teams.</div>
       <ul class="plan-features">
-        <li><span class="ck">✓</span> Unlimited repos</li>
-        <li><span class="ck">✓</span> Unlimited scans</li>
-        <li><span class="ck">✓</span> Auto PR raising</li>
-        <li><span class="ck">✓</span> Continuous Protection 24/7</li>
-        <li><span class="ck">✓</span> Email alerts</li>
-        <li><span class="ck">✓</span> Priority support</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Unlimited repos</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Unlimited scans</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Auto PR raising</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Continuous Protection 24/7</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Email alerts</li>
       </ul>
-      <a href="/auth/github" class="btn btn-primary" style="width:100%;justify-content:center">Start Pro</a>
+      <a href="/auth/github" class="btn btn-teal" style="width:100%;justify-content:center">Start Pro</a>
     </div>
-    <div class="plan">
+    <div class="plan-card">
       <div class="plan-name">Enterprise</div>
       <div class="plan-price" style="font-size:32px;padding-top:6px">Custom</div>
       <div class="plan-desc">For large teams with custom needs.</div>
       <ul class="plan-features">
-        <li><span class="ck">✓</span> Everything in Pro</li>
-        <li><span class="ck">✓</span> Custom integrations</li>
-        <li><span class="ck">✓</span> SLA guarantee</li>
-        <li><span class="ck">✓</span> Dedicated support</li>
-        <li><span class="ck">✓</span> On-premise option</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Everything in Pro</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Custom integrations</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> SLA guarantee</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Dedicated support</li>
+        <li><svg class="feat-icon feat-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> On-premise option</li>
       </ul>
-      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openModal('contactModal')">Contact us</button>
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openModal('earlyModal')">Contact us</button>
     </div>
   </div>
 </section>
 
-<div class="referral-section reveal">
-  <div class="referral-card">
-    <div>
-      <h3>🎁 Refer a friend, both get 10 free scans</h3>
-      <p>Share your referral link. Every friend who signs up gives you both 10 bonus scans — forever.</p>
+
+
+<!-- CAREERS MODAL -->
+<div class="modal-overlay" id="careersModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('careersModal')">×</button>
+    <h3>Work with us</h3>
+    <p>We're a small team building something that matters. Tell us about yourself.</p>
+    <div class="form-group"><label>Name</label><input type="text" class="form-input" placeholder="Your name"></div>
+    <div class="form-group"><label>Email</label><input type="email" class="form-input" id="careerEmail" placeholder="you@company.com"></div>
+    <div class="form-group"><label>Role you're interested in</label>
+      <select class="form-input">
+        <option>Full-stack Engineer</option>
+        <option>Security Engineer</option>
+        <option>Product Designer</option>
+        <option>Growth & Marketing</option>
+        <option>Other</option>
+      </select>
     </div>
-    <a href="/auth/github" class="btn btn-primary btn-lg">Get your referral link</a>
+    <div class="form-group"><label>LinkedIn or GitHub</label><input type="text" class="form-input" placeholder="https://"></div>
+    <div class="form-group"><label>Why Grassion?</label><textarea class="form-input" placeholder="What excites you about what we're building?"></textarea></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px" onclick="submitCareer()">Submit application</button>
+    <p id="careerSuccess" style="color:var(--teal);text-align:center;margin-top:12px;display:none;font-size:13px">Application received. We'll be in touch.</p>
   </div>
 </div>
 
-<section class="waitlist reveal">
-  <h2>🚀 Join the Early Access</h2>
-  <p>Be first to get Continuous Protection Mode — Grassion watching every commit 24/7.</p>
-  <form class="wl-form" onsubmit="joinWaitlist(event)">
-    <input type="email" id="wlEmail" placeholder="your@email.com" required>
-    <button type="submit" class="btn btn-primary">Join waitlist</button>
-  </form>
-  <p id="wlMsg" style="margin-top:16px;color:#34d399;display:none">✓ You're on the list!</p>
-</section>
-
+<!-- FOOTER -->
 <footer>
-  <a href="/" class="logo">Grassion</a>
-  <span>© 2026 Grassion. Zero-Touch Codebase Security.</span>
-  <div class="footer-links">
-    <a href="/about">About</a>
-    <a href="/pricing">Pricing</a>
-    <a href="/contact">Contact</a>
-    <a href="mailto:sai@grassion.com">sai@grassion.com</a>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <img src="/img/logo-white.png" alt="Grassion" onerror="this.style.display='none'">
+      <p style="font-family:'Clash Display',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:10px">Grassion</p>
+      <p>Built in Odisha, For the World.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#how-it-works">How it works</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/auth/github">Sign in</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a href="#" onclick="openModal('careersModal')">Careers</a>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <a href="/cdn-cgi/l/email-protection#a3cacdc5cce3c4d1c2d0d0cacccd8dc0ccce"><span class="__cf_email__" data-cfemail="147d7a727b5473667567677d7b7a3a777b79">[email&#160;protected]</span></a>
+      <a href="https://twitter.com/grassion_hq" target="_blank">Twitter</a>
+      <a href="https://linkedin.com/company/grassion" target="_blank">LinkedIn</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Grassion. All rights reserved.</span>
+    <span>Bhubaneswar, Odisha, India</span>
   </div>
 </footer>
 
-<script>
-// CURSOR
-const cursor = document.getElementById('cursor');
-const ring = document.getElementById('cursorRing');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cursor.style.left=mx-6+'px'; cursor.style.top=my-6+'px'; });
-function animateRing(){ rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12; ring.style.left=rx-18+'px'; ring.style.top=ry-18+'px'; requestAnimationFrame(animateRing); }
-animateRing();
-document.querySelectorAll('a,button').forEach(el => {
-  el.addEventListener('mouseenter', () => { cursor.style.transform='scale(2)'; ring.style.transform='scale(1.5)'; });
-  el.addEventListener('mouseleave', () => { cursor.style.transform='scale(1)'; ring.style.transform='scale(1)'; });
-});
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// PARTICLE CURSOR
+const dot = document.getElementById('cursorDot');
+const trails = [];
+const TRAIL_COUNT = 12;
+for(let i=0;i<TRAIL_COUNT;i++){
+  const t=document.createElement('div');
+  t.className='cursor-trail';
+  const size=Math.max(4,16-i);
+  const hue=180+i*8;
+  t.style.cssText=`width:${size}px;height:${size}px;background:hsla(${hue},80%,60%,${0.8-i*0.06});`;
+  document.body.appendChild(t);
+  trails.push({el:t,x:0,y:0});
+}
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx-4+'px';dot.style.top=my-4+'px';});
+function animateTrails(){
+  let px=mx,py=my;
+  trails.forEach((t,i)=>{
+    const speed=0.12+i*0.02;
+    t.x+=(px-t.x)*speed;t.y+=(py-t.y)*speed;
+    t.el.style.left=t.x+'px';t.el.style.top=t.y+'px';
+    px=t.x;py=t.y;
+  });
+  requestAnimationFrame(animateTrails);
+}
+animateTrails();
 
-// PARTICLES
-const canvas = document.getElementById('particles');
-const ctx = canvas.getContext('2d');
-let particles = [];
-function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
-resize(); window.addEventListener('resize', resize);
-function Particle(){ this.x=Math.random()*canvas.width; this.y=Math.random()*canvas.height; this.vx=(Math.random()-0.5)*0.3; this.vy=(Math.random()-0.5)*0.3; this.r=Math.random()*2+1; this.alpha=Math.random()*0.5+0.1; }
-Particle.prototype.update=function(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>canvas.width)this.vx*=-1; if(this.y<0||this.y>canvas.height)this.vy*=-1; };
-for(let i=0;i<80;i++) particles.push(new Particle());
+// PARTICLE BACKGROUND
+const canvas=document.getElementById('bg-canvas');
+const ctx=canvas.getContext('2d');
+let particles=[];
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+class Particle{
+  constructor(){this.reset();}
+  reset(){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.vx=(Math.random()-0.5)*0.2;this.vy=(Math.random()-0.5)*0.2;this.r=Math.random()*1.5+0.5;this.alpha=Math.random()*0.3+0.05;}
+  update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>canvas.width)this.vx*=-1;if(this.y<0||this.y>canvas.height)this.vy*=-1;}
+}
+for(let i=0;i<60;i++)particles.push(new Particle());
 function drawParticles(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  particles.forEach(p => { p.update(); ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(37,99,235,${p.alpha})`; ctx.fill(); });
-  particles.forEach((p,i) => { particles.slice(i+1).forEach(q => { const d=Math.hypot(p.x-q.x,p.y-q.y); if(d<120){ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.strokeStyle=`rgba(37,99,235,${0.15*(1-d/120)})`; ctx.lineWidth=0.5; ctx.stroke(); } }); });
+  particles.forEach(p=>{
+    p.update();
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(42,159,214,${p.alpha})`;ctx.fill();
+  });
+  particles.forEach((p,i)=>particles.slice(i+1).forEach(q=>{
+    const d=Math.hypot(p.x-q.x,p.y-q.y);
+    if(d<100){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle=`rgba(42,159,214,${0.08*(1-d/100)})`;ctx.lineWidth=0.5;ctx.stroke();}
+  }));
   requestAnimationFrame(drawParticles);
 }
 drawParticles();
 
 // SCROLL REVEAL
-const observer = new IntersectionObserver(entries => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); }), { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:0.05});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+// Trigger immediately for anything already visible
+setTimeout(()=>document.querySelectorAll('.reveal').forEach(el=>{const r=el.getBoundingClientRect();if(r.top<window.innerHeight)el.classList.add('visible');}),100);
 
 // MODAL
-function openModal(id){ document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) closeModal(m.id); }));
+function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
 
-async function submitEarlyAccess(){
-  const email = document.getElementById('modalEmail').value;
-  if(!email) return alert('Please enter your email');
-  await fetch('/api/waitlist', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
-  document.getElementById('modalSuccess').style.display='block';
-  setTimeout(() => closeModal('contactModal'), 2000);
+async function submitFeedback(){
+  const email=document.getElementById('fbEmail').value;
+  if(!email)return;
+  await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})}).catch(()=>{});
+  document.getElementById('fbSuccess').style.display='block';
 }
-
-async function joinWaitlist(e){
-  e.preventDefault();
-  const email = document.getElementById('wlEmail').value;
-  await fetch('/api/waitlist', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
-  document.getElementById('wlMsg').style.display='block';
-  document.getElementById('wlEmail').value='';
+async function submitEarly(){
+  const email=document.getElementById('earlyEmail').value;
+  if(!email)return;
+  await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})}).catch(()=>{});
+  document.getElementById('earlySuccess').style.display='block';
 }
-</script>
-</body>
-</html>
+async function submitCareer(){
+  const email=document.getElementById('careerEmail').value;
+  if(!email)return;
+  await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})}).catch(()=>{});
+  documen
