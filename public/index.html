@@ -595,4 +595,8 @@ async function submitCareer(){
   const email=document.getElementById('careerEmail').value;
   if(!email)return;
   await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})}).catch(()=>{});
-  documen
+  document.getElementById('careerSuccess').style.display='block';
+}
+</script>
+</body>
+</html>
