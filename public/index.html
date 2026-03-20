@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grassion — Zero-Touch Codebase Security</title>
+<title>Grassion Zero-Touch Codebase Security</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -353,8 +354,8 @@ footer{background:var(--navy);padding:64px;position:relative;z-index:1}
 
 <nav>
   <a href="/" class="nav-logo">
-    <img src="/img/logo.png" alt="Grassion" onerror="this.style.display='none'">
-    <span class="nav-logo-text">Grassion</span>
+    <img src="/img/logo.png" alt="Grassion" style="height:32px">
+    
   </a>
   <div class="nav-links">
     <a href="#how-it-works">How it works</a>
@@ -414,10 +415,10 @@ footer{background:var(--navy);padding:64px;position:relative;z-index:1}
     <div class="demo-card" style="overflow:hidden">
       <div class="demo-bar">
         <div class="demo-dots"><div class="demo-dot demo-dot-r"></div><div class="demo-dot demo-dot-y"></div><div class="demo-dot demo-dot-g"></div></div>
-        <span class="demo-title">grassion — scanning myapp/api-server</span>
+        <span class="demo-title">grassion scanning myapp/api-server</span>
         <span style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:10px;color:#4ade80;font-weight:700;letter-spacing:0.8px"><span style="width:5px;height:5px;border-radius:50%;background:#4ade80;display:inline-block;animation:pulse 1.5s infinite"></span>LIVE</span>
       </div>
-      <div id="liveScanBody" style="padding:16px 24px;min-height:200px;max-height:220px;overflow:hidden"></div>
+      <div id="liveScanBody" style="padding:16px 24px;height:200px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;justify-content:flex-end"></div>
     </div>
   </div>
 </section>
@@ -621,7 +622,7 @@ footer{background:var(--navy);padding:64px;position:relative;z-index:1}
     </div>
     <div class="footer-col">
       <h4>Connect</h4>
-      <a href="mailto:info@grassion.com">info@grassion.com</a>
+      <a href="/cdn-cgi/l/email-protection#10797e767f507762716363797f7e3e737f7d"><span class="__cf_email__" data-cfemail="ec85828a83ac8b9e8d9f9f858382c28f8381">[email&#160;protected]</span></a>
       <a href="https://twitter.com/grassion_hq" target="_blank">Twitter</a>
       <a href="https://linkedin.com/company/grassion" target="_blank">LinkedIn</a>
     </div>
@@ -698,7 +699,7 @@ function addScanLine(){
   var row=document.createElement('div');row.className='live-line';
   row.innerHTML='<span class="live-ts">'+getTs()+'</span><span class="live-tag '+ev.tag+'">'+ev.label+'</span><span class="live-text">'+ev.text+'</span>';
   scanBody.appendChild(row);setTimeout(function(){row.classList.add('show');},30);
-  var delay=ev.label==='SCAN'?1800:ev.label==='FOUND'?1400:ev.label==='FIX'?2000:ev.label==='PR'?1200:2400;
+  var delay=ev.label==='SCAN'?700:ev.label==='FOUND'?500:ev.label==='FIX'?800:ev.label==='PR'?500:1000;
   setTimeout(addScanLine,delay);
 }
 if(scanBody){
