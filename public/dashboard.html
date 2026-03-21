@@ -8,11 +8,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#0d1b2a;--navy-2:#112236;--navy-3:#1a3352;--teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;--green:#10b981;--green-light:#f0fdf4;--red:#ef4444;--red-light:#fef2f2;--yellow:#f59e0b;--yellow-light:#fffbeb;--white:#fff;--off-white:#f0f4f8;--text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;--border:rgba(13,27,42,0.08);--border-teal:rgba(42,159,214,0.2);--shadow:0 4px 20px rgba(13,27,42,0.08);--shadow-teal:0 8px 32px rgba(42,159,214,0.15)}
+:root{
+  --navy:#0d1b2a;--navy-2:#112236;--navy-3:#1a3352;
+  --teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;
+  --green:#10b981;--green-light:#f0fdf4;
+  --red:#ef4444;--red-light:#fef2f2;
+  --yellow:#f59e0b;--yellow-light:#fffbeb;
+  --white:#fff;--off-white:#f0f4f8;
+  --text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;
+  --border:rgba(13,27,42,0.08);--border-teal:rgba(42,159,214,0.2);
+  --glass:rgba(255,255,255,0.7);
+  --shadow:0 4px 20px rgba(13,27,42,0.08);
+  --shadow-teal:0 8px 32px rgba(42,159,214,0.15);
+}
 html{cursor:auto}
 body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
 .layout{display:flex;min-height:100vh}
-.sidebar{width:248px;background:#fff;border-right:1px solid var(--border);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50}
+.sidebar{width:248px;background:#fff;border-right:1px solid var(--border);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50;transition:transform 0.3s}
 .sidebar-header{padding:20px 20px 0}
 .sidebar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;padding:0 0 20px;border-bottom:1px solid var(--border)}
 .sidebar-logo img{height:28px}
@@ -20,52 +33,70 @@ body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--te
 .nav-section-label{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;padding:0 8px;margin:16px 0 8px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;font-size:14px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.15s;text-decoration:none;border:none;background:none;width:100%;font-family:'Satoshi',sans-serif}
 .nav-item svg{width:17px;height:17px;flex-shrink:0;opacity:0.6}
-.nav-item:hover{background:var(--off-white);color:var(--text)}.nav-item:hover svg{opacity:0.8}
-.nav-item.active{background:var(--teal-light);color:var(--teal-2);font-weight:600}.nav-item.active svg{opacity:1;color:var(--teal)}
-.nav-item.danger{color:var(--red)}.nav-item.danger svg{color:var(--red)}
+.nav-item:hover{background:var(--off-white);color:var(--text)}
+.nav-item:hover svg{opacity:0.8}
+.nav-item.active{background:var(--teal-light);color:var(--teal-2);font-weight:600}
+.nav-item.active svg{opacity:1;color:var(--teal)}
+.nav-item.danger{color:var(--red)}
+.nav-item.danger svg{color:var(--red)}
 .sidebar-bottom{padding:16px 12px;border-top:1px solid var(--border)}
 .user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--off-white);margin-bottom:10px}
 .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--navy-2),var(--teal-2));display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
 .user-name{font-size:13px;font-weight:600;color:var(--navy)}
-.user-plan-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px}
+.user-plan-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;letter-spacing:0.3px}
 .plan-free{background:var(--off-white);color:var(--text-light);border:1px solid var(--border)}
 .plan-pro{background:var(--yellow-light);color:var(--yellow)}
+
 .main{margin-left:248px;flex:1;min-height:100vh;display:flex;flex-direction:column}
 .topbar{padding:16px 32px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
 .topbar-title{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy)}
 .topbar-sub{font-size:13px;color:var(--text-light);margin-top:2px}
 .content{padding:28px 32px;flex:1}
+
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'Satoshi',sans-serif}
 .btn svg{width:15px;height:15px;flex-shrink:0}
-.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-3)}.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
-.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:var(--teal-2)}
-.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-3)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-teal:hover{background:var(--teal-2)}
+.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
 .btn-green{background:var(--green);color:#fff}
-.btn-ghost{background:var(--off-white);color:var(--text-mid)}.btn-ghost:hover{color:var(--text)}
+.btn-ghost{background:var(--off-white);color:var(--text-mid)}
+.btn-ghost:hover{color:var(--text)}
 .btn-danger{background:var(--red-light);color:var(--red)}
 .btn-sm{padding:6px 12px;font-size:12px}
 .btn-full{width:100%;justify-content:center;padding:12px}
+
 .card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:22px}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .card-title{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;color:var(--navy)}
 .card-sub{font-size:13px;color:var(--text-light);margin-top:2px}
+
 .upgrade-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-3) 100%);border-radius:14px;padding:20px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;position:relative;overflow:hidden}
 .upgrade-banner::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(42,159,214,0.1);border-radius:50%}
 .upgrade-banner h3{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;position:relative}
 .upgrade-banner p{font-size:13px;opacity:0.7;margin-top:3px;position:relative}
 .btn-upgrade{background:var(--teal);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Satoshi',sans-serif;white-space:nowrap;transition:all 0.2s}
 .btn-upgrade:hover{background:var(--teal-2)}
+
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 .stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:20px;transition:all 0.2s}
 .stat-card:hover{border-color:var(--border-teal);box-shadow:var(--shadow-teal)}
 .stat-label{font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
 .stat-value{font-family:'Clash Display',sans-serif;font-size:32px;font-weight:700;color:var(--navy);line-height:1}
-.stat-value.red{color:var(--red)}.stat-value.green{color:var(--green)}.stat-value.teal{color:var(--teal)}
+.stat-value.red{color:var(--red)}
+.stat-value.green{color:var(--green)}
+.stat-value.teal{color:var(--teal)}
 .stat-sub{font-size:12px;color:var(--text-light);margin-top:6px}
+
 .tabs{display:flex;gap:2px;background:var(--off-white);border-radius:10px;padding:4px;margin-bottom:24px;width:fit-content}
 .tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.2s;border:none;background:none;font-family:'Satoshi',sans-serif}
 .tab.active{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
-.tab-pane{display:none}.tab-pane.active{display:block}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
 .repo-search{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Satoshi',sans-serif;outline:none;transition:all 0.2s;background:#fff;color:var(--text);margin-bottom:14px}
 .repo-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,159,214,0.08)}
 .repo-list{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto}
@@ -74,13 +105,16 @@ body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--te
 .repo-name{font-size:14px;font-weight:500;color:var(--navy)}
 .repo-meta{font-size:12px;color:var(--text-light);margin-top:2px}
 .repo-lang{font-size:11px;padding:3px 9px;border-radius:100px;background:var(--off-white);color:var(--text-mid);font-weight:500}
+
 .loading-state{display:none;text-align:center;padding:48px}
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 20px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-steps{display:flex;flex-direction:column;gap:8px;max-width:260px;margin:0 auto;text-align:left}
 .ls{font-size:13px;color:var(--text-light);display:flex;align-items:center;gap:8px;padding:6px 0}
-.ls.active{color:var(--teal);font-weight:500}.ls.done{color:var(--green)}
+.ls.active{color:var(--teal);font-weight:500}
+.ls.done{color:var(--green)}
 .ls svg{width:14px;height:14px;flex-shrink:0}
+
 .results-wrap{display:none;margin-bottom:24px}
 .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .results-title{font-family:'Clash Display',sans-serif;font-size:19px;font-weight:700;color:var(--navy)}
@@ -92,86 +126,422 @@ body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--te
 .endpoint-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
 .endpoint-row:last-child{border-bottom:none}
 .method{font-size:10px;font-weight:800;padding:3px 7px;border-radius:4px;font-family:'Satoshi',monospace;letter-spacing:0.5px}
-.m-get{background:#dcfce7;color:#16a34a}.m-post{background:#dbeafe;color:#2563eb}.m-put{background:#fef9c3;color:#ca8a04}.m-delete{background:#fee2e2;color:var(--red)}.m-patch{background:#f3e8ff;color:#9333ea}
-.ep-path{font-family:monospace;color:var(--text)}.ep-issue{color:var(--red);font-size:12px;margin-left:auto}
+.m-get{background:#dcfce7;color:#16a34a}
+.m-post{background:#dbeafe;color:#2563eb}
+.m-put{background:#fef9c3;color:#ca8a04}
+.m-delete{background:#fee2e2;color:var(--red)}
+.m-patch{background:#f3e8ff;color:#9333ea}
+.ep-path{font-family:monospace;color:var(--text)}
+.ep-issue{color:var(--red);font-size:12px;margin-left:auto}
+
 .data-table{width:100%;border-collapse:collapse}
 .data-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border)}
 .data-table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text-mid)}
 .data-table tr:last-child td{border-bottom:none}
 .data-table tbody tr:hover td{background:var(--off-white)}
-.badge{display:inline-flex;align-items:center;font-size:11px;padding:3px 9px;border-radius:100px;font-weight:600}
-.badge-red{background:var(--red-light);color:var(--red)}.badge-green{background:var(--green-light);color:var(--green)}.badge-gray{background:var(--off-white);color:var(--text-light)}.badge-teal{background:var(--teal-light);color:var(--teal-2)}
+.badge{display:inline-flex;align-items:center;font-size:11px;padding:3px 9px;border-radius:100px;font-weight:600;letter-spacing:0.2px}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-gray{background:var(--off-white);color:var(--text-light)}
+.badge-teal{background:var(--teal-light);color:var(--teal-2)}
+
 .ref-box{background:linear-gradient(135deg,var(--teal-light),#e0f2fe);border:1.5px solid var(--border-teal);border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .ref-code-display{font-family:'Clash Display',monospace;font-size:24px;font-weight:700;color:var(--teal-2);letter-spacing:3px;background:#fff;padding:10px 20px;border-radius:10px;border:1.5px solid var(--border-teal)}
-@media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stats-row{grid-template-columns:repeat(2,1fr)}}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .main{margin-left:0}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
 <div class="layout">
 <aside class="sidebar">
   <div class="sidebar-header">
-    <a href="/" class="sidebar-logo"><img src="/img/logo.png" alt="Grassion" style="height:28px"></a>
+    <a href="/" class="sidebar-logo">
+      <img src="/img/logo.png" alt="Grassion" style="height:28px">
+    </a>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">Main</div>
-    <button class="nav-item active" onclick="showTab('scan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Dashboard</button>
-    <button class="nav-item" onclick="showTab('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Scan History</button>
-    <button class="nav-item" onclick="showTab('referral')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Refer &amp; Earn</button>
+    <button class="nav-item active" onclick="showTab('scan')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="showTab('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Scan History
+    </button>
+    <button class="nav-item" onclick="showTab('referral')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Refer &amp; Earn
+    </button>
+    <button class="nav-item" onclick="showTab('billing')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Billing
+    </button>
     <div class="nav-section-label">Account</div>
-    <button class="nav-item" onclick="showTab('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
+    <button class="nav-item" onclick="showTab('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
   </nav>
   <div class="sidebar-bottom">
     <div class="user-card">
       <div class="user-avatar" id="sideAvatar">S</div>
-      <div><div class="user-name" id="sideUsername">Loading...</div><span class="user-plan-badge plan-free" id="sidePlan">Free</span></div>
+      <div>
+        <div class="user-name" id="sideUsername">Loading...</div>
+        <span class="user-plan-badge plan-free" id="sidePlan">Free</span>
+      </div>
     </div>
-    <button class="nav-item" id="upgradeNavBtn" onclick="startPayment()" style="display:none;background:rgba(42,159,214,0.08);color:var(--teal);margin-bottom:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"/><path d="M21 3L13 11 9 7 3 13"/></svg>Upgrade to Pro</button>
-    <a href="/auth/logout" class="nav-item danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</a>
+    <button class="nav-item" id="upgradeNavBtn" onclick="startPayment()" style="display:none;background:rgba(42,159,214,0.08);color:var(--teal);margin-bottom:4px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"/><path d="M21 3L13 11 9 7 3 13"/></svg>
+      Upgrade to Pro
+    </button>
+    <a href="/auth/logout" class="nav-item danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign out
+    </a>
   </div>
 </aside>
+
 <main class="main">
   <div class="topbar">
-    <div><div class="topbar-title" id="pageTitle">Dashboard</div><div class="topbar-sub" id="pageSub">Scan repos and fix security gaps automatically</div></div>
-    <span id="topPlanBadge" style="font-size:12px;color:var(--text-light)"></span>
+    <div>
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-sub" id="pageSub">Scan repos and fix security gaps automatically</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="topPlanBadge" style="font-size:12px;color:var(--text-light)"></span>
+    </div>
   </div>
+
   <div class="content">
-    <div class="upgrade-banner" id="upgradeBanner" style="display:none"><div><h3>Upgrade to Pro — ₹4,900/month</h3><p>Auto PR raising + Continuous Protection watching every commit 24/7</p></div><button class="btn-upgrade" onclick="startPayment()">Upgrade now</button></div>
+    <div class="upgrade-banner" id="upgradeBanner" style="display:none">
+      <div>
+        <h3>Upgrade to Pro — ₹4,900/month</h3>
+        <p>Auto PR raising + Continuous Protection watching every commit 24/7</p>
+      </div>
+      <button class="btn-upgrade" onclick="startPayment()">Upgrade now</button>
+    </div>
+
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Total Scans</div><div class="stat-value" id="stScans">0</div><div class="stat-sub">All time</div></div>
       <div class="stat-card"><div class="stat-label">Issues Found</div><div class="stat-value red" id="stIssues">0</div><div class="stat-sub">Auth gaps detected</div></div>
       <div class="stat-card"><div class="stat-label">PRs Raised</div><div class="stat-value green" id="stPRs">0</div><div class="stat-sub">Auto-fixed</div></div>
       <div class="stat-card"><div class="stat-label">Scans Left</div><div class="stat-value teal" id="stLeft">3</div><div class="stat-sub" id="stLeftSub">Free tier</div></div>
     </div>
-    <div class="tabs"><button class="tab active" onclick="showTab('scan')">New Scan</button><button class="tab" onclick="showTab('history')">History</button><button class="tab" onclick="showTab('referral')">Referral</button><button class="tab" onclick="showTab('settings')">Settings</button></div>
-    <div class="tab-pane active" id="tab-scan">
-      <div class="card" style="margin-bottom:20px"><div class="card-header"><div><div class="card-title">Select a repository</div><div class="card-sub" id="repoCount">Loading...</div></div></div><input type="text" class="repo-search" placeholder="Search repositories..." oninput="filterRepos(this.value)"><div class="repo-list" id="repoList"><div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">Loading repositories...</div></div></div>
-      <div id="scanSelected" style="display:none;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px 20px;align-items:center;justify-content:space-between;margin-bottom:20px"><div><div style="font-weight:600;font-size:15px;color:var(--navy)" id="selectedName">—</div><div style="font-size:13px;color:var(--text-light);margin-top:2px">Ready to scan for auth gaps</div></div><button class="btn btn-primary" onclick="startScan()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Scan now</button></div>
-      <div class="loading-state" id="loadingState"><div class="spinner"></div><div class="loading-steps"><div class="ls" id="ls1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Reading route files...</div><div class="ls" id="ls2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Analyzing endpoints...</div><div class="ls" id="ls3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Detecting auth gaps...</div><div class="ls" id="ls4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Preparing results...</div></div></div>
-      <div class="results-wrap" id="resultsWrap"><div class="results-header"><div class="results-title" id="resultsTitle">Scan Results</div><button class="btn btn-green" id="prBtn" onclick="raisePR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>Raise fix PR</button></div><div id="issuesList"></div></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('scan')">New Scan</button>
+      <button class="tab" onclick="showTab('history')">History</button>
+      <button class="tab" onclick="showTab('referral')">Referral</button>
+      <button class="tab" onclick="showTab('billing')">Billing</button>
+      <button class="tab" onclick="showTab('settings')">Settings</button>
     </div>
-    <div class="tab-pane" id="tab-history"><div class="card"><div class="card-header"><div class="card-title">Scan History</div><button class="btn btn-ghost btn-sm" onclick="loadHistory()">Refresh</button></div><table class="data-table"><thead><tr><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th><th>Action</th></tr></thead><tbody id="historyBody"><tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-light)">No scans yet.</td></tr></tbody></table></div></div>
-    <div class="tab-pane" id="tab-referral"><div class="card" style="margin-bottom:20px"><div class="card-header"><div class="card-title">Your referral code</div></div><p style="font-size:14px;color:var(--text-mid);margin-bottom:20px">Share your code. Both you and your friend get 10 bonus scans when they sign up.</p><div class="ref-box"><div><div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;font-weight:500">Referral code</div><div class="ref-code-display" id="refCode">...</div></div><button class="btn btn-teal" onclick="copyRef()">Copy link</button></div></div><div class="card"><div class="card-header"><div class="card-title">Apply a referral code</div></div><div style="display:flex;gap:10px"><input type="text" id="refInput" class="repo-search" placeholder="Enter code e.g. ABC123" style="margin-bottom:0;flex:1"><button class="btn btn-primary" onclick="applyRef()">Apply</button></div><p id="refMsg" style="font-size:13px;margin-top:12px;display:none"></p></div></div>
-    <div class="tab-pane" id="tab-settings"><div class="card" style="margin-bottom:20px"><div class="card-header"><div class="card-title">Account</div></div><div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--off-white);border-radius:10px"><div class="user-avatar" id="settingsAvatar" style="width:56px;height:56px;font-size:20px">S</div><div><div style="font-weight:600;font-size:16px;color:var(--navy)" id="settingsName">—</div><div style="font-size:13px;color:var(--text-light)" id="settingsEmail">—</div></div></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><div><div class="card-title">Plan &amp; Billing</div><div class="card-sub" id="planDesc">Free plan</div></div></div><div id="planUpgradeArea"><p style="font-size:14px;color:var(--text-mid);margin-bottom:16px">Upgrade to Pro for unlimited repos, auto PR raising, and 24/7 Continuous Protection.</p><button class="btn btn-teal" onclick="startPayment()">Upgrade to Pro — ₹4,900/month</button></div></div><div class="card"><div class="card-header"><div class="card-title" style="color:var(--red)">Danger zone</div></div><p style="font-size:13px;color:var(--text-mid);margin-bottom:16px">Signing out will end your current session.</p><a href="/auth/logout" class="btn btn-danger">Sign out</a></div></div>
+
+    <div class="tab-pane active" id="tab-scan">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div><div class="card-title">Select a repository</div><div class="card-sub" id="repoCount">Loading...</div></div></div>
+        <input type="text" class="repo-search" placeholder="Search repositories..." oninput="filterRepos(this.value)">
+        <div class="repo-list" id="repoList"><div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">Loading repositories...</div></div>
+      </div>
+
+      <div id="scanSelected" style="display:none;background:#fff;border:1.5px solid var(--teal);border-radius:12px;padding:18px 20px;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Selected repository</div>
+          <div style="font-weight:600;font-size:15px;color:var(--navy)" id="selectedName">...</div>
+          <div style="font-size:13px;color:var(--text-light);margin-top:2px">Ready to scan for auth gaps</div>
+        </div>
+        <button class="btn btn-primary" onclick="startScan()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Scan now
+        </button>
+      </div>
+
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <div class="loading-steps">
+          <div class="ls" id="ls1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Reading route files...</div>
+          <div class="ls" id="ls2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Analyzing endpoints...</div>
+          <div class="ls" id="ls3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Detecting auth gaps...</div>
+          <div class="ls" id="ls4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Preparing results...</div>
+        </div>
+      </div>
+
+      <div class="results-wrap" id="resultsWrap">
+        <div class="results-header">
+          <div class="results-title" id="resultsTitle">Scan Results</div>
+          <button class="btn btn-green" id="prBtn" onclick="raisePR()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
+            Raise fix PR
+          </button>
+        </div>
+        <div id="issuesList"></div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-history">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Scan History</div><button class="btn btn-ghost btn-sm" onclick="loadHistory()">Refresh</button></div>
+        <table class="data-table">
+          <thead><tr><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-light)">No scans yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-referral">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Your referral code</div></div>
+        <p style="font-size:14px;color:var(--text-mid);margin-bottom:20px">Share your code. Both you and your friend get <strong>5 bonus scans</strong> when they sign up.</p>
+        <div class="ref-box">
+          <div><div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;font-weight:500">Referral code</div><div class="ref-code-display" id="refCode">...</div></div>
+          <button class="btn btn-teal" onclick="copyRef()">Copy link</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Apply a referral code</div></div>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="refInput" class="repo-search" placeholder="Enter code e.g. ABC123" style="margin-bottom:0;flex:1">
+          <button class="btn btn-primary" onclick="applyRef()">Apply</button>
+        </div>
+        <p id="refMsg" style="font-size:13px;margin-top:12px;display:none"></p>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-billing">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Current Plan</div></div>
+        <div id="billingPlanInfo" style="padding:20px;background:var(--off-white);border-radius:12px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--navy)" id="billingPlanName">Free</div>
+              <div style="font-size:13px;color:var(--text-mid);margin-top:4px" id="billingPlanDesc">3 scans per month, 1 repository</div>
+            </div>
+            <span id="billingPlanBadge" class="badge badge-gray" style="font-size:13px;padding:6px 14px">FREE</span>
+          </div>
+        </div>
+        <div id="billingUpgradeArea">
+          <h3 style="font-family:'Clash Display',sans-serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:16px">Upgrade to Pro</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+            <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:22px;margin-bottom:6px">∞</div>
+              <div style="font-size:12px;color:var(--text-mid);font-weight:500">Unlimited repos</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:22px;margin-bottom:6px">🤖</div>
+              <div style="font-size:12px;color:var(--text-mid);font-weight:500">Auto PR raising</div>
+            </div>
+            <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center">
+              <div style="font-size:22px;margin-bottom:6px">24/7</div>
+              <div style="font-size:12px;color:var(--text-mid);font-weight:500">Continuous watch</div>
+            </div>
+          </div>
+          <div style="background:var(--navy);border-radius:14px;padding:24px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700">₹4,900<span style="font-size:14px;opacity:0.6">/month</span></div>
+              <div style="font-size:13px;opacity:0.6;margin-top:4px">Cancel anytime. No lock-in.</div>
+            </div>
+            <button class="btn-upgrade" onclick="startPayment()">Upgrade now</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Payment Methods</div></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid);display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Credit / Debit Card</div>
+          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid);display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>UPI</div>
+          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid);display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Net Banking</div>
+          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid)">Powered by Razorpay</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-settings">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Account</div></div>
+        <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--off-white);border-radius:10px">
+          <div class="user-avatar" id="settingsAvatar" style="width:56px;height:56px;font-size:20px">S</div>
+          <div><div style="font-weight:600;font-size:16px;color:var(--navy)" id="settingsName">...</div><div style="font-size:13px;color:var(--text-light)" id="settingsEmail">...</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div><div class="card-title">Plan &amp; Billing</div><div class="card-sub" id="planDesc">Free plan</div></div></div>
+        <div id="planUpgradeArea">
+          <p style="font-size:14px;color:var(--text-mid);margin-bottom:16px">Upgrade to Pro for unlimited repos, auto PR raising, and 24/7 Continuous Protection.</p>
+          <button class="btn btn-teal" onclick="startPayment()">Upgrade to Pro — ₹4,900/month</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title" style="color:var(--red)">Danger zone</div></div>
+        <p style="font-size:13px;color:var(--text-mid);margin-bottom:16px">Signing out will end your current session.</p>
+        <a href="/auth/logout" class="btn btn-danger">Sign out</a>
+      </div>
+    </div>
   </div>
 </main>
 </div>
+
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 var selectedRepo=null,scanResults=null,allRepos=[],currentUser=null;
-async function init(){var res=await fetch('/auth/me');var d=await res.json();if(!d.user){window.location.href='/';return;}currentUser=d.user;document.getElementById('sideUsername').textContent=d.user.username;document.getElementById('sideAvatar').textContent=d.user.username[0].toUpperCase();document.getElementById('settingsAvatar').textContent=d.user.username[0].toUpperCase();document.getElementById('settingsName').textContent=d.user.username;document.getElementById('settingsEmail').textContent=d.user.email||'—';if(d.user.plan==='pro'){document.getElementById('sidePlan').textContent='Pro';document.getElementById('sidePlan').className='user-plan-badge plan-pro';document.getElementById('stLeft').textContent='∞';document.getElementById('stLeftSub').textContent='Pro — Unlimited';document.getElementById('planDesc').textContent='Pro plan — active';document.getElementById('planUpgradeArea').innerHTML='<p style="color:var(--green);font-size:14px;font-weight:500">You\'re on Pro. Thank you!</p>';}else{document.getElementById('upgradeBanner').style.display='flex';document.getElementById('upgradeNavBtn').style.display='flex';document.getElementById('topPlanBadge').textContent='Free plan';}loadRepos();loadHistory();loadReferral();}
-async function loadRepos(){var res=await fetch('/api/repos');var d=await res.json();allRepos=d.repos||[];document.getElementById('repoCount').textContent=allRepos.length+' repositories';renderRepos(allRepos);}
-function renderRepos(repos){var el=document.getElementById('repoList');if(!repos.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">No repositories found.</div>';return;}el.innerHTML=repos.map(function(r){return'<div class="repo-item" onclick="selectRepo(\''+r.fullName+'\',\''+r.name+'\')"><div><div class="repo-name">'+r.name+'</div><div class="repo-meta">'+r.fullName+' · '+new Date(r.updatedAt).toLocaleDateString()+'</div></div><span class="repo-lang">'+(r.language||'—')+'</span></div>';}).join('');}
+
+async function init(){
+  var res=await fetch('/auth/me');
+  var d=await res.json();
+  if(!d.user){window.location.href='/';return;}
+  currentUser=d.user;
+  document.getElementById('sideUsername').textContent=d.user.username;
+  document.getElementById('sideAvatar').textContent=d.user.username[0].toUpperCase();
+  document.getElementById('settingsAvatar').textContent=d.user.username[0].toUpperCase();
+  document.getElementById('settingsName').textContent=d.user.username;
+  document.getElementById('settingsEmail').textContent=d.user.email||'...';
+  if(d.user.plan==='pro'){
+    document.getElementById('sidePlan').textContent='Pro ✓';
+    document.getElementById('sidePlan').className='user-plan-badge plan-pro';
+    document.getElementById('stLeft').textContent='∞';
+    document.getElementById('stLeftSub').textContent='Pro — Unlimited';
+    document.getElementById('planDesc').textContent='Pro plan — active';
+    document.getElementById('planUpgradeArea').innerHTML='<div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--green-light);border-radius:10px;border:1.5px solid rgba(16,185,129,0.2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><div style="font-weight:600;color:var(--green);font-size:15px">You\'re on Pro</div><div style="font-size:13px;color:var(--text-mid);margin-top:2px">All features unlocked.</div></div></div>';
+    document.getElementById('topPlanBadge').innerHTML='<span style="background:var(--yellow-light);color:var(--yellow);font-weight:700;font-size:11px;padding:3px 10px;border-radius:100px">PRO</span>';
+    var bpn=document.getElementById('billingPlanName');if(bpn)bpn.textContent='Pro';
+    var bpd=document.getElementById('billingPlanDesc');if(bpd)bpd.textContent='Unlimited repos, unlimited scans, auto PR raising, 24/7 protection';
+    var bpb=document.getElementById('billingPlanBadge');if(bpb){bpb.textContent='PRO';bpb.className='badge badge-teal';bpb.style.fontSize='13px';bpb.style.padding='6px 14px';}
+    var bua=document.getElementById('billingUpgradeArea');if(bua)bua.innerHTML='<div style="background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><div style="font-weight:700;color:var(--green);font-size:16px">Pro plan is active</div><div style="font-size:13px;color:var(--text-mid);margin-top:4px">All features unlocked. Auto PR raising active. Plan renews monthly.</div></div></div>';
+    var upg=document.getElementById('upgradeBanner');if(upg)upg.style.display='none';
+    var unb=document.getElementById('upgradeNavBtn');if(unb)unb.style.display='none';
+  }else{
+    document.getElementById('upgradeBanner').style.display='flex';
+    document.getElementById('upgradeNavBtn').style.display='flex';
+    document.getElementById('topPlanBadge').textContent='Free plan';
+  }
+  loadRepos();loadHistory();loadReferral();
+}
+
+async function loadRepos(){
+  var res=await fetch('/api/repos');
+  var d=await res.json();
+  allRepos=d.repos||[];
+  document.getElementById('repoCount').textContent=allRepos.length+' repositories';
+  renderRepos(allRepos);
+}
+
+function renderRepos(repos){
+  var el=document.getElementById('repoList');
+  if(!repos.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">No repositories found.</div>';return;}
+  el.innerHTML=repos.map(function(r){return '<div class="repo-item" onclick="selectRepo(\''+r.fullName+'\',\''+r.name+'\')" id="ri-'+r.id+'"><div><div class="repo-name">'+r.name+'</div><div class="repo-meta">'+r.fullName+' · '+new Date(r.updatedAt).toLocaleDateString()+'</div></div><span class="repo-lang">'+(r.language||'...')+'</span></div>';}).join('');
+}
+
 function filterRepos(q){renderRepos(allRepos.filter(function(r){return r.name.toLowerCase().includes(q.toLowerCase())||r.fullName.toLowerCase().includes(q.toLowerCase());}));}
-function selectRepo(full,name){selectedRepo=full;var el=document.getElementById('scanSelected');el.style.display='flex';document.getElementById('selectedName').textContent=full;}
-async function startScan(){if(!selectedRepo)return;var parts=selectedRepo.split('/'),owner=parts[0],repo=parts[1];document.getElementById('scanSelected').style.display='none';document.getElementById('resultsWrap').style.display='none';document.getElementById('loadingState').style.display='block';var steps=['ls1','ls2','ls3','ls4'],si=0;var iv=setInterval(function(){if(si>0)document.getElementById(steps[si-1]).className='ls done';if(si<steps.length)document.getElementById(steps[si]).className='ls active';si++;},2500);try{var res=await fetch('/api/scanner/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:owner,repo:repo})});var data=await res.json();clearInterval(iv);document.getElementById('loadingState').style.display='none';if(data.upgrade){alert('Scan limit reached. Upgrade to Pro.');startPayment();return;}scanResults=data.results;showResults(data.results,data.totalIssues);document.getElementById('stScans').textContent=parseInt(document.getElementById('stScans').textContent)+1;document.getElementById('stIssues').textContent=parseInt(document.getElementById('stIssues').textContent)+data.totalIssues;}catch(e){clearInterval(iv);document.getElementById('loadingState').style.display='none';alert('Scan failed. Please try again.');}}
-function showResults(results,total){document.getElementById('resultsWrap').style.display='block';document.getElementById('resultsTitle').textContent=total>0?'Found '+total+' issue'+(total!==1?'s':'')+' in '+selectedRepo:'No issues found in '+selectedRepo;var list=document.getElementById('issuesList');if(!results.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--green);font-size:15px;font-weight:500">No auth gaps found. Your codebase looks secure.</div>';document.getElementById('prBtn').style.display='none';return;}if(currentUser&&currentUser.plan!=='pro'){var btn=document.getElementById('prBtn');btn.innerHTML='Upgrade to raise PR';btn.onclick=startPayment;btn.className='btn btn-primary';}list.innerHTML=results.map(function(r){return'<div class="issue-card"><div class="issue-head"><span class="issue-file">'+r.file+'</span><span class="issue-count">'+r.issues.length+' issue'+(r.issues.length>1?'s':'')+'</span></div><div class="issue-body">'+r.issues.map(function(i){return'<div class="endpoint-row"><span class="method m-'+i.method.toLowerCase()+'">'+i.method+'</span><span class="ep-path">'+i.endpoint+'</span><span class="ep-issue">'+i.issue+'</span></div>';}).join('')+'</div></div>';}).join('');}
-async function raisePR(){if(!scanResults||!selectedRepo)return;var parts=selectedRepo.split('/'),owner=parts[0],repo=parts[1];var btn=document.getElementById('prBtn');btn.textContent='Raising PR...';btn.disabled=true;try{var res=await fetch('/api/scanner/raise-pr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:owner,repo:repo,results:scanResults})});var data=await res.json();if(data.prUrl){btn.innerHTML='PR Raised';btn.style.background='var(--green)';btn.disabled=false;document.getElementById('stPRs').textContent=parseInt(document.getElementById('stPRs').textContent)+1;setTimeout(function(){window.open(data.prUrl,'_blank');},400);}}catch(e){btn.textContent='Raise fix PR';btn.disabled=false;}}
-async function loadHistory(){var res=await fetch('/api/scanner/history');var d=await res.json();var tbody=document.getElementById('historyBody');if(!d.scans||!d.scans.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">No scans yet.</td></tr>';return;}tbody.innerHTML=d.scans.map(function(s){return'<tr><td style="color:var(--navy);font-weight:500">'+s.repo_name+'</td><td><span class="badge '+(s.total_issues>0?'badge-red':'badge-green')+'">'+s.total_issues+' issues</span></td><td><span class="badge '+(s.pr_raised?'badge-green':'badge-gray')+'">'+(s.pr_raised?'PR Raised':'Pending')+'</span></td><td>'+new Date(s.created_at).toLocaleDateString()+'</td><td>'+(s.pr_url?'<a href="'+s.pr_url+'" target="_blank" style="color:var(--teal);font-size:12px;font-weight:500;text-decoration:none">View PR</a>':'—')+'</td></tr>';}).join('');}
-async function loadReferral(){var res=await fetch('/api/referral/my-code');var d=await res.json();document.getElementById('refCode').textContent=d.code||'—';}
-function copyRef(){navigator.clipboard.writeText('https://grassion.com/?ref='+document.getElementById('refCode').textContent);alert('Referral link copied!');}
-async function applyRef(){var code=document.getElementById('refInput').value.trim();if(!code)return;var res=await fetch('/api/referral/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});var data=await res.json();var msg=document.getElementById('refMsg');msg.style.display='block';msg.style.color=data.success?'var(--green)':'var(--red)';msg.textContent=data.message||data.error;}
-async function startPayment(){var res=await fetch('/api/payments/create-order',{method:'POST'});var d=await res.json();new Razorpay({key:d.key,amount:d.order.amount,currency:'INR',name:'Grassion',description:'Pro Plan',order_id:d.order.id,handler:async function(r){var vr=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});var vd=await vr.json();if(vd.success)location.reload();},theme:{color:'#2a9fd6'}}).open();}
-function showTab(name){document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});var pane=document.getElementById('tab-'+name);if(pane)pane.classList.add('active');var titles={scan:'Dashboard',history:'Scan History',referral:'Refer & Earn',settings:'Settings'};var subs={scan:'Scan repos and fix security gaps automatically',history:'View all your past scans',referral:'Share Grassion and earn bonus scans',settings:'Manage your account and billing'};document.getElementById('pageTitle').textContent=titles[name]||'Dashboard';document.getElementById('pageSub').textContent=subs[name]||'';var tabs=['scan','history','referral','settings'];var tabEls=document.querySelectorAll('.tab');if(tabEls[tabs.indexOf(name)])tabEls[tabs.indexOf(name)].classList.add('active');if(name==='history')loadHistory();if(name==='referral')loadReferral();}
+
+function selectRepo(full,name){
+  selectedRepo=full;
+  document.querySelectorAll('.repo-item').forEach(function(e){e.classList.remove('selected');});
+  var el=document.getElementById('scanSelected');
+  el.style.display='flex';
+  document.getElementById('selectedName').textContent=full;
+  // Scroll to show the selected repo bar
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function startScan(){
+  if(!selectedRepo)return;
+  var parts=selectedRepo.split('/');
+  document.getElementById('scanSelected').style.display='none';
+  document.getElementById('resultsWrap').style.display='none';
+  document.getElementById('loadingState').style.display='block';
+  var steps=['ls1','ls2','ls3','ls4'],si=0;
+  var iv=setInterval(function(){
+    if(si>0){var prev=document.getElementById(steps[si-1]);prev.className='ls done';prev.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'+prev.textContent.trim();}
+    if(si<steps.length)document.getElementById(steps[si]).className='ls active';
+    si++;
+  },2500);
+  try{
+    var res=await fetch('/api/scanner/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:parts[0],repo:parts[1]})});
+    var data=await res.json();
+    clearInterval(iv);
+    document.getElementById('loadingState').style.display='none';
+    if(data.upgrade){alert('Scan limit reached. Upgrade to Pro.');startPayment();return;}
+    scanResults=data.results;
+    showResults(data.results,data.totalIssues);
+    document.getElementById('stScans').textContent=parseInt(document.getElementById('stScans').textContent)+1;
+    document.getElementById('stIssues').textContent=parseInt(document.getElementById('stIssues').textContent)+data.totalIssues;
+  }catch(e){clearInterval(iv);document.getElementById('loadingState').style.display='none';alert('Scan failed. Please try again.');}
+}
+
+function showResults(results,total){
+  document.getElementById('resultsWrap').style.display='block';
+  document.getElementById('resultsTitle').textContent=total>0?'Found '+total+' issue'+(total!==1?'s':'')+' in '+selectedRepo:'No issues found in '+selectedRepo;
+  var list=document.getElementById('issuesList');
+  if(!results.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--green);font-size:15px;font-weight:500">No auth gaps found. Your codebase looks secure.</div>';document.getElementById('prBtn').style.display='none';return;}
+  if(currentUser&&currentUser.plan!=='pro'){var btn=document.getElementById('prBtn');btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Upgrade to raise PR';btn.onclick=startPayment;btn.className='btn btn-primary';}
+  list.innerHTML=results.map(function(r){return '<div class="issue-card"><div class="issue-head"><span class="issue-file">'+r.file+'</span><span class="issue-count">'+r.issues.length+' issue'+(r.issues.length>1?'s':'')+'</span></div><div class="issue-body">'+r.issues.map(function(i){return '<div class="endpoint-row"><span class="method m-'+i.method.toLowerCase()+'">'+i.method+'</span><span class="ep-path">'+i.endpoint+'</span><span class="ep-issue">'+i.issue+'</span></div>';}).join('')+'</div></div>';}).join('');
+}
+
+async function raisePR(){
+  if(!scanResults||!selectedRepo)return;
+  var parts=selectedRepo.split('/');
+  var btn=document.getElementById('prBtn');
+  btn.textContent='Raising PR...';btn.disabled=true;
+  try{
+    var res=await fetch('/api/scanner/raise-pr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:parts[0],repo:parts[1],results:scanResults})});
+    var data=await res.json();
+    if(data.prUrl){btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> PR Raised';btn.style.background='var(--green)';btn.disabled=false;document.getElementById('stPRs').textContent=parseInt(document.getElementById('stPRs').textContent)+1;setTimeout(function(){window.open(data.prUrl,'_blank');},400);}
+  }catch(e){btn.textContent='Raise fix PR';btn.disabled=false;}
+}
+
+async function loadHistory(){
+  var res=await fetch('/api/scanner/history');
+  var d=await res.json();
+  var tbody=document.getElementById('historyBody');
+  if(!d.scans||!d.scans.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">No scans yet.</td></tr>';return;}
+  tbody.innerHTML=d.scans.map(function(s){return '<tr><td style="color:var(--navy);font-weight:500">'+s.repo_name+'</td><td><span class="badge '+(s.total_issues>0?'badge-red':'badge-green')+'">'+s.total_issues+' issues</span></td><td><span class="badge '+(s.pr_raised?'badge-green':'badge-gray')+'">'+(s.pr_raised?'PR Raised':'Pending')+'</span></td><td>'+new Date(s.created_at).toLocaleDateString()+'</td><td>'+(s.pr_url?'<a href="'+s.pr_url+'" target="_blank" style="color:var(--teal);font-size:12px;font-weight:500;text-decoration:none">View PR</a>':'...')+'</td></tr>';}).join('');
+}
+
+async function loadReferral(){
+  var res=await fetch('/api/referral/my-code');
+  var d=await res.json();
+  document.getElementById('refCode').textContent=d.code||'...';
+}
+
+function copyRef(){var code=document.getElementById('refCode').textContent;navigator.clipboard.writeText('https://grassion.com/?ref='+code);alert('Referral link copied!');}
+
+async function applyRef(){
+  var code=document.getElementById('refInput').value.trim();
+  if(!code)return;
+  var res=await fetch('/api/referral/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
+  var data=await res.json();
+  var msg=document.getElementById('refMsg');
+  msg.style.display='block';msg.style.color=data.success?'var(--green)':'var(--red)';msg.textContent=data.message||data.error;
+}
+
+async function startPayment(){
+  var res=await fetch('/api/payments/create-order',{method:'POST'});
+  var d=await res.json();
+  new Razorpay({key:d.key,amount:d.order.amount,currency:'INR',name:'Grassion',description:'Pro Plan — Monthly',order_id:d.order.id,handler:async function(r){var vr=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});var vd=await vr.json();if(vd.success)location.reload();},theme:{color:'#2a9fd6'}}).open();
+}
+
+function showTab(name){
+  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  var pane=document.getElementById('tab-'+name);if(pane)pane.classList.add('active');
+  var titles={scan:'Dashboard',history:'Scan History',referral:'Refer & Earn',billing:'Billing',settings:'Settings'};
+  var subs={scan:'Scan repos and fix security gaps automatically',history:'View all your past scans',referral:'Share Grassion and earn bonus scans',billing:'Manage your plan and payments',settings:'Manage your account'};
+  document.getElementById('pageTitle').textContent=titles[name]||'Dashboard';
+  document.getElementById('pageSub').textContent=subs[name]||'';
+  var tabs=['scan','history','referral','billing','settings'];
+  var idx=tabs.indexOf(name);
+  var tabEls=document.querySelectorAll('.tab');
+  if(tabEls[idx])tabEls[idx].classList.add('active');
+  var navItems=['scan','history','referral','billing','settings'];
+  document.querySelectorAll('.nav-item').forEach(function(n,i){if(navItems[i]===name)n.classList.add('active');});
+  if(name==='history')loadHistory();
+  if(name==='referral')loadReferral();
+}
+
 init();
 </script>
 </body>

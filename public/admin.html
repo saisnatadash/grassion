@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Grassion</title>
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@600;700&family=Satoshi:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,7 +13,7 @@ html{cursor:auto}
 body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased}
 nav{background:#fff;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.nav-brand img{height:26px}
+.nav-brand img{height:28px}
 .admin-badge{background:var(--red-light);color:var(--red);font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;letter-spacing:0.5px}
 .nav-back{font-size:13px;color:var(--text-mid);text-decoration:none;display:flex;align-items:center;gap:6px}
 .nav-back:hover{color:var(--navy)}
@@ -28,7 +27,8 @@ nav{background:#fff;border-bottom:1px solid var(--border);padding:14px 28px;disp
 .tabs{display:flex;gap:2px;background:rgba(13,27,42,0.05);border-radius:10px;padding:4px;margin-bottom:24px;width:fit-content}
 .tab{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.2s;border:none;background:none;font-family:'Satoshi',sans-serif}
 .tab.active{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(13,27,42,0.08)}
-.tab-pane{display:none}.tab-pane.active{display:block}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
 .card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px}
 .card-title{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
 .count-badge{font-size:12px;font-weight:600;background:var(--teal-light);color:var(--teal);padding:3px 10px;border-radius:100px}
@@ -38,7 +38,11 @@ td{padding:11px 12px;font-size:13px;border-bottom:1px solid var(--border);color:
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--off-white)}
 .badge{display:inline-flex;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:600}
-.b-green{background:var(--green-light);color:var(--green)}.b-red{background:var(--red-light);color:var(--red)}.b-teal{background:var(--teal-light);color:var(--teal)}.b-yellow{background:var(--yellow-light);color:var(--yellow)}.b-gray{background:var(--off-white);color:var(--text-light)}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-teal{background:var(--teal-light);color:var(--teal)}
+.b-yellow{background:var(--yellow-light);color:var(--yellow)}
+.b-gray{background:var(--off-white);color:var(--text-light)}
 .revenue-highlight{font-family:'Clash Display',sans-serif;font-size:32px;font-weight:700;color:var(--green)}
 .status-select{font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:'Satoshi',sans-serif;outline:none;background:#fff;cursor:pointer}
 @media(max-width:1200px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
@@ -47,24 +51,30 @@ tbody tr:hover td{background:var(--off-white)}
 </head>
 <body>
 <nav>
-  <a href="/" class="nav-brand"><img src="/img/logo.png" alt="Grassion" style="height:26px"></a>
+  <a href="/" class="nav-brand"><img src="/img/logo.png" alt="Grassion" style="height:28px"></a>
   <span class="admin-badge">Admin Panel</span>
-  <a href="/dashboard" class="nav-back"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>Dashboard</a>
+  <a href="/dashboard" class="nav-back">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Dashboard
+  </a>
 </nav>
+
 <div class="main">
   <div class="page-title">Admin Panel</div>
   <div class="page-sub">Only accessible by @saisnatadash</div>
+
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-n" id="aTU">—</div><div class="stat-l">Total Users</div></div>
-    <div class="stat-card"><div class="stat-n" id="aPU" style="color:var(--teal)">—</div><div class="stat-l">Pro Users</div></div>
-    <div class="stat-card"><div class="stat-n" id="aTS">—</div><div class="stat-l">Total Scans</div></div>
-    <div class="stat-card"><div class="stat-n" id="aPR" style="color:var(--green)">—</div><div class="stat-l">PRs Raised</div></div>
+    <div class="stat-card"><div class="stat-n" id="aTU">...</div><div class="stat-l">Total Users</div></div>
+    <div class="stat-card"><div class="stat-n" id="aPU" style="color:var(--teal)">...</div><div class="stat-l">Pro Users</div></div>
+    <div class="stat-card"><div class="stat-n" id="aTS">...</div><div class="stat-l">Total Scans</div></div>
+    <div class="stat-card"><div class="stat-n" id="aPR" style="color:var(--green)">...</div><div class="stat-l">PRs Raised</div></div>
     <div class="stat-card"><div class="revenue-highlight" id="aRev">₹0</div><div class="stat-l">Revenue</div></div>
-    <div class="stat-card"><div class="stat-n" id="aWL">—</div><div class="stat-l">Waitlist</div></div>
-    <div class="stat-card"><div class="stat-n" id="aCR" style="color:var(--yellow)">—</div><div class="stat-l">Applications</div></div>
-    <div class="stat-card"><div class="stat-n" id="aFB">—</div><div class="stat-l">Feedback</div></div>
-    <div class="stat-card"><div class="stat-n" id="aCT">—</div><div class="stat-l">Contacts</div></div>
+    <div class="stat-card"><div class="stat-n" id="aWL">...</div><div class="stat-l">Waitlist</div></div>
+    <div class="stat-card"><div class="stat-n" id="aCR" style="color:var(--yellow)">...</div><div class="stat-l">Applications</div></div>
+    <div class="stat-card"><div class="stat-n" id="aFB">...</div><div class="stat-l">Feedback</div></div>
+    <div class="stat-card"><div class="stat-n" id="aCT">...</div><div class="stat-l">Contacts</div></div>
   </div>
+
   <div class="tabs">
     <button class="tab active" onclick="showTab('users')">Users</button>
     <button class="tab" onclick="showTab('scans')">Scans</button>
@@ -75,31 +85,137 @@ tbody tr:hover td{background:var(--off-white)}
     <button class="tab" onclick="showTab('waitlist')">Waitlist</button>
     <button class="tab" onclick="showTab('analytics')">Analytics</button>
   </div>
-  <div class="tab-pane active" id="tab-users"><div class="card"><div class="card-title">All Users <span class="count-badge" id="uCount">0</span></div><table><thead><tr><th>GitHub</th><th>Email</th><th>Plan</th><th>Scans</th><th>Location</th><th>Time Spent</th><th>Last Seen</th><th>Joined</th></tr></thead><tbody id="usersBody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
-  <div class="tab-pane" id="tab-scans"><div class="card"><div class="card-title">All Scans <span class="count-badge" id="sCount">0</span></div><table><thead><tr><th>User</th><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th></tr></thead><tbody id="scansBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
-  <div class="tab-pane" id="tab-payments"><div class="card"><div class="card-title">All Payments <span class="count-badge" id="pCount">0</span></div><table><thead><tr><th>User</th><th>Amount</th><th>Order ID</th><th>Payment ID</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
-  <div class="tab-pane" id="tab-careers"><div class="card"><div class="card-title">Career Applications <span class="count-badge" id="cCount">0</span></div><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>LinkedIn</th><th>Message</th><th>Status</th><th>Date</th></tr></thead><tbody id="careersBody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
-  <div class="tab-pane" id="tab-feedback"><div class="card"><div class="card-title">Feedback <span class="count-badge" id="fbCount">0</span></div><table><thead><tr><th>Name</th><th>Email</th><th>Message</th><th>IP</th><th>Date</th></tr></thead><tbody id="feedbackBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
-  <div class="tab-pane" id="tab-contacts"><div class="card"><div class="card-title">Contact Submissions <span class="count-badge" id="ctCount">0</span></div><table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Topic</th><th>Message</th><th>Date</th></tr></thead><tbody id="contactsBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
-  <div class="tab-pane" id="tab-waitlist"><div class="card"><div class="card-title">Waitlist <span class="count-badge" id="wlCount">0</span></div><table><thead><tr><th>Email</th><th>Joined</th></tr></thead><tbody id="waitlistBody"><tr><td colspan="2" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
-  <div class="tab-pane" id="tab-analytics"><div class="card"><div class="card-title">Analytics Events</div><table><thead><tr><th>Event</th><th>Page</th><th>Location</th><th>IP</th><th>Date</th></tr></thead><tbody id="analyticsBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div></div>
+
+  <div class="tab-pane active" id="tab-users">
+    <div class="card"><div class="card-title">All Users <span class="count-badge" id="uCount">0</span></div>
+    <table><thead><tr><th>GitHub</th><th>Email</th><th>Plan</th><th>Scans</th><th>Location</th><th>Time Spent</th><th>Last Seen</th><th>Joined</th></tr></thead>
+    <tbody id="usersBody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <div class="tab-pane" id="tab-scans">
+    <div class="card"><div class="card-title">All Scans <span class="count-badge" id="sCount">0</span></div>
+    <table><thead><tr><th>User</th><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th></tr></thead>
+    <tbody id="scansBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <div class="tab-pane" id="tab-payments">
+    <div class="card"><div class="card-title">All Payments <span class="count-badge" id="pCount">0</span></div>
+    <table><thead><tr><th>User</th><th>Amount</th><th>Order ID</th><th>Payment ID</th><th>Status</th><th>Date</th></tr></thead>
+    <tbody id="paymentsBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <div class="tab-pane" id="tab-careers">
+    <div class="card"><div class="card-title">Career Applications <span class="count-badge" id="cCount">0</span></div>
+    <table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>LinkedIn</th><th>Message</th><th>Status</th><th>Date</th></tr></thead>
+    <tbody id="careersBody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <div class="tab-pane" id="tab-feedback">
+    <div class="card"><div class="card-title">Feedback <span class="count-badge" id="fbCount">0</span></div>
+    <table><thead><tr><th>Name</th><th>Email</th><th>Message</th><th>IP</th><th>Date</th></tr></thead>
+    <tbody id="feedbackBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <div class="tab-pane" id="tab-contacts">
+    <div class="card"><div class="card-title">Contact Submissions <span class="count-badge" id="ctCount">0</span></div>
+    <table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Topic</th><th>Message</th><th>Date</th></tr></thead>
+    <tbody id="contactsBody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <div class="tab-pane" id="tab-waitlist">
+    <div class="card"><div class="card-title">Waitlist <span class="count-badge" id="wlCount">0</span></div>
+    <table><thead><tr><th>Email</th><th>Joined</th></tr></thead>
+    <tbody id="waitlistBody"><tr><td colspan="2" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <div class="tab-pane" id="tab-analytics">
+    <div class="card"><div class="card-title">Analytics Events</div>
+    <table><thead><tr><th>Event</th><th>Page</th><th>Location</th><th>IP</th><th>Date</th></tr></thead>
+    <tbody id="analyticsBody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody></table></div>
+  </div>
 </div>
+
 <script>
 var fmt=function(d){return new Date(d).toLocaleDateString();};
-var trunc=function(s,n){n=n||40;return s&&s.length>n?s.slice(0,n)+'...':s||'—';};
-async function loadStats(){var r=await fetch('/api/admin/stats').then(function(x){return x.json();});document.getElementById('aTU').textContent=r.totalUsers||0;document.getElementById('aPU').textContent=r.proUsers||0;document.getElementById('aTS').textContent=r.totalScans||0;document.getElementById('aPR').textContent=r.prsRaised||0;document.getElementById('aRev').textContent='₹'+(r.revenue||0).toLocaleString();document.getElementById('aWL').textContent=r.waitlist||0;document.getElementById('aCR').textContent=r.careers||0;document.getElementById('aFB').textContent=r.feedback||0;document.getElementById('aCT').textContent=r.contacts||0;}
-async function loadUsers(){var d=await fetch('/api/admin/users').then(function(x){return x.json();});document.getElementById('uCount').textContent=d.users.length;document.getElementById('usersBody').innerHTML=d.users.map(function(u){return'<tr><td><a href="https://github.com/'+u.github_username+'" target="_blank" style="color:var(--teal);text-decoration:none">@'+u.github_username+'</a></td><td>'+(u.email||'—')+'</td><td><span class="badge '+(u.plan==='pro'?'b-yellow':'b-gray')+'">'+u.plan.toUpperCase()+'</span></td><td>'+(u.scans_used||0)+' (+'+(u.bonus_scans||0)+')</td><td>'+(u.location||'—')+'</td><td>'+Math.round((u.total_time_spent||0)/60)+'m</td><td>'+(u.last_seen?fmt(u.last_seen):'—')+'</td><td>'+fmt(u.created_at)+'</td></tr>';}).join('');}
-async function loadScans(){var d=await fetch('/api/admin/scans').then(function(x){return x.json();});document.getElementById('sCount').textContent=d.scans.length;document.getElementById('scansBody').innerHTML=d.scans.map(function(s){return'<tr><td>@'+(s.github_username||'—')+'</td><td>'+s.repo_name+'</td><td><span class="badge '+(s.total_issues>0?'b-red':'b-green')+'">'+s.total_issues+'</span></td><td>'+(s.pr_raised?'<a href="'+s.pr_url+'" target="_blank" style="color:var(--teal);font-size:12px">View PR</a>':'—')+'</td><td>'+fmt(s.created_at)+'</td></tr>';}).join('');}
-async function loadPayments(){var d=await fetch('/api/admin/payments').then(function(x){return x.json();});document.getElementById('pCount').textContent=d.payments.length;document.getElementById('paymentsBody').innerHTML=d.payments.map(function(p){return'<tr><td>@'+(p.github_username||'—')+'</td><td style="color:var(--green);font-weight:600">₹'+((p.amount||0)/100).toLocaleString()+'</td><td style="font-family:monospace;font-size:11px">'+(p.order_id||'—')+'</td><td style="font-family:monospace;font-size:11px">'+(p.payment_id||'—')+'</td><td><span class="badge '+(p.status==='success'?'b-green':'b-red')+'">'+p.status+'</span></td><td>'+fmt(p.created_at)+'</td></tr>';}).join('');}
-async function loadCareers(){var d=await fetch('/api/admin/careers').then(function(x){return x.json();});document.getElementById('cCount').textContent=d.careers.length;document.getElementById('careersBody').innerHTML=d.careers.map(function(c){return'<tr><td>'+(c.name||'—')+'</td><td>'+c.email+'</td><td>'+(c.role||'—')+'</td><td>'+(c.linkedin?'<a href="'+c.linkedin+'" target="_blank" style="color:var(--teal);font-size:12px">View</a>':'—')+'</td><td>'+trunc(c.message)+'</td><td><select class="status-select" onchange="updateCareer('+c.id+',this.value)"><option '+(c.status==='new'?'selected':'')+'>new</option><option '+(c.status==='reviewing'?'selected':'')+'>reviewing</option><option '+(c.status==='accepted'?'selected':'')+'>accepted</option><option '+(c.status==='rejected'?'selected':'')+'>rejected</option></select></td><td>'+fmt(c.created_at)+'</td></tr>';}).join('');}
-async function loadFeedback(){var d=await fetch('/api/admin/feedback').then(function(x){return x.json();});document.getElementById('fbCount').textContent=d.feedback.length;document.getElementById('feedbackBody').innerHTML=d.feedback.map(function(f){return'<tr><td>'+(f.name||'—')+'</td><td>'+(f.email||'—')+'</td><td>'+trunc(f.message,60)+'</td><td style="font-family:monospace;font-size:11px">'+(f.ip_address||'—')+'</td><td>'+fmt(f.created_at)+'</td></tr>';}).join('');}
-async function loadContacts(){var d=await fetch('/api/admin/contacts').then(function(x){return x.json();});document.getElementById('ctCount').textContent=d.contacts.length;document.getElementById('contactsBody').innerHTML=d.contacts.map(function(c){return'<tr><td>'+(c.name||'—')+'</td><td>'+c.email+'</td><td>'+(c.company||'—')+'</td><td>'+(c.topic||'—')+'</td><td>'+trunc(c.message,50)+'</td><td>'+fmt(c.created_at)+'</td></tr>';}).join('');}
-async function loadWaitlist(){var d=await fetch('/api/admin/waitlist').then(function(x){return x.json();});document.getElementById('wlCount').textContent=d.waitlist.length;document.getElementById('waitlistBody').innerHTML=d.waitlist.map(function(w){return'<tr><td>'+w.email+'</td><td>'+fmt(w.created_at)+'</td></tr>';}).join('');}
-async function loadAnalytics(){var d=await fetch('/api/admin/analytics').then(function(x){return x.json();});document.getElementById('analyticsBody').innerHTML=d.analytics.map(function(a){return'<tr><td><span class="badge b-teal">'+a.event_type+'</span></td><td>'+(a.page||'—')+'</td><td>'+(a.location||'—')+'</td><td style="font-family:monospace;font-size:11px">'+(a.ip_address||'—')+'</td><td>'+fmt(a.created_at)+'</td></tr>';}).join('');}
-async function updateCareer(id,status){await fetch('/api/admin/careers/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})});}
+var trunc=function(s,n){n=n||40;return s&&s.length>n?s.slice(0,n)+'...':s||'...';};
+
+async function loadStats(){
+  var r=await fetch('/api/admin/stats').then(function(x){return x.json();});
+  document.getElementById('aTU').textContent=r.totalUsers||0;
+  document.getElementById('aPU').textContent=r.proUsers||0;
+  document.getElementById('aTS').textContent=r.totalScans||0;
+  document.getElementById('aPR').textContent=r.prsRaised||0;
+  document.getElementById('aRev').textContent='₹'+(r.revenue||0).toLocaleString();
+  document.getElementById('aWL').textContent=r.waitlist||0;
+  document.getElementById('aCR').textContent=r.careers||0;
+  document.getElementById('aFB').textContent=r.feedback||0;
+  document.getElementById('aCT').textContent=r.contacts||0;
+}
+
+async function loadUsers(){
+  var d=await fetch('/api/admin/users').then(function(x){return x.json();});
+  document.getElementById('uCount').textContent=d.users.length;
+  document.getElementById('usersBody').innerHTML=d.users.map(function(u){return '<tr><td><a href="https://github.com/'+u.github_username+'" target="_blank" style="color:var(--teal);text-decoration:none">@'+u.github_username+'</a></td><td>'+(u.email||'...')+'</td><td><span class="badge '+(u.plan==='pro'?'b-yellow':'b-gray')+'">'+u.plan.toUpperCase()+'</span></td><td>'+(u.scans_used||0)+' (+'+(u.bonus_scans||0)+')</td><td>'+(u.location||'...')+'</td><td>'+Math.round((u.total_time_spent||0)/60)+'m</td><td>'+(u.last_seen?fmt(u.last_seen):'...')+'</td><td>'+fmt(u.created_at)+'</td></tr>';}).join('');
+}
+
+async function loadScans(){
+  var d=await fetch('/api/admin/scans').then(function(x){return x.json();});
+  document.getElementById('sCount').textContent=d.scans.length;
+  document.getElementById('scansBody').innerHTML=d.scans.map(function(s){return '<tr><td>@'+(s.github_username||'...')+'</td><td>'+s.repo_name+'</td><td><span class="badge '+(s.total_issues>0?'b-red':'b-green')+'">'+s.total_issues+'</span></td><td>'+(s.pr_raised?'<a href="'+s.pr_url+'" target="_blank" style="color:var(--teal);font-size:12px">View PR</a>':'...')+'</td><td>'+fmt(s.created_at)+'</td></tr>';}).join('');
+}
+
+async function loadPayments(){
+  var d=await fetch('/api/admin/payments').then(function(x){return x.json();});
+  document.getElementById('pCount').textContent=d.payments.length;
+  document.getElementById('paymentsBody').innerHTML=d.payments.map(function(p){return '<tr><td>@'+(p.github_username||'...')+'</td><td style="color:var(--green);font-weight:600">₹'+((p.amount||0)/100).toLocaleString()+'</td><td style="font-family:monospace;font-size:11px">'+(p.order_id||'...')+'</td><td style="font-family:monospace;font-size:11px">'+(p.payment_id||'...')+'</td><td><span class="badge '+(p.status==='success'?'b-green':'b-red')+'">'+p.status+'</span></td><td>'+fmt(p.created_at)+'</td></tr>';}).join('');
+}
+
+async function loadCareers(){
+  var d=await fetch('/api/admin/careers').then(function(x){return x.json();});
+  document.getElementById('cCount').textContent=d.careers.length;
+  document.getElementById('careersBody').innerHTML=d.careers.map(function(c){return '<tr><td>'+(c.name||'...')+'</td><td>'+c.email+'</td><td>'+(c.role||'...')+'</td><td>'+(c.linkedin?'<a href="'+c.linkedin+'" target="_blank" style="color:var(--teal);font-size:12px">View</a>':'...')+'</td><td>'+trunc(c.message)+'</td><td><select class="status-select" onchange="updateCareer('+c.id+',this.value)"><option '+(c.status==='new'?'selected':'')+'>new</option><option '+(c.status==='reviewing'?'selected':'')+'>reviewing</option><option '+(c.status==='accepted'?'selected':'')+'>accepted</option><option '+(c.status==='rejected'?'selected':'')+'>rejected</option></select></td><td>'+fmt(c.created_at)+'</td></tr>';}).join('');
+}
+
+async function loadFeedback(){
+  var d=await fetch('/api/admin/feedback').then(function(x){return x.json();});
+  document.getElementById('fbCount').textContent=d.feedback.length;
+  document.getElementById('feedbackBody').innerHTML=d.feedback.map(function(f){return '<tr><td>'+(f.name||'...')+'</td><td>'+(f.email||'...')+'</td><td>'+trunc(f.message,60)+'</td><td style="font-family:monospace;font-size:11px">'+(f.ip_address||'...')+'</td><td>'+fmt(f.created_at)+'</td></tr>';}).join('');
+}
+
+async function loadContacts(){
+  var d=await fetch('/api/admin/contacts').then(function(x){return x.json();});
+  document.getElementById('ctCount').textContent=d.contacts.length;
+  document.getElementById('contactsBody').innerHTML=d.contacts.map(function(c){return '<tr><td>'+(c.name||'...')+'</td><td>'+c.email+'</td><td>'+(c.company||'...')+'</td><td>'+(c.topic||'...')+'</td><td>'+trunc(c.message,50)+'</td><td>'+fmt(c.created_at)+'</td></tr>';}).join('');
+}
+
+async function loadWaitlist(){
+  var d=await fetch('/api/admin/waitlist').then(function(x){return x.json();});
+  document.getElementById('wlCount').textContent=d.waitlist.length;
+  document.getElementById('waitlistBody').innerHTML=d.waitlist.map(function(w){return '<tr><td>'+w.email+'</td><td>'+fmt(w.created_at)+'</td></tr>';}).join('');
+}
+
+async function loadAnalytics(){
+  var d=await fetch('/api/admin/analytics').then(function(x){return x.json();});
+  document.getElementById('analyticsBody').innerHTML=d.analytics.map(function(a){return '<tr><td><span class="badge b-teal">'+a.event_type+'</span></td><td>'+(a.page||'...')+'</td><td>'+(a.location||'...')+'</td><td style="font-family:monospace;font-size:11px">'+(a.ip_address||'...')+'</td><td>'+fmt(a.created_at)+'</td></tr>';}).join('');
+}
+
+async function updateCareer(id,status){
+  await fetch('/api/admin/careers/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})});
+}
+
 var loaders={users:loadUsers,scans:loadScans,payments:loadPayments,careers:loadCareers,feedback:loadFeedback,contacts:loadContacts,waitlist:loadWaitlist,analytics:loadAnalytics};
 var loaded={};
-function showTab(name){document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('tab-'+name).classList.add('active');var tabs=['users','scans','payments','careers','feedback','contacts','waitlist','analytics'];document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');if(!loaded[name]){loaded[name]=true;loaders[name]();}}
+
+function showTab(name){
+  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('tab-'+name).classList.add('active');
+  var tabs=['users','scans','payments','careers','feedback','contacts','waitlist','analytics'];
+  var el=document.querySelectorAll('.tab')[tabs.indexOf(name)];
+  if(el)el.classList.add('active');
+  if(!loaded[name]){loaded[name]=true;loaders[name]();}
+}
+
 loadStats();loadUsers();loaded.users=true;
 </script>
 </body>
