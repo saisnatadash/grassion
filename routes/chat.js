@@ -5,7 +5,6 @@ const OpenAI = require('openai');
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 
-// Pro-only middleware
 async function proOnly(req, res, next) {
   const result = await db.query('SELECT plan FROM users WHERE id = $1', [req.session.user.id]);
   if (result.rows[0]?.plan !== 'pro') {
@@ -17,10 +16,21 @@ async function proOnly(req, res, next) {
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Fetch file contents from GitHub
-async function getRepoFiles(accessToken, owner, repo, branch = 'main') {
+// Auto-detect default branch
+async function getDefaultBranch(accessToken, owner, repo) {
   try {
-    // Get repo tree
+    const res = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    return res.data.default_branch || 'main';
+  } catch(e) {
+    return 'main';
+  }
+}
+
+async function getRepoFiles(accessToken, owner, repo, branch) {
+  try {
     const treeRes = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -31,7 +41,7 @@ async function getRepoFiles(accessToken, owner, repo, branch = 'main') {
       !f.path.includes('node_modules') &&
       !f.path.includes('.min.') &&
       f.size < 50000
-    ).slice(0, 20); // Limit to 20 files to stay within token budget
+    ).slice(0, 15);
 
     const contents = [];
     for (const file of files) {
@@ -41,7 +51,7 @@ async function getRepoFiles(accessToken, owner, repo, branch = 'main') {
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         const decoded = Buffer.from(contentRes.data.content, 'base64').toString('utf-8');
-        contents.push({ path: file.path, content: decoded.substring(0, 3000) }); // Limit each file
+        contents.push({ path: file.path, content: decoded.substring(0, 2000) });
       } catch(e) {}
     }
     return contents;
@@ -51,10 +61,8 @@ async function getRepoFiles(accessToken, owner, repo, branch = 'main') {
   }
 }
 
-// Create or update a file on GitHub
 async function updateFileOnGitHub(accessToken, owner, repo, filePath, newContent, branch, message) {
   try {
-    // Get current file SHA
     let sha = null;
     try {
       const existing = await axios.get(
@@ -83,14 +91,10 @@ async function updateFileOnGitHub(accessToken, owner, repo, filePath, newContent
   }
 }
 
-// Generate unified diff
 function generateDiff(original, modified, filename) {
-  const origLines = original.split('\n');
-  const modLines = modified.split('\n');
+  const origLines = (original || '').split('\n');
+  const modLines = (modified || '').split('\n');
   const diff = [`--- a/${filename}`, `+++ b/${filename}`];
-
-  // Simple line-by-line diff
-  const maxLen = Math.max(origLines.length, modLines.length);
   let i = 0, j = 0;
   while (i < origLines.length || j < modLines.length) {
     if (i < origLines.length && j < modLines.length && origLines[i] === modLines[j]) {
@@ -100,55 +104,59 @@ function generateDiff(original, modified, filename) {
       if (i < origLines.length) diff.push(`-${origLines[i++]}`);
       if (j < modLines.length) diff.push(`+${modLines[j++]}`);
     }
-    if (diff.length > 200) { diff.push('... (truncated)'); break; }
+    if (diff.length > 150) { diff.push('... (truncated)'); break; }
   }
   return diff.join('\n');
 }
 
-// Analyze repo and generate changes
 router.post('/analyze', authMiddleware, proOnly, async (req, res) => {
-  const { prompt, repo, branch = 'main' } = req.body;
+  const { prompt, repo, branch: requestedBranch } = req.body;
   if (!prompt || !repo) return res.status(400).json({ error: 'Prompt and repo required' });
 
   const [owner, repoName] = repo.split('/');
   const accessToken = req.session.user.accessToken;
 
   try {
-    // Fetch repo files
-    const files = await getRepoFiles(accessToken, owner, repoName, branch);
+    // Auto-detect branch if not specified or if 'main' fails
+    let branch = requestedBranch || 'main';
+    const defaultBranch = await getDefaultBranch(accessToken, owner, repoName);
+    
+    // Try requested branch first, fall back to default
+    let files = await getRepoFiles(accessToken, owner, repoName, branch);
+    if (!files.length && branch !== defaultBranch) {
+      branch = defaultBranch;
+      files = await getRepoFiles(accessToken, owner, repoName, branch);
+    }
+
     if (!files.length) {
       return res.json({
-        summary: "I couldn't access the repository files. Make sure the repo exists and you have access.",
+        success: true,
+        summary: `I couldn't read files from ${repo} on branch '${branch}'. Make sure the repo has JavaScript/TypeScript files and you have access.`,
         changes: [],
         session_id: null
       });
     }
 
-    // Build context for OpenAI
     const fileContext = files.map(f => `=== ${f.path} ===\n${f.content}`).join('\n\n');
-    const systemPrompt = `You are Grassion, an AI code assistant. You analyze codebases and make precise, targeted code changes.
+    
+    const systemPrompt = `You are Grassion, an AI code assistant. Analyze codebases and make precise, targeted code changes.
 
-When given a task, you:
-1. Analyze the relevant files
-2. Generate the COMPLETE modified file content for each file that needs changing
-3. Explain what you changed and why
-
-Respond in this exact JSON format:
+Respond ONLY in this exact JSON format, no other text:
 {
-  "summary": "Brief explanation of what you're doing and why",
+  "summary": "Brief explanation of what you changed and why",
   "changes": [
     {
       "file": "path/to/file.js",
-      "original_content": "the exact current content of the file",
+      "original_content": "the exact current content",
       "modified_content": "the complete modified file content",
       "description": "what was changed in this file"
     }
   ]
 }
 
-Only modify files that actually need changing. Be precise and minimal. Do not break existing functionality.`;
+Only modify files that actually need changing. Be minimal and precise.`;
 
-    const userMessage = `Repository: ${repo}\nBranch: ${branch}\n\nTask: ${prompt}\n\nRepository files:\n${fileContext.substring(0, 60000)}`;
+    const userMessage = `Repository: ${repo}\nBranch: ${branch}\n\nTask: ${prompt}\n\nFiles:\n${fileContext.substring(0, 50000)}`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -161,9 +169,18 @@ Only modify files that actually need changing. Be precise and minimal. Do not br
       response_format: { type: 'json_object' }
     });
 
-    const aiResponse = JSON.parse(completion.choices[0].message.content);
+    let aiResponse;
+    try {
+      aiResponse = JSON.parse(completion.choices[0].message.content);
+    } catch(e) {
+      return res.json({
+        success: true,
+        summary: 'Analysis complete but response formatting failed. Please try rephrasing your request.',
+        changes: [],
+        session_id: null
+      });
+    }
 
-    // Generate diffs for each change
     const changesWithDiff = (aiResponse.changes || []).map(ch => ({
       file: ch.file,
       original_content: ch.original_content,
@@ -172,17 +189,9 @@ Only modify files that actually need changing. Be precise and minimal. Do not br
       diff: generateDiff(ch.original_content || '', ch.modified_content || '', ch.file)
     }));
 
-    // Save session to DB for later PR raising
+    // Save session
     let sessionId = null;
     try {
-      const sessionResult = await db.query(
-        `INSERT INTO chat_sessions (user_id, repo, branch, prompt, summary, changes, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id`,
-        [req.session.user.id, repo, branch, prompt, aiResponse.summary, JSON.stringify(changesWithDiff)]
-      );
-      sessionId = sessionResult.rows[0].id;
-    } catch(e) {
-      // chat_sessions table may not exist yet - create it
       await db.query(`
         CREATE TABLE IF NOT EXISTS chat_sessions (
           id SERIAL PRIMARY KEY,
@@ -196,31 +205,39 @@ Only modify files that actually need changing. Be precise and minimal. Do not br
           created_at TIMESTAMP DEFAULT NOW()
         )
       `).catch(() => {});
+
       const sessionResult = await db.query(
         `INSERT INTO chat_sessions (user_id, repo, branch, prompt, summary, changes, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id`,
         [req.session.user.id, repo, branch, prompt, aiResponse.summary, JSON.stringify(changesWithDiff)]
-      ).catch(() => ({ rows: [{ id: null }] }));
-      sessionId = sessionResult.rows[0]?.id;
+      );
+      sessionId = sessionResult.rows[0].id;
+    } catch(e) {
+      console.error('Session save error:', e.message);
     }
 
     res.json({
       success: true,
       summary: aiResponse.summary,
       changes: changesWithDiff,
-      session_id: sessionId
+      session_id: sessionId,
+      branch_used: branch
     });
 
   } catch(e) {
     console.error('Chat analyze error:', e.message);
-    if (e.message.includes('JSON')) {
-      return res.json({ summary: 'I analyzed the repo but had trouble formatting the response. Please try rephrasing your request.', changes: [], session_id: null });
-    }
-    res.status(500).json({ error: 'Failed to analyze repository. Please try again.' });
+    
+    // Return helpful error instead of generic failure
+    let errorMsg = 'Failed to analyze repository.';
+    if (e.message.includes('401')) errorMsg = 'GitHub authentication failed. Please sign out and sign back in.';
+    else if (e.message.includes('404')) errorMsg = `Repository ${repo} not found or you don't have access.`;
+    else if (e.message.includes('OpenAI') || e.message.includes('openai')) errorMsg = 'AI service unavailable. Please check your OpenAI API key in Railway variables.';
+    else if (e.message.includes('rate limit')) errorMsg = 'Rate limited. Please wait a moment and try again.';
+    
+    res.status(500).json({ error: errorMsg });
   }
 });
 
-// Raise PR with approved changes
 router.post('/raise-pr', authMiddleware, proOnly, async (req, res) => {
   const { session_id } = req.body;
   if (!session_id) return res.status(400).json({ error: 'Session ID required' });
@@ -238,7 +255,11 @@ router.post('/raise-pr', authMiddleware, proOnly, async (req, res) => {
     const branch = session.branch || 'main';
     const accessToken = req.session.user.accessToken;
 
-    // Create a new branch for the changes
+    if (!changes || !changes.length) {
+      return res.status(400).json({ error: 'No changes to raise PR for' });
+    }
+
+    // Create PR branch
     const prBranch = `grassion/ai-fix-${Date.now()}`;
 
     // Get base branch SHA
@@ -255,21 +276,23 @@ router.post('/raise-pr', authMiddleware, proOnly, async (req, res) => {
       { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
     );
 
-    // Apply all file changes to the new branch
+    // Apply file changes
     for (const change of changes) {
-      await updateFileOnGitHub(
-        accessToken, owner, repo, change.file,
-        change.modified_content, prBranch,
-        `fix: ${change.description || 'AI suggested fix'}`
-      );
+      if (change.modified_content) {
+        await updateFileOnGitHub(
+          accessToken, owner, repo, change.file,
+          change.modified_content, prBranch,
+          `fix: ${change.description || 'AI suggested fix'}`
+        );
+      }
     }
 
-    // Create pull request
+    // Create PR
     const prRes = await axios.post(
       `https://api.github.com/repos/${owner}/${repo}/pulls`,
       {
         title: `[Grassion AI] ${session.prompt.substring(0, 60)}`,
-        body: `## AI-suggested changes\n\n**Request:** ${session.prompt}\n\n**Summary:** ${session.summary}\n\n**Files changed:** ${changes.length}\n\n---\n*Raised by Grassion AI Assistant*`,
+        body: `## AI-suggested changes\n\n**Request:** ${session.prompt}\n\n**Summary:** ${session.summary}\n\n**Files changed:** ${changes.length}\n\n---\n*Raised by [Grassion AI Assistant](https://grassion.com)*`,
         head: prBranch,
         base: branch
       },
@@ -277,8 +300,6 @@ router.post('/raise-pr', authMiddleware, proOnly, async (req, res) => {
     );
 
     const prUrl = prRes.data.html_url;
-
-    // Save PR URL
     await db.query('UPDATE chat_sessions SET pr_url = $1 WHERE id = $2', [prUrl, session_id]);
 
     res.json({ success: true, prUrl });
@@ -288,7 +309,6 @@ router.post('/raise-pr', authMiddleware, proOnly, async (req, res) => {
   }
 });
 
-// Get chat history
 router.get('/history', authMiddleware, async (req, res) => {
   try {
     const result = await db.query(

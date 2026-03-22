@@ -5,13 +5,21 @@ const pgSession = require('connect-pg-simple')(session);
 const path = require('path');
 const db = require('./db');
 const app = express();
+
+// Trust Railway's proxy — required for secure cookies to work
 app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// PostgreSQL session store — eliminates MemoryStore warning permanently
+// Explicit favicon route
+app.get('/favicon.ico', (req, res) => {
+  res.setHeader('Content-Type', 'image/x-icon');
+  res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
+
+// PostgreSQL session store
 app.use(session({
   store: new pgSession({
     pool: db,
@@ -23,6 +31,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
