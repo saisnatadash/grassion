@@ -25,529 +25,721 @@
   --white:#fff;--off-white:#f0f4f8;
   --text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;
   --border:rgba(13,27,42,0.08);--border-teal:rgba(42,159,214,0.2);
-  --glass:rgba(255,255,255,0.7);
   --shadow:0 4px 20px rgba(13,27,42,0.08);
   --shadow-teal:0 8px 32px rgba(42,159,214,0.15);
+  --sw:252px;--sc:64px;
 }
 html{cursor:auto}
 body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-
 .layout{display:flex;min-height:100vh}
-.sidebar{width:248px;background:#fff;border-right:1px solid var(--border);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50;transition:transform 0.3s}
-.sidebar-header{padding:20px 20px 0}
-.sidebar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;padding:0 0 20px;border-bottom:1px solid var(--border)}
-.sidebar-logo img{height:28px}
-.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
-.nav-section-label{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;padding:0 8px;margin:16px 0 8px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;font-size:14px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.15s;text-decoration:none;border:none;background:none;width:100%;font-family:'Satoshi',sans-serif}
-.nav-item svg{width:17px;height:17px;flex-shrink:0;opacity:0.6}
-.nav-item:hover{background:var(--off-white);color:var(--text)}
-.nav-item:hover svg{opacity:0.8}
-.nav-item.active{background:var(--teal-light);color:var(--teal-2);font-weight:600}
-.nav-item.active svg{opacity:1;color:var(--teal)}
-.nav-item.danger{color:var(--red)}
-.nav-item.danger svg{color:var(--red)}
-.sidebar-bottom{padding:16px 12px;border-top:1px solid var(--border)}
-.user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--off-white);margin-bottom:10px}
-.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--navy-2),var(--teal-2));display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
-.user-name{font-size:13px;font-weight:600;color:var(--navy)}
-.user-plan-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;letter-spacing:0.3px}
-.plan-free{background:var(--off-white);color:var(--text-light);border:1px solid var(--border)}
-.plan-pro{background:var(--yellow-light);color:var(--yellow)}
 
-.main{margin-left:248px;flex:1;min-height:100vh;display:flex;flex-direction:column}
-.topbar{padding:16px 32px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
-.topbar-title{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy)}
-.topbar-sub{font-size:13px;color:var(--text-light);margin-top:2px}
-.content{padding:28px 32px;flex:1}
+/* SIDEBAR */
+.sidebar{width:var(--sw);background:var(--white);border-right:1px solid var(--border);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50;transition:width 0.25s cubic-bezier(0.4,0,0.2,1);overflow:hidden}
+.sidebar.col{width:var(--sc)}
+.sb-hd{padding:16px 12px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;min-height:60px}
+.sb-logo{display:flex;align-items:center;gap:9px;text-decoration:none;overflow:hidden;flex:1;min-width:0}
+.sb-logo img{height:25px;flex-shrink:0}
+.sb-logo-t{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;opacity:1;transition:opacity 0.2s}
+.sidebar.col .sb-logo-t{opacity:0;pointer-events:none}
+.sidebar.col .sb-logo{justify-content:center}
+.tog-btn{width:26px;height:26px;border:none;background:var(--off-white);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-mid);transition:all 0.2s}
+.tog-btn:hover{background:var(--border)}
+.tog-btn svg{width:13px;height:13px;transition:transform 0.25s}
+.sidebar.col .tog-btn svg{transform:rotate(180deg)}
+.sb-nav{flex:1;padding:10px 7px;overflow-y:auto;overflow-x:hidden}
+.sb-lbl{font-size:9px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.8px;padding:0 7px;margin:12px 0 5px;white-space:nowrap;opacity:1;transition:opacity 0.2s}
+.sidebar.col .sb-lbl{opacity:0}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.15s;text-decoration:none;border:none;background:none;width:100%;font-family:'Satoshi',sans-serif;white-space:nowrap;overflow:hidden;position:relative}
+.ni-ic{width:17px;height:17px;flex-shrink:0;opacity:0.55;transition:opacity 0.15s}
+.ni-lb{opacity:1;transition:opacity 0.2s;overflow:hidden;text-overflow:ellipsis;flex:1;text-align:left}
+.sidebar.col .ni-lb{opacity:0;pointer-events:none}
+.ni:hover{background:var(--off-white);color:var(--text)}
+.ni:hover .ni-ic{opacity:0.8}
+.ni.active{background:var(--teal-light);color:var(--teal-2);font-weight:600}
+.ni.active .ni-ic{opacity:1;color:var(--teal)}
+.ni.danger{color:var(--red)}
+.ni.danger .ni-ic{color:var(--red);opacity:0.7}
+.pro-tag{font-size:8px;font-weight:800;padding:2px 5px;background:var(--yellow-light);color:var(--yellow);border-radius:3px;letter-spacing:0.5px;flex-shrink:0;transition:opacity 0.2s}
+.sidebar.col .pro-tag{opacity:0}
+.sidebar.col .ni{justify-content:center;padding:9px}
+.sidebar.col .ni::after{content:attr(data-t);position:absolute;left:calc(var(--sc) + 7px);background:var(--navy);color:#fff;font-size:11px;padding:4px 9px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:100}
+.sidebar.col .ni:hover::after{opacity:1}
+.sb-bot{padding:10px 7px;border-top:1px solid var(--border);flex-shrink:0}
+.u-card{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:9px;background:var(--off-white);margin-bottom:7px;overflow:hidden}
+.u-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--navy-2),var(--teal-2));display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:12px;font-weight:700;color:#fff}
+.u-inf{overflow:hidden;opacity:1;transition:opacity 0.2s}
+.sidebar.col .u-inf{opacity:0}
+.u-name{font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u-pb{font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px}
+.pb-free{background:var(--off-white);color:var(--text-light);border:1px solid var(--border)}
+.pb-pro{background:var(--yellow-light);color:var(--yellow)}
 
-.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'Satoshi',sans-serif}
-.btn svg{width:15px;height:15px;flex-shrink:0}
-.btn-primary{background:var(--navy);color:#fff}
-.btn-primary:hover{background:var(--navy-3)}
-.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
-.btn-teal{background:var(--teal);color:#fff}
-.btn-teal:hover{background:var(--teal-2)}
-.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}
-.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
-.btn-green{background:var(--green);color:#fff}
-.btn-ghost{background:var(--off-white);color:var(--text-mid)}
-.btn-ghost:hover{color:var(--text)}
+/* MAIN */
+.main{margin-left:var(--sw);flex:1;min-height:100vh;display:flex;flex-direction:column;transition:margin-left 0.25s cubic-bezier(0.4,0,0.2,1)}
+.main.col{margin-left:var(--sc)}
+.topbar{padding:13px 26px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.tb-greet{font-size:11px;color:var(--text-light);margin-bottom:1px}
+.tb-title{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;color:var(--navy)}
+.tb-sub{font-size:11px;color:var(--text-light);margin-top:1px}
+.content{padding:22px 26px;flex:1}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'Satoshi',sans-serif}
+.btn svg{width:13px;height:13px;flex-shrink:0}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy-3)}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:var(--teal-2)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#0d9b6e}
+.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-ghost{background:var(--off-white);color:var(--text-mid)}.btn-ghost:hover{color:var(--text)}
 .btn-danger{background:var(--red-light);color:var(--red)}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-full{width:100%;justify-content:center;padding:12px}
+.btn-sm{padding:5px 11px;font-size:11px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-upg{background:var(--teal);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Satoshi',sans-serif;white-space:nowrap;transition:all 0.2s}.btn-upg:hover{background:var(--teal-2)}
 
-.card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:22px}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.card-title{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;color:var(--navy)}
-.card-sub{font-size:13px;color:var(--text-light);margin-top:2px}
+/* CARDS */
+.card{background:#fff;border:1.5px solid var(--border);border-radius:13px;padding:20px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ct{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:600;color:var(--navy)}
+.cs{font-size:11px;color:var(--text-light);margin-top:2px}
 
-.upgrade-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-3) 100%);border-radius:14px;padding:20px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;position:relative;overflow:hidden}
-.upgrade-banner::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(42,159,214,0.1);border-radius:50%}
-.upgrade-banner h3{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;position:relative}
-.upgrade-banner p{font-size:13px;opacity:0.7;margin-top:3px;position:relative}
-.btn-upgrade{background:var(--teal);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Satoshi',sans-serif;white-space:nowrap;transition:all 0.2s}
-.btn-upgrade:hover{background:var(--teal-2)}
+/* UPGRADE BANNER */
+.upg-banner{background:linear-gradient(135deg,var(--navy),var(--navy-3));border-radius:13px;padding:16px 20px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;position:relative;overflow:hidden}
+.upg-banner::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:rgba(42,159,214,0.1);border-radius:50%}
+.upg-banner h3{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;position:relative}
+.upg-banner p{font-size:11px;opacity:0.65;margin-top:2px;position:relative}
 
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:20px;transition:all 0.2s}
-.stat-card:hover{border-color:var(--border-teal);box-shadow:var(--shadow-teal)}
-.stat-label{font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
-.stat-value{font-family:'Clash Display',sans-serif;font-size:32px;font-weight:700;color:var(--navy);line-height:1}
-.stat-value.red{color:var(--red)}
-.stat-value.green{color:var(--green)}
-.stat-value.teal{color:var(--teal)}
-.stat-sub{font-size:12px;color:var(--text-light);margin-top:6px}
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:#fff;border:1.5px solid var(--border);border-radius:13px;padding:16px;transition:all 0.2s}
+.sc:hover{border-color:var(--border-teal);box-shadow:var(--shadow-teal)}
+.sl{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px}
+.sv{font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700;color:var(--navy);line-height:1}
+.sv.red{color:var(--red)}.sv.green{color:var(--green)}.sv.teal{color:var(--teal)}
+.ss{font-size:10px;color:var(--text-light);margin-top:4px}
 
-.tabs{display:flex;gap:2px;background:var(--off-white);border-radius:10px;padding:4px;margin-bottom:24px;width:fit-content}
-.tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.2s;border:none;background:none;font-family:'Satoshi',sans-serif}
-.tab.active{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
-.tab-pane{display:none}
-.tab-pane.active{display:block}
+/* PANES */
+.pane{display:none}.pane.active{display:block}
 
-.repo-search{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Satoshi',sans-serif;outline:none;transition:all 0.2s;background:#fff;color:var(--text);margin-bottom:14px}
+/* REPO */
+.srb{background:#fff;border:1.5px solid var(--teal);border-radius:11px;padding:13px 16px;display:none;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.srb.vis{display:flex}
+.repo-search{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Satoshi',sans-serif;outline:none;transition:all 0.2s;background:#fff;color:var(--text);margin-bottom:11px}
 .repo-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,159,214,0.08)}
-.repo-list{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto}
-.repo-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s}
-.repo-item:hover,.repo-item.selected{border-color:var(--teal);background:var(--teal-light)}
-.repo-name{font-size:14px;font-weight:500;color:var(--navy)}
-.repo-meta{font-size:12px;color:var(--text-light);margin-top:2px}
-.repo-lang{font-size:11px;padding:3px 9px;border-radius:100px;background:var(--off-white);color:var(--text-mid);font-weight:500}
+.repo-list{display:flex;flex-direction:column;gap:5px;max-height:320px;overflow-y:auto}
+.ri{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;cursor:pointer;transition:all 0.15s}
+.ri:hover,.ri.sel{border-color:var(--teal);background:var(--teal-light)}
+.ri-name{font-size:13px;font-weight:500;color:var(--navy)}
+.ri-meta{font-size:11px;color:var(--text-light);margin-top:1px}
+.ri-lang{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--off-white);color:var(--text-mid);font-weight:500}
 
-.loading-state{display:none;text-align:center;padding:48px}
-.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 20px}
+/* LOADING */
+.ls-wrap{display:none;text-align:center;padding:36px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-steps{display:flex;flex-direction:column;gap:8px;max-width:260px;margin:0 auto;text-align:left}
-.ls{font-size:13px;color:var(--text-light);display:flex;align-items:center;gap:8px;padding:6px 0}
-.ls.active{color:var(--teal);font-weight:500}
-.ls.done{color:var(--green)}
-.ls svg{width:14px;height:14px;flex-shrink:0}
+.ls-steps{display:flex;flex-direction:column;gap:5px;max-width:220px;margin:0 auto;text-align:left}
+.ls{font-size:12px;color:var(--text-light);display:flex;align-items:center;gap:7px;padding:4px 0}
+.ls.active{color:var(--teal);font-weight:500}.ls.done{color:var(--green)}
+.ls svg{width:12px;height:12px;flex-shrink:0}
 
-.results-wrap{display:none;margin-bottom:24px}
-.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.results-title{font-family:'Clash Display',sans-serif;font-size:19px;font-weight:700;color:var(--navy)}
-.issue-card{border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}
-.issue-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--red-light);border-bottom:1px solid rgba(239,68,68,0.1)}
-.issue-file{font-size:13px;font-weight:600;font-family:'Satoshi',monospace;color:var(--navy)}
-.issue-count{font-size:12px;color:var(--red);font-weight:700}
-.issue-body{padding:12px 16px}
-.endpoint-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
-.endpoint-row:last-child{border-bottom:none}
-.method{font-size:10px;font-weight:800;padding:3px 7px;border-radius:4px;font-family:'Satoshi',monospace;letter-spacing:0.5px}
-.m-get{background:#dcfce7;color:#16a34a}
-.m-post{background:#dbeafe;color:#2563eb}
-.m-put{background:#fef9c3;color:#ca8a04}
-.m-delete{background:#fee2e2;color:var(--red)}
-.m-patch{background:#f3e8ff;color:#9333ea}
-.ep-path{font-family:monospace;color:var(--text)}
-.ep-issue{color:var(--red);font-size:12px;margin-left:auto}
+/* RESULTS */
+.rw{display:none;margin-bottom:18px}
+.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rt{font-family:'Clash Display',sans-serif;font-size:17px;font-weight:700;color:var(--navy)}
+.ic{border:1.5px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:8px}
+.ih{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--red-light);border-bottom:1px solid rgba(239,68,68,0.1)}
+.if{font-size:12px;font-weight:600;font-family:'Satoshi',monospace;color:var(--navy)}
+.ib{padding:10px 14px}
+.er{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.er:last-child{border-bottom:none}
+.mth{font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;font-family:'Satoshi',monospace;letter-spacing:0.5px}
+.m-get{background:#dcfce7;color:#16a34a}.m-post{background:#dbeafe;color:#2563eb}.m-put{background:#fef9c3;color:#ca8a04}.m-delete{background:#fee2e2;color:var(--red)}.m-patch{background:#f3e8ff;color:#9333ea}
 
-.data-table{width:100%;border-collapse:collapse}
-.data-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border)}
-.data-table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text-mid)}
-.data-table tr:last-child td{border-bottom:none}
-.data-table tbody tr:hover td{background:var(--off-white)}
-.badge{display:inline-flex;align-items:center;font-size:11px;padding:3px 9px;border-radius:100px;font-weight:600;letter-spacing:0.2px}
-.badge-red{background:var(--red-light);color:var(--red)}
-.badge-green{background:var(--green-light);color:var(--green)}
-.badge-gray{background:var(--off-white);color:var(--text-light)}
-.badge-teal{background:var(--teal-light);color:var(--teal-2)}
+/* TABLE */
+.dt{width:100%;border-collapse:collapse}
+.dt th{text-align:left;padding:8px 12px;font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border)}
+.dt td{padding:10px 12px;font-size:12px;border-bottom:1px solid var(--border);color:var(--text-mid)}
+.dt tr:last-child td{border-bottom:none}
+.dt tbody tr:hover td{background:var(--off-white)}
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:100px;font-weight:600}
+.b-red{background:var(--red-light);color:var(--red)}.b-green{background:var(--green-light);color:var(--green)}.b-gray{background:var(--off-white);color:var(--text-light)}.b-teal{background:var(--teal-light);color:var(--teal-2)}.b-yellow{background:var(--yellow-light);color:var(--yellow)}
 
-.ref-box{background:linear-gradient(135deg,var(--teal-light),#e0f2fe);border:1.5px solid var(--border-teal);border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.ref-code-display{font-family:'Clash Display',monospace;font-size:24px;font-weight:700;color:var(--teal-2);letter-spacing:3px;background:#fff;padding:10px 20px;border-radius:10px;border:1.5px solid var(--border-teal)}
+/* REFERRAL */
+.ref-box{background:linear-gradient(135deg,var(--teal-light),#e0f2fe);border:1.5px solid var(--border-teal);border-radius:13px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.ref-code{font-family:'Clash Display',monospace;font-size:20px;font-weight:700;color:var(--teal-2);letter-spacing:3px;background:#fff;padding:8px 16px;border-radius:9px;border:1.5px solid var(--border-teal)}
+.ub-track{height:6px;background:var(--off-white);border-radius:100px;overflow:hidden;margin-top:4px}
+.ub-fill{height:100%;background:var(--teal);border-radius:100px;transition:width 0.6s ease}
 
-@media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}
-  .main{margin-left:0}
-  .stats-row{grid-template-columns:repeat(2,1fr)}
-}
+/* SETTINGS */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.si{background:var(--off-white);border-radius:9px;padding:12px 14px}
+.si-l{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px}
+.si-v{font-size:13px;font-weight:500;color:var(--navy)}
+
+/* CHAT */
+.chat-layout{display:flex;height:calc(100vh - 60px - 44px);min-height:480px;background:#fff;border:1.5px solid var(--border);border-radius:13px;overflow:hidden}
+.chat-sb{width:200px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--off-white)}
+.chat-sb-top{padding:12px}
+.chat-sb-lbl{font-size:9px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px}
+.chat-sel{width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Satoshi',sans-serif;outline:none;background:#fff;color:var(--text);cursor:pointer}
+.chat-sel:focus{border-color:var(--teal)}
+.chat-br{width:100%;padding:5px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Satoshi',sans-serif;outline:none;background:#fff;color:var(--text);margin-top:5px}
+.chat-br:focus{border-color:var(--teal)}
+.chat-hist{flex:1;overflow-y:auto;padding:6px}
+.chi{padding:6px 8px;border-radius:6px;cursor:pointer;font-size:11px;color:var(--text-mid);transition:background 0.15s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chi:hover{background:rgba(42,159,214,0.08);color:var(--teal-2)}
+.chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chat-tb{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.cm{display:flex;gap:8px;max-width:88%}
+.cm.user{align-self:flex-end;flex-direction:row-reverse}
+.cm.assistant{align-self:flex-start}
+.cm-av{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.cm.user .cm-av{background:linear-gradient(135deg,var(--navy-2),var(--teal-2));color:#fff}
+.cm.assistant .cm-av{background:var(--teal-light);color:var(--teal-2)}
+.cm-b{padding:9px 13px;border-radius:11px;font-size:12px;line-height:1.6}
+.cm.user .cm-b{background:var(--navy);color:#fff;border-radius:11px 11px 3px 11px}
+.cm.assistant .cm-b{background:#fff;border:1.5px solid var(--border);color:var(--text);border-radius:11px 11px 11px 3px}
+.diff-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-top:7px;width:100%;max-width:560px}
+.diff-hd{padding:9px 13px;background:var(--off-white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.diff-fn{font-family:'Satoshi',monospace;font-size:11px;font-weight:600;color:var(--navy)}
+.diff-body{font-family:'Satoshi',monospace;font-size:10px;line-height:1.6;overflow-x:auto;max-height:180px}
+.dl{padding:1px 13px;white-space:pre}
+.dl.add{background:#f0fdf4;color:#16a34a}.dl.rem{background:#fef2f2;color:#dc2626}.dl.ctx{color:var(--text-mid)}
+.appr-bar{background:#fff;border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;margin-top:7px;display:flex;align-items:center;justify-content:space-between;gap:9px;width:100%;max-width:560px}
+.pr-ok{background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:9px;padding:10px 13px;margin-top:7px;display:flex;align-items:center;gap:9px;width:100%;max-width:560px}
+.chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center}
+.chat-suggs{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:400px;margin-top:14px}
+.chat-sugg{background:var(--off-white);border:none;border-radius:8px;padding:9px 11px;cursor:pointer;text-align:left;font-size:11px;color:var(--text-mid);transition:all 0.2s;font-family:'Satoshi',sans-serif}
+.chat-sugg:hover{background:var(--teal-light);color:var(--teal-2)}
+.chat-sugg strong{display:block;font-size:10px;color:var(--navy);margin-bottom:2px}
+.chat-ia{padding:12px 16px;background:#fff;border-top:1px solid var(--border)}
+.chat-iw{background:var(--off-white);border:1.5px solid var(--border);border-radius:9px;display:flex;align-items:flex-end;gap:7px;padding:8px 11px;transition:border-color 0.2s}
+.chat-iw:focus-within{border-color:var(--teal);background:#fff}
+.chat-ta{flex:1;border:none;outline:none;font-size:12px;font-family:'Satoshi',sans-serif;color:var(--text);resize:none;min-height:18px;max-height:90px;background:transparent;line-height:1.5}
+.chat-ta::placeholder{color:var(--text-light)}
+.chat-sb-btn{width:30px;height:30px;background:var(--teal);border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.chat-sb-btn:hover{background:var(--teal-2)}
+.chat-sb-btn:disabled{background:var(--border);cursor:not-allowed}
+.chat-sb-btn svg{width:13px;height:13px;color:#fff}
+.typ{display:flex;align-items:center;gap:3px;padding:9px 13px}
+.td{width:5px;height:5px;border-radius:50%;background:var(--text-light);animation:typing 1.2s infinite}
+.td:nth-child(2){animation-delay:0.2s}.td:nth-child(3){animation-delay:0.4s}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-3px);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}.sg{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="layout">
-<aside class="sidebar">
-  <div class="sidebar-header">
-    <a href="/" class="sidebar-logo">
-      <img src="/img/logo.png" alt="Grassion" style="height:28px">
+
+<aside class="sidebar" id="sb">
+  <div class="sb-hd">
+    <a href="/" class="sb-logo">
+      <img src="/img/logo.png" alt="Grassion">
+      <span class="sb-logo-t">Grassion</span>
     </a>
+    <button class="tog-btn" onclick="toggleSB()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-label">Main</div>
-    <button class="nav-item active" onclick="showTab('scan')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-      Dashboard
+  <nav class="sb-nav">
+    <div class="sb-lbl">Main</div>
+    <button class="ni active" onclick="showPane('scan')" data-t="Dashboard">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span class="ni-lb">Dashboard</span>
     </button>
-    <button class="nav-item" onclick="showTab('history')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Scan History
+    <button class="ni" onclick="showPane('history')" data-t="Scan History">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="ni-lb">Scan History</span>
     </button>
-    <button class="nav-item" onclick="showTab('referral')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Refer &amp; Earn
+    <button class="ni" onclick="showPane('referral')" data-t="Refer &amp; Earn">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="ni-lb">Refer &amp; Earn</span>
     </button>
-    <button class="nav-item" onclick="showTab('billing')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      Billing
+    <button class="ni" onclick="showPane('billing')" data-t="Billing">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span class="ni-lb">Billing</span>
     </button>
-    <div class="nav-section-label">Account</div>
-    <button class="nav-item" onclick="showTab('settings')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Settings
+    <div class="sb-lbl">Account</div>
+    <button class="ni" onclick="showPane('settings')" data-t="Settings">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="ni-lb">Settings</span>
+    </button>
+    <button class="ni" onclick="showPane('chat')" data-t="AI Assistant (Pro)">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="ni-lb">AI Assistant</span>
+      <span class="pro-tag">PRO</span>
     </button>
   </nav>
-  <div class="sidebar-bottom">
-    <div class="user-card">
-      <div class="user-avatar" id="sideAvatar">S</div>
-      <div>
-        <div class="user-name" id="sideUsername">Loading...</div>
-        <span class="user-plan-badge plan-free" id="sidePlan">Free</span>
+  <div class="sb-bot">
+    <div class="u-card">
+      <div class="u-av" id="sideAv">S</div>
+      <div class="u-inf">
+        <div class="u-name" id="sideUn">Loading...</div>
+        <span class="u-pb pb-free" id="sidePl">Free</span>
       </div>
     </div>
-    <button class="nav-item" id="upgradeNavBtn" onclick="startPayment()" style="display:none;background:rgba(42,159,214,0.08);color:var(--teal);margin-bottom:4px">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"/><path d="M21 3L13 11 9 7 3 13"/></svg>
-      Upgrade to Pro
+    <button class="ni" id="upgBtn" onclick="pay()" style="display:none;background:rgba(42,159,214,0.08);color:var(--teal)" data-t="Upgrade">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--teal);opacity:1"><polyline points="13 2 13 9 20 9"/><path d="M21 3L13 11 9 7 3 13"/></svg>
+      <span class="ni-lb">Upgrade to Pro</span>
     </button>
-    <a href="/auth/logout" class="nav-item danger">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Sign out
+    <a href="/auth/logout" class="ni danger" data-t="Sign out">
+      <svg class="ni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="ni-lb">Sign out</span>
     </a>
   </div>
 </aside>
 
-<main class="main">
+<main class="main" id="mn">
   <div class="topbar">
     <div>
-      <div class="topbar-title" id="pageTitle">Dashboard</div>
-      <div class="topbar-sub" id="pageSub">Scan repos and fix security gaps automatically</div>
+      <div class="tb-greet" id="tg">Good morning</div>
+      <div class="tb-title" id="ptitle">Dashboard</div>
+      <div class="tb-sub" id="psub">Scan repos and fix security gaps automatically</div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <span id="topPlanBadge" style="font-size:12px;color:var(--text-light)"></span>
-    </div>
+    <div id="tpb"></div>
   </div>
 
   <div class="content">
-    <div class="upgrade-banner" id="upgradeBanner" style="display:none">
-      <div>
-        <h3>Upgrade to Pro — ₹4,900/month</h3>
-        <p>Auto PR raising + Continuous Protection watching every commit 24/7</p>
-      </div>
-      <button class="btn-upgrade" onclick="startPayment()">Upgrade now</button>
+    <div class="upg-banner" id="upgBanner" style="display:none">
+      <div><h3>Upgrade to Pro — ₹4,900/month</h3><p>Unlimited scans · Auto PR · AI Assistant · 24/7 protection</p></div>
+      <button class="btn-upg" onclick="pay()">Upgrade now</button>
     </div>
 
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Total Scans</div><div class="stat-value" id="stScans">0</div><div class="stat-sub">All time</div></div>
-      <div class="stat-card"><div class="stat-label">Issues Found</div><div class="stat-value red" id="stIssues">0</div><div class="stat-sub">Auth gaps detected</div></div>
-      <div class="stat-card"><div class="stat-label">PRs Raised</div><div class="stat-value green" id="stPRs">0</div><div class="stat-sub">Auto-fixed</div></div>
-      <div class="stat-card"><div class="stat-label">Scans Left</div><div class="stat-value teal" id="stLeft">3</div><div class="stat-sub" id="stLeftSub">Free tier</div></div>
+      <div class="sc"><div class="sl">Total Scans</div><div class="sv" id="stS">—</div><div class="ss">All time</div></div>
+      <div class="sc"><div class="sl">Issues Found</div><div class="sv red" id="stI">—</div><div class="ss">Auth gaps detected</div></div>
+      <div class="sc"><div class="sl">PRs Raised</div><div class="sv green" id="stP">—</div><div class="ss">Auto-fixed</div></div>
+      <div class="sc"><div class="sl">Scans Left</div><div class="sv teal" id="stL">—</div><div class="ss" id="stLS">Loading...</div></div>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" onclick="showTab('scan')">New Scan</button>
-      <button class="tab" onclick="showTab('history')">History</button>
-      <button class="tab" onclick="showTab('referral')">Referral</button>
-      <button class="tab" onclick="showTab('billing')">Billing</button>
-      <button class="tab" onclick="showTab('settings')">Settings</button>
-    </div>
-
-    <div class="tab-pane active" id="tab-scan">
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header"><div><div class="card-title">Select a repository</div><div class="card-sub" id="repoCount">Loading...</div></div></div>
-        <input type="text" class="repo-search" placeholder="Search repositories..." oninput="filterRepos(this.value)">
-        <div class="repo-list" id="repoList"><div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">Loading repositories...</div></div>
-      </div>
-
-      <div id="scanSelected" style="display:none;background:#fff;border:1.5px solid var(--teal);border-radius:12px;padding:18px 20px;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <!-- SCAN -->
+    <div class="pane active" id="pane-scan">
+      <div class="srb" id="srb">
         <div>
-          <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Selected repository</div>
-          <div style="font-weight:600;font-size:15px;color:var(--navy)" id="selectedName">...</div>
-          <div style="font-size:13px;color:var(--text-light);margin-top:2px">Ready to scan for auth gaps</div>
+          <div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Selected repository</div>
+          <div style="font-weight:600;font-size:14px;color:var(--navy)" id="selName">...</div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:1px">Ready to scan for auth gaps</div>
         </div>
-        <button class="btn btn-primary" onclick="startScan()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          Scan now
+        <button class="btn btn-navy" onclick="startScan()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Scan now
         </button>
       </div>
-
-      <div class="loading-state" id="loadingState">
+      <div class="card">
+        <div class="ch"><div><div class="ct">Select a repository</div><div class="cs" id="rcount">Loading...</div></div></div>
+        <input type="text" class="repo-search" placeholder="Search repositories..." oninput="filterRepos(this.value)">
+        <div class="repo-list" id="rlist"><div style="text-align:center;padding:18px;color:var(--text-light);font-size:12px">Loading...</div></div>
+      </div>
+      <div class="ls-wrap" id="lsw">
         <div class="spinner"></div>
-        <div class="loading-steps">
+        <div class="ls-steps">
           <div class="ls" id="ls1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Reading route files...</div>
           <div class="ls" id="ls2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Analyzing endpoints...</div>
           <div class="ls" id="ls3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Detecting auth gaps...</div>
           <div class="ls" id="ls4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Preparing results...</div>
         </div>
       </div>
-
-      <div class="results-wrap" id="resultsWrap">
-        <div class="results-header">
-          <div class="results-title" id="resultsTitle">Scan Results</div>
+      <div class="rw" id="rw">
+        <div class="rh"><div class="rt" id="rtitle">Scan Results</div>
           <button class="btn btn-green" id="prBtn" onclick="raisePR()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
-            Raise fix PR
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>Raise fix PR
           </button>
         </div>
-        <div id="issuesList"></div>
+        <div id="ilist"></div>
       </div>
     </div>
 
-    <div class="tab-pane" id="tab-history">
+    <!-- HISTORY -->
+    <div class="pane" id="pane-history">
       <div class="card">
-        <div class="card-header"><div class="card-title">Scan History</div><button class="btn btn-ghost btn-sm" onclick="loadHistory()">Refresh</button></div>
-        <table class="data-table">
-          <thead><tr><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th><th>Action</th></tr></thead>
-          <tbody id="historyBody"><tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-light)">No scans yet.</td></tr></tbody>
-        </table>
+        <div class="ch"><div class="ct">Scan History</div><button class="btn btn-ghost btn-sm" onclick="loadHistory()">Refresh</button></div>
+        <table class="dt"><thead><tr><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="hbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light)">No scans yet.</td></tr></tbody></table>
       </div>
     </div>
 
-    <div class="tab-pane" id="tab-referral">
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header"><div class="card-title">Your referral code</div></div>
-        <p style="font-size:14px;color:var(--text-mid);margin-bottom:20px">Share your code. Both you and your friend get <strong>5 bonus scans</strong> when they sign up.</p>
-        <div class="ref-box">
-          <div><div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;font-weight:500">Referral code</div><div class="ref-code-display" id="refCode">...</div></div>
-          <button class="btn btn-teal" onclick="copyRef()">Copy link</button>
+    <!-- REFERRAL -->
+    <div class="pane" id="pane-referral">
+      <div class="card" style="margin-bottom:14px">
+        <div class="ch"><div class="ct">Your referral code</div></div>
+        <p style="font-size:12px;color:var(--text-mid);margin-bottom:16px">Share your code. Both you and your friend get <strong>5 bonus scans</strong> when they sign up.</p>
+        <div class="ref-box"><div><div style="font-size:11px;color:var(--text-mid);margin-bottom:6px;font-weight:500">Referral code</div><div class="ref-code" id="refCode">...</div></div><button class="btn btn-teal" onclick="copyRef()">Copy link</button></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="ch"><div class="ct">Referral stats</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="background:var(--off-white);border-radius:9px;padding:12px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:var(--navy)" id="rss">0</div><div style="font-size:10px;color:var(--text-light);margin-top:3px">Friends signed up</div></div>
+          <div style="background:var(--off-white);border-radius:9px;padding:12px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:var(--teal)" id="rsb">0</div><div style="font-size:10px;color:var(--text-light);margin-top:3px">Bonus scans earned</div></div>
+          <div style="background:var(--off-white);border-radius:9px;padding:12px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:var(--green)" id="rst">0</div><div style="font-size:10px;color:var(--text-light);margin-top:3px">Total bonus scans</div></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title">Apply a referral code</div></div>
-        <div style="display:flex;gap:10px">
-          <input type="text" id="refInput" class="repo-search" placeholder="Enter code e.g. ABC123" style="margin-bottom:0;flex:1">
-          <button class="btn btn-primary" onclick="applyRef()">Apply</button>
-        </div>
-        <p id="refMsg" style="font-size:13px;margin-top:12px;display:none"></p>
+        <div class="ch"><div class="ct">Apply a referral code</div></div>
+        <div style="display:flex;gap:9px"><input type="text" id="refIn" class="repo-search" placeholder="Enter code e.g. ABC123" style="margin-bottom:0;flex:1"><button class="btn btn-navy" onclick="applyRef()">Apply</button></div>
+        <p id="refMsg" style="font-size:12px;margin-top:9px;display:none"></p>
       </div>
     </div>
 
-    <div class="tab-pane" id="tab-billing">
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header"><div class="card-title">Current Plan</div></div>
-        <div id="billingPlanInfo" style="padding:20px;background:var(--off-white);border-radius:12px;margin-bottom:20px">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--navy)" id="billingPlanName">Free</div>
-              <div style="font-size:13px;color:var(--text-mid);margin-top:4px" id="billingPlanDesc">3 scans per month, 1 repository</div>
-            </div>
-            <span id="billingPlanBadge" class="badge badge-gray" style="font-size:13px;padding:6px 14px">FREE</span>
-          </div>
+    <!-- BILLING -->
+    <div class="pane" id="pane-billing">
+      <div class="card" style="margin-bottom:14px">
+        <div class="ch"><div class="ct">Current Plan</div><span id="billBadge" class="badge b-gray">FREE</span></div>
+        <div style="padding:14px;background:var(--off-white);border-radius:9px;margin-bottom:14px">
+          <div style="font-family:'Clash Display',sans-serif;font-size:17px;font-weight:700;color:var(--navy)" id="billPlan">Free</div>
+          <div style="font-size:12px;color:var(--text-mid);margin-top:3px" id="billPlanD">3 scans/month · 1 repository</div>
         </div>
-        <div id="billingUpgradeArea">
-          <h3 style="font-family:'Clash Display',sans-serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:16px">Upgrade to Pro</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
-            <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center">
-              <div style="font-size:22px;margin-bottom:6px">∞</div>
-              <div style="font-size:12px;color:var(--text-mid);font-weight:500">Unlimited repos</div>
-            </div>
-            <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center">
-              <div style="font-size:22px;margin-bottom:6px">🤖</div>
-              <div style="font-size:12px;color:var(--text-mid);font-weight:500">Auto PR raising</div>
-            </div>
-            <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center">
-              <div style="font-size:22px;margin-bottom:6px">24/7</div>
-              <div style="font-size:12px;color:var(--text-mid);font-weight:500">Continuous watch</div>
-            </div>
-          </div>
-          <div style="background:var(--navy);border-radius:14px;padding:24px;color:#fff;display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700">₹4,900<span style="font-size:14px;opacity:0.6">/month</span></div>
-              <div style="font-size:13px;opacity:0.6;margin-top:4px">Cancel anytime. No lock-in.</div>
-            </div>
-            <button class="btn-upgrade" onclick="startPayment()">Upgrade now</button>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:4px"><span>Scans used this month</span><span id="ubText">0 / 3</span></div>
+          <div class="ub-track"><div class="ub-fill" id="ubFill" style="width:0%"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px">
+          <div style="background:var(--off-white);border-radius:8px;padding:11px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy)" id="bSU">0</div><div style="font-size:9px;color:var(--text-light);margin-top:3px">Scans used</div></div>
+          <div style="background:var(--off-white);border-radius:8px;padding:11px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--teal)" id="bBS">0</div><div style="font-size:9px;color:var(--text-light);margin-top:3px">Bonus scans</div></div>
+          <div style="background:var(--off-white);border-radius:8px;padding:11px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--green)" id="bPR">0</div><div style="font-size:9px;color:var(--text-light);margin-top:3px">PRs raised</div></div>
+          <div style="background:var(--off-white);border-radius:8px;padding:11px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--red)" id="bIF">0</div><div style="font-size:9px;color:var(--text-light);margin-top:3px">Issues found</div></div>
+        </div>
+        <div id="billUpgArea">
+          <div style="background:var(--navy);border-radius:11px;padding:18px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700">₹4,900<span style="font-size:12px;opacity:0.6">/month</span></div><div style="font-size:11px;opacity:0.6;margin-top:3px">Unlimited · Auto PR · AI · 24/7</div></div>
+            <button class="btn-upg" onclick="pay()">Upgrade now</button>
           </div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title">Payment Methods</div></div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid);display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Credit / Debit Card</div>
-          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid);display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>UPI</div>
-          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid);display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Net Banking</div>
-          <div style="background:var(--off-white);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-mid)">Powered by Razorpay</div>
+        <div class="ch"><div class="ct">Payment methods</div></div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <div style="background:var(--off-white);border-radius:7px;padding:8px 13px;font-size:11px;color:var(--text-mid)">Credit/Debit Card</div>
+          <div style="background:var(--off-white);border-radius:7px;padding:8px 13px;font-size:11px;color:var(--text-mid)">UPI</div>
+          <div style="background:var(--off-white);border-radius:7px;padding:8px 13px;font-size:11px;color:var(--text-mid)">Net Banking</div>
+          <div style="background:var(--off-white);border-radius:7px;padding:8px 13px;font-size:11px;color:var(--text-light)">Powered by Razorpay</div>
         </div>
       </div>
     </div>
 
-    <div class="tab-pane" id="tab-settings">
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header"><div class="card-title">Account</div></div>
-        <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--off-white);border-radius:10px">
-          <div class="user-avatar" id="settingsAvatar" style="width:56px;height:56px;font-size:20px">S</div>
-          <div><div style="font-weight:600;font-size:16px;color:var(--navy)" id="settingsName">...</div><div style="font-size:13px;color:var(--text-light)" id="settingsEmail">...</div></div>
+    <!-- SETTINGS -->
+    <div class="pane" id="pane-settings">
+      <div class="card" style="margin-bottom:14px">
+        <div class="ch"><div class="ct">Profile</div></div>
+        <div style="display:flex;align-items:center;gap:13px;padding:13px;background:var(--off-white);border-radius:9px;margin-bottom:14px">
+          <div class="u-av" id="setAv" style="width:48px;height:48px;font-size:16px">S</div>
+          <div><div style="font-weight:700;font-size:15px;color:var(--navy)" id="setName">...</div><div style="font-size:12px;color:var(--text-light)" id="setEmail">...</div></div>
+        </div>
+        <div class="sg">
+          <div class="si"><div class="si-l">GitHub username</div><div class="si-v" id="setUN">...</div></div>
+          <div class="si"><div class="si-l">Member since</div><div class="si-v" id="setJoin">...</div></div>
+          <div class="si"><div class="si-l">Current plan</div><div class="si-v" id="setPlan">Free</div></div>
+          <div class="si"><div class="si-l">Referral code</div><div class="si-v" id="setRef">...</div></div>
+          <div class="si"><div class="si-l">Total scans</div><div class="si-v" id="setTS">0</div></div>
+          <div class="si"><div class="si-l">Bonus scans</div><div class="si-v" id="setBS">0</div></div>
         </div>
       </div>
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header"><div><div class="card-title">Plan &amp; Billing</div><div class="card-sub" id="planDesc">Free plan</div></div></div>
-        <div id="planUpgradeArea">
-          <p style="font-size:14px;color:var(--text-mid);margin-bottom:16px">Upgrade to Pro for unlimited repos, auto PR raising, and 24/7 Continuous Protection.</p>
-          <button class="btn btn-teal" onclick="startPayment()">Upgrade to Pro — ₹4,900/month</button>
+      <div class="card" style="margin-bottom:14px">
+        <div class="ch"><div><div class="ct">Plan &amp; Billing</div><div class="cs" id="setPD">Free — 3 scans/month</div></div></div>
+        <div id="setPArea">
+          <p style="font-size:12px;color:var(--text-mid);margin-bottom:13px">Upgrade to Pro for unlimited repos, auto PR raising, AI Assistant, and 24/7 Continuous Protection.</p>
+          <button class="btn btn-teal" onclick="pay()">Upgrade to Pro — ₹4,900/month</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="ch"><div class="ct">GitHub connection</div></div>
+        <div style="display:flex;align-items:center;gap:9px;padding:11px;background:var(--off-white);border-radius:9px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--navy)"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          <div><div style="font-size:12px;font-weight:600;color:var(--navy)" id="setGH">...</div><div style="font-size:11px;color:var(--green)">Connected via OAuth</div></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title" style="color:var(--red)">Danger zone</div></div>
-        <p style="font-size:13px;color:var(--text-mid);margin-bottom:16px">Signing out will end your current session.</p>
-        <a href="/auth/logout" class="btn btn-danger">Sign out</a>
+        <div class="ch"><div class="ct" style="color:var(--red)">Danger zone</div></div>
+        <p style="font-size:12px;color:var(--text-mid);margin-bottom:13px">Signing out ends your session. Your data is preserved.</p>
+        <a href="/auth/logout" class="btn btn-danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</a>
       </div>
     </div>
+
+    <!-- CHAT -->
+    <div class="pane" id="pane-chat">
+      <div id="chatGate" style="display:none">
+        <div class="card" style="text-align:center;padding:40px;max-width:400px;margin:0 auto">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" style="margin:0 auto 12px;display:block"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:7px">Pro Feature</div>
+          <p style="font-size:12px;color:var(--text-mid);margin-bottom:18px;line-height:1.6">AI Code Assistant lets you describe what to change, review the diff, and raise a PR in one flow.</p>
+          <button class="btn btn-teal" onclick="pay()">Upgrade to Pro</button>
+        </div>
+      </div>
+      <div class="chat-layout" id="chatUI" style="display:none">
+        <div class="chat-sb">
+          <div class="chat-sb-top">
+            <div class="chat-sb-lbl">Repository</div>
+            <select class="chat-sel" id="chatRepo" onchange="onChatRepo()"><option value="">Select repo...</option></select>
+            <input type="text" class="chat-br" id="chatBranch" placeholder="Branch (default: main)" value="main">
+          </div>
+          <div style="padding:6px 6px 3px"><div style="font-size:9px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.2px;padding:0 2px">Recent</div></div>
+          <div class="chat-hist" id="chatHist"></div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-tb">
+            <div><div style="font-family:'Clash Display',sans-serif;font-size:13px;font-weight:700;color:var(--navy)">AI Code Assistant</div><div style="font-size:10px;color:var(--text-light)" id="chatSub">Select a repository to start</div></div>
+            <div id="chatConn" style="display:none;font-size:10px;color:var(--green);font-weight:600;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block"></span>Connected</div>
+          </div>
+          <div class="chat-msgs" id="chatMsgs">
+            <div class="chat-empty" id="chatEmpty">
+              <div style="width:44px;height:44px;background:var(--teal-light);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" style="width:22px;height:22px"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+              <div style="font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:5px">What should I fix?</div>
+              <div style="font-size:12px;color:var(--text-mid);max-width:300px;line-height:1.6;margin-bottom:14px">Select a repo, describe the change. I'll analyze, show the diff, and raise a PR once you approve.</div>
+              <div class="chat-suggs">
+                <button class="chat-sugg" onclick="useSugg('Add auth middleware to all unprotected API routes')"><strong>Security fix</strong>Add auth to unprotected routes</button>
+                <button class="chat-sugg" onclick="useSugg('Add input validation to all POST endpoints')"><strong>Validation</strong>Validate all POST inputs</button>
+                <button class="chat-sugg" onclick="useSugg('Add try/catch error handling to all async functions')"><strong>Error handling</strong>Add try/catch everywhere</button>
+                <button class="chat-sugg" onclick="useSugg('Add rate limiting middleware to public API routes')"><strong>Rate limiting</strong>Limit public route calls</button>
+              </div>
+            </div>
+          </div>
+          <div class="chat-ia">
+            <div class="chat-iw">
+              <textarea class="chat-ta" id="chatIn" placeholder="Describe what to change..." rows="1" onkeydown="chatKey(event)" oninput="chatResize(this)"></textarea>
+              <button class="chat-sb-btn" id="chatSend" onclick="sendChat()" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+            <div style="font-size:10px;color:var(--text-light);margin-top:4px;text-align:center">Analyzes repo · shows diff · waits for approval · raises PR</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-var selectedRepo=null,scanResults=null,allRepos=[],currentUser=null;
+var selRepo=null,scanRes=null,allRepos=[],cu=null,chatRepo=null,chatLoading=false;
+
+function toggleSB(){var s=document.getElementById('sb'),m=document.getElementById('mn');s.classList.toggle('col');m.classList.toggle('col');}
+
+function greet(){var h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening';}
 
 async function init(){
-  var res=await fetch('/auth/me');
-  var d=await res.json();
+  document.getElementById('tg').textContent=greet();
+  var r=await fetch('/auth/me'),d=await r.json();
   if(!d.user){window.location.href='/';return;}
-  currentUser=d.user;
-  document.getElementById('sideUsername').textContent=d.user.username;
-  document.getElementById('sideAvatar').textContent=d.user.username[0].toUpperCase();
-  document.getElementById('settingsAvatar').textContent=d.user.username[0].toUpperCase();
-  document.getElementById('settingsName').textContent=d.user.username;
-  document.getElementById('settingsEmail').textContent=d.user.email||'...';
-  if(d.user.plan==='pro'){
-    document.getElementById('sidePlan').textContent='Pro ✓';
-    document.getElementById('sidePlan').className='user-plan-badge plan-pro';
-    document.getElementById('stLeft').textContent='∞';
-    document.getElementById('stLeftSub').textContent='Pro — Unlimited';
-    document.getElementById('planDesc').textContent='Pro plan — active';
-    document.getElementById('planUpgradeArea').innerHTML='<div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--green-light);border-radius:10px;border:1.5px solid rgba(16,185,129,0.2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><div style="font-weight:600;color:var(--green);font-size:15px">You\'re on Pro</div><div style="font-size:13px;color:var(--text-mid);margin-top:2px">All features unlocked.</div></div></div>';
-    document.getElementById('topPlanBadge').innerHTML='<span style="background:var(--yellow-light);color:var(--yellow);font-weight:700;font-size:11px;padding:3px 10px;border-radius:100px">PRO</span>';
-    var bpn=document.getElementById('billingPlanName');if(bpn)bpn.textContent='Pro';
-    var bpd=document.getElementById('billingPlanDesc');if(bpd)bpd.textContent='Unlimited repos, unlimited scans, auto PR raising, 24/7 protection';
-    var bpb=document.getElementById('billingPlanBadge');if(bpb){bpb.textContent='PRO';bpb.className='badge badge-teal';bpb.style.fontSize='13px';bpb.style.padding='6px 14px';}
-    var bua=document.getElementById('billingUpgradeArea');if(bua)bua.innerHTML='<div style="background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><div style="font-weight:700;color:var(--green);font-size:16px">Pro plan is active</div><div style="font-size:13px;color:var(--text-mid);margin-top:4px">All features unlocked. Auto PR raising active. Plan renews monthly.</div></div></div>';
-    var upg=document.getElementById('upgradeBanner');if(upg)upg.style.display='none';
-    var unb=document.getElementById('upgradeNavBtn');if(unb)unb.style.display='none';
+  cu=d.user;var u=d.user,un=u.username||'User';
+  document.getElementById('tg').textContent=greet()+', '+un;
+  document.getElementById('sideAv').textContent=un[0].toUpperCase();
+  document.getElementById('sideUn').textContent=un;
+  document.getElementById('setAv').textContent=un[0].toUpperCase();
+  document.getElementById('setName').textContent=un;
+  document.getElementById('setEmail').textContent=u.email||'No email on file';
+  document.getElementById('setUN').textContent='@'+un;
+  document.getElementById('setGH').textContent=un;
+  document.getElementById('setRef').textContent=u.referral_code||'...';
+  document.getElementById('setBS').textContent=u.bonus_scans||0;
+  if(u.created_at)document.getElementById('setJoin').textContent=new Date(u.created_at).toLocaleDateString('en-IN',{year:'numeric',month:'long'});
+  loadStats();
+  if(u.plan==='pro'){
+    document.getElementById('sidePl').textContent='Pro \u2713';document.getElementById('sidePl').className='u-pb pb-pro';
+    document.getElementById('tpb').innerHTML='<span style="background:var(--yellow-light);color:var(--yellow);font-weight:700;font-size:10px;padding:3px 9px;border-radius:100px">PRO</span>';
+    document.getElementById('billPlan').textContent='Pro';document.getElementById('billPlanD').textContent='Unlimited repos \u00b7 Unlimited scans \u00b7 Auto PR \u00b7 AI Assistant \u00b7 24/7';
+    document.getElementById('billBadge').textContent='PRO';document.getElementById('billBadge').className='badge b-teal';
+    document.getElementById('billUpgArea').innerHTML='<div style="background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:9px;padding:14px;display:flex;align-items:center;gap:10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><div style="font-weight:700;color:var(--green);font-size:13px">Pro plan is active</div><div style="font-size:11px;color:var(--text-mid);margin-top:2px">All features unlocked. Auto PR raising active.</div></div></div>';
+    document.getElementById('upgBanner').style.display='none';document.getElementById('upgBtn').style.display='none';
+    document.getElementById('setPlan').textContent='Pro';document.getElementById('setPD').textContent='Pro \u2014 All features unlocked';
+    document.getElementById('setPArea').innerHTML='<div style="background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:9px;padding:12px;display:flex;align-items:center;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div style="font-weight:600;color:var(--green);font-size:12px">You\'re on Pro. All features unlocked.</div></div>';
+    document.getElementById('chatGate').style.display='none';document.getElementById('chatUI').style.display='flex';
+    loadChatRepos();loadChatHist();
+    document.getElementById('stLS').textContent='Pro \u2014 Unlimited';
   }else{
-    document.getElementById('upgradeBanner').style.display='flex';
-    document.getElementById('upgradeNavBtn').style.display='flex';
-    document.getElementById('topPlanBadge').textContent='Free plan';
+    document.getElementById('upgBanner').style.display='flex';document.getElementById('upgBtn').style.display='flex';
+    document.getElementById('tpb').textContent='Free plan';
+    document.getElementById('chatGate').style.display='block';document.getElementById('chatUI').style.display='none';
   }
-  loadRepos();loadHistory();loadReferral();
+  loadRepos();loadHistory();loadRef();
+}
+
+async function loadStats(){
+  try{
+    var r=await fetch('/api/scanner/stats'),d=await r.json();
+    document.getElementById('stS').textContent=d.total_scans||0;
+    document.getElementById('stI').textContent=d.total_issues||0;
+    document.getElementById('stP').textContent=d.prs_raised||0;
+    document.getElementById('stL').textContent=d.scans_left===null?'\u221e':(d.scans_left||0);
+    document.getElementById('bSU').textContent=d.scans_used||0;
+    document.getElementById('bBS').textContent=d.bonus_scans||0;
+    document.getElementById('bPR').textContent=d.prs_raised||0;
+    document.getElementById('bIF').textContent=d.total_issues||0;
+    document.getElementById('setTS').textContent=d.total_scans||0;
+    if(d.plan!=='pro'){
+      var lim=3+(d.bonus_scans||0),pct=Math.min(100,Math.round(((d.scans_used||0)/lim)*100));
+      document.getElementById('ubText').textContent=(d.scans_used||0)+' / '+lim;
+      document.getElementById('ubFill').style.width=pct+'%';
+      if(pct>=80)document.getElementById('ubFill').style.background='var(--red)';
+    }else{
+      document.getElementById('ubText').textContent=(d.scans_used||0)+' / Unlimited';
+      document.getElementById('ubFill').style.width='100%';document.getElementById('ubFill').style.background='var(--green)';
+    }
+  }catch(e){}
 }
 
 async function loadRepos(){
-  var res=await fetch('/api/repos');
-  var d=await res.json();
-  allRepos=d.repos||[];
-  document.getElementById('repoCount').textContent=allRepos.length+' repositories';
-  renderRepos(allRepos);
+  var r=await fetch('/api/repos'),d=await r.json();
+  allRepos=d.repos||[];document.getElementById('rcount').textContent=allRepos.length+' repositories';renderRepos(allRepos);
 }
-
 function renderRepos(repos){
-  var el=document.getElementById('repoList');
-  if(!repos.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">No repositories found.</div>';return;}
-  el.innerHTML=repos.map(function(r){return '<div class="repo-item" onclick="selectRepo(\''+r.fullName+'\',\''+r.name+'\')" id="ri-'+r.id+'"><div><div class="repo-name">'+r.name+'</div><div class="repo-meta">'+r.fullName+' · '+new Date(r.updatedAt).toLocaleDateString()+'</div></div><span class="repo-lang">'+(r.language||'...')+'</span></div>';}).join('');
+  var el=document.getElementById('rlist');
+  if(!repos.length){el.innerHTML='<div style="text-align:center;padding:18px;color:var(--text-light);font-size:12px">No repos found.</div>';return;}
+  el.innerHTML=repos.map(function(r){return '<div class="ri'+(selRepo===r.fullName?' sel':'')+'" onclick="selR(\''+r.fullName+'\')" id="ri-'+r.id+'"><div><div class="ri-name">'+r.name+'</div><div class="ri-meta">'+r.fullName+' \u00b7 '+new Date(r.updatedAt).toLocaleDateString()+'</div></div><span class="ri-lang">'+(r.language||'...')+'</span></div>';}).join('');
 }
-
 function filterRepos(q){renderRepos(allRepos.filter(function(r){return r.name.toLowerCase().includes(q.toLowerCase())||r.fullName.toLowerCase().includes(q.toLowerCase());}));}
-
-function selectRepo(full,name){
-  selectedRepo=full;
-  document.querySelectorAll('.repo-item').forEach(function(e){e.classList.remove('selected');});
-  var el=document.getElementById('scanSelected');
-  el.style.display='flex';
-  document.getElementById('selectedName').textContent=full;
-  // Scroll to show the selected repo bar
-  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+function selR(full){
+  selRepo=full;
+  document.getElementById('srb').classList.add('vis');
+  document.getElementById('selName').textContent=full;
+  document.querySelectorAll('.ri').forEach(function(e){e.classList.remove('sel');});
+  allRepos.forEach(function(r){if(r.fullName===full){var el=document.getElementById('ri-'+r.id);if(el)el.classList.add('sel');}});
+  document.getElementById('srb').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 async function startScan(){
-  if(!selectedRepo)return;
-  var parts=selectedRepo.split('/');
-  document.getElementById('scanSelected').style.display='none';
-  document.getElementById('resultsWrap').style.display='none';
-  document.getElementById('loadingState').style.display='block';
+  if(!selRepo)return;
+  var parts=selRepo.split('/');
+  document.getElementById('srb').classList.remove('vis');
+  document.getElementById('rw').style.display='none';
+  document.getElementById('lsw').style.display='block';
   var steps=['ls1','ls2','ls3','ls4'],si=0;
-  var iv=setInterval(function(){
-    if(si>0){var prev=document.getElementById(steps[si-1]);prev.className='ls done';prev.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'+prev.textContent.trim();}
-    if(si<steps.length)document.getElementById(steps[si]).className='ls active';
-    si++;
-  },2500);
+  var iv=setInterval(function(){if(si>0){var p=document.getElementById(steps[si-1]);if(p)p.className='ls done';}if(si<steps.length){var c=document.getElementById(steps[si]);if(c)c.className='ls active';}si++;},2500);
   try{
-    var res=await fetch('/api/scanner/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:parts[0],repo:parts[1]})});
-    var data=await res.json();
-    clearInterval(iv);
-    document.getElementById('loadingState').style.display='none';
-    if(data.upgrade){alert('Scan limit reached. Upgrade to Pro.');startPayment();return;}
-    scanResults=data.results;
-    showResults(data.results,data.totalIssues);
-    document.getElementById('stScans').textContent=parseInt(document.getElementById('stScans').textContent)+1;
-    document.getElementById('stIssues').textContent=parseInt(document.getElementById('stIssues').textContent)+data.totalIssues;
-  }catch(e){clearInterval(iv);document.getElementById('loadingState').style.display='none';alert('Scan failed. Please try again.');}
+    var r=await fetch('/api/scanner/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:parts[0],repo:parts[1]})});
+    var data=await r.json();clearInterval(iv);document.getElementById('lsw').style.display='none';
+    if(data.upgrade){alert('Scan limit reached. Upgrade to Pro.');pay();return;}
+    scanRes=data.results;showResults(data.results,data.totalIssues);loadStats();
+  }catch(e){clearInterval(iv);document.getElementById('lsw').style.display='none';alert('Scan failed.');}
 }
-
-function showResults(results,total){
-  document.getElementById('resultsWrap').style.display='block';
-  document.getElementById('resultsTitle').textContent=total>0?'Found '+total+' issue'+(total!==1?'s':'')+' in '+selectedRepo:'No issues found in '+selectedRepo;
-  var list=document.getElementById('issuesList');
-  if(!results.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--green);font-size:15px;font-weight:500">No auth gaps found. Your codebase looks secure.</div>';document.getElementById('prBtn').style.display='none';return;}
-  if(currentUser&&currentUser.plan!=='pro'){var btn=document.getElementById('prBtn');btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Upgrade to raise PR';btn.onclick=startPayment;btn.className='btn btn-primary';}
-  list.innerHTML=results.map(function(r){return '<div class="issue-card"><div class="issue-head"><span class="issue-file">'+r.file+'</span><span class="issue-count">'+r.issues.length+' issue'+(r.issues.length>1?'s':'')+'</span></div><div class="issue-body">'+r.issues.map(function(i){return '<div class="endpoint-row"><span class="method m-'+i.method.toLowerCase()+'">'+i.method+'</span><span class="ep-path">'+i.endpoint+'</span><span class="ep-issue">'+i.issue+'</span></div>';}).join('')+'</div></div>';}).join('');
+function showResults(res,total){
+  document.getElementById('rw').style.display='block';
+  document.getElementById('rtitle').textContent=total>0?'Found '+total+' issue'+(total!==1?'s':'')+' in '+selRepo:'No issues found in '+selRepo;
+  var list=document.getElementById('ilist');
+  if(!res||!res.length){list.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:13px;font-weight:500">No auth gaps found. Codebase looks secure.</div>';document.getElementById('prBtn').style.display='none';return;}
+  if(cu&&cu.plan!=='pro'){var b=document.getElementById('prBtn');b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Upgrade to raise PR';b.onclick=pay;b.className='btn btn-navy';}
+  list.innerHTML=res.map(function(r){return '<div class="ic"><div class="ih"><span class="if">'+r.file+'</span><span style="font-size:10px;color:var(--red);font-weight:700">'+r.issues.length+' issue'+(r.issues.length>1?'s':'')+'</span></div><div class="ib">'+r.issues.map(function(i){return '<div class="er"><span class="mth m-'+i.method.toLowerCase()+'">'+i.method+'</span><span style="font-family:monospace;color:var(--text);font-size:11px">'+i.endpoint+'</span><span style="color:var(--red);font-size:11px;margin-left:auto">'+i.issue+'</span></div>';}).join('')+'</div></div>';}).join('');
 }
-
 async function raisePR(){
-  if(!scanResults||!selectedRepo)return;
-  var parts=selectedRepo.split('/');
-  var btn=document.getElementById('prBtn');
+  if(!scanRes||!selRepo)return;
+  var parts=selRepo.split('/'),btn=document.getElementById('prBtn');
   btn.textContent='Raising PR...';btn.disabled=true;
   try{
-    var res=await fetch('/api/scanner/raise-pr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:parts[0],repo:parts[1],results:scanResults})});
-    var data=await res.json();
-    if(data.prUrl){btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> PR Raised';btn.style.background='var(--green)';btn.disabled=false;document.getElementById('stPRs').textContent=parseInt(document.getElementById('stPRs').textContent)+1;setTimeout(function(){window.open(data.prUrl,'_blank');},400);}
+    var r=await fetch('/api/scanner/raise-pr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:parts[0],repo:parts[1],results:scanRes})});
+    var data=await r.json();
+    if(data.prUrl){btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>PR Raised';btn.style.background='var(--green)';btn.disabled=false;loadStats();setTimeout(function(){window.open(data.prUrl,'_blank');},400);}
   }catch(e){btn.textContent='Raise fix PR';btn.disabled=false;}
 }
 
 async function loadHistory(){
-  var res=await fetch('/api/scanner/history');
-  var d=await res.json();
-  var tbody=document.getElementById('historyBody');
-  if(!d.scans||!d.scans.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light);font-size:13px">No scans yet.</td></tr>';return;}
-  tbody.innerHTML=d.scans.map(function(s){return '<tr><td style="color:var(--navy);font-weight:500">'+s.repo_name+'</td><td><span class="badge '+(s.total_issues>0?'badge-red':'badge-green')+'">'+s.total_issues+' issues</span></td><td><span class="badge '+(s.pr_raised?'badge-green':'badge-gray')+'">'+(s.pr_raised?'PR Raised':'Pending')+'</span></td><td>'+new Date(s.created_at).toLocaleDateString()+'</td><td>'+(s.pr_url?'<a href="'+s.pr_url+'" target="_blank" style="color:var(--teal);font-size:12px;font-weight:500;text-decoration:none">View PR</a>':'...')+'</td></tr>';}).join('');
+  var r=await fetch('/api/scanner/history'),d=await r.json();
+  var tb=document.getElementById('hbody');
+  if(!d.scans||!d.scans.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--text-light)">No scans yet.</td></tr>';return;}
+  tb.innerHTML=d.scans.map(function(s){return '<tr><td style="color:var(--navy);font-weight:500">'+s.repo_name+'</td><td><span class="badge '+(s.total_issues>0?'b-red':'b-green')+'">'+s.total_issues+' issues</span></td><td><span class="badge '+(s.pr_raised?'b-green':'b-gray')+'">'+(s.pr_raised?'Raised':'Pending')+'</span></td><td>'+new Date(s.created_at).toLocaleDateString()+'</td><td>'+(s.pr_url?'<a href="'+s.pr_url+'" target="_blank" style="color:var(--teal);font-size:11px;font-weight:500;text-decoration:none">View PR \u2197</a>':'—')+'</td></tr>';}).join('');
 }
 
-async function loadReferral(){
-  var res=await fetch('/api/referral/my-code');
-  var d=await res.json();
-  document.getElementById('refCode').textContent=d.code||'...';
+async function loadRef(){
+  try{var r=await fetch('/api/referral/my-code'),d=await r.json();document.getElementById('refCode').textContent=d.code||'...';if(d.signups!==undefined)document.getElementById('rss').textContent=d.signups||0;if(d.bonus_earned!==undefined)document.getElementById('rsb').textContent=d.bonus_earned||0;if(d.total_bonus!==undefined)document.getElementById('rst').textContent=d.total_bonus||0;}catch(e){document.getElementById('refCode').textContent='...';}
 }
-
-function copyRef(){var code=document.getElementById('refCode').textContent;navigator.clipboard.writeText('https://grassion.com/?ref='+code);alert('Referral link copied!');}
-
+function copyRef(){var c=document.getElementById('refCode').textContent;navigator.clipboard.writeText('https://grassion.com/?ref='+c);alert('Referral link copied!');}
 async function applyRef(){
-  var code=document.getElementById('refInput').value.trim();
-  if(!code)return;
-  var res=await fetch('/api/referral/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
-  var data=await res.json();
-  var msg=document.getElementById('refMsg');
-  msg.style.display='block';msg.style.color=data.success?'var(--green)':'var(--red)';msg.textContent=data.message||data.error;
+  var code=document.getElementById('refIn').value.trim();if(!code)return;
+  var r=await fetch('/api/referral/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
+  var data=await r.json();var msg=document.getElementById('refMsg');msg.style.display='block';msg.style.color=data.success?'var(--green)':'var(--red)';msg.textContent=data.message||data.error;
 }
 
-async function startPayment(){
-  var res=await fetch('/api/payments/create-order',{method:'POST'});
-  var d=await res.json();
-  new Razorpay({key:d.key,amount:d.order.amount,currency:'INR',name:'Grassion',description:'Pro Plan — Monthly',order_id:d.order.id,handler:async function(r){var vr=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});var vd=await vr.json();if(vd.success)location.reload();},theme:{color:'#2a9fd6'}}).open();
+async function pay(){
+  var r=await fetch('/api/payments/create-order',{method:'POST'}),d=await r.json();
+  new Razorpay({key:d.key,amount:d.order.amount,currency:'INR',name:'Grassion',description:'Pro Plan',order_id:d.order.id,handler:async function(rz){var vr=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rz)});var vd=await vr.json();if(vd.success)location.reload();},theme:{color:'#2a9fd6'}}).open();
 }
 
-function showTab(name){
-  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
-  var pane=document.getElementById('tab-'+name);if(pane)pane.classList.add('active');
-  var titles={scan:'Dashboard',history:'Scan History',referral:'Refer & Earn',billing:'Billing',settings:'Settings'};
-  var subs={scan:'Scan repos and fix security gaps automatically',history:'View all your past scans',referral:'Share Grassion and earn bonus scans',billing:'Manage your plan and payments',settings:'Manage your account'};
-  document.getElementById('pageTitle').textContent=titles[name]||'Dashboard';
-  document.getElementById('pageSub').textContent=subs[name]||'';
-  var tabs=['scan','history','referral','billing','settings'];
-  var idx=tabs.indexOf(name);
-  var tabEls=document.querySelectorAll('.tab');
-  if(tabEls[idx])tabEls[idx].classList.add('active');
-  var navItems=['scan','history','referral','billing','settings'];
-  document.querySelectorAll('.nav-item').forEach(function(n,i){if(navItems[i]===name)n.classList.add('active');});
+function showPane(name){
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('active');});
+  var p=document.getElementById('pane-'+name);if(p)p.classList.add('active');
+  var titles={scan:'Dashboard',history:'Scan History',referral:'Refer & Earn',billing:'Billing',settings:'Settings',chat:'AI Assistant'};
+  var subs={scan:'Scan repos and fix security gaps automatically',history:'All your past scans',referral:'Share Grassion, earn bonus scans',billing:'Manage your plan and usage',settings:'Manage your account',chat:'Describe changes · review diff · approve PR'};
+  document.getElementById('ptitle').textContent=titles[name]||name;
+  document.getElementById('psub').textContent=subs[name]||'';
+  document.querySelectorAll('.ni').forEach(function(n){if((n.getAttribute('onclick')||'').includes("'"+name+"'"))n.classList.add('active');});
   if(name==='history')loadHistory();
-  if(name==='referral')loadReferral();
+  if(name==='referral')loadRef();
+  if(name==='billing')loadStats();
+}
+
+// CHAT
+async function loadChatRepos(){var r=await fetch('/api/repos'),d=await r.json();var sel=document.getElementById('chatRepo');(d.repos||[]).forEach(function(r){var o=document.createElement('option');o.value=r.fullName;o.textContent=r.name;sel.appendChild(o);});}
+function onChatRepo(){chatRepo=document.getElementById('chatRepo').value;document.getElementById('chatSend').disabled=!chatRepo;if(chatRepo){document.getElementById('chatSub').textContent=chatRepo+' \u00b7 '+(document.getElementById('chatBranch').value||'main');document.getElementById('chatConn').style.display='flex';}}
+async function loadChatHist(){try{var r=await fetch('/api/chat/history'),d=await r.json();var list=document.getElementById('chatHist');list.innerHTML='';(d.sessions||[]).slice(0,10).forEach(function(s){var item=document.createElement('div');item.className='chi';item.innerHTML='<div>'+esc(s.prompt.substring(0,38))+'</div><div style="font-size:9px;color:var(--text-light)">'+ta(s.created_at)+'</div>';list.appendChild(item);});}catch(e){}}
+function ta(d){var diff=(Date.now()-new Date(d))/1000;if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago';}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function useSugg(t){document.getElementById('chatIn').value=t;chatResize(document.getElementById('chatIn'));if(chatRepo)document.getElementById('chatSend').disabled=false;}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function chatResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,90)+'px';document.getElementById('chatSend').disabled=!el.value.trim()||!chatRepo||chatLoading;}
+function showChatMsgs(){document.getElementById('chatEmpty').style.display='none';}
+function addCM(role,content,extra){
+  showChatMsgs();var wrap=document.getElementById('chatMsgs');
+  var msg=document.createElement('div');msg.className='cm '+role;
+  var av=document.createElement('div');av.className='cm-av';av.textContent=role==='user'?(cu?cu.username[0].toUpperCase():'U'):'G';
+  var bubble=document.createElement('div');bubble.className='cm-b';bubble.innerHTML=content.replace(/\n/g,'<br>');
+  msg.appendChild(av);msg.appendChild(bubble);wrap.appendChild(msg);
+  if(extra){var ec=document.createElement('div');ec.style.cssText='width:100%;max-width:560px;align-self:flex-start;margin-top:3px';ec.appendChild(extra);wrap.appendChild(ec);}
+  wrap.scrollTop=wrap.scrollHeight;
+}
+function addTyp(){showChatMsgs();var wrap=document.getElementById('chatMsgs');var msg=document.createElement('div');msg.className='cm assistant';msg.id='ctyp';var av=document.createElement('div');av.className='cm-av';av.textContent='G';var b=document.createElement('div');b.className='cm-b';b.innerHTML='<div class="typ"><div class="td"></div><div class="td"></div><div class="td"></div></div>';msg.appendChild(av);msg.appendChild(b);wrap.appendChild(msg);wrap.scrollTop=wrap.scrollHeight;}
+function remTyp(){var el=document.getElementById('ctyp');if(el)el.remove();}
+function buildDiff(changes){
+  if(!changes||!changes.length)return null;
+  var c=document.createElement('div');
+  changes.forEach(function(ch){
+    var card=document.createElement('div');card.className='diff-card';
+    var adds=(ch.diff||'').split('\n').filter(function(l){return l.startsWith('+')&&!l.startsWith('+++');}).length;
+    var rems=(ch.diff||'').split('\n').filter(function(l){return l.startsWith('-')&&!l.startsWith('---');}).length;
+    var hd=document.createElement('div');hd.className='diff-hd';
+    hd.innerHTML='<span class="diff-fn">'+esc(ch.file)+'</span><span style="font-size:10px"><span style="color:var(--green)">+'+adds+'</span> <span style="color:var(--red)">-'+rems+'</span></span>';
+    var bd=document.createElement('div');bd.className='diff-body';
+    (ch.diff||'').split('\n').slice(0,50).forEach(function(line){var div=document.createElement('div');div.className='dl'+(line.startsWith('+')&&!line.startsWith('+++')?' add':line.startsWith('-')&&!line.startsWith('---')?' rem':' ctx');div.textContent=line;bd.appendChild(div);});
+    card.appendChild(hd);card.appendChild(bd);c.appendChild(card);
+  });return c;
+}
+function buildApprBar(changes,sid){
+  var bar=document.createElement('div');bar.className='appr-bar';
+  var txt=document.createElement('div');txt.style.fontSize='12px';txt.style.color='var(--text-mid)';
+  txt.innerHTML='<strong style="color:var(--navy)">'+changes.length+' file'+(changes.length>1?'s':'')+' changed.</strong> Approve to raise a PR.';
+  var acts=document.createElement('div');acts.style.cssText='display:flex;gap:6px';
+  var ap=document.createElement('button');ap.className='btn btn-green btn-sm';
+  ap.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve &amp; Raise PR';
+  ap.onclick=function(){approveChat(sid,bar);};
+  var rj=document.createElement('button');rj.className='btn btn-danger btn-sm';rj.textContent='Discard';
+  rj.onclick=function(){bar.innerHTML='<div style="font-size:11px;color:var(--text-light)">Changes discarded.</div>';};
+  acts.appendChild(ap);acts.appendChild(rj);bar.appendChild(txt);bar.appendChild(acts);return bar;
+}
+async function sendChat(){
+  var input=document.getElementById('chatIn'),text=input.value.trim();
+  if(!text||!chatRepo||chatLoading)return;
+  input.value='';chatResize(input);chatLoading=true;document.getElementById('chatSend').disabled=true;
+  addCM('user',text);addTyp();
+  var branch=document.getElementById('chatBranch').value||'main';
+  try{
+    var r=await fetch('/api/chat/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:text,repo:chatRepo,branch:branch})});
+    var data=await r.json();remTyp();
+    if(!r.ok||data.error){addCM('assistant',data.error||'Something went wrong.');chatLoading=false;document.getElementById('chatSend').disabled=false;return;}
+    var extra=null;
+    if(data.changes&&data.changes.length){extra=document.createElement('div');var dv=buildDiff(data.changes),ab=buildApprBar(data.changes,data.session_id);if(dv)extra.appendChild(dv);if(ab)extra.appendChild(ab);}
+    addCM('assistant',data.summary||'Here are the proposed changes:',extra);
+    loadChatHist();
+  }catch(e){remTyp();addCM('assistant','Connection error. Please try again.');}
+  chatLoading=false;document.getElementById('chatSend').disabled=!document.getElementById('chatIn').value.trim()||!chatRepo;
+}
+async function approveChat(sid,bar){
+  bar.innerHTML='<div style="font-size:11px;color:var(--text-mid)">Raising PR on GitHub...</div>';
+  try{
+    var r=await fetch('/api/chat/raise-pr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid})});
+    var data=await r.json();
+    if(data.prUrl){bar.className='pr-ok';bar.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><div style="font-weight:600;color:var(--green);font-size:12px">PR raised successfully</div><a href="'+data.prUrl+'" target="_blank" style="color:var(--teal);font-size:11px;font-weight:500">View on GitHub \u2197</a></div>';}
+    else{bar.innerHTML='<div style="color:var(--red);font-size:11px">'+(data.error||'Failed')+'</div>';}
+  }catch(e){bar.innerHTML='<div style="color:var(--red);font-size:11px">Failed. Please try again.</div>';}
 }
 
 init();
