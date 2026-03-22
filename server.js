@@ -5,6 +5,7 @@ const pgSession = require('connect-pg-simple')(session);
 const path = require('path');
 const db = require('./db');
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
