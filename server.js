@@ -1,20 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const path = require('path');
+const db = require('./db');
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// PostgreSQL session store — eliminates MemoryStore warning permanently
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'grassion_secret_2026_xyz',
+  store: new pgSession({
+    pool: db,
+    tableName: 'session',
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET || 'grassionsecret2026',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false,
-    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
@@ -30,6 +37,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/careers', require('./routes/careers'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/feedback', require('./routes/feedback'));
 app.use('/webhook', require('./routes/webhook'));
 
 // Public pages
@@ -67,6 +75,7 @@ app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
+// 404 fallback
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
@@ -74,4 +83,5 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`[Grassion] Running on port ${PORT}`);
+  console.log(`[Grassion] Environment: ${process.env.NODE_ENV || 'development'}`);
 });
