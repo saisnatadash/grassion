@@ -8,29 +8,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Use connect-pg-simple for production session store to fix MemoryStore warning
-let sessionStore;
-try {
-  const pgSession = require('connect-pg-simple')(session);
-  const db = require('./db');
-  sessionStore = new pgSession({
-    pool: db,
-    tableName: 'session',
-    createTableIfMissing: true
-  });
-} catch(e) {
-  console.log('Using MemoryStore for sessions (ok for dev)');
-  sessionStore = undefined;
-}
-
 app.use(session({
-  store: sessionStore,
-  secret: process.env.SESSION_SECRET || 'grassionsecret2026',
+  secret: process.env.SESSION_SECRET || 'grassion_secret_2026_xyz',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    secure: false,
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
 
@@ -52,17 +37,14 @@ app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
 app.get('/signup', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
-
 app.get('/signin', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');
   res.sendFile(path.join(__dirname, 'public', 'signin.html'));
 });
-
 app.get('/pricing', (req, res) => res.sendFile(path.join(__dirname, 'public', 'pricing.html')));
 app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')));
 app.get('/contact', (req, res) => res.sendFile(path.join(__dirname, 'public', 'contact.html')));
@@ -72,27 +54,24 @@ app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/signin');
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
-
 app.get('/settings', (req, res) => {
   if (!req.session.user) return res.redirect('/signin');
   res.sendFile(path.join(__dirname, 'public', 'settings.html'));
 });
-
 app.get('/admin', (req, res) => {
   if (!req.session.user) return res.redirect('/signin');
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
-
-// Pro-only AI chat page
 app.get('/chat', (req, res) => {
   if (!req.session.user) return res.redirect('/signin');
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
-// 404
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Grassion running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`[Grassion] Running on port ${PORT}`);
+});
