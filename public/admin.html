@@ -1,0 +1,885 @@
+﻿<!DOCTYPE html>
+<!-- GRASSION ADMIN v3.0 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin | Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1b2a;--navy-2:#112236;--navy-3:#1a3352;
+  --teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --yellow:#f59e0b;--yellow-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --white:#fff;--off-white:#f0f4f8;
+  --text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;
+  --border:rgba(13,27,42,0.08);--border-teal:rgba(42,159,214,0.2);
+  --shadow:0 4px 20px rgba(13,27,42,0.08);
+  --shadow-teal:0 8px 32px rgba(42,159,214,0.15);
+  --sw:210px;
+}
+body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* LAYOUT */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:var(--sw);background:var(--navy);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50;overflow-y:auto}
+.sb-hd{padding:16px 14px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:9px}
+.sb-hd img{height:22px}
+.sb-hd-text{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;color:#fff}
+.admin-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:4px;background:var(--red);color:#fff;letter-spacing:0.8px;margin-left:2px}
+.sb-nav{flex:1;padding:10px 8px}
+.nav-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,0.28);text-transform:uppercase;letter-spacing:1.8px;padding:0 8px;margin:12px 0 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.15s;text-decoration:none;border:none;background:none;width:100%;font-family:'Satoshi',sans-serif;white-space:nowrap}
+.ni svg{width:15px;height:15px;flex-shrink:0;opacity:0.6}
+.ni:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85)}
+.ni.active{background:rgba(42,159,214,0.18);color:#fff;font-weight:600}
+.ni.active svg{opacity:1;color:var(--teal)}
+.ni .dot{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:100px;min-width:18px;text-align:center}
+.sb-bottom{padding:10px 8px;border-top:1px solid rgba(255,255,255,0.07)}
+.sb-user{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.06);margin-bottom:6px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--teal-2),var(--navy-3));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;font-family:'Clash Display',sans-serif}
+.sb-uname{font-size:12px;font-weight:600;color:#fff}
+.sb-role{font-size:10px;color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
+
+/* MAIN */
+.main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column}
+.topbar{padding:12px 24px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.tb-title{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy)}
+.tb-sub{font-size:12px;color:var(--text-light);margin-top:1px}
+.tb-right{display:flex;gap:8px;align-items:center}
+.content{padding:20px 24px;flex:1}
+
+/* PANES */
+.pane{display:none}.pane.active{display:block}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'Satoshi',sans-serif;white-space:nowrap}
+.btn svg{width:12px;height:12px;flex-shrink:0}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:var(--teal-2)}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy-3)}
+.btn-red{background:var(--red-light);color:var(--red);border:1px solid #fecaca}.btn-red:hover{background:#fee2e2}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#059669}
+.btn-ghost{background:var(--off-white);color:var(--text-mid);border:1px solid var(--border)}.btn-ghost:hover{background:var(--border)}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:5px}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:all 0.2s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.sc-teal::before{background:linear-gradient(90deg,var(--teal),#60c4f0)}
+.stat-card.sc-green::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.stat-card.sc-red::before{background:linear-gradient(90deg,var(--red),#f87171)}
+.stat-card.sc-yellow::before{background:linear-gradient(90deg,var(--yellow),#fbbf24)}
+.stat-card.sc-purple::before{background:linear-gradient(90deg,var(--purple),#a78bfa)}
+.stat-card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.stat-lbl{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px}
+.stat-val{font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;color:var(--navy);line-height:1}
+.stat-sub{font-size:11px;color:var(--text-light);margin-top:4px}
+
+/* CARDS */
+.card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:600;color:var(--navy)}
+.card-sub{font-size:11px;color:var(--text-light);margin-top:2px}
+
+/* GRANT BAR */
+.grant-bar{background:linear-gradient(135deg,var(--navy),var(--navy-3));border-radius:12px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.grant-field{display:flex;flex-direction:column;gap:4px}
+.grant-field label{font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px}
+.grant-input{padding:7px 11px;border:1px solid rgba(255,255,255,0.1);border-radius:7px;background:rgba(255,255,255,0.07);color:#fff;font-size:12px;font-family:'Satoshi',sans-serif;outline:none;transition:border-color 0.2s}
+.grant-input:focus{border-color:var(--teal);background:rgba(255,255,255,0.1)}
+.grant-input::placeholder{color:rgba(255,255,255,0.3)}
+.grant-input option{background:var(--navy);color:#fff}
+.grant-input-wide{flex:2;min-width:180px}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:8px 12px;font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.7px;border-bottom:1.5px solid var(--border);background:var(--off-white)}
+.tbl td{padding:10px 12px;font-size:12px;border-bottom:1px solid var(--border);color:var(--text-mid);vertical-align:middle}
+.tbl tbody tr:hover td{background:#fafbfc}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td b{color:var(--navy);font-weight:600}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 8px;border-radius:100px;font-weight:700;letter-spacing:0.3px}
+.b-teal{background:var(--teal-light);color:var(--teal-2)}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-yellow{background:var(--yellow-light);color:var(--yellow)}
+.b-gray{background:var(--off-white);color:var(--text-light);border:1px solid var(--border)}
+.b-purple{background:var(--purple-light);color:var(--purple)}
+.b-navy{background:rgba(13,27,42,0.07);color:var(--navy)}
+
+/* SEARCH */
+.search-wrap{position:relative;max-width:260px}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text-light);pointer-events:none}
+.search-inp{width:100%;padding:7px 11px 7px 28px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Satoshi',sans-serif;outline:none;color:var(--text);transition:border-color 0.2s;background:#fff}
+.search-inp:focus{border-color:var(--teal)}
+
+/* FORMS */
+.inp{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:'Satoshi',sans-serif;outline:none;color:var(--text);background:#fff;transition:border-color 0.2s}
+.inp:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,159,214,0.06)}
+.lbl{font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;display:block}
+.sel{appearance:none;-webkit-appearance:none;padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a95aa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(13,27,42,0.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(13,27,42,0.2);animation:modalIn 0.25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(0.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-family:'Clash Display',sans-serif;font-size:17px;font-weight:700;color:var(--navy)}
+.modal-close{width:28px;height:28px;background:var(--off-white);border:none;border-radius:7px;cursor:pointer;font-size:15px;color:var(--text-mid);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--border)}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.modal-field{background:var(--off-white);border-radius:9px;padding:11px 13px}
+.modal-field-lbl{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.modal-field-val{font-size:13px;font-weight:500;color:var(--navy);word-break:break-all}
+
+/* DANGER ZONE */
+.danger-zone{border:1.5px solid rgba(239,68,68,0.2);border-radius:10px;padding:14px 16px;background:var(--red-light);margin-top:10px}
+.danger-title{font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.danger-sub{font-size:11px;color:var(--text-mid);margin-bottom:10px}
+
+/* PAGINATION */
+.pg{display:flex;align-items:center;gap:5px;margin-top:12px;justify-content:flex-end}
+.pg-btn{padding:4px 10px;font-size:11px;border:1.5px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;color:var(--text-mid);font-family:'Satoshi',sans-serif;transition:all 0.15s}
+.pg-btn:hover,.pg-btn.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.pg-btn:disabled{opacity:0.35;cursor:not-allowed}
+.pg-info{font-size:11px;color:var(--text-light);margin-right:4px}
+
+/* METRIC GRID */
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.metric{background:var(--off-white);border-radius:9px;padding:14px}
+.metric-val{font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:var(--navy)}
+.metric-lbl{font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}
+
+/* TOAST */
+@keyframes toastIn{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}.metric-grid{grid-template-columns:1fr 1fr}.modal-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-hd">
+    <img src="/img/logo-white.png" alt="G" onerror="this.style.display='none'">
+    <span class="sb-hd-text">Grassion</span>
+    <span class="admin-badge">Admin</span>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-lbl">Overview</div>
+    <button class="ni active" onclick="showPane('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <div class="nav-lbl">Management</div>
+    <button class="ni" onclick="showPane('users')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+      <span class="dot" id="newUsersCount">0</span>
+    </button>
+    <button class="ni" onclick="showPane('access')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Grant Access
+    </button>
+    <button class="ni" onclick="showPane('scans')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Scan History
+    </button>
+    <button class="ni" onclick="showPane('feedback')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feedback
+    </button>
+    <button class="ni" onclick="showPane('referrals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Referrals
+    </button>
+    <button class="ni" onclick="showPane('waitlist')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Waitlist
+    </button>
+    <div class="nav-lbl">Analytics</div>
+    <button class="ni" onclick="showPane('analytics')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </button>
+    <button class="ni" onclick="showPane('payments')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Payments
+    </button>
+    <div class="nav-lbl">System</div>
+    <button class="ni" onclick="showPane('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      System Settings
+    </button>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-av" id="sbAv">S</div>
+      <div><div class="sb-uname" id="sbName">Admin</div><div class="sb-role">Admin</div></div>
+    </div>
+    <a href="/dashboard" class="ni" style="font-size:12px;color:rgba(255,255,255,0.35)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back to Dashboard
+    </a>
+    <a href="/auth/logout" class="ni" style="color:rgba(239,68,68,0.65)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign out
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title" id="pageTitle">Dashboard</div>
+      <div class="tb-sub" id="pageSub">Grassion admin overview</div>
+    </div>
+    <div class="tb-right">
+      <span style="font-size:10px;background:var(--off-white);color:var(--text-light);padding:3px 8px;border-radius:5px;border:1px solid var(--border)">v3.0</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadAll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+      <a href="/dashboard" class="btn btn-ghost btn-sm">← User view</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="pane active" id="pane-dashboard">
+    <div class="stats-row">
+      <div class="stat-card sc-teal"><div class="stat-lbl">Total Users</div><div class="stat-val" id="st-users">-</div><div class="stat-sub" id="st-users-sub">Loading...</div></div>
+      <div class="stat-card sc-yellow"><div class="stat-lbl">Pro Users</div><div class="stat-val" id="st-pro">-</div><div class="stat-sub" id="st-rev">Paying customers</div></div>
+      <div class="stat-card sc-green"><div class="stat-lbl">Total Scans</div><div class="stat-val" id="st-scans">-</div><div class="stat-sub">All time</div></div>
+      <div class="stat-card sc-red"><div class="stat-lbl">Issues Found</div><div class="stat-val" id="st-issues">-</div><div class="stat-sub">Auth gaps detected</div></div>
+      <div class="stat-card sc-purple"><div class="stat-lbl">PRs Raised</div><div class="stat-val" id="st-prs">-</div><div class="stat-sub">Auto-fixed</div></div>
+    </div>
+
+    <!-- Quick Grant -->
+    <div class="grant-bar">
+      <div style="flex-basis:100%;margin-bottom:4px">
+        <div style="font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;color:#fff">Quick Grant Access</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:1px">Find any user and upgrade instantly</div>
+      </div>
+      <div class="grant-field" style="flex:2">
+        <label>GitHub Username or Email</label>
+        <input class="grant-input grant-input-wide" id="grantQuery" placeholder="e.g. saisnatadash" onkeydown="if(event.key==='Enter')grantAccess()">
+      </div>
+      <div class="grant-field">
+        <label>Plan</label>
+        <select class="grant-input sel" id="grantPlan"><option value="pro">Pro</option><option value="free">Free</option></select>
+      </div>
+      <div class="grant-field">
+        <label>Role</label>
+        <select class="grant-input sel" id="grantRole"><option value="user">User</option><option value="admin">Admin</option><option value="enterprise">Enterprise</option></select>
+      </div>
+      <div class="grant-field">
+        <label>Bonus Scans</label>
+        <input class="grant-input" id="grantBonus" type="number" min="0" value="0" style="width:80px">
+      </div>
+      <button class="btn btn-teal" onclick="grantAccess()" id="grantBtn" style="align-self:flex-end;height:34px">Grant</button>
+      <div id="grantMsg" style="font-size:12px;color:#6ee7b7;align-self:center;min-width:120px"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="card">
+        <div class="card-hd"><div><div class="card-title">Recent Signups</div></div><button class="btn btn-ghost btn-xs" onclick="showPane('users')">View all</button></div>
+        <table class="tbl"><thead><tr><th>User</th><th>Plan</th><th>Action</th></tr></thead>
+        <tbody id="recentSignups"><tr><td colspan="3" style="text-align:center;padding:16px;color:var(--text-light)">Loading...</td></tr></tbody></table>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div><div class="card-title">Recent Feedback</div></div><button class="btn btn-ghost btn-xs" onclick="showPane('feedback')">View all</button></div>
+        <div id="recentFeedback" style="min-height:60px"><div style="text-align:center;padding:16px;color:var(--text-light);font-size:12px">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-hd"><div><div class="card-title">Recent Scans</div></div><button class="btn btn-ghost btn-xs" onclick="showPane('scans')">View all</button></div>
+      <table class="tbl"><thead><tr><th>User</th><th>Repository</th><th>Issues</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody id="recentScans"><tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text-light)">Loading...</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- ═══ USERS ═══ -->
+  <div class="pane" id="pane-users">
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title">All Users</div><div class="card-sub" id="userCountLbl">Loading...</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-inp" id="userSearch" placeholder="Search user or email..." oninput="filterUsers(this.value)">
+          </div>
+          <select class="inp sel" id="planFilter" onchange="filterUsers(document.getElementById('userSearch').value)" style="width:110px;padding:7px 24px 7px 9px;font-size:12px">
+            <option value="">All plans</option><option value="pro">Pro only</option><option value="free">Free only</option>
+          </select>
+        </div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Role</th><th>Scans</th><th>Issues</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="usersTbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-light)">Loading users...</td></tr></tbody>
+      </table>
+      <div class="pg" id="userPg"></div>
+    </div>
+  </div>
+
+  <!-- ═══ GRANT ACCESS ═══ -->
+  <div class="pane" id="pane-access">
+    <div class="card" style="max-width:560px">
+      <div class="card-hd"><div><div class="card-title">Grant / Modify Access</div><div class="card-sub">Upgrade, downgrade, or set roles for any user</div></div></div>
+      <div style="display:flex;flex-direction:column;gap:13px">
+        <div><label class="lbl">GitHub Username or Email</label><input class="inp" id="ga2Query" placeholder="e.g. saisnatadash or user@email.com"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+          <div><label class="lbl">Plan</label><select class="inp sel" id="ga2Plan"><option value="pro">Pro</option><option value="free">Free</option></select></div>
+          <div><label class="lbl">Role</label><select class="inp sel" id="ga2Role"><option value="user">User</option><option value="admin">Admin</option><option value="enterprise">Enterprise</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+          <div><label class="lbl">Add Bonus Scans</label><input class="inp" id="ga2Bonus" type="number" min="0" value="0"></div>
+          <div><label class="lbl">Reset Scans Used (leave blank to skip)</label><input class="inp" id="ga2ScansUsed" type="number" min="0" placeholder="e.g. 0"></div>
+        </div>
+        <button class="btn btn-teal" onclick="grantAccessFull()" id="ga2Btn" style="font-size:13px;padding:9px 18px">Apply Changes</button>
+        <div id="ga2Result" style="font-size:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCAN HISTORY ═══ -->
+  <div class="pane" id="pane-scans">
+    <div class="card">
+      <div class="card-hd">
+        <div><div class="card-title">All Scans</div><div class="card-sub" id="scanCountLbl">Loading...</div></div>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-inp" id="scanSearch" placeholder="Repo, user..." oninput="filterScans(this.value)">
+        </div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>User</th><th>Repository</th><th>Branch</th><th>Issues</th><th>PRs</th><th>Type</th><th>Risk</th><th>Date</th></tr></thead>
+        <tbody id="scansTbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody>
+      </table>
+      <div class="pg" id="scanPg"></div>
+    </div>
+  </div>
+
+  <!-- ═══ FEEDBACK ═══ -->
+  <div class="pane" id="pane-feedback">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title">User Feedback</div><div class="card-sub" id="feedbackCountLbl">All submissions</div></div></div>
+      <table class="tbl">
+        <thead><tr><th>User</th><th>Type</th><th>Message</th><th>Rating</th><th>Date</th></tr></thead>
+        <tbody id="feedbackTbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ REFERRALS ═══ -->
+  <div class="pane" id="pane-referrals">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title">Referral Program</div></div></div>
+      <table class="tbl">
+        <thead><tr><th>User</th><th>Referral Code</th><th>Referrals</th><th>Bonus Scans</th><th>Status</th></tr></thead>
+        <tbody id="referralsTbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ WAITLIST ═══ -->
+  <div class="pane" id="pane-waitlist">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title">Waitlist</div><div class="card-sub" id="waitlistCountLbl">Early access requests</div></div></div>
+      <table class="tbl">
+        <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Message</th><th>Date</th></tr></thead>
+        <tbody id="waitlistTbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYTICS ═══ -->
+  <div class="pane" id="pane-analytics">
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-val" id="an-avg">-</div><div class="metric-lbl">Avg scans / user</div></div>
+      <div class="metric"><div class="metric-val" id="an-conv">-%</div><div class="metric-lbl">Free → Pro conversion</div></div>
+      <div class="metric"><div class="metric-val" id="an-ips">-</div><div class="metric-lbl">Issues per scan</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Top Repositories</div></div>
+        <table class="tbl"><thead><tr><th>Repo</th><th>Scans</th><th>Issues</th></tr></thead>
+        <tbody id="topRepos"><tr><td colspan="3" style="text-align:center;padding:16px;color:var(--text-light)">Loading...</td></tr></tbody></table>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Top Users by Activity</div></div>
+        <table class="tbl"><thead><tr><th>User</th><th>Plan</th><th>Scans</th></tr></thead>
+        <tbody id="topUsers"><tr><td colspan="3" style="text-align:center;padding:16px;color:var(--text-light)">Loading...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAYMENTS ═══ -->
+  <div class="pane" id="pane-payments">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title">Payment History</div><div class="card-sub" id="payCountLbl">Razorpay transactions</div></div></div>
+      <table class="tbl">
+        <thead><tr><th>User</th><th>Amount</th><th>Plan</th><th>Payment ID</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="paymentsTbody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SETTINGS ═══ -->
+  <div class="pane" id="pane-settings">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:800px">
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Bulk Actions</div></div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <button class="btn btn-ghost" onclick="bulkAction('reset_free_scans')" style="justify-content:flex-start">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Reset all free user scan counts
+          </button>
+          <button class="btn btn-ghost" onclick="bulkAction('send_digest')" style="justify-content:flex-start">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Send weekly digest email
+          </button>
+          <div class="danger-zone">
+            <div class="danger-title">⚠ Danger Zone</div>
+            <div class="danger-sub">These actions cannot be undone.</div>
+            <button class="btn btn-red btn-sm" onclick="confirmDanger('purge_scans')">Purge all scan data</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">System Info</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-mid)">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Environment</span><span style="color:var(--green);font-weight:600">Production</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Database</span><span style="color:var(--green);font-weight:600">Railway PostgreSQL</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Admin Panel</span><span style="font-weight:600;color:var(--navy)">v3.0</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0"><span>OpenAI</span><span id="openaiStatus" style="font-weight:600">Checking...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</main>
+</div>
+
+<!-- USER EDIT MODAL -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="modalTitle">Edit User</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody">Loading...</div>
+  </div>
+</div>
+
+<div id="toast" style="display:none;position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:500;z-index:9999;color:#fff;box-shadow:0 8px 32px rgba(13,27,42,0.2);animation:toastIn 0.3s ease;font-family:'Satoshi',sans-serif"></div>
+
+<script>
+var allUsers=[], filteredUsers=[], allScans=[], adminData={};
+var userPage=1, scanPage=1, PER=20;
+
+// ── INIT ──
+async function init(){
+  try{
+    var r=await fetch('/auth/me',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json')){window.location.href='/signin';return;}
+    var d=await r.json();
+    if(!d.user){window.location.href='/signin';return;}
+    if(d.user.role!=='admin'){window.location.href='/dashboard';return;}
+    document.getElementById('sbAv').textContent=d.user.username[0].toUpperCase();
+    document.getElementById('sbName').textContent=d.user.username;
+    loadAll();
+    // Check OpenAI
+    document.getElementById('openaiStatus').textContent=
+      (typeof process!=='undefined'&&process.env&&process.env.OPENAI_API_KEY)?'✓ Configured':'Check Railway vars';
+  }catch(e){window.location.href='/signin';}
+}
+
+// ── NAV ──
+var titles={dashboard:'Dashboard',users:'Users',access:'Grant Access',scans:'Scan History',feedback:'Feedback',referrals:'Referrals',waitlist:'Waitlist',analytics:'Analytics',payments:'Payments',settings:'System Settings'};
+var subs={dashboard:'Grassion admin overview',users:'Manage all user accounts',access:'Upgrade or modify user access',scans:'All security scans',feedback:'User feedback',referrals:'Referral codes and conversions',waitlist:'Early access requests',analytics:'Usage analytics',payments:'Razorpay payment records',settings:'Platform configuration'};
+function showPane(name){
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('active');});
+  var p=document.getElementById('pane-'+name);if(p)p.classList.add('active');
+  document.getElementById('pageTitle').textContent=titles[name]||name;
+  document.getElementById('pageSub').textContent=subs[name]||'';
+  document.querySelectorAll('.ni').forEach(function(n){if((n.getAttribute('onclick')||'').includes("'"+name+"'"))n.classList.add('active');});
+  if(name==='analytics')loadAnalytics();
+  if(name==='waitlist')loadWaitlist();
+}
+
+async function loadAll(){
+  loadStats();
+  loadUsers();
+  loadScans();
+  loadFeedback();
+  loadReferrals();
+  loadPayments();
+}
+
+// ── STATS ──
+async function loadStats(){
+  try{
+    var r=await fetch('/api/admin/stats',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    document.getElementById('st-users').textContent=d.total_users||0;
+    document.getElementById('st-users-sub').textContent=(d.new_this_week||0)+' new this week';
+    document.getElementById('st-pro').textContent=d.pro_users||0;
+    document.getElementById('st-scans').textContent=d.total_scans||0;
+    document.getElementById('st-issues').textContent=d.total_issues||0;
+    document.getElementById('st-prs').textContent=d.prs_raised||0;
+    document.getElementById('newUsersCount').textContent=d.new_this_week||0;
+    if(d.revenue_total)document.getElementById('st-rev').textContent='₹'+(d.revenue_total/100).toLocaleString('en-IN')+' revenue';
+  }catch(e){}
+}
+
+// ── USERS ──
+async function loadUsers(){
+  try{
+    var r=await fetch('/api/admin/users',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    allUsers=d.users||[];
+    filteredUsers=[...allUsers];
+    document.getElementById('userCountLbl').textContent=allUsers.length+' total users';
+    renderUsers();
+    renderRecentSignups(allUsers.slice(0,8));
+  }catch(e){console.error('Load users:',e);}
+}
+
+function filterUsers(q){
+  var plan=document.getElementById('planFilter').value;
+  filteredUsers=allUsers.filter(function(u){
+    var mq=!q||(u.username||'').toLowerCase().includes(q.toLowerCase())||(u.email||'').toLowerCase().includes(q.toLowerCase());
+    var mp=!plan||u.plan===plan;
+    return mq&&mp;
+  });
+  userPage=1;renderUsers();
+}
+
+function renderUsers(){
+  var start=(userPage-1)*PER,page=filteredUsers.slice(start,start+PER);
+  var tbody=document.getElementById('usersTbody');
+  if(!page.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-light)">No users found</td></tr>';renderPg('userPg',filteredUsers.length,userPage,function(p){userPage=p;renderUsers();});return;}
+  tbody.innerHTML=page.map(function(u){
+    var planB=u.plan==='pro'?'<span class="badge b-yellow">PRO</span>':'<span class="badge b-gray">FREE</span>';
+    var roleB=u.role==='admin'?'<span class="badge b-red">ADMIN</span>':u.role==='enterprise'?'<span class="badge b-purple">ENT</span>':'<span class="badge b-navy">USER</span>';
+    return '<tr>'
+      +'<td><b>@'+esc(u.username||'')+'</b></td>'
+      +'<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(u.email||'-')+'</td>'
+      +'<td>'+planB+'</td>'
+      +'<td>'+roleB+'</td>'
+      +'<td>'+(u.total_scans||0)+'</td>'
+      +'<td>'+(u.total_issues||0)+'</td>'
+      +'<td>'+fmtDate(u.created_at)+'</td>'
+      +'<td style="display:flex;gap:5px;align-items:center">'
+        +'<button class="btn btn-ghost btn-xs" onclick="openUserModal('+u.id+')">Edit</button>'
+        +(u.plan!=='pro'?'<button class="btn btn-teal btn-xs" onclick="quickUpgrade(\''+esc(u.username)+'\')">→ Pro</button>':'<span style="font-size:11px;color:var(--green)">✓</span>')
+      +'</td>'
+    +'</tr>';
+  }).join('');
+  renderPg('userPg',filteredUsers.length,userPage,function(p){userPage=p;renderUsers();});
+}
+
+function renderRecentSignups(users){
+  var tbody=document.getElementById('recentSignups');
+  if(!users.length){tbody.innerHTML='<tr><td colspan="3" style="text-align:center;padding:12px;color:var(--text-light)">No users yet</td></tr>';return;}
+  tbody.innerHTML=users.map(function(u){
+    var badge=u.plan==='pro'?'<span class="badge b-yellow">PRO</span>':'<span class="badge b-gray">FREE</span>';
+    var action=u.plan!=='pro'?'<button class="btn btn-teal btn-xs" onclick="quickUpgrade(\''+esc(u.username)+'\')">→ Pro</button>':'<span style="font-size:11px;color:var(--green)">✓ Pro</span>';
+    return '<tr><td><b>@'+esc(u.username||'')+'</b></td><td>'+badge+'</td><td>'+action+'</td></tr>';
+  }).join('');
+}
+
+async function quickUpgrade(username){
+  if(!confirm('Upgrade @'+username+' to Pro?'))return;
+  var d=await doGrant({identifier:username,plan:'pro',role:'user',bonus_scans:0});
+  if(d.success){toast('✓ Upgraded @'+username,'success');loadUsers();loadStats();}
+}
+
+// ── USER MODAL ──
+function openUserModal(userId){
+  var user=allUsers.find(function(u){return u.id===userId;});
+  if(!user)return;
+  document.getElementById('modalTitle').textContent='Edit: @'+user.username;
+  document.getElementById('userModal').classList.add('open');
+  document.getElementById('modalBody').innerHTML=
+    '<div class="modal-grid">'
+      +'<div class="modal-field"><div class="modal-field-lbl">Username</div><div class="modal-field-val">@'+esc(user.username||'')+'</div></div>'
+      +'<div class="modal-field"><div class="modal-field-lbl">Email</div><div class="modal-field-val">'+esc(user.email||'-')+'</div></div>'
+      +'<div class="modal-field"><div class="modal-field-lbl">GitHub ID</div><div class="modal-field-val">'+esc(String(user.github_id||'-'))+'</div></div>'
+      +'<div class="modal-field"><div class="modal-field-lbl">Joined</div><div class="modal-field-val">'+fmtDate(user.created_at)+'</div></div>'
+      +'<div class="modal-field"><div class="modal-field-lbl">Total Scans</div><div class="modal-field-val">'+(user.total_scans||0)+'</div></div>'
+      +'<div class="modal-field"><div class="modal-field-lbl">Referral Code</div><div class="modal-field-val">'+esc(user.referral_code||'-')+'</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px">'
+      +'<div><label class="lbl">Plan</label><select class="inp sel" id="mu-plan"><option value="free"'+(user.plan==='free'?' selected':'')+'>Free</option><option value="pro"'+(user.plan==='pro'?' selected':'')+'>Pro</option></select></div>'
+      +'<div><label class="lbl">Role</label><select class="inp sel" id="mu-role"><option value="user"'+(user.role==='user'?' selected':'')+'>User</option><option value="admin"'+(user.role==='admin'?' selected':'')+'>Admin</option><option value="enterprise"'+(user.role==='enterprise'?' selected':'')+'>Enterprise</option></select></div>'
+      +'<div><label class="lbl">Bonus Scans</label><input class="inp" id="mu-bonus" type="number" value="'+(user.bonus_scans||0)+'"></div>'
+      +'<div><label class="lbl">Scans Used</label><input class="inp" id="mu-used" type="number" value="'+(user.scans_used||0)+'"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+      +'<button class="btn btn-teal" onclick="saveUserModal('+user.id+',\''+esc(user.username)+'\')">Save Changes</button>'
+      +'<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+      +'<button class="btn btn-red btn-xs" onclick="deleteUser('+user.id+',\''+esc(user.username)+'\')" style="margin-left:auto">Delete User</button>'
+    +'</div>'
+    +'<div id="modalMsg" style="font-size:12px;margin-top:8px"></div>';
+}
+
+async function saveUserModal(userId,username){
+  var plan=document.getElementById('mu-plan').value;
+  var role=document.getElementById('mu-role').value;
+  var bonus=parseInt(document.getElementById('mu-bonus').value)||0;
+  var used=parseInt(document.getElementById('mu-used').value)||0;
+  var msg=document.getElementById('modalMsg');msg.textContent='Saving...';msg.style.color='var(--text-light)';
+  try{
+    var r=await fetch('/api/admin/user/'+userId,{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({plan,role,bonus_scans:bonus,scans_used:used})});
+    var d=await r.json();
+    if(d.success){toast('Updated @'+username,'success');closeModal();loadUsers();loadStats();}
+    else{msg.textContent='✗ '+(d.error||'Failed');msg.style.color='var(--red)';}
+  }catch(e){msg.textContent='Error: '+e.message;msg.style.color='var(--red)';}
+}
+
+async function deleteUser(userId,username){
+  if(!confirm('PERMANENTLY DELETE @'+username+'? This cannot be undone.'))return;
+  if(!confirm('Are you absolutely sure? All data for @'+username+' will be lost.'))return;
+  try{
+    var r=await fetch('/api/admin/user/'+userId,{method:'DELETE',credentials:'include'});
+    var d=await r.json();
+    if(d.success){toast('Deleted @'+username,'info');closeModal();loadUsers();}
+    else toast(d.error||'Failed','error');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+function closeModal(){document.getElementById('userModal').classList.remove('open');}
+
+// ── GRANT ──
+async function grantAccess(){
+  var q=document.getElementById('grantQuery').value.trim();
+  var plan=document.getElementById('grantPlan').value;
+  var role=document.getElementById('grantRole').value;
+  var bonus=parseInt(document.getElementById('grantBonus').value)||0;
+  if(!q){toast('Enter username or email','error');return;}
+  var btn=document.getElementById('grantBtn');btn.disabled=true;btn.textContent='...';
+  var d=await doGrant({identifier:q,plan,role,bonus_scans:bonus});
+  btn.disabled=false;btn.textContent='Grant';
+  var msg=document.getElementById('grantMsg');
+  if(d.success){msg.textContent='✓ Updated '+q;document.getElementById('grantQuery').value='';loadUsers();loadStats();}
+  else msg.textContent='✗ '+(d.error||'Failed');
+}
+
+async function grantAccessFull(){
+  var q=document.getElementById('ga2Query').value.trim();
+  var plan=document.getElementById('ga2Plan').value;
+  var role=document.getElementById('ga2Role').value;
+  var bonus=parseInt(document.getElementById('ga2Bonus').value)||0;
+  var used=document.getElementById('ga2ScansUsed').value;
+  if(!q){toast('Enter username or email','error');return;}
+  var btn=document.getElementById('ga2Btn');btn.disabled=true;btn.textContent='Applying...';
+  var payload={identifier:q,plan,role,bonus_scans:bonus};
+  var d=await doGrant(payload);
+  // Also patch scans_used if provided
+  if(d.success&&d.user&&used!==''){
+    await fetch('/api/admin/user/'+d.user.id,{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({scans_used:parseInt(used)||0})});
+  }
+  btn.disabled=false;btn.textContent='Apply Changes';
+  var el=document.getElementById('ga2Result');
+  if(d.success){el.innerHTML='<span style="color:var(--green)">✓ Updated @'+(d.user?.username||q)+' → '+plan+' / '+role+'</span>';loadUsers();loadStats();}
+  else el.innerHTML='<span style="color:var(--red)">✗ '+(d.error||'Failed')+'</span>';
+}
+
+async function doGrant(payload){
+  try{
+    var r=await fetch('/api/admin/grant',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(payload)});
+    var ct=r.headers.get('content-type')||'';
+    if(!ct.includes('application/json')){toast('Server error','error');return{success:false,error:'Server error'};}
+    var d=await r.json();
+    if(d.success)toast('Updated '+payload.identifier,'success');
+    else toast(d.error||'Failed','error');
+    return d;
+  }catch(e){toast('Error: '+e.message,'error');return{success:false,error:e.message};}
+}
+
+// ── SCANS ──
+async function loadScans(){
+  try{
+    var r=await fetch('/api/admin/scans',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    allScans=d.scans||[];
+    document.getElementById('scanCountLbl').textContent=allScans.length+' total scans';
+    renderScans(allScans);
+    renderRecentScans(allScans.slice(0,6));
+  }catch(e){}
+}
+
+function filterScans(q){
+  var filtered=allScans.filter(function(s){return !q||(s.repo_name||'').toLowerCase().includes(q.toLowerCase())||(s.username||'').toLowerCase().includes(q.toLowerCase());});
+  renderScans(filtered);
+}
+
+function renderScans(scans){
+  var start=(scanPage-1)*PER,page=scans.slice(start,start+PER);
+  var tbody=document.getElementById('scansTbody');
+  if(!page.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-light)">No scans</td></tr>';return;}
+  tbody.innerHTML=page.map(function(s){
+    var risk=s.risk_level||'-';var riskB=risk==='HIGH'||risk==='CRITICAL'?'b-red':risk==='MEDIUM'?'b-yellow':risk==='LOW'?'b-green':'b-gray';
+    return '<tr><td><b>@'+esc(s.username||'?')+'</b></td><td style="font-family:monospace;font-size:11px">'+esc(s.repo_name||'-')+'</td><td>'+esc(s.branch||'main')+'</td><td>'+(s.issues_found||0)+'</td><td>'+(s.prs_raised||0)+'</td><td><span class="badge b-teal">'+esc(s.scan_type||'manual')+'</span></td><td><span class="badge '+riskB+'">'+risk+'</span></td><td>'+fmtDate(s.created_at)+'</td></tr>';
+  }).join('');
+  renderPg('scanPg',scans.length,scanPage,function(p){scanPage=p;renderScans(scans);});
+}
+
+function renderRecentScans(scans){
+  document.getElementById('recentScans').innerHTML=scans.map(function(s){
+    return '<tr><td><b>@'+esc(s.username||'?')+'</b></td><td style="font-family:monospace;font-size:11px">'+esc(s.repo_name||'-')+'</td><td>'+(s.issues_found||0)+'</td><td><span class="badge '+(s.status==='completed'?'b-green':'b-yellow')+'">'+esc(s.status||'done')+'</span></td><td>'+timeAgo(s.created_at)+'</td></tr>';
+  }).join('')||'<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--text-light)">No scans yet</td></tr>';
+}
+
+// ── FEEDBACK ──
+async function loadFeedback(){
+  try{
+    var r=await fetch('/api/admin/feedback',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    var fb=d.feedback||[];
+    document.getElementById('feedbackCountLbl').textContent=fb.length+' submissions';
+    document.getElementById('feedbackTbody').innerHTML=fb.map(function(f){
+      var stars=f.rating?'★'.repeat(f.rating)+'☆'.repeat(5-f.rating):'-';
+      return '<tr><td><b>@'+esc(f.username||'anon')+'</b></td><td><span class="badge b-teal">'+esc(f.type||'general')+'</span></td><td style="max-width:280px">'+esc((f.message||'-').substring(0,100))+'</td><td style="color:var(--yellow)">'+stars+'</td><td>'+fmtDate(f.created_at)+'</td></tr>';
+    }).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light)">No feedback yet</td></tr>';
+    // Recent for dashboard
+    document.getElementById('recentFeedback').innerHTML=fb.slice(0,4).map(function(f){
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px"><div style="font-weight:600;color:var(--navy)">@'+esc(f.username||'anon')+'<span style="font-weight:400;color:var(--text-light);margin-left:6px">'+timeAgo(f.created_at)+'</span></div><div style="color:var(--text-mid);margin-top:2px">'+esc((f.message||'-').substring(0,80))+'</div></div>';
+    }).join('')||'<div style="text-align:center;padding:16px;color:var(--text-light);font-size:12px">No feedback yet</div>';
+  }catch(e){}
+}
+
+// ── REFERRALS ──
+async function loadReferrals(){
+  try{
+    var r=await fetch('/api/admin/referrals',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    var refs=d.referrals||[];
+    document.getElementById('referralsTbody').innerHTML=refs.map(function(ref){
+      return '<tr><td><b>@'+esc(ref.username||'?')+'</b></td><td style="font-family:monospace;font-weight:600;letter-spacing:2px">'+esc(ref.referral_code||'-')+'</td><td>'+(ref.referral_count||0)+'</td><td>'+(ref.bonus_scans||0)+' scans</td><td><span class="badge '+((ref.referral_count||0)>0?'b-green':'b-gray')+'">'+(( ref.referral_count||0)>0?'Active':'None')+'</span></td></tr>';
+    }).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light)">No referrals yet</td></tr>';
+  }catch(e){}
+}
+
+// ── WAITLIST ──
+async function loadWaitlist(){
+  try{
+    var r=await fetch('/api/admin/waitlist',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    var wl=d.waitlist||[];
+    document.getElementById('waitlistCountLbl').textContent=wl.length+' early access requests';
+    document.getElementById('waitlistTbody').innerHTML=wl.map(function(w){
+      return '<tr><td><b>'+esc(w.name||'-')+'</b></td><td>'+esc(w.email||'-')+'</td><td>'+esc(w.company||'-')+'</td><td style="max-width:220px">'+esc((w.message||'-').substring(0,80))+'</td><td>'+fmtDate(w.created_at)+'</td></tr>';
+    }).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light)">No waitlist entries</td></tr>';
+  }catch(e){}
+}
+
+// ── PAYMENTS ──
+async function loadPayments(){
+  try{
+    var r=await fetch('/api/admin/payments',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    var pays=d.payments||[];
+    document.getElementById('payCountLbl').textContent=pays.length+' transactions';
+    document.getElementById('paymentsTbody').innerHTML=pays.map(function(p){
+      var amt=p.amount?'₹'+(p.amount/100).toLocaleString('en-IN'):'-';
+      return '<tr><td><b>@'+esc(p.username||'?')+'</b></td><td style="font-weight:600;color:var(--green)">'+amt+'</td><td><span class="badge b-yellow">'+esc(p.plan||'pro')+'</span></td><td style="font-family:monospace;font-size:11px">'+esc(p.payment_id||'-')+'</td><td><span class="badge '+(p.status==='captured'?'b-green':'b-red')+'">'+esc(p.status||'-')+'</span></td><td>'+fmtDate(p.created_at)+'</td></tr>';
+    }).join('')||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-light)">No payments yet</td></tr>';
+  }catch(e){}
+}
+
+// ── ANALYTICS ──
+async function loadAnalytics(){
+  try{
+    var r=await fetch('/api/admin/analytics',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json'))return;
+    var d=await r.json();
+    document.getElementById('an-avg').textContent=d.avg_scans_per_user||'0';
+    document.getElementById('an-conv').textContent=(d.conversion_rate||0)+'%';
+    document.getElementById('an-ips').textContent=d.issues_per_scan||'0';
+    document.getElementById('topRepos').innerHTML=(d.top_repos||[]).map(function(r){return '<tr><td style="font-family:monospace;font-size:11px">'+esc(r.repo_name||'')+'</td><td>'+r.scan_count+'</td><td>'+(r.total_issues||0)+'</td></tr>';}).join('')||'<tr><td colspan="3" style="text-align:center;padding:14px;color:var(--text-light)">No data</td></tr>';
+    document.getElementById('topUsers').innerHTML=(d.top_users||[]).map(function(u){return '<tr><td><b>@'+esc(u.username||'')+'</b></td><td><span class="badge '+(u.plan==='pro'?'b-yellow':'b-gray')+'">'+(u.plan||'').toUpperCase()+'</span></td><td>'+(u.scan_count||0)+'</td></tr>';}).join('')||'<tr><td colspan="3" style="text-align:center;padding:14px;color:var(--text-light)">No data</td></tr>';
+  }catch(e){}
+}
+
+// ── BULK / SETTINGS ──
+async function bulkAction(action){
+  if(!confirm('Run: '+action+'?'))return;
+  try{
+    var r=await fetch('/api/admin/bulk/'+action,{method:'POST',credentials:'include'});
+    var d=await r.json();
+    if(d.success)toast(d.message||'Done','success');
+    else toast(d.error||'Failed','error');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+async function confirmDanger(action){
+  var word=prompt('Type DELETE to confirm this irreversible action:');
+  if(word!=='DELETE'){toast('Cancelled','info');return;}
+  bulkAction(action);
+}
+
+// ── PAGINATION ──
+function renderPg(elId,total,current,onPage){
+  var pages=Math.ceil(total/PER);
+  var el=document.getElementById(elId);
+  if(pages<=1){el.innerHTML='';return;}
+  var h='<span class="pg-info">Page '+current+' of '+pages+'</span>';
+  h+='<button class="pg-btn"'+(current<=1?' disabled':'')+' onclick="('+onPage.toString()+'('+(current-1)+'))">←</button>';
+  for(var i=Math.max(1,current-2);i<=Math.min(pages,current+2);i++)h+='<button class="pg-btn'+(i===current?' active':'')+'" onclick="('+onPage.toString()+'('+i+'))">'+i+'</button>';
+  h+='<button class="pg-btn"'+(current>=pages?' disabled':'')+' onclick="('+onPage.toString()+'('+(current+1)+'))">→</button>';
+  el.innerHTML=h;
+}
+
+// ── UTILS ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(d){if(!d)return'-';return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+function timeAgo(d){if(!d)return'-';var diff=(Date.now()-new Date(d))/1000;if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago';}
+var toastTimer=null;
+function toast(msg,type){
+  var el=document.getElementById('toast');el.textContent=msg;el.style.display='flex';
+  el.style.background=type==='error'?'var(--red)':type==='success'?'var(--green)':type==='info'?'var(--teal)':'var(--navy)';
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.style.display='none';},3000);
+}
+
+document.getElementById('userModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+init();
+</script>
+</body>
+</html>

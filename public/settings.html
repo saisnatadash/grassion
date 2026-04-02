@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-814J68KF3J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-814J68KF3J');
+</script>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/img/logo.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@600;700&family=Satoshi:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0d1b2a;--navy-2:#112236;--teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;--green:#10b981;--green-light:#f0fdf4;--red:#ef4444;--red-light:#fef2f2;--yellow:#f59e0b;--yellow-light:#fffbeb;--off-white:#f0f4f8;--text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;--border:rgba(13,27,42,0.08)}
+html{cursor:auto}
+body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh}
+nav{background:#fff;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50}
+.nav-brand{display:flex;align-items:center;text-decoration:none}
+.nav-brand img{height:28px}
+.nav-sep{color:var(--border);font-size:18px;margin:0 4px}
+.nav-page{font-size:14px;color:var(--text-mid)}
+.nav-back{margin-left:auto;font-size:13px;color:var(--text-mid);text-decoration:none;display:flex;align-items:center;gap:5px}
+.nav-back:hover{color:var(--navy)}
+.main{padding:32px;max-width:680px}
+.page-title{font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;color:var(--navy);margin-bottom:28px}
+.card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
+.card-title{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.card-sub{font-size:13px;color:var(--text-light);margin-bottom:20px}
+.info-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none;padding-bottom:0}
+.info-label{font-size:14px;font-weight:500;color:var(--navy)}
+.info-value{font-size:14px;color:var(--text-mid)}
+.badge{display:inline-flex;font-size:11px;padding:3px 9px;border-radius:100px;font-weight:600}
+.b-teal{background:var(--teal-light);color:var(--teal)}
+.b-yellow{background:var(--yellow-light);color:var(--yellow)}
+.b-gray{background:var(--off-white);color:var(--text-light)}
+.b-green{background:var(--green-light);color:var(--green)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;border:none;font-family:'Satoshi',sans-serif;transition:all 0.2s}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:var(--teal-2)}
+.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-danger{background:var(--red-light);color:var(--red)}.btn-danger:hover{background:#fee2e2}
+.btn-full{width:100%;justify-content:center;padding:12px}
+.plan-box{background:linear-gradient(135deg,var(--navy-2),var(--navy));border-radius:12px;padding:24px;color:#fff;margin-bottom:4px;position:relative;overflow:hidden}
+.plan-box::before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:rgba(42,159,214,0.1);border-radius:50%}
+.plan-box h3{font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px;position:relative}
+.plan-box p{font-size:13px;opacity:0.6;margin-bottom:20px;position:relative}
+.pro-active-box{background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px;margin-top:4px}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-brand"><img src="/img/logo.png" alt="Grassion" style="height:28px"></a>
+  <span class="nav-sep">/</span>
+  <span class="nav-page">Settings</span>
+  <a href="/dashboard" class="nav-back">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Dashboard
+  </a>
+</nav>
+<div class="main">
+  <div class="page-title">Settings</div>
+
+  <div class="card">
+    <div class="card-title">Account</div>
+    <div class="card-sub">Your GitHub account details</div>
+    <div class="info-row"><div class="info-label">GitHub username</div><div class="info-value" id="sUsername">Loading...</div></div>
+    <div class="info-row"><div class="info-label">Email</div><div class="info-value" id="sEmail">Loading...</div></div>
+    <div class="info-row"><div class="info-label">Member since</div><div class="info-value" id="sJoined">Loading...</div></div>
+    <div class="info-row"><div class="info-label">Plan</div><div><span class="badge b-gray" id="sPlanBadge">Free</span></div></div>
+    <div class="info-row"><div class="info-label">Scans used this month</div><div class="info-value" id="sScansUsed">0 / 3</div></div>
+    <div class="info-row"><div class="info-label">Total scans all time</div><div class="info-value" id="sTotalScans">0</div></div>
+    <div class="info-row"><div class="info-label">PRs raised</div><div class="info-value" id="sPRs">0</div></div>
+    <div class="info-row"><div class="info-label">Bonus scans</div><div class="info-value" id="sBonusScans">0</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Plan &amp; Billing</div>
+    <div class="card-sub">Manage your subscription</div>
+    <div id="freePlanBox">
+      <div class="plan-box">
+        <h3>Upgrade to Pro</h3>
+        <p>Unlimited repos, auto PR raising, Continuous Protection 24/7</p>
+        <button class="btn btn-teal" onclick="startPayment()">Upgrade ₹2,900/month</button>
+      </div>
+    </div>
+    <div id="proPlanBox" style="display:none">
+      <div class="pro-active-box">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <div>
+          <div style="font-weight:700;color:var(--green);font-size:15px">Pro plan is active</div>
+          <div style="font-size:13px;color:var(--text-mid);margin-top:3px">Unlimited repos, auto PR raising, and 24/7 protection are active.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Referral</div>
+    <div class="card-sub">Share Grassion and earn 5 bonus scans per signup</div>
+    <div class="info-row">
+      <div class="info-label">Your referral code</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <code style="font-size:16px;font-weight:700;color:var(--teal);letter-spacing:2px" id="sRefCode">Loading...</code>
+        <button class="btn btn-outline" onclick="copyRef()">Copy link</button>
+      </div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Friends referred</div>
+      <div class="info-value" id="sReferredCount">0</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Scans earned from referrals</div>
+      <div class="info-value" id="sReferralScans">0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--red)">Danger zone</div>
+    <div class="card-sub">Irreversible actions</div>
+    <div class="info-row">
+      <div>
+        <div class="info-label">Sign out</div>
+        <div style="font-size:13px;color:var(--text-light);margin-top:2px">End your current session</div>
+      </div>
+      <a href="/auth/logout" class="btn btn-danger">Sign out</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+async function init(){
+  var res=await fetch('/auth/me');
+  var d=await res.json();
+  if(!d.user){window.location.href='/signin';return;}
+  var u=d.user;
+  document.getElementById('sUsername').textContent='@'+u.username;
+  document.getElementById('sEmail').textContent=u.email||'Not set';
+  document.getElementById('sJoined').textContent=u.created_at?new Date(u.created_at).toLocaleDateString():'...';
+  document.getElementById('sScansUsed').textContent=(u.scans_used||0)+' / '+(u.plan==='pro'?'∞':'3');
+  document.getElementById('sTotalScans').textContent=u.total_scans||0;
+  document.getElementById('sPRs').textContent=u.prs_raised||0;
+  document.getElementById('sBonusScans').textContent=u.bonus_scans||0;
+  if(u.plan==='pro'){
+    document.getElementById('sPlanBadge').textContent='Pro';
+    document.getElementById('sPlanBadge').className='badge b-yellow';
+    document.getElementById('freePlanBox').style.display='none';
+    document.getElementById('proPlanBox').style.display='block';
+  }
+  try{
+    var r=await fetch('/api/referral/my-code');
+    var rd=await r.json();
+    document.getElementById('sRefCode').textContent=rd.code||'...';
+  }catch(e){}
+}
+
+function copyRef(){
+  var code=document.getElementById('sRefCode').textContent;
+  navigator.clipboard.writeText('https://grassion.com/?ref='+code);
+  alert('Referral link copied!');
+}
+
+async function startPayment(){
+  var res=await fetch('/api/payments/create-order',{method:'POST'});
+  var d=await res.json();
+  new Razorpay({key:d.key,amount:d.order.amount,currency:'INR',name:'Grassion',description:'Pro Plan',order_id:d.order.id,
+    handler:async function(r){
+      var vr=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});
+      var vd=await vr.json();
+      if(vd.success)location.reload();
+    },theme:{color:'#2a9fd6'}}).open();
+}
+init();
+</script>
+</body>
+</html>

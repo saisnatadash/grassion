@@ -1,0 +1,156 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-814J68KF3J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-814J68KF3J');
+</script>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/img/logo.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0d1b2a;--navy-2:#112236;--navy-3:#1a3352;--teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;--green:#10b981;--green-light:#f0fdf4;--off-white:#f0f4f8;--text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;--border:rgba(13,27,42,0.08);--border-teal:rgba(42,159,214,0.2);--shadow:0 20px 60px rgba(13,27,42,0.1);--shadow-teal:0 8px 32px rgba(42,159,214,0.15)}
+html{cursor:none;scroll-behavior:smooth}
+body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.cursor-dot{width:8px;height:8px;background:var(--teal);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;}
+.cursor-trail{position:fixed;pointer-events:none;z-index:9998;border-radius:50%;transform:translate(-50%,-50%)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;display:flex;align-items:center;justify-content:space-between;background:rgba(240,244,248,0.9);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo img{height:34px;width:auto}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{text-decoration:none;color:var(--text-mid);font-size:14px;font-weight:500;transition:color 0.2s}
+.nav-links a:hover{color:var(--navy)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'Satoshi',sans-serif}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-3)}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:var(--teal-2)}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.page-header{padding:140px 64px 60px;text-align:center}
+.section-label{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:inline-block}
+.page-header h1{font-family:'Clash Display',sans-serif;font-size:52px;font-weight:700;letter-spacing:-1.8px;color:var(--navy);margin-bottom:14px}
+.page-header p{font-size:18px;color:var(--text-mid)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto;padding:0 64px 80px}
+.plan{background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);border:1.5px solid var(--border);border-radius:20px;padding:36px;transition:all 0.3s;position:relative}
+.plan:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
+.plan.featured{border-color:var(--teal);background:rgba(255,255,255,0.95);box-shadow:0 0 0 1px var(--teal),var(--shadow-teal)}
+.plan-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:100px;white-space:nowrap;letter-spacing:0.5px;text-transform:uppercase}
+.plan-name{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:600;color:var(--navy);margin-bottom:10px}
+.plan-price{font-family:'Clash Display',sans-serif;font-size:48px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:4px}
+.plan-price sup{font-size:22px;vertical-align:top;margin-top:9px}
+.plan-period{font-size:14px;color:var(--text-light);font-family:'Satoshi',sans-serif}
+.plan-desc{font-size:14px;color:var(--text-mid);margin:14px 0 24px;line-height:1.5}
+.plan-divider{height:1px;background:var(--border);margin-bottom:20px}
+.plan-features{list-style:none;margin-bottom:28px}
+.plan-features li{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14px;color:var(--text-mid);border-bottom:1px solid var(--border)}
+.plan-features li:last-child{border-bottom:none}
+.fi{width:18px;height:18px;flex-shrink:0}
+.fi-yes{color:var(--teal)}
+.fi-no{color:var(--text-light);opacity:0.4}
+.faq-section{padding:60px 64px 80px}
+.faq-section h2{font-family:'Clash Display',sans-serif;font-size:36px;font-weight:700;letter-spacing:-1px;color:var(--navy);margin-bottom:36px;text-align:center}
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:800px;margin:0 auto}
+.faq-item{background:rgba(255,255,255,0.8);border:1.5px solid var(--border);border-radius:14px;padding:24px;transition:all 0.2s}
+.faq-item:hover{border-color:var(--border-teal)}
+.faq-q{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:10px}
+.faq-a{font-size:14px;color:var(--text-mid);line-height:1.65}
+.float-el{position:fixed;pointer-events:none;z-index:0}
+.float-a{top:30%;right:4%;width:120px;height:120px;background:rgba(42,159,214,0.05);border:1px solid rgba(42,159,214,0.12);border-radius:20px;transform:rotate(10deg);animation:fA 9s ease-in-out infinite}
+@keyframes fA{0%,100%{transform:rotate(10deg) translateY(0)}50%{transform:rotate(10deg) translateY(-14px)}}
+footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.06);padding:36px 64px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.35)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{color:rgba(255,255,255,0.35);text-decoration:none;transition:color 0.2s}
+.footer-links a:hover{color:rgba(255,255,255,0.7)}
+@media(max-width:768px){nav,footer,.page-header,.pricing-grid,.faq-section{padding-left:24px;padding-right:24px}.pricing-grid,.faq-grid{grid-template-columns:1fr}.page-header h1{font-size:36px}}
+</style>
+</head>
+<body>
+<div class="float-el float-a"></div>
+<nav>
+  <a href="/" class="nav-logo"><img src="/img/logo.png" alt="Grassion" style="height:28px"></a>
+  <div class="nav-links"><a href="/about">About</a><a href="/contact">Contact</a></div>
+  <a href="/auth/github" class="btn btn-primary">Connect GitHub</a>
+</nav>
+<div class="page-header">
+  <div class="section-label">Pricing</div>
+  <h1>Start free. No card required.</h1>
+  <p>Upgrade when you need full protection.</p>
+</div>
+<div class="pricing-grid">
+  <div class="plan">
+    <div class="plan-name">Free</div>
+    <div class="plan-price"><sup>₹</sup>0</div>
+    <div class="plan-period">forever</div>
+    <div class="plan-desc">Try Grassion on your first repo with no commitment.</div>
+    <div class="plan-divider"></div>
+    <ul class="plan-features">
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 repository</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>3 scans per month</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Full vulnerability report</li>
+      <li><svg class="fi fi-no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Auto PR raising</li>
+      <li><svg class="fi fi-no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Continuous protection</li>
+      <li><svg class="fi fi-no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Email alerts</li>
+    </ul>
+    <a href="/auth/github" class="btn btn-outline" style="width:100%;justify-content:center">Get started free</a>
+  </div>
+  <div class="plan featured">
+    <div class="plan-badge">Most Popular</div>
+    <div class="plan-name">Pro</div>
+    <div class="plan-price"><sup>₹</sup>2,900</div>
+    <div class="plan-period">per month</div>
+    <div class="plan-desc">Full security automation for serious engineering teams.</div>
+    <div class="plan-divider"></div>
+    <ul class="plan-features">
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited repositories</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited scans</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Full vulnerability reports</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Auto PR raising</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Continuous Protection 24/7</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Email alerts on every scan</li>
+    </ul>
+    <a href="/auth/github" class="btn btn-teal" style="width:100%;justify-content:center">Start Pro</a>
+  </div>
+  <div class="plan">
+    <div class="plan-name">Enterprise</div>
+    <div class="plan-price" style="font-size:34px;padding-top:6px">Custom</div>
+    <div class="plan-period">contact us</div>
+    <div class="plan-desc">For large teams with custom security, compliance, and integration requirements.</div>
+    <div class="plan-divider"></div>
+    <ul class="plan-features">
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Everything in Pro</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Custom integrations</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>SLA guarantee</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dedicated support</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>On-premise option</li>
+      <li><svg class="fi fi-yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Custom reporting</li>
+    </ul>
+    <a href="/contact" class="btn btn-outline" style="width:100%;justify-content:center">Contact sales</a>
+  </div>
+</div>
+<section class="faq-section">
+  <h2>Common questions</h2>
+  <div class="faq-grid">
+    <div class="faq-item"><div class="faq-q">What is Continuous Protection?</div><div class="faq-a">Grassion watches your repo 24/7. Every commit triggers an automatic scan. If a new unprotected endpoint appears, Grassion raises a fix PR immediately.</div></div>
+    <div class="faq-item"><div class="faq-q">What frameworks does Grassion support?</div><div class="faq-a">Currently optimized for Node.js/Express. Django, FastAPI, Rails, and Spring Boot support coming soon.</div></div>
+    <div class="faq-item"><div class="faq-q">Is my code stored on your servers?</div><div class="faq-a">No. Grassion reads your code temporarily to analyze it but never stores source code. Only scan metadata is retained.</div></div>
+    <div class="faq-item"><div class="faq-q">Can I cancel anytime?</div><div class="faq-a">Yes. Cancel anytime from your dashboard. Pro features remain active until the end of your billing period.</div></div>
+    <div class="faq-item"><div class="faq-q">What payment methods are accepted?</div><div class="faq-a">All major credit/debit cards, UPI, net banking, and wallets through Razorpay.</div></div>
+    <div class="faq-item"><div class="faq-q">Does Grassion work with private repos?</div><div class="faq-a">Yes. Grassion works with both public and private repositories through GitHub OAuth.</div></div>
+  </div>
+</section>
+<footer>
+  <span style="font-family:'Clash Display',sans-serif;font-size:16px;color:rgba(255,255,255,0.6)">Grassion</span>
+  <span>© 2026 Grassion.</span>
+  <div class="footer-links"><a href="/about">About</a><a href="/contact">Contact</a></div>
+</footer>
+<script>
+(function(){var _cd=document.createElement('div');_cd.className='cursor-dot';document.body.appendChild(_cd);var _tr=[];for(var _i=0;_i<12;_i++){var _t=document.createElement('div');_t.className='cursor-trail';var _sz=Math.max(4,16-_i);_t.style.cssText='width:'+_sz+'px;height:'+_sz+'px;background:hsla('+(180+_i*8)+',80%,60%,'+(0.8-_i*0.06)+');';document.body.appendChild(_t);_tr.push({el:_t,x:0,y:0});}var _mx=0,_my=0;document.addEventListener('mousemove',function(e){_mx=e.clientX;_my=e.clientY;_cd.style.left=(_mx-4)+'px';_cd.style.top=(_my-4)+'px';});(function _a(){var px=_mx,py=_my;for(var i=0;i<_tr.length;i++){var tr=_tr[i],sp=0.12+i*0.02;tr.x+=(px-tr.x)*sp;tr.y+=(py-tr.y)*sp;tr.el.style.left=tr.x+'px';tr.el.style.top=tr.y+'px';px=tr.x;py=tr.y;}requestAnimationFrame(_a);})();})();
+</script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="/img/logo-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1b2a;--navy-2:#112236;
+  --teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;
+  --green:#10b981;--off-white:#f0f4f8;
+  --text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;
+  --border:rgba(13,27,42,0.08);
+}
+body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;-webkit-font-smoothing:antialiased}
+
+.ob-wrap{width:100%;max-width:520px}
+
+/* Progress bar */
+.ob-progress{display:flex;align-items:center;gap:8px;margin-bottom:32px;justify-content:center}
+.ob-step{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;transition:all 0.3s;flex-shrink:0}
+.ob-step.done{background:var(--green);color:#fff}
+.ob-step.active{background:var(--teal);color:#fff;box-shadow:0 0 0 4px rgba(42,159,214,0.2)}
+.ob-step.todo{background:var(--border);color:var(--text-light)}
+.ob-step-line{height:2px;flex:1;background:var(--border);transition:background 0.3s}
+.ob-step-line.done{background:var(--green)}
+
+/* Card */
+.ob-card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 4px 40px rgba(13,27,42,0.1);animation:cardIn 0.4s cubic-bezier(0.16,1,0.3,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.ob-step-label{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+.ob-emoji{font-size:40px;margin-bottom:14px;display:block}
+.ob-title{font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;color:var(--navy);line-height:1.15;margin-bottom:8px}
+.ob-sub{font-size:14px;color:var(--text-mid);line-height:1.6;margin-bottom:24px}
+
+/* Inputs */
+.ob-field{margin-bottom:14px}
+.ob-label{font-size:12px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block}
+.ob-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Satoshi',sans-serif;color:var(--text);outline:none;transition:border-color 0.2s;background:#fff}
+.ob-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,159,214,0.08)}
+.ob-input::placeholder{color:var(--text-light)}
+
+/* Option cards */
+.ob-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.ob-option{border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all 0.15s;text-align:left;background:#fff;font-family:'Satoshi',sans-serif;display:flex;align-items:center;gap:10px}
+.ob-option:hover{border-color:var(--teal);background:var(--teal-light)}
+.ob-option.selected{border-color:var(--teal);background:var(--teal-light);color:var(--teal)}
+.ob-option-emoji{font-size:20px;flex-shrink:0}
+.ob-option-text{font-size:13px;font-weight:500;color:var(--navy)}
+.ob-option.selected .ob-option-text{color:var(--teal-2);font-weight:600}
+
+/* Single options full width */
+.ob-options-1col{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+
+/* Next button */
+.ob-btn{width:100%;padding:13px;border-radius:10px;background:var(--teal);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:'Satoshi',sans-serif;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}
+.ob-btn:hover{background:var(--teal-2);transform:translateY(-1px)}
+.ob-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.ob-btn svg{width:16px;height:16px}
+.ob-skip{display:block;text-align:center;margin-top:12px;font-size:12px;color:var(--text-light);cursor:pointer;text-decoration:none;transition:color 0.15s}
+.ob-skip:hover{color:var(--text-mid)}
+
+/* Welcome step */
+.ob-welcome-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--navy-2),var(--teal-2));display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:#fff;margin:0 auto 20px}
+
+/* Done step */
+.ob-done-features{display:flex;flex-direction:column;gap:9px;margin:20px 0}
+.ob-done-feature{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--off-white);border-radius:9px;font-size:13px;color:var(--text-mid)}
+.ob-done-feature svg{width:16px;height:16px;color:var(--teal);flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="ob-wrap">
+  <!-- Progress -->
+  <div class="ob-progress" id="obProgress">
+    <div class="ob-step active" id="ps1">1</div>
+    <div class="ob-step-line" id="pl1"></div>
+    <div class="ob-step todo" id="ps2">2</div>
+    <div class="ob-step-line" id="pl2"></div>
+    <div class="ob-step todo" id="ps3">3</div>
+    <div class="ob-step-line" id="pl3"></div>
+    <div class="ob-step todo" id="ps4">✓</div>
+  </div>
+
+  <!-- STEP 1: Welcome -->
+  <div class="ob-card" id="step1">
+    <div class="ob-welcome-avatar" id="ob-avatar">S</div>
+    <div class="ob-step-label">Step 1 of 3 · Takes 60 seconds</div>
+    <div class="ob-title">Hey <span id="ob-name-display">there</span>! 👋<br>You're in. Let's set you up.</div>
+    <div class="ob-sub">Quick 3 questions so Grassion works for your exact setup. No spam, no fluff.</div>
+    <div class="ob-field">
+      <label class="ob-label">What's your role?</label>
+      <div class="ob-options" id="roleOptions">
+        <button class="ob-option" onclick="selectOption('role','founder',this)">
+          <span class="ob-option-emoji">🚀</span>
+          <span class="ob-option-text">Founder / CTO</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('role','lead',this)">
+          <span class="ob-option-emoji">👨‍💻</span>
+          <span class="ob-option-text">Lead Engineer</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('role','dev',this)">
+          <span class="ob-option-emoji">💻</span>
+          <span class="ob-option-text">Developer</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('role','other',this)">
+          <span class="ob-option-emoji">🤔</span>
+          <span class="ob-option-text">Something else</span>
+        </button>
+      </div>
+    </div>
+    <button class="ob-btn" id="step1btn" onclick="goStep(2)" disabled>
+      Continue
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <a class="ob-skip" onclick="goStep(2)">Skip for now</a>
+  </div>
+
+  <!-- STEP 2: Team size + main concern -->
+  <div class="ob-card" id="step2" style="display:none">
+    <span class="ob-emoji">🛡️</span>
+    <div class="ob-step-label">Step 2 of 3</div>
+    <div class="ob-title">Tell us about your team</div>
+    <div class="ob-sub">We'll set up the right defaults for you.</div>
+    <div class="ob-field">
+      <label class="ob-label">Team size</label>
+      <div class="ob-options" id="teamOptions">
+        <button class="ob-option" onclick="selectOption('team','solo',this)">
+          <span class="ob-option-emoji">👤</span>
+          <span class="ob-option-text">Just me</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('team','small',this)">
+          <span class="ob-option-emoji">👥</span>
+          <span class="ob-option-text">2–10 people</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('team','mid',this)">
+          <span class="ob-option-emoji">🏢</span>
+          <span class="ob-option-text">11–50 people</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('team','large',this)">
+          <span class="ob-option-emoji">🏭</span>
+          <span class="ob-option-text">50+ people</span>
+        </button>
+      </div>
+    </div>
+    <div class="ob-field" style="margin-top:16px">
+      <label class="ob-label">Your biggest concern right now?</label>
+      <div class="ob-options-1col" id="concernOptions">
+        <button class="ob-option" onclick="selectOption('concern','exposed',this)" style="grid-column:unset">
+          <span class="ob-option-emoji">🔓</span>
+          <span class="ob-option-text">Exposed API routes I don't know about</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('concern','prs',this)" style="grid-column:unset">
+          <span class="ob-option-emoji">🔀</span>
+          <span class="ob-option-text">Bad code getting merged via pull requests</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('concern','secrets',this)" style="grid-column:unset">
+          <span class="ob-option-emoji">🗝️</span>
+          <span class="ob-option-text">Secrets and API keys in the codebase</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('concern','all',this)" style="grid-column:unset">
+          <span class="ob-option-emoji">🚨</span>
+          <span class="ob-option-text">All of the above, honestly</span>
+        </button>
+      </div>
+    </div>
+    <button class="ob-btn" id="step2btn" onclick="goStep(3)" disabled>
+      Continue
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <a class="ob-skip" onclick="goStep(3)">Skip</a>
+  </div>
+
+  <!-- STEP 3: Which repo to protect first -->
+  <div class="ob-card" id="step3" style="display:none">
+    <span class="ob-emoji">🎯</span>
+    <div class="ob-step-label">Step 3 of 3 · Last one!</div>
+    <div class="ob-title">Which repo matters most?</div>
+    <div class="ob-sub">We'll scan it first and set up automatic PR protection. You can add more anytime.</div>
+    <div class="ob-field">
+      <label class="ob-label">Most important repo right now</label>
+      <input class="ob-input" id="obRepoInput" placeholder="e.g. myapp/api-server or paste GitHub URL">
+    </div>
+    <div class="ob-field">
+      <label class="ob-label">How did you hear about Grassion?</label>
+      <div class="ob-options" id="sourceOptions">
+        <button class="ob-option" onclick="selectOption('source','linkedin',this)">
+          <span class="ob-option-emoji">💼</span>
+          <span class="ob-option-text">LinkedIn</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('source','friend',this)">
+          <span class="ob-option-emoji">🤝</span>
+          <span class="ob-option-text">Friend / colleague</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('source','search',this)">
+          <span class="ob-option-emoji">🔍</span>
+          <span class="ob-option-text">Google search</span>
+        </button>
+        <button class="ob-option" onclick="selectOption('source','other',this)">
+          <span class="ob-option-emoji">✨</span>
+          <span class="ob-option-text">Other</span>
+        </button>
+      </div>
+    </div>
+    <button class="ob-btn" onclick="finishOnboarding()">
+      Go to my dashboard 🎉
+    </button>
+    <a class="ob-skip" onclick="finishOnboarding()">Skip and go to dashboard</a>
+  </div>
+
+</div>
+
+<script>
+var answers = { role: null, team: null, concern: null, source: null };
+
+// Load user name
+fetch('/auth/me', { credentials: 'include' })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if(!d.user){ window.location.href='/signin'; return; }
+    if(d.user.onboarding_done){ window.location.href='/dashboard'; return; }
+    var name = d.user.username || 'there';
+    document.getElementById('ob-name-display').textContent = name;
+    document.getElementById('ob-avatar').textContent = name[0].toUpperCase();
+  })
+  .catch(function(){ window.location.href='/signin'; });
+
+function selectOption(type, value, el) {
+  answers[type] = value;
+  // Clear other selections in same group
+  var parent = el.parentElement;
+  parent.querySelectorAll('.ob-option').forEach(function(o){ o.classList.remove('selected'); });
+  el.classList.add('selected');
+  // Enable continue button
+  var btnMap = { role: 'step1btn', team: null, concern: null, source: null };
+  if(type === 'role') document.getElementById('step1btn').disabled = false;
+  if(type === 'team' || type === 'concern') {
+    // Enable step2 btn if both answered
+    if(answers.team && answers.concern) document.getElementById('step2btn').disabled = false;
+  }
+}
+
+function goStep(n) {
+  // Hide all steps
+  [1,2,3].forEach(function(i){ document.getElementById('step'+i).style.display='none'; });
+  document.getElementById('step'+n).style.display='block';
+  document.getElementById('step'+n).style.animation='none';
+  void document.getElementById('step'+n).offsetHeight;
+  document.getElementById('step'+n).style.animation='cardIn 0.4s cubic-bezier(0.16,1,0.3,1)';
+
+  // Update progress
+  for(var i=1;i<=4;i++){
+    var stepEl=document.getElementById('ps'+i);
+    if(i<n){ stepEl.classList.remove('active','todo'); stepEl.classList.add('done'); stepEl.textContent=i===4?'✓':'✓'; }
+    else if(i===n){ stepEl.classList.remove('done','todo'); stepEl.classList.add('active'); }
+    else{ stepEl.classList.remove('done','active'); stepEl.classList.add('todo'); }
+  }
+  for(var i=1;i<=3;i++){
+    var line=document.getElementById('pl'+i);
+    if(i<n) line.classList.add('done');
+    else line.classList.remove('done');
+  }
+  window.scrollTo(0,0);
+}
+
+async function finishOnboarding() {
+  var repo = document.getElementById('obRepoInput').value.trim();
+  // Save onboarding answers
+  try {
+    await fetch('/api/user/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        role: answers.role,
+        team_size: answers.team,
+        concern: answers.concern,
+        source: answers.source,
+        primary_repo: repo
+      })
+    });
+  } catch(e) {}
+  window.location.href = '/dashboard';
+}
+</script>
+</body>
+</html>

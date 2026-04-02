@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-814J68KF3J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-814J68KF3J');
+</script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 | Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@700&family=Satoshi:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Satoshi',sans-serif;background:#f0f4f8;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;cursor:none;color:#0d1b2a}
+.cursor-dot{width:8px;height:8px;background:#2a9fd6;border-radius:50%;position:fixed;pointer-events:none;z-index:9999}
+.err{font-family:'Clash Display',sans-serif;font-size:140px;font-weight:700;color:#0d1b2a;opacity:0.06;line-height:1;margin-bottom:-30px}
+h1{font-family:'Clash Display',sans-serif;font-size:32px;font-weight:700;color:#0d1b2a;margin-bottom:12px;letter-spacing:-0.8px}
+p{font-size:16px;color:#4a6075;margin-bottom:32px}
+a{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#0d1b2a;color:#fff;border-radius:9px;text-decoration:none;font-size:14px;font-weight:500;font-family:'Satoshi',sans-serif;transition:all 0.2s}
+a:hover{background:#1a3352}
+</style>
+</head>
+<body>
+<div class="cursor-dot" id="cDot"></div>
+<div class="err">404</div>
+<h1>Page not found.</h1>
+<p>The page you're looking for doesn't exist or has been moved.</p>
+<a href="/">← Back to Grassion</a>
+<script>
+const d=document.getElementById('cDot');
+document.addEventListener('mousemove',e=>{d.style.left=e.clientX-4+'px';d.style.top=e.clientY-4+'px';});
+</script>
+</body>
+</html>

@@ -1,0 +1,1881 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-814J68KF3J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-814J68KF3J');
+</script>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="/img/logo-icon.png"> width='32' height='32' rx='6' fill='%230d1b2a'/><text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='18' font-family='Arial' font-weight='bold' fill='%232a9fd6'>G</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | Grassion</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1b2a;--navy-2:#112236;--navy-3:#1a3352;
+  --teal:#2a9fd6;--teal-2:#1e8ab8;--teal-light:#e8f6fd;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --yellow:#f59e0b;--yellow-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --orange:#f97316;--orange-light:#fff7ed;
+  --white:#fff;--off-white:#f0f4f8;
+  --text:#0d1b2a;--text-mid:#4a6075;--text-light:#7a95aa;
+  --border:rgba(13,27,42,0.08);--border-teal:rgba(42,159,214,0.2);
+  --shadow:0 4px 20px rgba(13,27,42,0.08);
+  --shadow-teal:0 8px 32px rgba(42,159,214,0.15);
+  --sw:252px;--sw-col:64px;
+}
+html{cursor:auto}
+body{font-family:'Satoshi',sans-serif;background:var(--off-white);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sw);background:#fff;border-right:1px solid var(--border);
+  position:fixed;height:100vh;display:flex;flex-direction:column;z-index:50;
+  transition:width 0.25s cubic-bezier(0.4,0,0.2,1);overflow:hidden
+}
+.sidebar.collapsed{width:var(--sw-col)}
+.sb-header{
+  padding:16px 14px 14px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);flex-shrink:0;min-height:62px
+}
+.sb-logo{display:flex;align-items:center;gap:9px;text-decoration:none;overflow:hidden;flex:1;min-width:0}
+.sb-logo img{height:30px;width:auto;flex-shrink:0}
+.sb-logo-text
+{
+  font-family:'Clash Display',sans-serif;
+  font-size:17px;
+  font-weight:700;
+  color:var(--navy);
+  letter-spacing:-0.3px;
+  display:none !important;
+}
+.sidebar.collapsed .sb-logo-text
+{
+  opacity:0;
+  pointer-events:none;
+  display:none !important;
+}
+.toggle-btn{width:26px;height:26px;border:none;background:var(--off-white);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-mid);transition:all 0.15s}
+.toggle-btn:hover{background:var(--border);color:var(--navy)}
+.toggle-btn svg{width:13px;height:13px;transition:transform 0.25s}
+.sidebar.collapsed .toggle-btn svg{transform:rotate(180deg)}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;overflow-x:hidden}
+.nav-lbl{font-size:9px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.8px;padding:0 8px;margin:12px 0 5px;white-space:nowrap;opacity:1;transition:opacity 0.2s}
+.sidebar.collapsed .nav-lbl{opacity:0}
+.ni{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;
+  font-size:13px;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.15s;
+  text-decoration:none;border:none;background:none;width:100%;font-family:'Satoshi',sans-serif;
+  white-space:nowrap;overflow:hidden;position:relative
+}
+.ni-icon{width:17px;height:17px;flex-shrink:0;opacity:0.55;transition:opacity 0.15s}
+.ni-label{opacity:1;transition:opacity 0.2s;overflow:hidden;text-overflow:ellipsis}
+.sidebar.collapsed .ni-label{opacity:0;pointer-events:none}
+.ni:hover{background:var(--off-white);color:var(--text)}.ni:hover .ni-icon{opacity:0.85}
+.ni.active{background:var(--teal-light);color:var(--teal-2);font-weight:600}.ni.active .ni-icon{opacity:1;color:var(--teal)}
+.ni.danger{color:var(--red)}.ni.danger .ni-icon{color:var(--red);opacity:0.7}
+.ni-badge{font-size:9px;font-weight:800;padding:2px 6px;background:var(--yellow-light);color:var(--yellow);border-radius:4px;letter-spacing:0.5px;flex-shrink:0;margin-left:auto;transition:opacity 0.2s}
+.sidebar.collapsed .ni-badge{opacity:0}
+.sidebar.collapsed .ni{justify-content:center;padding:9px}
+.sidebar.collapsed .ni::after{content:attr(data-tip);position:absolute;left:calc(var(--sw-col)+8px);background:var(--navy);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:100}
+.sidebar.collapsed .ni:hover::after{opacity:1}
+.sb-bottom{padding:10px 8px;border-top:1px solid var(--border);flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:var(--off-white);margin-bottom:6px;overflow:hidden}
+.uav{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--navy-2),var(--teal-2));display:flex;align-items:center;justify-content:center;font-family:'Clash Display',sans-serif;font-size:12px;font-weight:700;color:#fff}
+.ui-text{overflow:hidden;opacity:1;transition:opacity 0.2s}
+.sidebar.collapsed .ui-text{opacity:0}
+.ui-name{font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ui-plan{font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px}
+.plan-free{background:var(--off-white);color:var(--text-light);border:1px solid var(--border)}
+.plan-pro{background:var(--yellow-light);color:var(--yellow)}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sw);flex:1;min-height:100vh;display:flex;flex-direction:column;transition:margin-left 0.25s cubic-bezier(0.4,0,0.2,1)}
+.main.collapsed{margin-left:var(--sw-col)}
+.topbar{padding:14px 28px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.tb-left .greeting{font-size:22px;font-family:'Clash Display',sans-serif;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px}
+.tb-left .greeting-emoji{font-size:24px}
+.tb-left .tb-sub{font-size:12px;color:var(--text-light);margin-top:2px}
+.tb-right{display:flex;gap:9px;align-items:center}
+.content{padding:24px 28px;flex:1}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;font-family:'Satoshi',sans-serif;white-space:nowrap}
+.btn svg{width:13px;height:13px;flex-shrink:0}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-3);transform:translateY(-1px)}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:var(--teal-2)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#059669}
+.btn-red{background:var(--red-light);color:var(--red);border:1px solid #fecaca}
+.btn-ghost{background:var(--off-white);color:var(--text-mid);border:1px solid var(--border)}.btn-ghost:hover{background:var(--border);color:var(--text)}
+.btn-outline{background:#fff;color:var(--text-mid);border:1px solid var(--border)}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
+.btn-upgrade{background:var(--teal);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Satoshi',sans-serif;white-space:nowrap;transition:all 0.2s}.btn-upgrade:hover{background:var(--teal-2)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:20px}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;color:var(--navy)}
+.card-sub{font-size:12px;color:var(--text-light);margin-top:2px}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:18px;transition:all 0.2s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.sc-teal::before{background:linear-gradient(90deg,var(--teal),#60c4f0)}
+.stat-card.sc-red::before{background:linear-gradient(90deg,var(--red),#f87171)}
+.stat-card.sc-green::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.stat-card.sc-yellow::before{background:linear-gradient(90deg,var(--yellow),#fbbf24)}
+.stat-card:hover{box-shadow:var(--shadow-teal);transform:translateY(-2px)}
+.stat-lbl{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.stat-val{font-family:'Clash Display',sans-serif;font-size:30px;font-weight:700;color:var(--navy);line-height:1}
+.stat-val.sv-red{color:var(--red)}.stat-val.sv-green{color:var(--green)}.stat-val.sv-teal{color:var(--teal)}
+.stat-sub{font-size:11px;color:var(--text-light);margin-top:5px}
+
+/* ── UPGRADE BANNER ── */
+.upgrade-banner{background:linear-gradient(135deg,var(--navy) 0%,#1a3352 100%);border-radius:14px;padding:18px 22px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;position:relative;overflow:hidden}
+.upgrade-banner::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:rgba(42,159,214,0.1);border-radius:50%}
+.upgrade-banner h3{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;position:relative}
+.upgrade-banner p{font-size:12px;opacity:0.6;margin-top:2px;position:relative}
+
+/* ── PANES ── */
+.pane{display:none}.pane.active{display:block}
+
+/* ── REPO SELECTOR ── */
+.srb{background:#fff;border:1.5px solid var(--teal);border-radius:12px;padding:14px 18px;display:none;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.srb.visible{display:flex}
+.srb-label{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.srb-name{font-weight:600;font-size:14px;color:var(--navy)}
+.srb-meta{font-size:12px;color:var(--text-light);margin-top:1px}
+.repo-search{width:100%;padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'Satoshi',sans-serif;outline:none;transition:all 0.2s;background:#fff;color:var(--text);margin-bottom:12px}
+.repo-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,159,214,0.08)}
+.repo-list{display:flex;flex-direction:column;gap:5px;max-height:320px;overflow-y:auto}
+.repo-item{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s}
+.repo-item:hover,.repo-item.selected{border-color:var(--teal);background:var(--teal-light)}
+.repo-name{font-size:13px;font-weight:500;color:var(--navy)}
+.repo-meta{font-size:11px;color:var(--text-light);margin-top:2px}
+.repo-lang{font-size:10px;padding:2px 8px;border-radius:100px;background:var(--off-white);color:var(--text-mid);font-weight:500}
+
+/* ── LOADING ── */
+.loading-state{display:none;text-align:center;padding:40px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls{font-size:12px;color:var(--text-light);display:flex;align-items:center;gap:8px;padding:5px 0}
+.ls.active{color:var(--teal);font-weight:500}.ls.done{color:var(--green)}
+
+/* ── RESULTS ── */
+.results-wrap{display:none;margin-bottom:20px}
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.results-title{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy)}
+.issue-card{border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:8px}
+.issue-head{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;background:var(--red-light);border-bottom:1px solid rgba(239,68,68,0.1)}
+.issue-file{font-size:12px;font-weight:600;font-family:'Satoshi',monospace;color:var(--navy)}
+.issue-count{font-size:11px;color:var(--red);font-weight:700}
+.issue-body{padding:10px 15px}
+.endpoint-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.endpoint-row:last-child{border-bottom:none}
+.method{font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;font-family:'Satoshi',monospace;letter-spacing:0.5px}
+.m-get{background:#dcfce7;color:#16a34a}.m-post{background:#dbeafe;color:#2563eb}
+.m-put{background:#fef9c3;color:#ca8a04}.m-delete{background:#fee2e2;color:var(--red)}
+.m-patch{background:#f3e8ff;color:#9333ea}
+.ep-path{font-family:monospace;color:var(--text)}.ep-issue{color:var(--red);font-size:11px;margin-left:auto}
+
+/* ── TABLE ── */
+.dtbl{width:100%;border-collapse:collapse}
+.dtbl th{text-align:left;padding:9px 13px;font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border)}
+.dtbl td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text-mid)}
+.dtbl tr:last-child td{border-bottom:none}
+.dtbl tbody tr:hover td{background:var(--off-white)}
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:3px 8px;border-radius:100px;font-weight:600}
+.b-red{background:var(--red-light);color:var(--red)}.b-green{background:var(--green-light);color:var(--green)}
+.b-gray{background:var(--off-white);color:var(--text-light)}.b-teal{background:var(--teal-light);color:var(--teal-2)}
+.b-yellow{background:var(--yellow-light);color:var(--yellow)}.b-orange{background:var(--orange-light);color:var(--orange)}
+
+/* ── REFERRAL ── */
+.ref-box{background:linear-gradient(135deg,var(--teal-light),#e0f2fe);border:1.5px solid var(--border-teal);border-radius:14px;padding:22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.ref-code{font-family:'Clash Display',monospace;font-size:22px;font-weight:700;color:var(--teal-2);letter-spacing:3px;background:#fff;padding:9px 18px;border-radius:10px;border:1.5px solid var(--border-teal)}
+
+/* ── USAGE BAR ── */
+.usage-track{height:7px;background:var(--off-white);border-radius:100px;overflow:hidden;margin-top:5px}
+.usage-fill{height:100%;background:var(--teal);border-radius:100px;transition:width 0.6s ease}
+
+/* ── SETTINGS GRID ── */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.set-item{background:var(--off-white);border-radius:10px;padding:14px 16px;position:relative}
+.set-lbl{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+.set-val{font-size:14px;font-weight:500;color:var(--navy)}
+.set-edit-btn{position:absolute;top:12px;right:12px;font-size:10px;padding:3px 8px;background:#fff;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--text-mid);font-family:'Satoshi',sans-serif;transition:all 0.15s}
+.set-edit-btn:hover{border-color:var(--teal);color:var(--teal)}
+.set-edit-input{width:100%;padding:6px 8px;border:1.5px solid var(--teal);border-radius:7px;font-size:13px;font-family:'Satoshi',sans-serif;outline:none;background:#fff;color:var(--text);margin-top:4px;display:none}
+
+/* ══════════════════════════════════════════════════
+   CODE GUARDIAN (AI ASSISTANT) - FULL UI
+══════════════════════════════════════════════════ */
+.cg-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 62px - 48px);min-height:560px;background:#fff;border:1.5px solid var(--border);border-radius:14px;overflow:hidden}
+
+/* LEFT PANEL */
+.cg-left{border-right:1px solid var(--border);display:flex;flex-direction:column;background:#f8fafc}
+.cg-left-top{padding:14px 14px 12px;border-bottom:1px solid var(--border);background:#fff}
+.cg-section-lbl{font-size:9px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.cg-repo-select{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'Satoshi',sans-serif;outline:none;background:#fff;color:var(--text);cursor:pointer;margin-bottom:7px}
+.cg-repo-select:focus{border-color:var(--teal)}
+.cg-branch-wrap{display:flex;gap:6px;align-items:center}
+.cg-branch-select{flex:1;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:11px;font-family:'Satoshi',sans-serif;outline:none;background:#fff;color:var(--text);cursor:pointer}
+.cg-branch-select:focus{border-color:var(--teal)}
+.cg-refresh-btn{padding:6px;border:1.5px solid var(--border);border-radius:7px;background:#fff;cursor:pointer;color:var(--text-mid);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.cg-refresh-btn:hover{border-color:var(--teal);color:var(--teal)}
+.cg-refresh-btn svg{width:12px;height:12px}
+
+/* File tree */
+.cg-tree-wrap{flex:0 0 auto;border-bottom:1px solid var(--border);max-height:200px;overflow-y:auto}
+.cg-tree-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 4px;font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1px}
+.cg-tree-search{margin:0 10px 6px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Satoshi',sans-serif;outline:none;width:calc(100% - 20px);color:var(--text)}
+.cg-tree-search:focus{border-color:var(--teal)}
+.cg-tree-list{padding:0 6px 6px}
+.cg-tree-item{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px;color:var(--text-mid);transition:all 0.12s}
+.cg-tree-item:hover{background:rgba(42,159,214,0.06);color:var(--navy)}
+.cg-tree-item.selected{background:var(--teal-light);color:var(--teal-2);font-weight:600}
+.cg-tree-item svg{width:11px;height:11px;flex-shrink:0;opacity:0.5}
+.cg-tree-filename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.cg-tree-dir{font-weight:600;color:var(--navy);opacity:0.7}
+
+/* Session history */
+.cg-hist-wrap{flex:1;overflow-y:auto;padding:6px}
+.cg-hist-header{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 3px;font-size:9px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1px}
+.cg-hist-item{padding:8px 10px;border-radius:8px;cursor:pointer;transition:all 0.12s;border:1px solid transparent;margin-bottom:3px}
+.cg-hist-item:hover{background:rgba(42,159,214,0.05);border-color:rgba(42,159,214,0.1)}
+.cg-hist-item.active{background:var(--teal-light);border-color:var(--border-teal)}
+.cg-hist-prompt{font-size:11px;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+.cg-hist-meta{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-light)}
+.cg-hist-badge{font-size:9px;padding:1px 6px;border-radius:100px;font-weight:600}
+.risk-low{background:#dcfce7;color:#16a34a}.risk-medium{background:var(--yellow-light);color:#92400e}.risk-high{background:var(--red-light);color:var(--red)}
+.cg-hist-empty{text-align:center;padding:20px 10px;font-size:11px;color:var(--text-light)}
+
+/* RIGHT PANEL - MAIN CHAT */
+.cg-right{display:flex;flex-direction:column;overflow:hidden}
+.cg-topbar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff;flex-shrink:0}
+.cg-topbar-title{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;color:var(--navy)}
+.cg-topbar-sub{font-size:11px;color:var(--text-light);margin-top:1px}
+.cg-status{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--text-light)}
+.cg-status.connected{color:var(--green)}
+.cg-status-dot{width:6px;height:6px;border-radius:50%;background:var(--text-light)}
+.cg-status.connected .cg-status-dot{background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* Messages area */
+.cg-messages{flex:1;overflow-y:auto;padding:20px 20px 0;display:flex;flex-direction:column;gap:16px}
+.cg-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+.cg-empty-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--teal-light),#e0f2fe);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.cg-empty-icon svg{width:26px;height:26px;color:var(--teal)}
+.cg-suggestions{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:500px;margin-top:16px;width:100%}
+.cg-sug{background:var(--off-white);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;cursor:pointer;text-align:left;font-size:12px;color:var(--text-mid);transition:all 0.2s;font-family:'Satoshi',sans-serif}
+.cg-sug:hover{background:var(--teal-light);border-color:var(--border-teal);color:var(--teal-2)}
+.cg-sug strong{display:block;font-size:11px;color:var(--navy);margin-bottom:2px;font-weight:600}
+
+/* Message bubbles */
+.cg-msg{display:flex;gap:9px;animation:msgIn 0.3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.cg-msg.user{flex-direction:row-reverse;align-self:flex-end;max-width:80%}
+.cg-msg.assistant{align-self:flex-start;max-width:92%;flex-direction:column}
+.cg-msg-inner{display:flex;gap:9px}
+.cg-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.cg-msg.user .cg-av{background:linear-gradient(135deg,var(--navy-2),var(--teal-2));color:#fff}
+.cg-msg.assistant .cg-av{background:var(--teal-light);color:var(--teal-2)}
+.cg-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-break:break-word}
+.cg-msg.user .cg-bubble{background:var(--navy);color:#fff;border-radius:12px 12px 4px 12px}
+.cg-msg.assistant .cg-bubble{background:#fff;border:1.5px solid var(--border);color:var(--text);border-radius:12px 12px 12px 4px}
+
+/* Typing indicator */
+.cg-typing{display:flex;align-items:center;gap:4px;padding:10px 14px;background:#fff;border:1.5px solid var(--border);border-radius:12px 12px 12px 4px;width:fit-content}
+.cg-typing-dot{width:5px;height:5px;border-radius:50%;background:var(--text-light);animation:typing 1.2s infinite}
+.cg-typing-dot:nth-child(2){animation-delay:0.2s}
+.cg-typing-dot:nth-child(3){animation-delay:0.4s}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-3px);opacity:1}}
+
+/* Analysis result card */
+.cg-analysis{background:#fff;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-top:10px;width:100%}
+.cg-analysis-header{padding:12px 16px;background:var(--off-white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.cg-analysis-title{font-family:'Clash Display',sans-serif;font-size:13px;font-weight:700;color:var(--navy)}
+.cg-risk{font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px}
+.cg-analysis-body{padding:16px}
+.cg-summary{font-size:13px;color:var(--text);line-height:1.65;margin-bottom:14px}
+
+/* File change cards */
+.cg-file-change{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.cg-file-change-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--off-white);cursor:pointer;transition:background 0.15s}
+.cg-file-change-header:hover{background:#eef2f7}
+.cg-file-change-name{font-family:'Satoshi',monospace;font-size:12px;font-weight:600;color:var(--navy)}
+.cg-file-change-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-light)}
+.cg-diff-body{font-family:'Satoshi',monospace;font-size:11px;line-height:1.7;overflow-x:auto;max-height:280px;border-top:1px solid var(--border)}
+.cg-diff-line{padding:1px 14px;white-space:pre;display:block}
+.cg-diff-line.add{background:#f0fdf4;color:#16a34a}
+.cg-diff-line.remove{background:#fef2f2;color:#dc2626}
+.cg-diff-line.context{color:var(--text-mid)}
+.cg-diff-line.hunk{background:var(--teal-light);color:var(--teal-2);font-weight:600}
+.cg-file-reason{padding:8px 14px;font-size:12px;color:var(--text-mid);border-top:1px solid var(--border);background:#fafafa}
+
+/* Clarification questions */
+.cg-questions{background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:14px;margin-top:10px}
+.cg-questions-title{font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.cg-question{font-size:13px;color:var(--text);margin-bottom:6px;display:flex;gap:6px}
+.cg-question::before{content:'?';background:var(--yellow);color:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;margin-top:2px}
+.cg-clarify-input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Satoshi',sans-serif;outline:none;margin-top:10px;color:var(--text)}
+.cg-clarify-input:focus{border-color:var(--teal)}
+
+/* Risk + tests */
+.cg-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.cg-meta-box{background:var(--off-white);border-radius:8px;padding:12px}
+.cg-meta-box-title{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.cg-test-item{font-size:12px;color:var(--text-mid);padding:3px 0;display:flex;gap:7px}
+.cg-test-item::before{content:'▸';color:var(--teal);flex-shrink:0}
+
+/* Approval bar */
+.cg-approval{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cg-approval-text{font-size:13px;color:var(--text-mid);flex:1}
+.cg-approval-text strong{color:var(--navy)}
+.cg-approval-actions{display:flex;gap:8px;flex-wrap:wrap}
+.cg-pr-success{background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px 16px;margin-top:10px;display:flex;align-items:center;gap:12px}
+
+/* PR title/desc editor */
+.cg-pr-editor{margin-top:10px;padding:14px;background:var(--off-white);border-radius:10px;border:1.5px solid var(--border)}
+.cg-pr-editor-title{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:10px}
+.cg-pr-input{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Satoshi',sans-serif;outline:none;color:var(--text);margin-bottom:7px;background:#fff}
+.cg-pr-input:focus{border-color:var(--teal)}
+textarea.cg-pr-input{min-height:60px;resize:vertical}
+
+/* Input area */
+.cg-input-area{padding:14px 18px;background:#fff;border-top:1px solid var(--border);flex-shrink:0}
+.cg-input-wrap{background:var(--off-white);border:1.5px solid var(--border);border-radius:10px;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;transition:border-color 0.2s}
+.cg-input-wrap:focus-within{border-color:var(--teal);background:#fff}
+.cg-textarea{flex:1;border:none;outline:none;font-size:13px;font-family:'Satoshi',sans-serif;color:var(--text);resize:none;min-height:20px;max-height:100px;background:transparent;line-height:1.5}
+.cg-textarea::placeholder{color:var(--text-light)}
+.cg-textarea:disabled{cursor:not-allowed;opacity:0.6}
+.cg-send-btn{width:32px;height:32px;background:var(--teal);border:none;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.cg-send-btn:hover{background:var(--teal-2)}.cg-send-btn:disabled{background:var(--border);cursor:not-allowed}
+.cg-send-btn svg{width:14px;height:14px;color:#fff}
+.cg-input-hint{font-size:11px;color:var(--text-light);margin-top:5px;text-align:center}
+
+/* Pro gate */
+.cg-pro-gate{display:flex;align-items:center;justify-content:center;height:100%;padding:40px}
+.cg-gate-card{text-align:center;max-width:380px}
+.cg-gate-icon{width:56px;height:56px;background:var(--yellow-light);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.cg-gate-icon svg{width:28px;height:28px;color:var(--yellow)}
+
+/* ── UPGRADE MODAL ── */
+.upgrade-modal-overlay{position:fixed;inset:0;background:rgba(13,27,42,0.6);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.upgrade-modal-overlay.open{display:flex}
+.upgrade-modal{background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(13,27,42,0.2);animation:upgradeIn 0.3s ease}
+@keyframes upgradeIn{from{opacity:0;transform:scale(0.95) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.upgrade-modal-hd{padding:24px 24px 0;text-align:center}
+.upgrade-modal-badge{display:inline-flex;align-items:center;gap:6px;background:var(--yellow-light);color:var(--yellow);font-size:11px;font-weight:800;padding:4px 12px;border-radius:100px;letter-spacing:0.5px;margin-bottom:12px}
+.upgrade-modal-title{font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.upgrade-modal-sub{font-size:13px;color:var(--text-mid);margin-bottom:20px}
+.upgrade-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 24px;margin-bottom:20px}
+.upgrade-plan{border:1.5px solid var(--border);border-radius:12px;padding:16px;position:relative}
+.upgrade-plan.featured{border-color:var(--teal);background:linear-gradient(135deg,rgba(42,159,214,0.04),#fff)}
+.upgrade-plan-name{font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.upgrade-plan-price{font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.upgrade-plan-price span{font-size:13px;color:var(--text-light);font-weight:400}
+.upgrade-feature{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;color:var(--text-mid);border-bottom:1px solid var(--border)}
+.upgrade-feature:last-child{border-bottom:none}
+.upgrade-feature svg{width:13px;height:13px;flex-shrink:0}
+.upgrade-feature.yes svg{color:var(--green)}.upgrade-feature.no svg{color:var(--text-light);opacity:0.4}
+.upgrade-feature.no{opacity:0.5}
+.upgrade-modal-footer{padding:0 24px 24px;text-align:center}
+.upgrade-modal-footer .btn-teal{width:100%;justify-content:center;padding:12px;font-size:14px;font-weight:700;border-radius:9px}
+.upgrade-modal-footer .btn-ghost{margin-top:8px;width:100%;justify-content:center;font-size:12px}
+
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}.cg-layout{grid-template-columns:1fr}.cg-left{display:none}.set-grid{grid-template-columns:1fr}.upgrade-compare{grid-template-columns:1fr}}
+
+/* ── PR GUARDRAIL PANE ── */
+.gr-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-3) 100%);border-radius:14px;padding:24px 28px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden}
+.gr-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(42,159,214,0.08);border-radius:50%;pointer-events:none}
+.gr-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.gr-badge::before{content:'';width:6px;height:6px;background:#ef4444;border-radius:50%;animation:grpulse 1.5s infinite}
+@keyframes grpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.4)}}
+.gr-hero h2{font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;line-height:1.2;margin-bottom:8px}
+.gr-hero p{font-size:13px;opacity:0.6;max-width:500px;line-height:1.6}
+.gr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.gr-stat{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:12px 14px}
+.gr-stat-val{font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:#fff}
+.gr-stat-lbl{font-size:10px;color:rgba(255,255,255,0.4);margin-top:3px;text-transform:uppercase;letter-spacing:0.5px}
+.gr-repos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:18px}
+.gr-repo-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;position:relative;overflow:hidden}
+.gr-repo-card:hover{border-color:var(--border-teal);box-shadow:var(--shadow-teal)}
+.gr-repo-card.active::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),#34d399)}
+.gr-repo-card.inactive::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--border)}
+.gr-repo-name{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-repo-meta{font-size:11px;color:var(--text-light);margin-bottom:12px}
+.gr-repo-stats{display:flex;gap:14px;margin-bottom:12px}
+.gr-repo-stat-val{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;color:var(--navy)}
+.gr-repo-stat-lbl{font-size:9px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px}
+.gr-dot{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600}
+.gr-dot::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.gr-dot.on{color:var(--green)}.gr-dot.on::before{background:var(--green);animation:grpulse 2s infinite}
+.gr-dot.off{color:var(--text-light)}.gr-dot.off::before{background:var(--text-light)}
+.gr-event{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.gr-event:last-child{border-bottom:none}
+.gr-event-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.gr-event-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.gr-event-meta{font-size:11px;color:var(--text-light)}
+.gr-risk{display:inline-flex;align-items:center;font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;letter-spacing:0.5px;text-transform:uppercase}
+.gr-risk.critical{background:rgba(239,68,68,0.1);color:var(--red)}
+.gr-risk.high{background:rgba(249,115,22,0.1);color:var(--orange)}
+.gr-risk.medium{background:var(--yellow-light);color:var(--yellow)}
+.gr-risk.low,.gr-risk.safe{background:var(--green-light);color:var(--green)}
+.gr-install-modal{position:fixed;inset:0;background:rgba(13,27,42,0.55);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.gr-install-modal.open{display:flex}
+.gr-install-box{background:#fff;border-radius:16px;padding:28px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(13,27,42,0.2)}
+.gr-install-title{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.gr-repo-option{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+.gr-repo-option:last-child{border-bottom:none}
+.gr-repo-option:hover{background:var(--teal-light)}
+.gr-repo-option input[type=checkbox]{accent-color:var(--teal);width:14px;height:14px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <a href="/" class="sb-logo">
+      <img src="/img/logo.png" alt="Grassion" style="height:32px;width:auto;max-width:120px;object-fit:contain">
+    </a>
+    <button class="toggle-btn" onclick="toggleSB()" title="Toggle sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-lbl">Main</div>
+    <button class="ni active" onclick="showPane('scan')" data-tip="Dashboard">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="ni-label">Dashboard</span>
+    </button>
+    <button class="ni" onclick="showPane('history')" data-tip="Scan History">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      <span class="ni-label">Scan History</span>
+    </button>
+    <button class="ni" onclick="showPane('referral')" data-tip="Refer & Earn">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="ni-label">Refer &amp; Earn</span>
+    </button>
+    <button class="ni" onclick="showPane('billing')" data-tip="Billing">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span class="ni-label">Billing</span>
+    </button>
+    <div class="nav-lbl">Account</div>
+    <button class="ni" onclick="showPane('settings')" data-tip="Settings">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="ni-label">Settings</span>
+    </button>
+    <button class="ni" onclick="showPane('codeguard')" data-tip="Code Guardian">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="ni-label">Code Guardian</span>
+      <span class="ni-badge" id="cg-pro-badge">PRO</span>
+    </button>
+    <button class="ni" onclick="showPane('guardrail')" data-tip="PR Guardrail">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="ni-label">PR Guardrail</span>
+      <span class="ni-badge" style="background:var(--red-light);color:var(--red)">LIVE</span>
+    </button>
+  </nav>
+  <div class="sb-bottom">
+    <div class="user-card">
+      <div class="uav" id="sbAv">S</div>
+      <div class="ui-text">
+        <div class="ui-name" id="sbName">Loading...</div>
+        <span class="ui-plan plan-free" id="sbPlan">Free</span>
+      </div>
+    </div>
+    <button class="ni" id="upgradeNavBtn" onclick="openUpgradeModal()" style="display:none;background:rgba(42,159,214,0.08);color:var(--teal)" data-tip="Upgrade">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--teal);opacity:1"><polyline points="13 2 13 9 20 9"/><path d="M21 3L13 11 9 7 3 13"/></svg>
+      <span class="ni-label">Upgrade to Pro</span>
+    </button>
+    <a href="/auth/logout" class="ni danger" data-tip="Sign out">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="ni-label">Sign out</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main" id="mainArea">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="greeting" id="topGreeting">
+        <span class="greeting-emoji" id="greetEmoji">☀️</span>
+        <span id="greetText">Good morning</span>
+      </div>
+      <div class="tb-sub" id="pageSub">Scan repos and fix security gaps automatically</div>
+    </div>
+    <div class="tb-right">
+      <span style="font-size:10px;color:var(--text-light);background:var(--off-white);padding:3px 8px;border-radius:6px;letter-spacing:0.4px;border:1px solid var(--border)">v3.1</span>
+      <span id="topPlanBadge"></span>
+      <button class="btn btn-ghost btn-sm" onclick="refreshStats()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- UPGRADE BANNER -->
+    <div class="upgrade-banner" id="upgradeBanner" style="display:none">
+      <div>
+        <h3>Upgrade to Pro - ₹2,900/month</h3>
+        <p>Unlimited scans · Auto PR raising · Code Guardian AI · 24/7 Continuous Protection</p>
+      </div>
+      <button class="btn-upgrade" onclick="openUpgradeModal()">See Pro features</button>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-row">
+      <div class="stat-card sc-teal">
+        <div class="stat-lbl">Total Scans</div>
+        <div class="stat-val" id="stScans">-</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card sc-red">
+        <div class="stat-lbl">Issues Found</div>
+        <div class="stat-val sv-red" id="stIssues">-</div>
+        <div class="stat-sub">Auth gaps detected</div>
+      </div>
+      <div class="stat-card sc-green">
+        <div class="stat-lbl">PRs Raised</div>
+        <div class="stat-val sv-green" id="stPRs">-</div>
+        <div class="stat-sub">Auto-fixed</div>
+      </div>
+      <div class="stat-card sc-yellow">
+        <div class="stat-lbl">Scans Left</div>
+        <div class="stat-val sv-teal" id="stLeft">-</div>
+        <div class="stat-sub" id="stLeftSub">Loading...</div>
+      </div>
+    </div>
+
+    <!-- ── SCAN PANE ── -->
+    <div class="pane active" id="pane-scan">
+      <div class="srb" id="selectedRepoBar">
+        <div>
+          <div class="srb-label">Selected repository</div>
+          <div class="srb-name" id="selectedName">...</div>
+          <div class="srb-meta">Ready to scan for security issues</div>
+        </div>
+        <button class="btn btn-primary" onclick="startScan()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Scan now
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-title">Select a repository</div><div class="card-sub" id="repoCount">Loading...</div></div>
+        </div>
+        <input type="text" class="repo-search" placeholder="Search repositories..." oninput="filterRepos(this.value)">
+        <div class="repo-list" id="repoList"><div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px">Loading...</div></div>
+      </div>
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <div style="max-width:220px;margin:0 auto;text-align:left">
+          <div class="ls" id="ls1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg>Reading route files...</div>
+          <div class="ls" id="ls2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg>Analyzing endpoints...</div>
+          <div class="ls" id="ls3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg>Detecting auth gaps...</div>
+          <div class="ls" id="ls4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg>Generating report...</div>
+        </div>
+      </div>
+      <div class="results-wrap" id="resultsWrap">
+        <div class="results-header">
+          <div class="results-title" id="resultsTitle">Scan Results</div>
+          <button class="btn btn-green" id="prBtn" onclick="raisePR()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
+            Raise fix PR
+          </button>
+        </div>
+        <div id="issuesList"></div>
+      </div>
+    </div>
+
+    <!-- ── HISTORY PANE ── -->
+    <div class="pane" id="pane-history">
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Scan History</div><button class="btn btn-ghost btn-sm" onclick="loadHistory()">Refresh</button></div>
+        <table class="dtbl">
+          <thead><tr><th>Repository</th><th>Issues</th><th>PR</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light)">No scans yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── REFERRAL PANE ── -->
+    <div class="pane" id="pane-referral">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hd"><div class="card-title">Your referral code</div></div>
+        <p style="font-size:13px;color:var(--text-mid);margin-bottom:18px">Share your code. Both you and your friend get <strong>5 bonus scans</strong> when they sign up.</p>
+        <div class="ref-box">
+          <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:6px;font-weight:500">Referral code</div><div class="ref-code" id="refCode">...</div></div>
+          <button class="btn btn-teal" onclick="copyRef()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy link</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hd"><div class="card-title">Referral stats</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <div style="background:var(--off-white);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;color:var(--navy)" id="refSignups">0</div><div style="font-size:11px;color:var(--text-light);margin-top:4px">Friends signed up</div></div>
+          <div style="background:var(--off-white);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;color:var(--teal)" id="refBonus">0</div><div style="font-size:11px;color:var(--text-light);margin-top:4px">Bonus scans earned</div></div>
+          <div style="background:var(--off-white);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;color:var(--green)" id="refTotal">0</div><div style="font-size:11px;color:var(--text-light);margin-top:4px">Total bonus scans</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Apply a referral code</div></div>
+        <div style="display:flex;gap:10px"><input type="text" id="refInput" class="repo-search" placeholder="Enter code e.g. ABC123" style="margin-bottom:0;flex:1"><button class="btn btn-primary" onclick="applyRef()">Apply</button></div>
+        <p id="refMsg" style="font-size:12px;margin-top:10px;display:none"></p>
+      </div>
+    </div>
+
+    <!-- ── BILLING PANE ── -->
+    <div class="pane" id="pane-billing">
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title">Payment history</div>
+          <span id="billingBadge" class="badge b-gray">FREE</span>
+        </div>
+        <div style="padding:16px;background:var(--off-white);border-radius:10px;margin-bottom:16px">
+          <div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--navy)" id="billingPlanName">Free</div>
+          <div style="font-size:13px;color:var(--text-mid);margin-top:3px" id="billingPlanDesc">3 scans per month · 1 repository</div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-mid);margin-bottom:5px"><span>Scans used this month</span><span id="usageText">0 / 3</span></div>
+          <div class="usage-track"><div class="usage-fill" id="usageFill" style="width:0%"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+          <div style="background:var(--off-white);border-radius:9px;padding:12px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--navy)" id="bScansUsed">0</div><div style="font-size:10px;color:var(--text-light);margin-top:3px">Scans used</div></div>
+          <div style="background:var(--off-white);border-radius:9px;padding:12px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--teal)" id="bBonusScans">0</div><div style="font-size:10px;color:var(--text-light);margin-top:3px">Bonus scans</div></div>
+          <div style="background:var(--off-white);border-radius:9px;padding:12px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--green)" id="bPRs">0</div><div style="font-size:10px;color:var(--text-light);margin-top:3px">PRs raised</div></div>
+          <div style="background:var(--off-white);border-radius:9px;padding:12px;text-align:center"><div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--red)" id="bIssues">0</div><div style="font-size:10px;color:var(--text-light);margin-top:3px">Issues found</div></div>
+        </div>
+        <div id="billingUpgradeArea">
+          <div style="background:var(--navy);border-radius:12px;padding:20px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700">₹4,900<span style="font-size:13px;opacity:0.6">/month</span></div><div style="font-size:12px;opacity:0.6;margin-top:3px">Unlimited scans · Auto PR · Code Guardian · 24/7 watch</div></div>
+            <button class="btn-upgrade" onclick="openUpgradeModal()">See Pro features</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Transaction history</div><button class="btn btn-ghost btn-sm" onclick="loadPaymentHistory()">Refresh</button></div>
+        <div id="payHistoryBody">
+          <div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px">No transactions yet. Payments appear here after upgrade.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS PANE ── -->
+    <div class="pane" id="pane-settings">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hd"><div class="card-title">Profile</div></div>
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--off-white);border-radius:10px;margin-bottom:16px">
+          <div class="uav" id="settingsAv" style="width:52px;height:52px;font-size:18px">S</div>
+          <div>
+            <div style="font-weight:700;font-size:16px;color:var(--navy)" id="setName">...</div>
+            <div style="font-size:13px;color:var(--text-light)" id="setEmail">...</div>
+          </div>
+        </div>
+        <div class="set-grid">
+          <div class="set-item">
+            <div class="set-lbl">GitHub username</div>
+            <div class="set-val" id="setUsername">...</div>
+          </div>
+          <div class="set-item">
+            <div class="set-lbl">Member since</div>
+            <div class="set-val" id="setJoined">...</div>
+          </div>
+          <div class="set-item">
+            <div class="set-lbl">Current plan</div>
+            <div class="set-val" id="setPlan">Free</div>
+          </div>
+          <div class="set-item">
+            <div class="set-lbl">Referral code</div>
+            <div class="set-val" id="setRefCode">...</div>
+          </div>
+          <div class="set-item">
+            <div class="set-lbl">Total scans</div>
+            <div class="set-val" id="setTotalScans">0</div>
+          </div>
+          <div class="set-item">
+            <div class="set-lbl">Bonus scans</div>
+            <div class="set-val" id="setBonusScans">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hd"><div><div class="card-title">Plan &amp; Billing</div><div class="card-sub" id="setPlanDesc">Free - 3 scans/month</div></div></div>
+        <div id="setPlanArea">
+          <p style="font-size:13px;color:var(--text-mid);margin-bottom:14px">Upgrade to Pro for unlimited repos, auto PR raising, Code Guardian AI, and 24/7 Continuous Protection.</p>
+          <button class="btn btn-teal" onclick="openUpgradeModal()">Upgrade to Pro - ₹2,900/month</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hd"><div class="card-title">GitHub connection</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--off-white);border-radius:10px;margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--navy)"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          <div><div style="font-size:13px;font-weight:600;color:var(--navy)" id="setGitUser">...</div><div style="font-size:12px;color:var(--green)">Connected via OAuth</div></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost btn-sm" onclick="window.location.href='/auth/logout?redirect=/auth/github'">Reconnect GitHub (fixes token issues)</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hd"><div class="card-title">Notifications</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--off-white);border-radius:8px">
+            <div><div style="font-size:13px;font-weight:500;color:var(--navy)">Scan complete emails</div><div style="font-size:11px;color:var(--text-light)">Get notified when a scan finishes</div></div>
+            <label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer"><input type="checkbox" id="notifScans" style="opacity:0;width:0;height:0" checked onchange="saveNotifPref('scans',this.checked)"><span style="position:absolute;inset:0;background:#ccc;border-radius:100px;transition:0.3s" id="ns1"></span></label>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--off-white);border-radius:8px">
+            <div><div style="font-size:13px;font-weight:500;color:var(--navy)">PR raised alerts</div><div style="font-size:11px;color:var(--text-light)">Get notified when a PR is opened</div></div>
+            <label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer"><input type="checkbox" id="notifPRs" style="opacity:0;width:0;height:0" checked onchange="saveNotifPref('prs',this.checked)"></label>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--off-white);border-radius:8px">
+            <div><div style="font-size:13px;font-weight:500;color:var(--navy)">Security alerts</div><div style="font-size:11px;color:var(--text-light)">Critical unprotected routes found</div></div>
+            <label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer"><input type="checkbox" id="notifSec" style="opacity:0;width:0;height:0" checked onchange="saveNotifPref('security',this.checked)"></label>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title" style="color:var(--red)">Danger zone</div></div>
+        <p style="font-size:12px;color:var(--text-mid);margin-bottom:14px">Signing out ends your current session. Your data is preserved.</p>
+        <a href="/auth/logout" class="btn btn-red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </a>
+      </div>
+    </div>
+
+    <!-- ══ CODE GUARDIAN PANE ══ -->
+    <div class="pane" id="pane-codeguard">
+      <!-- Pro gate -->
+      <div id="cgProGate" style="display:none">
+        <div class="card" style="text-align:center;padding:52px;max-width:460px;margin:0 auto">
+          <div class="cg-gate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div style="font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px">Code Guardian</div>
+          <p style="font-size:13px;color:var(--text-mid);margin-bottom:8px;line-height:1.65">Describe any change in plain English. Code Guardian reads your repo, generates the exact diff, shows you every line that changes, then raises a PR with one click.</p>
+          <div style="background:var(--off-white);border-radius:10px;padding:14px;margin-bottom:20px;text-align:left">
+            <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;font-weight:600">What it can do:</div>
+            <div style="font-size:12px;color:var(--text-mid);margin-bottom:5px">✓ Add JWT auth to all unprotected routes</div>
+            <div style="font-size:12px;color:var(--text-mid);margin-bottom:5px">✓ Fix SQL injection vulnerabilities</div>
+            <div style="font-size:12px;color:var(--text-mid);margin-bottom:5px">✓ Add rate limiting, input validation</div>
+            <div style="font-size:12px;color:var(--text-mid)">✓ Refactor, rename, restructure any code</div>
+          </div>
+          <button class="btn btn-teal" style="width:100%;justify-content:center;padding:11px;font-size:14px;font-weight:700" onclick="openUpgradeModal()">Upgrade to Pro - ₹2,900/month</button>
+        </div>
+      </div>
+      <!-- Main UI -->
+      <div class="cg-layout" id="cgUI" style="display:none">
+        <!-- LEFT -->
+        <div class="cg-left">
+          <div class="cg-left-top">
+            <div class="cg-section-lbl">Repository</div>
+            <select class="cg-repo-select" id="cgRepoSelect" onchange="onCgRepoChange()">
+              <option value="">Select repository...</option>
+            </select>
+            <div class="cg-branch-wrap">
+              <select class="cg-branch-select" id="cgBranchSelect" onchange="onCgBranchChange()">
+                <option value="">Loading branches...</option>
+              </select>
+              <button class="cg-refresh-btn" onclick="refreshCgTree()" title="Refresh file tree">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+            </div>
+          </div>
+          <!-- File tree -->
+          <div class="cg-tree-wrap">
+            <div class="cg-tree-header">
+              <span>Files</span>
+              <span id="cgFileCount" style="font-size:10px;color:var(--text-light)">-</span>
+            </div>
+            <input type="text" class="cg-tree-search" id="cgTreeSearch" placeholder="Filter files..." oninput="filterCgTree(this.value)">
+            <div class="cg-tree-list" id="cgTreeList"><div style="padding:8px 14px;font-size:11px;color:var(--text-light)">Select a repo to see files</div></div>
+          </div>
+          <!-- Session history -->
+          <div class="cg-hist-wrap">
+            <div class="cg-hist-header">
+              <span>Sessions</span>
+              <button class="btn-ghost" style="padding:2px 6px;font-size:10px;border-radius:5px;border:1px solid var(--border);cursor:pointer;background:#fff;font-family:'Satoshi',sans-serif" onclick="startNewCgSession()">+ New</button>
+            </div>
+            <div id="cgHistList"><div class="cg-hist-empty">No sessions yet</div></div>
+          </div>
+        </div>
+        <!-- RIGHT -->
+        <div class="cg-right">
+          <div class="cg-topbar">
+            <div>
+              <div class="cg-topbar-title">Code Guardian</div>
+              <div class="cg-topbar-sub" id="cgTopSub">Select a repository to begin</div>
+            </div>
+            <div id="cgStatus" class="cg-status">
+              <div class="cg-status-dot"></div>
+              <span id="cgStatusText">Not connected</span>
+            </div>
+          </div>
+          <div class="cg-messages" id="cgMessages">
+            <div class="cg-empty" id="cgEmpty">
+              <div class="cg-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              <div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--navy);margin-bottom:6px">What should I fix?</div>
+              <div style="font-size:13px;color:var(--text-mid);max-width:360px;line-height:1.65;margin-bottom:16px">Select a repo and describe any change. I'll read your code, show you exactly what changes, and raise a PR once you approve.</div>
+              <div class="cg-suggestions">
+                <button class="cg-sug" onclick="useCgSug('Add JWT authentication middleware to all unprotected API routes')"><strong>Security</strong>Add JWT auth to all unprotected routes</button>
+                <button class="cg-sug" onclick="useCgSug('Add comprehensive input validation to all POST and PUT endpoints')"><strong>Validation</strong>Add input validation to POST endpoints</button>
+                <button class="cg-sug" onclick="useCgSug('Add try/catch error handling with proper HTTP status codes to all async route handlers')"><strong>Error handling</strong>Add async error handling throughout</button>
+                <button class="cg-sug" onclick="useCgSug('Add rate limiting middleware to public API routes using express-rate-limit')"><strong>Rate limiting</strong>Add rate limiting to public routes</button>
+                <button class="cg-sug" onclick="useCgSug('Add request logging middleware using morgan for all routes')"><strong>Logging</strong>Add request logging middleware</button>
+                <button class="cg-sug" onclick="useCgSug('Add CORS configuration with specific allowed origins instead of wildcard')"><strong>CORS</strong>Fix CORS with specific origins</button>
+              </div>
+            </div>
+          </div>
+          <div class="cg-input-area">
+            <div class="cg-input-wrap">
+              <textarea class="cg-textarea" id="cgInput" placeholder="Select a repo above, then describe what to change..." rows="1" onkeydown="handleCgKey(event)" oninput="autoCgResize(this)" disabled></textarea>
+              <button class="cg-send-btn" id="cgSendBtn" onclick="sendCgMessage()" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+            <div class="cg-input-hint" id="cgHint">Select a repository to start · Code Guardian reads your repo and generates exact changes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PR GUARDRAIL PANE ══ -->
+    <div class="pane" id="pane-guardrail">
+
+      <!-- Hero -->
+      <div class="gr-hero">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+          <div>
+            <div class="gr-badge">Live Protection</div>
+            <h2>PR Guardrail - Every merge, reviewed.</h2>
+            <p>Grassion intercepts every pull request before it merges. Reads the diff, finds auth gaps and injections, posts inline blocking comments with exact fixes. In under 15 seconds.</p>
+          </div>
+          <button class="btn btn-teal btn-sm" onclick="openGrInstall()" style="flex-shrink:0;margin-top:4px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Protect a Repo
+          </button>
+        </div>
+        <div class="gr-stats">
+          <div class="gr-stat"><div class="gr-stat-val" id="gr-repos">-</div><div class="gr-stat-lbl">Repos protected</div></div>
+          <div class="gr-stat"><div class="gr-stat-val" id="gr-prs">-</div><div class="gr-stat-lbl">PRs reviewed</div></div>
+          <div class="gr-stat"><div class="gr-stat-val" id="gr-issues">-</div><div class="gr-stat-lbl">Issues caught</div></div>
+          <div class="gr-stat"><div class="gr-stat-val" id="gr-blocked">-</div><div class="gr-stat-lbl">Critical blocked</div></div>
+        </div>
+      </div>
+
+      <!-- Protected Repos -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div class="card-title" style="font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;color:var(--navy)">Protected Repositories</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:1px">Grassion auto-reviews every PR on these repos</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadGrRepos()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <div class="gr-repos-grid" id="grReposGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--text-light);font-size:13px;background:#fff;border-radius:12px;border:1.5px dashed var(--border)">
+          <div style="font-size:32px;margin-bottom:10px">🛡️</div>
+          <div style="font-family:'Clash Display',sans-serif;font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">No repos protected yet</div>
+          <div style="margin-bottom:14px">Click "Protect a Repo" to start intercepting PRs automatically</div>
+          <button class="btn btn-teal btn-sm" onclick="openGrInstall()">Protect your first repo</button>
+        </div>
+      </div>
+
+      <!-- Live Event Feed -->
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-title">Live PR Review Feed</div><div class="card-sub">Every PR Grassion has reviewed</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadGrEvents()">Refresh</button>
+        </div>
+        <div id="grEventFeed" style="min-height:60px">
+          <div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px">No PR reviews yet. Protect a repo and open a pull request.</div>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-hd"><div class="card-title">How PR Guardrail works</div></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+          <div style="text-align:center;padding:10px">
+            <div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:rgba(42,159,214,0.2);margin-bottom:8px">1</div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">PR opens on GitHub</div>
+            <div style="font-size:11px;color:var(--text-light)">Any dev opens or pushes to a PR on your protected repo</div>
+          </div>
+          <div style="text-align:center;padding:10px">
+            <div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:rgba(42,159,214,0.2);margin-bottom:8px">2</div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Diff is read</div>
+            <div style="font-size:11px;color:var(--text-light)">Only changed lines analyzed - fast, precise, no noise from untouched code</div>
+          </div>
+          <div style="text-align:center;padding:10px">
+            <div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:rgba(42,159,214,0.2);margin-bottom:8px">3</div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">AI security analysis</div>
+            <div style="font-size:11px;color:var(--text-light)">GPT-4o + rule engine finds auth gaps, injections, secrets in &lt;15s</div>
+          </div>
+          <div style="text-align:center;padding:10px">
+            <div style="font-family:'Clash Display',sans-serif;font-size:24px;font-weight:700;color:rgba(42,159,214,0.2);margin-bottom:8px">4</div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Inline review posted</div>
+            <div style="font-size:11px;color:var(--text-light)">Exact line comments, risk score, and fixes - before anyone merges</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSTALL MODAL -->
+    <div class="gr-install-modal" id="grInstallModal">
+      <div class="gr-install-box">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div class="gr-install-title">Protect a Repository</div>
+            <div style="font-size:13px;color:var(--text-mid);margin-top:4px">Select repos to activate PR Guardrail.</div>
+          </div>
+          <button onclick="closeGrInstall()" style="width:28px;height:28px;background:var(--off-white);border:none;border-radius:7px;cursor:pointer;font-size:16px;color:var(--text-mid)">✕</button>
+        </div>
+        <div style="max-height:240px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px;margin-bottom:14px" id="grRepoSelectList">
+          <div style="padding:14px;text-align:center;color:var(--text-light);font-size:13px">Loading repos...</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-teal" onclick="installGuardrail()" id="grInstallBtn" style="flex:1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Activate Guardrail
+          </button>
+          <button class="btn btn-ghost" onclick="closeGrInstall()">Cancel</button>
+        </div>
+        <div id="grInstallMsg" style="font-size:12px;margin-top:10px"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div>
+
+<!-- ── UPGRADE TO PRO MODAL ── -->
+<div class="upgrade-modal-overlay" id="upgradeModal">
+  <div class="upgrade-modal">
+    <div class="upgrade-modal-hd">
+      <div class="upgrade-modal-badge">⚡ Pro Plan</div>
+      <div class="upgrade-modal-title">Unlock everything in Grassion</div>
+      <div class="upgrade-modal-sub">Unlimited scans, auto PR raising, Code Guardian AI, and live PR Guardrail. One plan, everything included.</div>
+    </div>
+    <div class="upgrade-compare">
+      <!-- Free -->
+      <div class="upgrade-plan">
+        <div class="upgrade-plan-name">Free</div>
+        <div class="upgrade-plan-price">₹0 <span>/ month</span></div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>3 scans / month</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 repository</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Security scan report</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 PR Guardrail trial</div>
+        <div class="upgrade-feature no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Auto PR raising</div>
+        <div class="upgrade-feature no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Code Guardian AI</div>
+        <div class="upgrade-feature no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Unlimited PR Guardrail</div>
+        <div class="upgrade-feature no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>24/7 continuous watch</div>
+      </div>
+      <!-- Pro -->
+      <div class="upgrade-plan featured">
+        <div style="position:absolute;top:-1px;right:16px;background:var(--teal);color:#fff;font-size:9px;font-weight:800;padding:3px 10px;border-radius:0 0 7px 7px;letter-spacing:0.5px">RECOMMENDED</div>
+        <div class="upgrade-plan-name" style="color:var(--teal)">Pro</div>
+        <div class="upgrade-plan-price">₹4,900 <span>/ month</span></div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited scans</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited repositories</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Full security reports</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited PR Guardrail</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Auto PR raising</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Code Guardian AI</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited PR Guardrail</div>
+        <div class="upgrade-feature yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>24/7 continuous watch</div>
+      </div>
+    </div>
+    <div class="upgrade-modal-footer">
+      <button class="btn btn-teal" onclick="closeUpgradeModal();startPayment();">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"/><path d="M21 3L13 11 9 7 3 13"/></svg>
+        Upgrade to Pro - ₹2,900/month
+      </button>
+      <button class="btn btn-ghost" onclick="closeUpgradeModal()" style="margin-top:8px;width:100%;justify-content:center;font-size:12px">Maybe later</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+var selectedRepo=null,scanResults=null,allRepos=[],currentUser=null;
+var cgSelectedRepo=null,cgSelectedBranch='main',cgSessionId=null,cgLoading=false;
+var cgSelectedFiles=[],cgAllFiles=[];
+
+// ── SIDEBAR ──
+function toggleSB(){
+  var sb=document.getElementById('sidebar'),mn=document.getElementById('mainArea');
+  sb.classList.toggle('collapsed');mn.classList.toggle('collapsed');
+}
+
+// ── GREETING ──
+function setGreeting(){
+  var h=new Date().getHours(),emoji,text;
+  if(h>=5&&h<12){emoji='☀️';text='Good morning'}
+  else if(h>=12&&h<17){emoji='🌤️';text='Good afternoon'}
+  else if(h>=17&&h<21){emoji='🌆';text='Good evening'}
+  else{emoji='🌙';text='Good night'}
+  document.getElementById('greetEmoji').textContent=emoji;
+  document.getElementById('greetText').textContent=text;
+}
+
+// ── PANE SWITCHING ──
+function showPane(name){
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('active');});
+  var p=document.getElementById('pane-'+name);if(p)p.classList.add('active');
+  var subs={scan:'Scan repos and fix security gaps automatically',history:'All your past scans',referral:'Share Grassion, earn bonus scans',billing:'Manage your plan and usage',settings:'Manage your account',codeguard:'AI-powered code changes · review diff · approve PR',guardrail:'Auto-review every PR · inline comments · block risky merges'};
+  document.getElementById('pageSub').textContent=subs[name]||'';
+  document.querySelectorAll('.ni').forEach(function(n){if((n.getAttribute('onclick')||'').indexOf("'"+name+"'")>-1)n.classList.add('active');});
+  if(name==='history')loadHistory();
+  if(name==='referral')loadReferral();
+  if(name==='billing'){loadStats();loadPaymentHistory();}
+  if(name==='codeguard')initCodeGuardian();
+  if(name==='guardrail'){loadGrRepos();loadGrEvents();}
+}
+
+function applyPlan(u){
+  if(u.plan==='pro'){
+    document.getElementById('sbPlan').textContent='Pro ✓';
+    document.getElementById('sbPlan').className='ui-plan plan-pro';
+    document.getElementById('stLeftSub').textContent='Pro - Unlimited';
+    document.getElementById('topPlanBadge').innerHTML='<span style="background:var(--yellow-light);color:var(--yellow);font-weight:700;font-size:11px;padding:3px 10px;border-radius:100px;letter-spacing:0.5px">PRO</span>';
+    document.getElementById('billingPlanName').textContent='Pro';
+    document.getElementById('billingPlanDesc').textContent='Unlimited repos · Unlimited scans · Auto PR · Code Guardian AI · 24/7 protection';
+    document.getElementById('billingBadge').textContent='PRO';document.getElementById('billingBadge').className='badge b-teal';
+    document.getElementById('billingUpgradeArea').innerHTML='<div style="background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;padding:16px;display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><div style="font-weight:700;color:var(--green);font-size:14px">Pro plan is active</div><div style="font-size:12px;color:var(--text-mid);margin-top:3px">All features unlocked. Auto PR raising active. Code Guardian available.</div></div></div>';
+    document.getElementById('upgradeBanner').style.display='none';
+    document.getElementById('upgradeNavBtn').style.display='none';
+    document.getElementById('setPlan').textContent='Pro';
+    document.getElementById('setPlanDesc').textContent='Pro - All features unlocked';
+    document.getElementById('setPlanArea').innerHTML='<div style="background:var(--green-light);border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div style="font-weight:600;color:var(--green)">You\'re on Pro. All features unlocked.</div></div>';
+  }else{
+    document.getElementById('upgradeBanner').style.display='flex';
+    document.getElementById('upgradeNavBtn').style.display='flex';
+    document.getElementById('topPlanBadge').textContent='Free plan';
+  }
+}
+
+// ── STATS ──
+async function loadStats(){
+  try{
+    var r=await fetch('/api/scanner/stats',{credentials:'include'});
+    var d=await r.json();
+    document.getElementById('stScans').textContent=d.total_scans||0;
+    document.getElementById('stIssues').textContent=d.total_issues||0;
+    document.getElementById('stPRs').textContent=d.prs_raised||0;
+    document.getElementById('stLeft').textContent=d.scans_left===null?'∞':(d.scans_left||0);
+    document.getElementById('bScansUsed').textContent=d.scans_used||0;
+    document.getElementById('bBonusScans').textContent=d.bonus_scans||0;
+    document.getElementById('bPRs').textContent=d.prs_raised||0;
+    document.getElementById('bIssues').textContent=d.total_issues||0;
+    document.getElementById('setTotalScans').textContent=d.total_scans||0;
+    var limit=d.plan==='pro'?null:(3+(d.bonus_scans||0));
+    if(limit){
+      var pct=Math.min(100,Math.round(((d.scans_used||0)/limit)*100));
+      document.getElementById('usageText').textContent=(d.scans_used||0)+' / '+limit;
+      document.getElementById('usageFill').style.width=pct+'%';
+      if(pct>=80)document.getElementById('usageFill').style.background='var(--red)';
+    }else{
+      document.getElementById('usageText').textContent=(d.scans_used||0)+' / Unlimited';
+      document.getElementById('usageFill').style.width='100%';
+      document.getElementById('usageFill').style.background='var(--green)';
+    }
+  }catch(e){}
+}
+function refreshStats(){loadStats();toast('Stats refreshed','info');}
+
+// ── REPOS ──
+async function loadRepos(){
+  var r=await fetch('/api/repos',{credentials:'include'});
+  var d=await r.json();
+  allRepos=d.repos||[];
+  document.getElementById('repoCount').textContent=allRepos.length+' repositories';
+  renderRepos(allRepos);
+  // Also populate Code Guardian repo select
+  var sel=document.getElementById('cgRepoSelect');
+  sel.innerHTML='<option value="">Select repository...</option>';
+  allRepos.forEach(function(repo){
+    var o=document.createElement('option');o.value=repo.fullName;o.textContent=repo.name;sel.appendChild(o);
+  });
+}
+function renderRepos(repos){
+  var el=document.getElementById('repoList');
+  if(!repos.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px">No repos found.</div>';return;}
+  el.innerHTML=repos.map(function(r){return '<div class="repo-item'+(selectedRepo===r.fullName?' selected':'')+'" onclick="selectRepo(\''+r.fullName+'\')" id="ri-'+r.id+'"><div><div class="repo-name">'+r.name+'</div><div class="repo-meta">'+r.fullName+' · '+new Date(r.updatedAt).toLocaleDateString()+'</div></div><span class="repo-lang">'+(r.language||'...')+'</span></div>';}).join('');
+}
+function filterRepos(q){renderRepos(allRepos.filter(function(r){return r.name.toLowerCase().includes(q.toLowerCase())||r.fullName.toLowerCase().includes(q.toLowerCase());}));}
+function selectRepo(full){
+  selectedRepo=full;
+  document.getElementById('selectedRepoBar').classList.add('visible');
+  document.getElementById('selectedName').textContent=full;
+  document.querySelectorAll('.repo-item').forEach(function(e){e.classList.remove('selected');});
+  allRepos.forEach(function(r){if(r.fullName===full){var el=document.getElementById('ri-'+r.id);if(el)el.classList.add('selected');}});
+  document.getElementById('selectedRepoBar').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── SCAN ──
+async function startScan(){
+  if(!selectedRepo)return;
+  var parts=selectedRepo.split('/');
+  document.getElementById('selectedRepoBar').classList.remove('visible');
+  document.getElementById('resultsWrap').style.display='none';
+  document.getElementById('loadingState').style.display='block';
+  var steps=['ls1','ls2','ls3','ls4'],si=0;
+  var iv=setInterval(function(){
+    if(si>0){var p=document.getElementById(steps[si-1]);if(p)p.className='ls done';}
+    if(si<steps.length){var c=document.getElementById(steps[si]);if(c)c.className='ls active';}
+    si++;
+  },2500);
+  try{
+    var res=await fetch('/api/scanner/scan',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({owner:parts[0],repo:parts[1]})});
+    var data=await res.json();
+    clearInterval(iv);document.getElementById('loadingState').style.display='none';
+    if(data.upgrade){toast('Scan limit reached. Upgrade to Pro.','error');openUpgradeModal();return;}
+    scanResults=data.results;showResults(data.results,data.totalIssues);loadStats();
+  }catch(e){clearInterval(iv);document.getElementById('loadingState').style.display='none';toast('Scan failed: '+e.message,'error');}
+}
+function showResults(results,total){
+  document.getElementById('resultsWrap').style.display='block';
+  document.getElementById('resultsTitle').textContent=total>0?'Found '+total+' issue'+(total!==1?'s':'')+' in '+selectedRepo:'No issues found in '+selectedRepo;
+  var list=document.getElementById('issuesList');
+  if(!results||!results.length){list.innerHTML='<div style="text-align:center;padding:32px;color:var(--green);font-size:14px;font-weight:500">✓ No auth gaps found. Your codebase looks secure.</div>';document.getElementById('prBtn').style.display='none';return;}
+  if(currentUser&&currentUser.plan!=='pro'){var btn=document.getElementById('prBtn');btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Upgrade to raise PR';btn.onclick=openUpgradeModal;btn.className='btn btn-primary';}
+  list.innerHTML=results.map(function(r){return '<div class="issue-card"><div class="issue-head"><span class="issue-file">'+r.file+'</span><span class="issue-count">'+r.issues.length+' issue'+(r.issues.length>1?'s':'')+'</span></div><div class="issue-body">'+r.issues.map(function(i){return '<div class="endpoint-row"><span class="method m-'+i.method.toLowerCase()+'">'+i.method+'</span><span class="ep-path">'+i.endpoint+'</span><span class="ep-issue">'+i.issue+'</span></div>';}).join('')+'</div></div>';}).join('');
+}
+async function raisePR(){
+  if(!scanResults||!selectedRepo)return;
+  var parts=selectedRepo.split('/');
+  var btn=document.getElementById('prBtn');btn.textContent='Raising PR...';btn.disabled=true;
+  try{
+    var res=await fetch('/api/scanner/raise-pr',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({owner:parts[0],repo:parts[1],results:scanResults})});
+    var data=await res.json();
+    if(data.prUrl){btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>PR Raised ✓';btn.style.background='var(--green)';btn.disabled=false;loadStats();toast('PR raised successfully!','success');setTimeout(function(){window.open(data.prUrl,'_blank');},400);}
+    else{btn.textContent='Raise fix PR';btn.disabled=false;toast(data.error||'Failed to raise PR','error');}
+  }catch(e){btn.textContent='Raise fix PR';btn.disabled=false;toast('Failed: '+e.message,'error');}
+}
+
+// ── HISTORY ──
+async function loadHistory(){
+  var r=await fetch('/api/scanner/history',{credentials:'include'});
+  var d=await r.json();
+  var tbody=document.getElementById('historyBody');
+  if(!d.scans||!d.scans.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light)">No scans yet.</td></tr>';return;}
+  tbody.innerHTML=d.scans.map(function(s){return '<tr><td style="color:var(--navy);font-weight:500;cursor:pointer" onclick="selectRepoFromHistory(\''+s.repo_name+'\')">'+s.repo_name+'</td><td><span class="badge '+(s.total_issues>0?'b-red':'b-green')+'">'+s.total_issues+' issues</span></td><td><span class="badge '+(s.pr_raised?'b-green':'b-gray')+'">'+(s.pr_raised?'Raised':'Pending')+'</span></td><td>'+new Date(s.created_at).toLocaleDateString()+'</td><td>'+(s.pr_url?'<a href="'+s.pr_url+'" target="_blank" style="color:var(--teal);font-size:12px;font-weight:500;text-decoration:none">View PR ↗</a>':'-')+'</td></tr>';}).join('');
+}
+function selectRepoFromHistory(repoName){
+  showPane('scan');
+  var found=allRepos.find(function(r){return r.name===repoName||r.fullName===repoName;});
+  if(found)selectRepo(found.fullName);
+}
+
+// ── REFERRAL ──
+async function loadReferral(){
+  try{
+    var r=await fetch('/api/referral/my-code',{credentials:'include'});
+    var d=await r.json();
+    document.getElementById('refCode').textContent=d.code||'...';
+    if(d.signups!==undefined)document.getElementById('refSignups').textContent=d.signups||0;
+    if(d.bonus_earned!==undefined)document.getElementById('refBonus').textContent=d.bonus_earned||0;
+    if(d.total_bonus!==undefined)document.getElementById('refTotal').textContent=d.total_bonus||0;
+  }catch(e){}
+}
+function copyRef(){var c=document.getElementById('refCode').textContent;navigator.clipboard.writeText('https://grassion.com/?ref='+c).then(function(){toast('Referral link copied!','success');});} 
+async function applyRef(){
+  var code=document.getElementById('refInput').value.trim();if(!code)return;
+  var r=await fetch('/api/referral/apply',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({code:code})});
+  var data=await r.json();
+  var msg=document.getElementById('refMsg');msg.style.display='block';msg.style.color=data.success?'var(--green)':'var(--red)';msg.textContent=data.message||data.error;
+}
+
+// ── UPGRADE MODAL ──
+function openUpgradeModal(){
+  document.getElementById('upgradeModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeUpgradeModal(){
+  document.getElementById('upgradeModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('upgradeModal').addEventListener('click',function(e){
+  if(e.target===this)closeUpgradeModal();
+});
+
+// ── PAYMENT ──
+async function startPayment(){
+  try{
+    var r=await fetch('/api/payments/create-order',{method:'POST',credentials:'include'});
+    var d=await r.json();
+    new Razorpay({key:d.key,amount:d.order.amount,currency:'INR',name:'Grassion',description:'Pro Plan - Monthly',order_id:d.order.id,handler:async function(res){var vr=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(res)});var vd=await vr.json();if(vd.success){toast('Upgraded to Pro! 🎉','success');setTimeout(function(){location.reload();},1500);}},theme:{color:'#2a9fd6'}}).open();
+  }catch(e){toast('Payment failed: '+e.message,'error');}
+}
+
+// ── PAYMENT HISTORY ──
+async function loadPaymentHistory(){
+  try{
+    var r=await fetch('/api/payments/history',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!ct.includes('application/json'))return;
+    var d=await r.json();
+    var el=document.getElementById('payHistoryBody');
+    if(!el)return;
+    var payments=d.payments||[];
+    if(!payments.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px">No transactions yet.</div>';return;}
+    el.innerHTML='<table class="dtbl" style="width:100%"><thead><tr><th>Date</th><th>Amount</th><th>Plan</th><th>Status</th><th>ID</th></tr></thead><tbody>'
+      +payments.map(function(p){
+        var amt=p.amount?'₹'+(p.amount/100).toLocaleString('en-IN'):'₹4,900';
+        var date=p.created_at?new Date(p.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'-';
+        return '<tr><td>'+date+'</td><td style="font-weight:600;color:var(--green)">'+amt+'</td><td><span class="badge b-yellow">Pro</span></td><td><span class="badge '+(p.status==='captured'?'b-green':'b-gray')+'">'+(p.status||'paid')+'</span></td><td style="font-family:monospace;font-size:10px;color:var(--text-light)">'+(p.payment_id||'-')+'</td></tr>';
+      }).join('')+'</tbody></table>';
+  }catch(e){}
+}
+
+// ── SETTINGS ──
+function saveNotifPref(type,val){toast('Notification preference saved','info');}
+
+// ══════════════════════════════════════════════════
+// CODE GUARDIAN - FULL IMPLEMENTATION
+// ══════════════════════════════════════════════════
+
+async function initCodeGuardian(){
+  // Always show UI for pro users - remove gate entirely
+  if(!currentUser){
+    document.getElementById('cgProGate').style.display='flex';
+    document.getElementById('cgUI').style.display='none';
+    return;
+  }
+  if(currentUser.plan!=='pro'){
+    document.getElementById('cgProGate').style.display='flex';
+    document.getElementById('cgUI').style.display='none';
+    return;
+  }
+  document.getElementById('cgProGate').style.display='none';
+  document.getElementById('cgUI').style.display='grid';
+  loadCgSessions();
+}
+
+// Repo/branch selection
+async function onCgRepoChange(){
+  var repoFull=document.getElementById('cgRepoSelect').value;
+  if(!repoFull){
+    setCgStatus(false,'Not connected');
+    document.getElementById('cgInput').disabled=true;
+    document.getElementById('cgSendBtn').disabled=true;
+    document.getElementById('cgInput').placeholder='Select a repository above...';
+    document.getElementById('cgHint').textContent='Select a repository to start';
+    document.getElementById('cgHint').style.color='var(--text-light)';
+    return;
+  }
+  cgSelectedRepo=repoFull;
+  cgSelectedBranch='main';
+  document.getElementById('cgTopSub').textContent=repoFull+' · loading...';
+  setCgStatus(false,'Connecting...');
+  await loadCgBranches();
+  await loadCgFileTree();
+  // Check if tree loaded or has token error
+  var treeList=document.getElementById('cgTreeList');
+  if(treeList.innerHTML.includes('Sign out')||treeList.innerHTML.includes('token')){
+    setCgStatus(false,'Token error');
+    document.getElementById('cgHint').innerHTML='GitHub token missing. <a href="/auth/logout" style="color:var(--teal);font-weight:600">Sign out and reconnect →</a>';
+    document.getElementById('cgInput').disabled=true;
+    document.getElementById('cgSendBtn').disabled=true;
+    return;
+  }
+  setCgStatus(true,'Connected - '+repoFull);
+  document.getElementById('cgTopSub').textContent=repoFull+' · '+cgSelectedBranch;
+  document.getElementById('cgInput').disabled=false;
+  document.getElementById('cgInput').placeholder='Describe what to change in '+repoFull+'...';
+  document.getElementById('cgSendBtn').disabled=false;
+  document.getElementById('cgHint').textContent='Press Enter to send · Shift+Enter for new line · Select files in tree to give context';
+  document.getElementById('cgHint').style.color='var(--text-light)';
+}
+
+async function onCgBranchChange(){
+  cgSelectedBranch=document.getElementById('cgBranchSelect').value||'main';
+  document.getElementById('cgTopSub').textContent=cgSelectedRepo+' · '+cgSelectedBranch;
+  await loadCgFileTree();
+}
+
+async function loadCgBranches(){
+  var parts=(cgSelectedRepo||'').split('/');
+  if(parts.length<2)return;
+  try{
+    var r=await fetch('/api/chat/branches?owner='+parts[0]+'&repo='+parts[1],{credentials:'include'});
+    var d=await r.json();
+    var sel=document.getElementById('cgBranchSelect');
+    sel.innerHTML='';
+    (d.branches||['main']).forEach(function(b){
+      var o=document.createElement('option');o.value=b;o.textContent=b;
+      if(b==='main'||b==='master')o.selected=true;
+      sel.appendChild(o);
+    });
+    cgSelectedBranch=sel.value;
+  }catch(e){
+    document.getElementById('cgBranchSelect').innerHTML='<option value="main">main</option>';
+    cgSelectedBranch='main';
+  }
+}
+
+async function loadCgFileTree(){
+  var parts=(cgSelectedRepo||'').split('/');
+  if(parts.length<2)return;
+  document.getElementById('cgTreeList').innerHTML='<div style="padding:8px 14px;font-size:11px;color:var(--text-light)">Loading files...</div>';
+  try{
+    var r=await fetch('/api/chat/tree?owner='+parts[0]+'&repo='+parts[1]+'&branch='+cgSelectedBranch,{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!ct.includes('application/json')){throw new Error('Server error');}
+    var d=await r.json();
+    if(r.status===401){
+      document.getElementById('cgTreeList').innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--red);line-height:1.5">Session expired.<br><a href="/auth/logout" style="color:var(--teal);font-weight:600">Sign out and reconnect GitHub →</a></div>';
+      return;
+    }
+    if(d.error&&d.error.includes('token')){
+      document.getElementById('cgTreeList').innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--red);line-height:1.5">GitHub token missing.<br><a href="/auth/logout" style="color:var(--teal);font-weight:600">Sign out and reconnect to fix →</a></div>';
+      return;
+    }
+    cgAllFiles=d.tree||[];
+    document.getElementById('cgFileCount').textContent=cgAllFiles.length+' files';
+    renderCgTree(cgAllFiles);
+    if(cgAllFiles.length===0){
+      document.getElementById('cgTreeList').innerHTML='<div style="padding:8px 14px;font-size:11px;color:var(--text-light)">No code files found in this repo/branch.</div>';
+    }
+  }catch(e){
+    document.getElementById('cgTreeList').innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--red)">Error: '+esc(e.message)+'<br><a href="/auth/logout" style="color:var(--teal);font-weight:600">Sign out and reconnect GitHub →</a></div>';
+  }
+}
+
+function renderCgTree(files){
+  var list=document.getElementById('cgTreeList');
+  if(!files.length){list.innerHTML='<div style="padding:8px 14px;font-size:11px;color:var(--text-light)">No code files found</div>';return;}
+  list.innerHTML=files.slice(0,100).map(function(f){
+    var name=f.path.split('/').pop();
+    var dir=f.path.split('/').slice(0,-1).join('/');
+    var isSelected=cgSelectedFiles.indexOf(f.path)>-1;
+    var ext=name.split('.').pop();
+    var color=ext==='js'?'#f7df1e':ext==='ts'?'#3178c6':ext==='py'?'#3776ab':ext==='go'?'#00add8':'#888';
+    return '<div class="cg-tree-item'+(isSelected?' selected':'')+'" onclick="toggleCgFile(\''+f.path+'\')" title="'+f.path+'">'
+      +'<svg viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+      +'<span class="cg-tree-filename">'+(dir?'<span class="cg-tree-dir">'+dir.split('/').pop()+'/</span>':'')+name+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+function filterCgTree(q){
+  renderCgTree(q?cgAllFiles.filter(function(f){return f.path.toLowerCase().includes(q.toLowerCase());}):cgAllFiles);
+}
+
+function toggleCgFile(path){
+  var idx=cgSelectedFiles.indexOf(path);
+  if(idx>-1)cgSelectedFiles.splice(idx,1);
+  else cgSelectedFiles.push(path);
+  renderCgTree(cgAllFiles);
+  updateCgHint();
+}
+
+function updateCgHint(){
+  var hint=document.getElementById('cgHint');
+  if(cgSelectedFiles.length){
+    hint.textContent='Context: '+cgSelectedFiles.length+' file'+(cgSelectedFiles.length>1?'s':'')+' selected · '+cgSelectedFiles.map(function(f){return f.split('/').pop();}).join(', ');
+    hint.style.color='var(--teal)';
+  }else{
+    hint.textContent='Press Enter to send · Shift+Enter for new line · Select files in tree to give context';
+    hint.style.color='var(--text-light)';
+  }
+}
+
+async function refreshCgTree(){
+  await loadCgBranches();
+  await loadCgFileTree();
+  toast('File tree refreshed','info');
+}
+
+function setCgStatus(connected,text){
+  var el=document.getElementById('cgStatus');
+  el.className='cg-status'+(connected?' connected':'');
+  document.getElementById('cgStatusText').textContent=text;
+}
+
+// ── NEW SESSION ──
+function startNewCgSession(){
+  cgSessionId=null;
+  document.getElementById('cgMessages').innerHTML='';
+  document.getElementById('cgEmpty').style.display='flex';
+  document.getElementById('cgMessages').appendChild(document.getElementById('cgEmpty'));
+  cgSelectedFiles=[];
+  renderCgTree(cgAllFiles);
+  updateCgHint();
+  document.querySelectorAll('.cg-hist-item').forEach(function(el){el.classList.remove('active');});
+}
+
+// ── LOAD SESSIONS ──
+async function loadCgSessions(){
+  try{
+    var r=await fetch('/api/chat/sessions',{credentials:'include'});
+    var d=await r.json();
+    renderCgSessions(d.sessions||[]);
+  }catch(e){}
+}
+
+function renderCgSessions(sessions){
+  var list=document.getElementById('cgHistList');
+  if(!sessions.length){list.innerHTML='<div class="cg-hist-empty">No sessions yet</div>';return;}
+  list.innerHTML=sessions.map(function(s){
+    var riskClass={'LOW':'risk-low','MEDIUM':'risk-medium','HIGH':'risk-high'}[s.risk_level]||'risk-low';
+    var statusBadge=s.pr_url?'<a href="'+s.pr_url+'" target="_blank" style="font-size:9px;color:var(--teal);font-weight:600">PR ↗</a>':'';
+    return '<div class="cg-hist-item'+(s.id===cgSessionId?' active':'')+'" onclick="loadCgSession(\''+s.id+'\',\''+s.repo_name+'\')">'
+      +'<div class="cg-hist-prompt">'+esc(s.prompt.substring(0,50))+'</div>'
+      +'<div class="cg-hist-meta">'
+        +'<span class="cg-hist-badge '+riskClass+'">'+(s.risk_level||'LOW')+'</span>'
+        +'<span>'+timeAgo(s.created_at)+'</span>'
+        +(s.files_changed?'<span>'+s.files_changed+' files</span>':'')
+        +statusBadge
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+async function loadCgSession(sid,repoName){
+  cgSessionId=sid;
+  try{
+    var r=await fetch('/api/chat/session/'+sid,{credentials:'include'});
+    var d=await r.json();
+    if(!d.session)return;
+    var s=d.session;
+    // Set repo
+    if(repoName&&repoName!==cgSelectedRepo){
+      document.getElementById('cgRepoSelect').value=repoName;
+      await onCgRepoChange();
+    }
+    // Replay conversation
+    var msgs=document.getElementById('cgMessages');
+    msgs.innerHTML='';
+    if(document.getElementById('cgEmpty'))document.getElementById('cgEmpty').style.display='none';
+    var history=s.conversation_history||[];
+    for(var i=0;i<history.length;i++){
+      var m=history[i];
+      if(m.role==='user'){addCgMsg('user',m.content);}
+      else if(m.role==='assistant'){
+        try{
+          var analysis=JSON.parse(m.content);
+          addCgAnalysisResult(analysis,[]);
+        }catch{addCgMsg('assistant',m.content);}
+      }
+    }
+    document.querySelectorAll('.cg-hist-item').forEach(function(el){
+      el.classList[el.getAttribute('onclick').includes(sid)?'add':'remove']('active');
+    });
+    toast('Session loaded','info');
+  }catch(e){toast('Failed to load session','error');}
+}
+
+// ── SEND MESSAGE ──
+function useCgSug(text){
+  document.getElementById('cgInput').value=text;
+  autoCgResize(document.getElementById('cgInput'));
+  if(cgSelectedRepo){
+    document.getElementById('cgSendBtn').disabled=false;
+    document.getElementById('cgInput').focus();
+  }
+}
+function handleCgKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCgMessage();}}
+function autoCgResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';document.getElementById('cgSendBtn').disabled=!el.value.trim()||!cgSelectedRepo||cgLoading;}
+
+async function sendCgMessage(){
+  var input=document.getElementById('cgInput');
+  var text=input.value.trim();
+  if(!text||!cgSelectedRepo||cgLoading)return;
+  if(document.getElementById('cgEmpty'))document.getElementById('cgEmpty').style.display='none';
+  input.value='';autoCgResize(input);
+  cgLoading=true;
+  document.getElementById('cgSendBtn').disabled=true;
+  addCgMsg('user',text);
+  var typingEl=addCgTyping();
+  try{
+    var body={prompt:text,repo:cgSelectedRepo,branch:cgSelectedBranch};
+    if(cgSessionId)body.session_id=cgSessionId;
+    if(cgSelectedFiles.length)body.context_files=cgSelectedFiles;
+    var r=await fetch('/api/chat/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify(body)
+    });
+    var data=await r.json();
+    typingEl.remove();
+    if(data.error){addCgMsg('assistant','Error: '+data.error);cgLoading=false;document.getElementById('cgSendBtn').disabled=false;return;}
+    cgSessionId=data.session_id;
+    addCgAnalysisResult(data,data.changes||[]);
+    loadCgSessions();
+  }catch(e){
+    typingEl.remove();
+    addCgMsg('assistant','Connection error. Please try again. ('+e.message+')');
+  }
+  cgLoading=false;
+  document.getElementById('cgSendBtn').disabled=!document.getElementById('cgInput').value.trim()||!cgSelectedRepo;
+}
+
+function addCgMsg(role,content){
+  var wrap=document.getElementById('cgMessages');
+  var msg=document.createElement('div');msg.className='cg-msg '+role;
+  var inner=document.createElement('div');inner.className='cg-msg-inner';
+  var av=document.createElement('div');av.className='cg-av';
+  av.textContent=role==='user'?(currentUser?currentUser.username[0].toUpperCase():'U'):'G';
+  var bubble=document.createElement('div');bubble.className='cg-bubble';bubble.innerHTML=esc(content).replace(/\n/g,'<br>');
+  inner.appendChild(av);inner.appendChild(bubble);msg.appendChild(inner);wrap.appendChild(msg);
+  wrap.scrollTop=wrap.scrollHeight;
+  return msg;
+}
+
+function addCgTyping(){
+  var wrap=document.getElementById('cgMessages');
+  var msg=document.createElement('div');msg.className='cg-msg assistant';
+  var inner=document.createElement('div');inner.className='cg-msg-inner';
+  var av=document.createElement('div');av.className='cg-av';av.textContent='G';
+  var bubble=document.createElement('div');bubble.className='cg-bubble';
+  bubble.innerHTML='<div class="cg-typing"><div class="cg-typing-dot"></div><div class="cg-typing-dot"></div><div class="cg-typing-dot"></div></div>';
+  inner.appendChild(av);inner.appendChild(bubble);msg.appendChild(inner);wrap.appendChild(msg);
+  wrap.scrollTop=wrap.scrollHeight;return msg;
+}
+
+function addCgAnalysisResult(data,changes){
+  var wrap=document.getElementById('cgMessages');
+  // If needs clarification
+  if(data.needs_clarification&&data.questions&&data.questions.length){
+    var msg=document.createElement('div');msg.className='cg-msg assistant';
+    var inner=document.createElement('div');inner.className='cg-msg-inner';
+    var av=document.createElement('div');av.className='cg-av';av.textContent='G';
+    var content=document.createElement('div');content.style.flex='1';
+    var bubble=document.createElement('div');bubble.className='cg-bubble';
+    bubble.textContent=data.summary||'I need a bit more information before making changes.';
+    var qbox=document.createElement('div');qbox.className='cg-questions';
+    qbox.innerHTML='<div class="cg-questions-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>I have a few questions</div>';
+    data.questions.forEach(function(q){var d2=document.createElement('div');d2.className='cg-question';d2.textContent=q;qbox.appendChild(d2);});
+    var clarInput=document.createElement('input');clarInput.type='text';clarInput.className='cg-clarify-input';clarInput.placeholder='Type your answer...';
+    clarInput.addEventListener('keydown',function(e){if(e.key==='Enter'){document.getElementById('cgInput').value=clarInput.value;sendCgMessage();}});
+    qbox.appendChild(clarInput);
+    content.appendChild(bubble);content.appendChild(qbox);inner.appendChild(av);inner.appendChild(content);msg.appendChild(inner);wrap.appendChild(msg);
+    wrap.scrollTop=wrap.scrollHeight;return;
+  }
+  // Normal analysis result
+  var msg=document.createElement('div');msg.className='cg-msg assistant';
+  var inner=document.createElement('div');inner.className='cg-msg-inner';
+  var av=document.createElement('div');av.className='cg-av';av.textContent='G';
+  var content=document.createElement('div');content.style.cssText='flex:1;min-width:0';
+  // Summary bubble
+  var bubble=document.createElement('div');bubble.className='cg-bubble';bubble.textContent=data.summary||'Here are the proposed changes:';
+  content.appendChild(bubble);
+  // Analysis card
+  if(changes&&changes.length){
+    var card=document.createElement('div');card.className='cg-analysis';
+    // Header
+    var header=document.createElement('div');header.className='cg-analysis-header';
+    header.innerHTML='<div class="cg-analysis-title">'+changes.length+' file'+(changes.length>1?'s':'')+' to change</div>';
+    var riskHtml='<span class="cg-risk '+(data.risk_level==='HIGH'?'b-red':data.risk_level==='MEDIUM'?'b-yellow':'b-green')+'">'+(data.risk_level||'LOW')+' RISK</span>';
+    header.innerHTML+='<div style="display:flex;align-items:center;gap:8px">'+riskHtml+'</div>';
+    card.appendChild(header);
+    // Files
+    var body=document.createElement('div');body.className='cg-analysis-body';
+    if(data.understanding){var und=document.createElement('div');und.className='cg-summary';und.textContent=data.understanding;body.appendChild(und);}
+    // File change cards
+    changes.forEach(function(fc){
+      var fc_el=document.createElement('div');fc_el.className='cg-file-change';
+      var fc_header=document.createElement('div');fc_header.className='cg-file-change-header';
+      fc_header.onclick=function(){var db_el=fc_el.querySelector('.cg-diff-body');if(db_el)db_el.style.display=db_el.style.display==='none'?'block':'none';};
+      var adds=0,removes=0;
+      if(fc.original&&fc.new_content){
+        var oldLines=fc.original.split('\n'),newLines=fc.new_content.split('\n');
+        adds=newLines.length-oldLines.length;
+        if(adds<0){removes=Math.abs(adds);adds=0;}
+      }
+      fc_header.innerHTML='<div class="cg-file-change-name">'+esc(fc.path)+(fc.is_new_file?' <span style="color:var(--green);font-size:9px;font-weight:700">NEW</span>':'')+'</div>'
+        +'<div class="cg-file-change-meta">'
+          +(adds?'<span style="color:var(--green)">+'+adds+'</span>':'')
+          +(removes?'<span style="color:var(--red)">-'+removes+'</span>':'')
+          +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><polyline points="6 9 12 15 18 9"/></svg>'
+        +'</div>';
+      fc_el.appendChild(fc_header);
+      // Diff view
+      var diff=buildSimpleDiff(fc.original||'',fc.new_content||'');
+      var diffBody=document.createElement('div');diffBody.className='cg-diff-body';
+      diff.forEach(function(line){
+        var span=document.createElement('span');span.className='cg-diff-line '+line.type;span.textContent=line.text;diffBody.appendChild(span);
+      });
+      fc_el.appendChild(diffBody);
+      if(fc.reason){var reason=document.createElement('div');reason.className='cg-file-reason';reason.textContent=fc.reason;fc_el.appendChild(reason);}
+      body.appendChild(fc_el);
+    });
+    // Meta: risk + tests
+    var meta=document.createElement('div');meta.className='cg-meta-row';
+    var riskBox=document.createElement('div');riskBox.className='cg-meta-box';
+    riskBox.innerHTML='<div class="cg-meta-box-title">Risk assessment</div><div style="font-size:13px;font-weight:600;color:'+(data.risk_level==='HIGH'?'var(--red)':data.risk_level==='MEDIUM'?'var(--yellow)':'var(--green)')+'">'+( data.risk_level||'LOW')+'</div><div style="font-size:12px;color:var(--text-mid);margin-top:4px">'+esc(data.risk_reason||'Minimal risk - targeted changes')+'</div>';
+    var testsBox=document.createElement('div');testsBox.className='cg-meta-box';
+    testsBox.innerHTML='<div class="cg-meta-box-title">Tests to run after merging</div>';
+    (data.tests_to_run||['Run your test suite','Test affected endpoints manually']).forEach(function(t){var ti=document.createElement('div');ti.className='cg-test-item';ti.textContent=t;testsBox.appendChild(ti);});
+    meta.appendChild(riskBox);meta.appendChild(testsBox);body.appendChild(meta);
+    // PR editor
+    var prEditor=document.createElement('div');prEditor.className='cg-pr-editor';
+    prEditor.innerHTML='<div class="cg-pr-editor-title">Pull Request details <span style="font-size:10px;color:var(--text-light);font-weight:400">(editable)</span></div>'
+      +'<input type="text" class="cg-pr-input" id="prTitle_'+cgSessionId+'" value="'+esc(data.pr_title||'feat: AI-assisted changes [Grassion]')+'" placeholder="PR title">'
+      +'<textarea class="cg-pr-input" id="prDesc_'+cgSessionId+'" placeholder="PR description...">'+esc(data.pr_description||'')+'</textarea>';
+    body.appendChild(prEditor);
+    // Approval bar
+    var approval=document.createElement('div');approval.className='cg-approval';
+    approval.innerHTML='<div class="cg-approval-text"><strong>'+changes.length+' file'+(changes.length>1?'s':'')+' ready to apply</strong> on branch <code style="background:var(--off-white);padding:1px 5px;border-radius:4px;font-size:11px">'+cgSelectedBranch+'</code>. Review the diff above then approve to create a PR.</div>';
+    var actions=document.createElement('div');actions.className='cg-approval-actions';
+    var approveBtn=document.createElement('button');approveBtn.className='btn btn-green';approveBtn.style.fontSize='12px';
+    approveBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve &amp; Raise PR';
+    var currentSid=cgSessionId,currentChanges=changes;
+    approveBtn.onclick=function(){applyCgChanges(currentSid,currentChanges,approval);};
+    var editBtn=document.createElement('button');editBtn.className='btn btn-ghost btn-sm';editBtn.style.fontSize='12px';editBtn.textContent='Edit changes';
+    editBtn.onclick=function(){var input=document.getElementById('cgInput');input.value='Please modify: ';input.focus();};
+    var rejectBtn=document.createElement('button');rejectBtn.className='btn btn-red btn-xs';rejectBtn.style.fontSize='12px';rejectBtn.textContent='Discard';
+    rejectBtn.onclick=function(){approval.innerHTML='<div style="font-size:12px;color:var(--text-light)">Changes discarded. Start a new request to try again.</div>';};
+    actions.appendChild(approveBtn);actions.appendChild(editBtn);actions.appendChild(rejectBtn);approval.appendChild(actions);body.appendChild(approval);
+    card.appendChild(body);content.appendChild(card);
+  }
+  inner.appendChild(av);inner.appendChild(content);msg.appendChild(inner);wrap.appendChild(msg);
+  wrap.scrollTop=wrap.scrollHeight;
+}
+
+// ── APPLY CHANGES ──
+async function applyCgChanges(sid,changes,approvalEl){
+  approvalEl.innerHTML='<div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid)"><div class="spinner" style="width:18px;height:18px;border-width:2px;margin:0"></div>Applying changes and creating PR on GitHub...</div>';
+  try{
+    var prTitleEl=document.getElementById('prTitle_'+sid);
+    var prDescEl=document.getElementById('prDesc_'+sid);
+    var r=await fetch('/api/chat/apply',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify({
+        session_id:sid,
+        changes:changes,
+        pr_title:prTitleEl?prTitleEl.value:'AI-assisted changes [Grassion]',
+        pr_description:prDescEl?prDescEl.value:''
+      })
+    });
+    var data=await r.json();
+    if(data.success&&data.pr_url){
+      approvalEl.className='cg-pr-success';
+      approvalEl.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
+        +'<div><div style="font-weight:700;color:var(--green);font-size:13px">PR created successfully ✓</div>'
+        +'<div style="font-size:12px;color:var(--text-mid);margin-top:3px">Changed '+data.files_changed.length+' file'+(data.files_changed.length>1?'s':'')+' on branch <code style="background:var(--off-white);padding:1px 4px;border-radius:3px">'+data.branch+'</code></div>'
+        +'<a href="'+data.pr_url+'" target="_blank" style="color:var(--teal);font-size:13px;font-weight:600;margin-top:6px;display:inline-block">View PR #'+data.pr_number+' on GitHub ↗</a>'
+        +'</div>';
+      loadStats();loadCgSessions();
+      toast('PR #'+data.pr_number+' raised! 🎉','success');
+    }else{
+      approvalEl.innerHTML='<div style="color:var(--red);font-size:12px">Failed: '+(data.error||'Unknown error')+'</div>';
+      toast(data.error||'Failed to raise PR','error');
+    }
+  }catch(e){
+    approvalEl.innerHTML='<div style="color:var(--red);font-size:12px">Error: '+e.message+'</div>';
+    toast('Failed: '+e.message,'error');
+  }
+}
+
+// ── DIFF BUILDER ──
+function buildSimpleDiff(original,newContent){
+  var origLines=original.split('\n'),newLines=newContent.split('\n'),result=[];
+  var maxLines=Math.min(Math.max(origLines.length,newLines.length),100);
+  var i=0,j=0;
+  while(i<origLines.length&&j<newLines.length&&result.length<maxLines){
+    if(origLines[i]===newLines[j]){result.push({type:'context',text:'  '+origLines[i]});i++;j++;}
+    else{
+      var found=newLines.slice(j,j+5).indexOf(origLines[i]);
+      if(found>-1){for(var k=0;k<found;k++)result.push({type:'add',text:'+ '+newLines[j+k]});j+=found;}
+      else{result.push({type:'remove',text:'- '+origLines[i]});result.push({type:'add',text:'+ '+newLines[j]});i++;j++;}
+    }
+  }
+  while(i<origLines.length&&result.length<maxLines)result.push({type:'remove',text:'- '+origLines[i++]});
+  while(j<newLines.length&&result.length<maxLines)result.push({type:'add',text:'+ '+newLines[j++]});
+  if(result.length>=maxLines)result.push({type:'hunk',text:'@@ ... '+( Math.max(origLines.length,newLines.length)-maxLines)+' more lines ...'});
+  return result;
+}
+
+// ── UTILS ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function timeAgo(d){var diff=(Date.now()-new Date(d))/1000;if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago';}
+
+// ── TOAST ──
+var toastTimer=null;
+function toast(msg,type){
+  var el=document.getElementById('toast')||createToast();
+  el.textContent=msg;
+  el.style.cssText='position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:500;z-index:9999;display:flex;align-items:center;box-shadow:0 8px 32px rgba(13,27,42,0.2);animation:toastIn 0.3s ease;font-family:Satoshi,sans-serif;color:#fff;';
+  el.style.background=type==='error'?'var(--red)':type==='success'?'var(--green)':'var(--navy)';
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.style.display='none';},3000);
+}
+function createToast(){var el=document.createElement('div');el.id='toast';document.body.appendChild(el);return el;}
+
+// ── INIT FIX: JSON guard ──
+async function init(){
+  setGreeting();
+  try{
+    var r=await fetch('/auth/me',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json')){window.location.href='/signin';return;}
+    var d=await r.json();
+    if(!d.user){window.location.href='/signin';return;}
+    currentUser=d.user;
+    var u=d.user,uname=u.username||'User';
+    document.getElementById('greetText').textContent+=(', '+uname);
+    document.getElementById('sbAv').textContent=uname[0].toUpperCase();
+    document.getElementById('sbName').textContent=uname;
+    document.getElementById('settingsAv').textContent=uname[0].toUpperCase();
+    document.getElementById('setName').textContent=uname;
+    document.getElementById('setEmail').textContent=u.email||'No email on file';
+    document.getElementById('setUsername').textContent='@'+uname;
+    document.getElementById('setGitUser').textContent=uname;
+    document.getElementById('setRefCode').textContent=u.referral_code||'...';
+    document.getElementById('setBonusScans').textContent=u.bonus_scans||0;
+    if(u.created_at)document.getElementById('setJoined').textContent=new Date(u.created_at).toLocaleDateString('en-IN',{year:'numeric',month:'long'});
+    loadStats();
+    applyPlan(u);
+    loadRepos();
+    loadHistory();
+    loadReferral();
+  }catch(e){console.error('Init:',e);window.location.href='/signin';}
+}
+
+// ── PR GUARDRAIL JS ──
+var grSelectedRepos=[];
+
+async function loadGrRepos(){
+  try{
+    var r=await fetch('/webhook/repos',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!ct.includes('application/json'))return;
+    var d=await r.json();
+    var repos=d.repos||[];
+    document.getElementById('gr-repos').textContent=repos.filter(function(r){return r.active;}).length;
+    var totalPRs=repos.reduce(function(s,r){return s+parseInt(r.scan_count||0);},0);
+    var totalIssues=repos.reduce(function(s,r){return s+parseInt(r.total_issues||0);},0);
+    document.getElementById('gr-prs').textContent=totalPRs;
+    document.getElementById('gr-issues').textContent=totalIssues;
+    document.getElementById('gr-blocked').textContent=repos.reduce(function(s,r){return s+(r.critical_count||0);},0);
+    var grid=document.getElementById('grReposGrid');
+    if(!repos.length){
+      grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--text-light);font-size:13px;background:#fff;border-radius:12px;border:1.5px dashed var(--border)"><div style="font-size:32px;margin-bottom:10px">🛡️</div><div style="font-family:\'Clash Display\',sans-serif;font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">No repos protected yet</div><div style="margin-bottom:14px">Click "Protect a Repo" to start intercepting PRs automatically</div><button class="btn btn-teal btn-sm" onclick="openGrInstall()">Protect your first repo</button></div>';
+      return;
+    }
+    grid.innerHTML=repos.map(function(repo){
+      var isActive=repo.active;
+      var lastScan=repo.last_scan?timeAgo(repo.last_scan):'Never';
+      var repoShort=(repo.repo_full_name||'').split('/')[1]||repo.repo_full_name;
+      return '<div class="gr-repo-card '+(isActive?'active':'inactive')+'">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px">'
+          +'<div><div class="gr-repo-name">'+esc(repoShort)+'</div><div class="gr-repo-meta">'+esc(repo.repo_full_name)+'</div></div>'
+          +'<div class="gr-dot '+(isActive?'on':'off')+'">'+(isActive?'Active':'Paused')+'</div>'
+        +'</div>'
+        +'<div class="gr-repo-stats">'
+          +'<div><div class="gr-repo-stat-val">'+(repo.scan_count||0)+'</div><div class="gr-repo-stat-lbl">PRs reviewed</div></div>'
+          +'<div><div class="gr-repo-stat-val" style="color:'+(parseInt(repo.total_issues||0)>0?'var(--red)':'var(--green)')+'">'+( repo.total_issues||0)+'</div><div class="gr-repo-stat-lbl">Issues caught</div></div>'
+          +'<div><div class="gr-repo-stat-val" style="font-size:12px;color:var(--text-light)">'+lastScan+'</div><div class="gr-repo-stat-lbl">Last scan</div></div>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px">'
+          +'<a href="https://github.com/'+esc(repo.repo_full_name)+'/pulls" target="_blank" class="btn btn-ghost btn-xs">View PRs ↗</a>'
+          +'<button class="btn btn-xs" style="background:var(--red-light);color:var(--red);border:1px solid #fecaca" onclick="deactivateGrRepo(\''+esc(repo.repo_full_name)+'\')">Remove</button>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+  }catch(e){}
+}
+
+async function loadGrEvents(){
+  try{
+    var r=await fetch('/webhook/events',{credentials:'include'});
+    var ct=r.headers.get('content-type')||'';
+    if(!ct.includes('application/json'))return;
+    var d=await r.json();
+    var events=d.events||[];
+    var feed=document.getElementById('grEventFeed');
+    if(!events.length){feed.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px">No PR reviews yet. Protect a repo and open a pull request.</div>';return;}
+    feed.innerHTML=events.map(function(ev){
+      var meta={};try{meta=JSON.parse(ev.metadata||'{}');}catch(e){}
+      var risk=(meta.risk_level||'SAFE').toLowerCase();
+      var riskEmoji={critical:'🚨',high:'🔴',medium:'🟡',low:'🟢',safe:'✅'}[risk]||'🟡';
+      var iconBg={critical:'rgba(239,68,68,0.1)',high:'rgba(249,115,22,0.1)',medium:'rgba(245,158,11,0.1)',safe:'rgba(16,185,129,0.1)',low:'rgba(16,185,129,0.1)'}[risk]||'var(--off-white)';
+      var verdict=meta.verdict||'REVIEWED';
+      var verdictColor=verdict==='APPROVE'?'var(--green)':verdict==='BLOCK'?'var(--red)':'var(--yellow)';
+      var verdictBg=verdict==='APPROVE'?'var(--green-light)':verdict==='BLOCK'?'var(--red-light)':'var(--yellow-light)';
+      return '<div class="gr-event">'
+        +'<div class="gr-event-icon" style="background:'+iconBg+'">'+riskEmoji+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div class="gr-event-title"><span class="gr-risk '+risk+'">'+(meta.risk_level||'SAFE')+'</span> PR #'+(meta.pr_number||'?')+' - '+esc(meta.pr_title||'Pull request')+'</div>'
+          +'<div class="gr-event-meta">'+esc((ev.repo_name||'').split('/')[1]||'')+' · @'+esc(meta.author||'?')+' · '+(meta.issues_count||0)+' issue'+(meta.issues_count!==1?'s':'')+' found · '+timeAgo(ev.created_at)+'</div>'
+        +'</div>'
+        +'<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;background:'+verdictBg+';color:'+verdictColor+';flex-shrink:0">'+verdict+'</span>'
+      +'</div>';
+    }).join('');
+  }catch(e){}
+}
+
+function openGrInstall(){
+  document.getElementById('grInstallModal').classList.add('open');
+  var list=document.getElementById('grRepoSelectList');
+  if(!allRepos.length){list.innerHTML='<div style="padding:14px;text-align:center;color:var(--text-light)">No repos found. Connect GitHub first.</div>';return;}
+  list.innerHTML=allRepos.map(function(repo){
+    return '<label class="gr-repo-option">'
+      +'<input type="checkbox" value="'+esc(repo.fullName)+'" onchange="toggleGrRepo(\''+esc(repo.fullName)+'\',this.checked)">'
+      +'<div><div style="font-size:13px;font-weight:500;color:var(--navy)">'+esc(repo.name)+'</div><div style="font-size:11px;color:var(--text-light)">'+esc(repo.fullName)+'</div></div>'
+    +'</label>';
+  }).join('');
+}
+function closeGrInstall(){document.getElementById('grInstallModal').classList.remove('open');grSelectedRepos=[];document.getElementById('grInstallMsg').textContent='';}
+function toggleGrRepo(name,checked){if(checked)grSelectedRepos.push(name);else grSelectedRepos=grSelectedRepos.filter(function(r){return r!==name;});}
+
+async function installGuardrail(){
+  if(!grSelectedRepos.length){toast('Select at least one repository','error');return;}
+  var btn=document.getElementById('grInstallBtn');
+  var msg=document.getElementById('grInstallMsg');
+  btn.disabled=true;btn.textContent='Installing...';
+  var successes=[],failures=[];
+  for(var i=0;i<grSelectedRepos.length;i++){
+    var repo=grSelectedRepos[i];
+    try{
+      var r=await fetch('/webhook/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({repo_full_name:repo})});
+      var ct=r.headers.get('content-type')||'';
+      var d=ct.includes('application/json')?await r.json():{error:'Server error'};
+      if(d.success)successes.push(repo);else failures.push(repo+': '+(d.error||'Failed'));
+    }catch(e){failures.push(repo+': '+e.message);}
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Activate Guardrail';
+  if(successes.length){toast(successes.length+' repo'+(successes.length>1?'s':'')+' now protected 🛡️','success');msg.innerHTML='<span style="color:var(--green)">✓ Protected: '+successes.join(', ')+'</span>';loadGrRepos();}
+  if(failures.length)msg.innerHTML+='<br><span style="color:var(--red)">✗ '+failures.join(', ')+'</span>';
+  setTimeout(function(){if(successes.length)closeGrInstall();},2000);
+}
+
+async function deactivateGrRepo(repoName){
+  if(!confirm('Remove Grassion guardrail from '+repoName+'?'))return;
+  try{
+    var r=await fetch('/webhook/unregister',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({repo_full_name:repoName})});
+    var d=await r.json();
+    if(d.success){toast('Guardrail removed','info');loadGrRepos();}
+    else toast(d.error||'Failed','error');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+init();
+</script>
+<style>@keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
+</body>
+</html>
