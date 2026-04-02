@@ -95,14 +95,16 @@ pool.connect(async (err, client, release) => {
     )`);
     await client.query(`CREATE INDEX IF NOT EXISTS session_expire_idx ON session(expire)`);
 
-    // Ensure founder account always has pro+admin - safe upsert, no hardcoded id
+    // Ensure unique constraint exists before upsert
+    await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_github_username_idx ON users(github_username)`);
+
+    // Ensure founder is always pro+admin - UPDATE only, no INSERT risk
+    await client.query(`UPDATE users SET plan='pro', role='admin', last_seen=NOW() WHERE github_username='saisnatadash'`);
+    // If row doesnt exist yet (first ever boot), insert it
     await client.query(`
       INSERT INTO users (github_username, email, avatar_url, plan, role, scans_used, bonus_scans, referral_code, created_at, last_seen)
-      VALUES ('saisnatadash', 'dsaisnata@gmail.com', 'https://avatars.githubusercontent.com/u/32237562', 'pro', 'admin', 0, 0, 'SAI001', NOW(), NOW())
-      ON CONFLICT (github_username) DO UPDATE SET
-        plan = 'pro',
-        role = 'admin',
-        last_seen = NOW()
+      SELECT 'saisnatadash', 'dsaisnata@gmail.com', 'https://avatars.githubusercontent.com/u/32237562', 'pro', 'admin', 0, 0, 'SAI001', NOW(), NOW()
+      WHERE NOT EXISTS (SELECT 1 FROM users WHERE github_username='saisnatadash')
     `);
 
     console.log('[DB] Schema ready. Founder: pro/admin.');
