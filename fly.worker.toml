@@ -1,0 +1,20 @@
+app = "grassion-worker"
+primary_region = "bom"
+
+[build]
+  dockerfile = "apps/worker/Dockerfile"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[env]
+  NODE_ENV = "production"
+
+# Worker doesn't expose HTTP — Fly will keep one machine alive for crons.
+[deploy]
+  strategy = "rolling"
+
+[processes]
+  app = "node dist/index.js"

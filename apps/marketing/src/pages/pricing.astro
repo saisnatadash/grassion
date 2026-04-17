@@ -1,0 +1,106 @@
+---
+import Base from '../layouts/Base.astro'
+
+const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
+const trialUrl = `${APP_URL}/login`
+
+const plans = [
+  {
+    name: 'Starter',
+    inr: '₹2,400',
+    usd: '$29',
+    unit: 'per dev / month',
+    best: '5-10 devs',
+    primary: true,
+  },
+  {
+    name: 'Team',
+    inr: '₹1,600',
+    usd: '$19',
+    unit: 'per dev / month (min 10 seats)',
+    best: '10-30 devs',
+  },
+  {
+    name: 'Business',
+    inr: '₹41,000',
+    usd: '$499',
+    unit: 'flat / month',
+    best: '30-50 devs',
+  },
+  {
+    name: 'Enterprise',
+    inr: 'Contact us',
+    usd: '',
+    unit: 'tailored to your usage',
+    best: '50+ devs',
+  },
+]
+---
+
+<Base title="Pricing" description="Simple per-developer pricing. 14-day free trial, no credit card required.">
+  <section>
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Simple pricing</h1>
+    <p class="mt-4 text-lg text-neutral-700">
+      Charged per active developer. 14-day free trial. No credit card to start. Cancel anytime.
+    </p>
+  </section>
+
+  <section class="mt-10 grid gap-4 sm:grid-cols-2">
+    {plans.map((p) => (
+      <div
+        class={`rounded-xl border p-6 ${
+          p.primary ? 'border-ink shadow-sm' : 'border-neutral-200'
+        }`}
+      >
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">{p.name}</h2>
+          {p.primary && (
+            <span class="rounded-full bg-ink px-2 py-0.5 text-xs font-medium text-white">
+              Most popular
+            </span>
+          )}
+        </div>
+        <div class="mt-3 text-3xl font-semibold tracking-tight">
+          {p.inr}
+          {p.usd && <span class="ml-2 text-base font-normal text-neutral-500">/ {p.usd}</span>}
+        </div>
+        <div class="mt-1 text-sm text-neutral-500">{p.unit}</div>
+        <div class="mt-4 text-sm text-neutral-600">Best for: {p.best}</div>
+        <a
+          href={p.name === 'Enterprise' ? '/contact/' : trialUrl}
+          class={`mt-6 inline-block w-full rounded-md px-4 py-2 text-center text-sm font-medium ${
+            p.primary
+              ? 'bg-ink text-white hover:bg-neutral-800'
+              : 'border border-neutral-300 text-neutral-800 hover:bg-neutral-50'
+          }`}
+        >
+          {p.name === 'Enterprise' ? 'Contact sales' : 'Start free trial'}
+        </a>
+      </div>
+    ))}
+  </section>
+
+  <section class="mt-14">
+    <h2 class="text-xl font-semibold tracking-tight">Billing FAQ</h2>
+    <div class="mt-4 divide-y divide-neutral-100">
+      <details class="py-3">
+        <summary class="cursor-pointer font-medium">Do you charge per repo or per developer?</summary>
+        <p class="mt-2 text-neutral-700">Per active developer. Repos are unlimited.</p>
+      </details>
+      <details class="py-3">
+        <summary class="cursor-pointer font-medium">Which payment methods are supported?</summary>
+        <p class="mt-2 text-neutral-700">
+          UPI, debit/credit cards (domestic and international), and netbanking via Razorpay. Annual
+          invoicing available on request.
+        </p>
+      </details>
+      <details class="py-3">
+        <summary class="cursor-pointer font-medium">Do you offer refunds?</summary>
+        <p class="mt-2 text-neutral-700">
+          Pro-rated refunds for annual plans. Monthly plans are evaluated case-by-case — write to{' '}
+          <a href="mailto:billing@grassion.com">billing@grassion.com</a>.
+        </p>
+      </details>
+    </div>
+  </section>
+</Base>

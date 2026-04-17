@@ -1,0 +1,29 @@
+{
+  "name": "grassion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Grassion — Measure whether your AI coding tool spend is paying off.",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "start": "pnpm -r start",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "pnpm --filter @grassion/db generate",
+    "db:migrate": "pnpm --filter @grassion/db migrate",
+    "db:push": "pnpm --filter @grassion/db push",
+    "db:studio": "pnpm --filter @grassion/db studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "prettier": "^3.3.3",
+    "@types/node": "^20.14.10"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.7.0"
+}

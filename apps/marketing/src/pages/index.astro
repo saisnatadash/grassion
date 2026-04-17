@@ -1,0 +1,208 @@
+---
+import Base from '../layouts/Base.astro'
+
+const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
+const trialUrl = `${APP_URL}/login`
+---
+
+<Base title="Grassion" description="Is your AI coding spend actually working? Grassion tells you — in plain English. Install on GitHub in 2 minutes. No code leaves your servers.">
+  <!-- Hero -->
+  <section class="pt-2 pb-14">
+    <h1 class="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
+      Is your AI coding spend actually working?
+    </h1>
+    <p class="mt-6 text-lg leading-relaxed text-neutral-700">
+      Your team pays for Cursor, Copilot, Claude Code. Grassion tells you — in plain English — whether
+      it's paying off. Install on GitHub in 2 minutes. No code leaves your servers.
+    </p>
+    <div class="mt-8 flex flex-wrap items-center gap-3">
+      <a
+        href={trialUrl}
+        class="rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800"
+      >
+        Start free trial →
+      </a>
+      <a
+        href="#how-it-works"
+        class="rounded-md border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+      >
+        See how it works →
+      </a>
+    </div>
+    <p class="mt-3 text-xs text-neutral-500">14-day free trial · No credit card · Works with any GitHub repo</p>
+  </section>
+
+  <!-- The problem -->
+  <section class="py-12">
+    <h2 class="text-2xl font-semibold tracking-tight">The question every CTO is being asked right now</h2>
+    <p class="mt-4 text-lg italic text-neutral-700">
+      "We're spending $X on AI coding tools. Is it working?"
+    </p>
+    <p class="mt-4 leading-relaxed text-neutral-700">
+      Most teams can't answer. Merge speed went up — but so did rework. Cursor feels fast — but is it
+      shipping bugs? No dashboard tells you the truth. You're flying blind with a growing invoice.
+    </p>
+  </section>
+
+  <!-- How it works -->
+  <section id="how-it-works" class="py-12">
+    <h2 class="text-2xl font-semibold tracking-tight">How it works</h2>
+    <ol class="mt-6 space-y-6">
+      <li>
+        <div class="text-sm font-semibold text-neutral-500">1.</div>
+        <h3 class="mt-1 text-lg font-semibold">Connect GitHub in 2 clicks</h3>
+        <p class="mt-1 text-neutral-700">
+          Install the Grassion GitHub App. Pick repos. Done. We read PR metadata only — never code content.
+        </p>
+      </li>
+      <li>
+        <div class="text-sm font-semibold text-neutral-500">2.</div>
+        <h3 class="mt-1 text-lg font-semibold">We detect AI-generated PRs automatically</h3>
+        <p class="mt-1 text-neutral-700">
+          Via commit trailers (Copilot, Claude Code), PR labels, and heuristics. No agent, no IDE plugin,
+          no disruption.
+        </p>
+      </li>
+      <li>
+        <div class="text-sm font-semibold text-neutral-500">3.</div>
+        <h3 class="mt-1 text-lg font-semibold">You get the ROI verdict every Monday</h3>
+        <p class="mt-1 text-neutral-700">
+          One email. Four numbers. One verdict — <em>net positive, net negative, or unclear.</em> Plus
+          the problem PRs worth reviewing.
+        </p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- What you get -->
+  <section class="py-12">
+    <h2 class="text-2xl font-semibold tracking-tight">What you get</h2>
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-lg border border-neutral-200 p-5">
+        <h3 class="font-semibold">Weekly ROI email</h3>
+        <p class="mt-1 text-sm text-neutral-600">Plain English, under 200 words. You'll read it.</p>
+      </div>
+      <div class="rounded-lg border border-neutral-200 p-5">
+        <h3 class="font-semibold">One-page dashboard</h3>
+        <p class="mt-1 text-sm text-neutral-600">No charts, just the 4 numbers that matter.</p>
+      </div>
+      <div class="rounded-lg border border-neutral-200 p-5">
+        <h3 class="font-semibold">Problem PR list</h3>
+        <p class="mt-1 text-sm text-neutral-600">Which AI-assisted PRs caused rework, with AI-written summaries.</p>
+      </div>
+      <div class="rounded-lg border border-neutral-200 p-5">
+        <h3 class="font-semibold">Honest detection</h3>
+        <p class="mt-1 text-sm text-neutral-600">We tell you what we catch and what we miss. No fake precision.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who it's for -->
+  <section class="py-12">
+    <h2 class="text-2xl font-semibold tracking-tight">Who it's for</h2>
+    <p class="mt-4 leading-relaxed text-neutral-700">
+      Engineering teams with 5-50 developers who pay for AI coding tools and want to know if it's working.
+      If your team spends $500+/month on Cursor, Copilot, or Claude Code, Grassion pays for itself on the
+      first problem PR you catch.
+    </p>
+  </section>
+
+  <!-- Pricing -->
+  <section class="py-12">
+    <h2 class="text-2xl font-semibold tracking-tight">Simple pricing. Charged per active developer.</h2>
+    <div class="mt-6 overflow-hidden rounded-lg border border-neutral-200">
+      <table class="w-full text-sm">
+        <thead class="bg-neutral-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Plan</th>
+            <th class="px-4 py-3 font-semibold">Price</th>
+            <th class="px-4 py-3 font-semibold">Best for</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-100">
+          <tr>
+            <td class="px-4 py-3 font-medium">Starter</td>
+            <td class="px-4 py-3">₹2,400 / $29 per dev / month</td>
+            <td class="px-4 py-3 text-neutral-600">5-10 devs</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-3 font-medium">Team</td>
+            <td class="px-4 py-3">₹1,600 / $19 per dev / month (min 10 seats)</td>
+            <td class="px-4 py-3 text-neutral-600">10-30 devs</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-3 font-medium">Business</td>
+            <td class="px-4 py-3">₹41,000 / $499 flat / month</td>
+            <td class="px-4 py-3 text-neutral-600">30-50 devs</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-3 font-medium">Enterprise</td>
+            <td class="px-4 py-3">Contact us</td>
+            <td class="px-4 py-3 text-neutral-600">50+ devs</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-4 text-sm text-neutral-600">14-day free trial. No credit card to start. Cancel anytime.</p>
+    <a
+      href={trialUrl}
+      class="mt-6 inline-block rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800"
+    >
+      Start free trial →
+    </a>
+  </section>
+
+  <!-- FAQ -->
+  <section class="py-12">
+    <h2 class="text-2xl font-semibold tracking-tight">FAQ</h2>
+    <div class="mt-6 divide-y divide-neutral-100">
+      <details class="group py-4">
+        <summary class="cursor-pointer font-medium">Does my code leave my servers?</summary>
+        <p class="mt-2 text-neutral-700">
+          No. Grassion only reads PR metadata — titles, labels, commit messages, merge status, CI results.
+          We never fetch or store code content.
+        </p>
+      </details>
+      <details class="group py-4">
+        <summary class="cursor-pointer font-medium">How accurate is AI detection?</summary>
+        <p class="mt-2 text-neutral-700">
+          Near 100% for GitHub Copilot code review and Claude Code (they leave trailers). 30-50% for
+          manual Cursor usage without trailers. Teams improve accuracy by using our PR labels (one click).
+          We're transparent about what we miss.
+        </p>
+      </details>
+      <details class="group py-4">
+        <summary class="cursor-pointer font-medium">Do I need to install anything in my IDE?</summary>
+        <p class="mt-2 text-neutral-700">
+          No. Grassion is a GitHub App. No IDE plugin, no agent, no developer friction.
+        </p>
+      </details>
+      <details class="group py-4">
+        <summary class="cursor-pointer font-medium">What does "ROI" actually mean?</summary>
+        <p class="mt-2 text-neutral-700">
+          We estimate hours saved by AI (faster merges) vs hours lost to rework (reverts, hotfixes,
+          follow-up fixes). Multiplied by your team's hourly rate. It's directional, not precise, and we
+          tell you our confidence level.
+        </p>
+      </details>
+      <details class="group py-4">
+        <summary class="cursor-pointer font-medium">Who built this?</summary>
+        <p class="mt-2 text-neutral-700">
+          Grassion is built by Mukti Prasad Behera, a Node.js developer who spent years wondering if his
+          own AI tool spend was working. Now you'll know.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="mt-16 rounded-2xl bg-ink px-8 py-12 text-center text-white">
+    <h2 class="text-2xl font-semibold">Stop guessing. Start knowing.</h2>
+    <a
+      href={trialUrl}
+      class="mt-6 inline-block rounded-md bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-neutral-100"
+    >
+      Start your 14-day free trial →
+    </a>
+  </section>
+</Base>

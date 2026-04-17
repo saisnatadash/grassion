@@ -1,0 +1,28 @@
+---
+const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
+const links = [
+  { href: '/about/', label: 'About' },
+  { href: '/pricing/', label: 'Pricing' },
+  { href: '/contact/', label: 'Contact' },
+]
+---
+
+<header class="border-b border-neutral-100">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+    <a href="/" class="flex items-center gap-2 text-lg font-semibold tracking-tight text-ink">
+      <span class="inline-block h-3 w-3 rounded-sm bg-ink"></span>
+      Grassion
+    </a>
+    <nav class="flex items-center gap-6 text-sm">
+      {links.map((l) => (
+        <a href={l.href} class="text-neutral-600 hover:text-neutral-900">{l.label}</a>
+      ))}
+      <a
+        href={APP_URL}
+        class="rounded-md bg-ink px-3 py-1.5 text-white hover:bg-neutral-800"
+      >
+        Sign in
+      </a>
+    </nav>
+  </div>
+</header>

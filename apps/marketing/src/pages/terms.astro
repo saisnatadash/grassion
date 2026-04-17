@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro'
+
+const lastUpdated = '2026-04-17'
+---
+
+<Base title="Terms" description="Grassion terms of service.">
+  <article class="prose-grassion">
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Terms of Service</h1>
+    <p class="text-sm text-neutral-500">Last updated: {lastUpdated}</p>
+    <p>By using Grassion, you agree to these terms.</p>
+
+    <h2>The service</h2>
+    <p>
+      Grassion measures AI coding tool ROI from GitHub metadata. We make no guarantee that
+      measurements are precise — they are estimates, and we disclose our confidence levels.
+    </p>
+
+    <h2>Your account</h2>
+    <ul>
+      <li>You must be authorized to install GitHub Apps on any account you connect to Grassion.</li>
+      <li>You're responsible for keeping your login secure.</li>
+      <li>One account per organization recommended; multi-team accounts require explicit admin role.</li>
+    </ul>
+
+    <h2>Payments</h2>
+    <ul>
+      <li>Plans billed monthly via Razorpay (primary) or Stripe (when available).</li>
+      <li>Free trial: 14 days, no card required.</li>
+      <li>Cancel anytime; access continues until end of billing cycle.</li>
+      <li>Refunds: pro-rated for annual plans only, case-by-case for monthly.</li>
+    </ul>
+
+    <h2>Limitations</h2>
+    <ul>
+      <li>Grassion is provided "as is" without warranties.</li>
+      <li>Our liability is limited to the amount you paid us in the prior 12 months.</li>
+      <li>Don't use Grassion for illegal activity.</li>
+    </ul>
+
+    <h2>Termination</h2>
+    <p>We may suspend accounts for abuse, non-payment, or policy violation with reasonable notice.</p>
+
+    <h2>Contact</h2>
+    <p><a href="mailto:contact@grassion.com">contact@grassion.com</a></p>
+    <p>Governing law: Odisha, India.</p>
+  </article>
+</Base>

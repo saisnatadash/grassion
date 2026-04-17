@@ -1,0 +1,71 @@
+---
+import Base from '../layouts/Base.astro'
+
+const lastUpdated = '2026-04-17'
+---
+
+<Base title="Privacy" description="How Grassion collects, uses, and protects your data.">
+  <article class="prose-grassion">
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Privacy Policy</h1>
+    <p class="text-sm text-neutral-500">Last updated: {lastUpdated}</p>
+    <p>
+      Grassion is a GitHub App that reads pull request metadata to help teams measure AI coding tool
+      ROI. This policy explains what we collect and how we use it.
+    </p>
+
+    <h2>What we collect</h2>
+    <ul>
+      <li>
+        <strong>GitHub metadata only:</strong> PR titles, descriptions, labels, commit messages, author,
+        merge status, CI check results. We do <strong>NOT</strong> fetch or store code content.
+      </li>
+      <li>
+        <strong>Account data:</strong> your GitHub login, email (from GitHub OAuth), and team
+        membership.
+      </li>
+      <li><strong>Usage data:</strong> pages visited, errors, performance (via Sentry/Plausible).</li>
+    </ul>
+
+    <h2>What we don't collect</h2>
+    <ul>
+      <li>Source code</li>
+      <li>File contents</li>
+      <li>Private messages or issue contents beyond what's in PR metadata</li>
+      <li>Any data from repositories you haven't explicitly connected</li>
+    </ul>
+
+    <h2>How we use it</h2>
+    <ul>
+      <li>Detect AI-generated PRs and compute ROI metrics for your team</li>
+      <li>Send weekly digest emails (you can opt out in settings)</li>
+      <li>Provide dashboard features</li>
+    </ul>
+
+    <h2>Who we share it with</h2>
+    <ul>
+      <li>
+        <strong>OpenAI</strong> receives anonymized PR titles and outcome signals to generate
+        human-readable summaries. We do not send commit messages, code, or author information.
+      </li>
+      <li><strong>Resend</strong> delivers transactional emails on our behalf.</li>
+      <li><strong>Razorpay</strong> processes payments.</li>
+      <li>We do not sell data to anyone, ever.</li>
+    </ul>
+
+    <h2>Your rights</h2>
+    <ul>
+      <li>Export your data: email <a href="mailto:contact@grassion.com">contact@grassion.com</a></li>
+      <li>Delete your data: uninstall the GitHub App or email us for full account deletion</li>
+      <li>Access logs, DPA, security: available on request</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>
+      Questions about privacy:
+      <a href="mailto:contact@grassion.com">contact@grassion.com</a>
+    </p>
+    <p>
+      Grassion is operated by Cluenuts Technology Private Limited, Bhubaneswar, Odisha, India.
+    </p>
+  </article>
+</Base>

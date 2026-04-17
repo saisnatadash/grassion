@@ -1,0 +1,29 @@
+{
+  "name": "@grassion/db",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "generate": "node --env-file=../../.env node_modules/drizzle-kit/bin.cjs generate",
+    "migrate": "tsx --env-file=../../.env ./src/migrate.ts",
+    "push": "node --env-file=../../.env node_modules/drizzle-kit/bin.cjs push",
+    "studio": "node --env-file=../../.env node_modules/drizzle-kit/bin.cjs studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.33.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.24.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.10"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "astro",
+  "buildCommand": "pnpm --filter @grassion/marketing build",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "cleanUrls": true,
+  "trailingSlash": true
+}

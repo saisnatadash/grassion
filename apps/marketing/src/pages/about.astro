@@ -1,0 +1,54 @@
+---
+import Base from '../layouts/Base.astro'
+---
+
+<Base title="About" description="Why Grassion exists, how it works, and who built it.">
+  <article class="prose-grassion">
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">About Grassion</h1>
+    <p>
+      Grassion was built because every engineering team in 2026 is spending real money on AI coding
+      tools — and no one can answer whether it's working.
+    </p>
+
+    <h2>Why this exists</h2>
+    <p>
+      In late 2025, CodeRabbit raised $60M at a $550M valuation. Cursor crossed $500M ARR. GitHub
+      Copilot hit 20 million developers. Every team is spending $20-60 per developer per month on AI
+      tools. And every CFO is asking: <em>"Is this paying off?"</em>
+    </p>
+    <p>
+      Traditional dev analytics tools measure velocity and cycle time. They don't measure whether
+      AI-generated code is <em>actually</em> faster net of rework, reverts, and hotfixes. That's the
+      gap Grassion fills.
+    </p>
+
+    <h2>How we built it</h2>
+    <p>
+      Grassion reads GitHub metadata only. We never touch your code. We detect AI-generated PRs through
+      commit trailers (the ones Copilot, Claude Code, and Cursor leave), manual labels, and heuristics.
+      Then we track what those PRs do after merge — reverts, downstream fixes, CI failures, hotfixes.
+      We put it all in one number and tell you the truth.
+    </p>
+
+    <h2>Who built it</h2>
+    <p>
+      Mukti Prasad Behera is the founder of Grassion. He runs a small software agency (Cluenuts
+      Technology) and has been building products since 2019. Grassion is his focused bet on a problem
+      he's lived through: <em>knowing where his AI tool money actually goes.</em>
+    </p>
+
+    <h2>What we believe</h2>
+    <ul>
+      <li><strong>Honest measurement beats fake precision.</strong> We tell you what we can and can't measure.</li>
+      <li><strong>One number beats fifty charts.</strong> A CTO shouldn't need 30 minutes to answer "is AI paying off."</li>
+      <li><strong>Your code is yours.</strong> We don't read it. We don't store it. We don't need it.</li>
+      <li><strong>Small teams deserve real tools.</strong> Not every measurement tool should require a $50k contract.</li>
+    </ul>
+
+    <h2>Get in touch</h2>
+    <p>
+      Questions, feedback, bugs:
+      <a href="mailto:contact@grassion.com">contact@grassion.com</a>
+    </p>
+  </article>
+</Base>

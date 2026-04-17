@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: theme('fontFamily.sans');
+  color: #0f172a;
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.prose-grassion h2 {
+  @apply mt-12 text-2xl font-semibold tracking-tight;
+}
+.prose-grassion h3 {
+  @apply mt-8 text-lg font-semibold tracking-tight;
+}
+.prose-grassion p {
+  @apply mt-4 leading-relaxed text-neutral-700;
+}
+.prose-grassion ul {
+  @apply mt-4 list-disc space-y-2 pl-6 text-neutral-700;
+}
+.prose-grassion strong {
+  @apply text-neutral-900;
+}
+.prose-grassion a {
+  @apply text-ink underline underline-offset-2 hover:no-underline;
+}
+.prose-grassion blockquote {
+  @apply mt-4 border-l-2 border-neutral-200 pl-4 text-neutral-600;
+}
+.prose-grassion table {
+  @apply mt-6 w-full border-collapse text-sm;
+}
+.prose-grassion th,
+.prose-grassion td {
+  @apply border border-neutral-200 px-3 py-2 text-left;
+}
+.prose-grassion th {
+  @apply bg-neutral-50 font-semibold;
+}
