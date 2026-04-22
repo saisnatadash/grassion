@@ -1,208 +1,751 @@
 ---
-import Base from '../layouts/Base.astro'
-
 const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
-const trialUrl = `${APP_URL}/login`
+const trialUrl = `${APP_URL}/install`
+const signinUrl = `${APP_URL}/login`
 ---
 
-<Base title="Grassion" description="Is your AI coding spend actually working? Grassion tells you — in plain English. Install on GitHub in 2 minutes. No code leaves your servers.">
-  <!-- Hero -->
-  <section class="pt-2 pb-14">
-    <h1 class="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
-      Is your AI coding spend actually working?
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grassion — Know if your AI coding spend is paying off</title>
+  <meta name="description" content="Grassion connects to GitHub, detects AI-generated PRs, and tells you whether Copilot, Cursor, or Claude Code is actually paying off. 2-minute install." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#060C18" />
+  <meta property="og:title" content="Grassion — Know if your AI coding spend is paying off" />
+  <meta property="og:description" content="Connects to GitHub. Detects AI PRs. Tracks rework. One verdict every Monday." />
+  <meta property="og:type" content="website" />
+</head>
+
+<body>
+
+<!-- ─── CURSOR GLOW ─────────────────────────── -->
+<div id="cg" class="cg" aria-hidden="true"></div>
+
+<!-- ─── NAV ────────────────────────────────── -->
+<nav class="nav">
+  <a href="/" class="logo-link">
+    <img src="/grassion-logo.png" alt="Grassion" class="logo-img" id="logo-img" />
+    <div class="logo-fallback hidden" id="logo-fallback">
+      <div class="logo-icon">G</div>
+      <span class="logo-text">GRASSION</span>
+    </div>
+  </a>
+
+  <div class="nav-links">
+    <a href="#about" class="nav-a">About</a>
+    <a href="#contact" class="nav-a">Contact</a>
+    <a href={signinUrl} class="nav-a">Sign in</a>
+    <a href={trialUrl} class="btn-primary btn-sm">Get early access →</a>
+  </div>
+</nav>
+
+<!-- ─── HERO ────────────────────────────────── -->
+<section class="hero">
+
+  <!-- subtle grid bg -->
+  <div class="grid-bg" aria-hidden="true"></div>
+  <!-- ambient blur -->
+  <div class="ambient" aria-hidden="true"></div>
+
+  <div class="hero-inner">
+
+    <!-- pill badge -->
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Live on GitHub · Real-time PR analysis
+    </div>
+
+    <h1 class="headline">
+      Your team pays for AI.<br />
+      <span class="headline-accent">Prove it works.</span>
     </h1>
-    <p class="mt-6 text-lg leading-relaxed text-neutral-700">
-      Your team pays for Cursor, Copilot, Claude Code. Grassion tells you — in plain English — whether
-      it's paying off. Install on GitHub in 2 minutes. No code leaves your servers.
+
+    <p class="subline">
+      Grassion connects to GitHub, detects AI-generated PRs automatically, and tracks what happens after merge — reverts, bugs, rework. One verdict every Monday: <em>net positive, net negative, or unclear.</em>
     </p>
-    <div class="mt-8 flex flex-wrap items-center gap-3">
-      <a
-        href={trialUrl}
-        class="rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800"
-      >
-        Start free trial →
+
+    <div class="cta-row">
+      <a href={trialUrl} class="btn-primary">
+        Install on GitHub — free
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
       </a>
-      <a
-        href="#how-it-works"
-        class="rounded-md border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-      >
-        See how it works →
+      <a href="#console" class="btn-ghost">See how it works</a>
+    </div>
+
+    <div class="trust-row">
+      <span>✓ 14-day free trial</span>
+      <span>✓ No credit card</span>
+      <span>✓ Zero code access</span>
+      <span>✓ 2-min install</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── LIVE CONSOLE ──────────────────────── -->
+<section id="console" class="console-section">
+  <div class="section-label">// live analysis</div>
+  <h2 class="section-title">Watch Grassion work</h2>
+  <p class="section-sub">This runs automatically on every PR your team merges.</p>
+
+  <div class="console-wrap">
+    <!-- window chrome -->
+    <div class="console-chrome">
+      <div class="chrome-dots">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+      </div>
+      <span class="chrome-title">grassion — live analysis</span>
+      <div class="chrome-right">
+        <span class="live-pill">
+          <span class="live-dot"></span>LIVE
+        </span>
+      </div>
+    </div>
+
+    <!-- scrolling output -->
+    <div class="console-body" id="console-output" aria-live="polite" aria-label="Live console output">
+      <div class="c-dim">$ grassion analyze --pr 247 --repo acme/backend</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── WHAT YOU GET ──────────────────────── -->
+<section class="what-section">
+  <div class="section-label">// product</div>
+  <h2 class="section-title">Four things. That's it.</h2>
+
+  <div class="what-grid">
+    <div class="what-card">
+      <div class="what-icon">◈</div>
+      <div>
+        <h3>Auto-detect AI PRs</h3>
+        <p>Reads commit trailers from Copilot, Cursor, Claude Code. No manual tagging. Near-100% accuracy.</p>
+      </div>
+    </div>
+    <div class="what-card">
+      <div class="what-icon">◆</div>
+      <div>
+        <h3>Track outcomes</h3>
+        <p>Watches every merged PR for reverts, downstream fixes, CI failures. Pure GitHub metadata — zero code access.</p>
+      </div>
+    </div>
+    <div class="what-card">
+      <div class="what-icon">◉</div>
+      <div>
+        <h3>Weekly verdict</h3>
+        <p>One email. Four numbers. Net positive, net negative, or unclear. Plain English. Under 200 words.</p>
+      </div>
+    </div>
+    <div class="what-card">
+      <div class="what-icon">◇</div>
+      <div>
+        <h3>Problem PR list</h3>
+        <p>Which AI-assisted PRs caused rework — with AI-written one-line summaries of exactly what went wrong.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ABOUT ──────────────────────────────── -->
+<section id="about" class="about-section">
+  <div class="section-label">// about</div>
+  <div class="about-inner">
+    <div class="about-text">
+      <h2 class="section-title">Why Grassion exists</h2>
+      <p>
+        Every engineering team in 2026 is spending real money on AI coding tools. And every CFO is asking: <em>"Is this paying off?"</em>
+        Traditional dev analytics measure velocity. They don't measure whether AI-generated code is <em>actually</em> faster net of rework, reverts, and hotfixes.
+        That's the gap Grassion fills.
+      </p>
+      <p style="margin-top: 1rem;">
+        Built by <strong>Mukti Prasad Behera</strong>, founder of Cluenuts Technology, Bhubaneswar — after years of wondering where his own AI tool spend was actually going.
+      </p>
+      <a href={trialUrl} class="btn-primary" style="margin-top:1.5rem; display:inline-flex;">Start free trial →</a>
+    </div>
+
+    <div class="about-stats">
+      <div class="stat-card">
+        <div class="stat-n">$29</div>
+        <div class="stat-l">per dev / month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-n">2 min</div>
+        <div class="stat-l">to install</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-n">0</div>
+        <div class="stat-l">code lines read</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-n">1</div>
+        <div class="stat-l">verdict per week</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── EARLY ACCESS CTA ───────────────────── -->
+<section id="early-access" class="early-section">
+  <div class="early-inner">
+    <div class="section-label" style="margin-bottom:1rem;">// early access</div>
+    <h2 class="early-title">Join the first 20 teams</h2>
+    <p class="early-sub">
+      Locked-in pricing. Direct access to the founder. Shape what gets built.
+    </p>
+
+    <ul class="early-list">
+      <li><span class="tick">✓</span> Full ROI dashboard — weekly verdict + 4 key metrics</li>
+      <li><span class="tick">✓</span> Automatic AI PR detection (Copilot, Cursor, Claude Code)</li>
+      <li><span class="tick">✓</span> Problem PR list with AI-written summaries</li>
+      <li><span class="tick">✓</span> Weekly email digest — plain English, under 200 words</li>
+      <li><span class="tick">✓</span> Razorpay billing — UPI, cards, netbanking (INR + USD)</li>
+      <li><span class="tick">✓</span> Early access price locked forever: ₹2,400 / $29 per dev/mo</li>
+    </ul>
+
+    <div class="early-cta-row">
+      <a href={trialUrl} class="btn-primary btn-lg">
+        Get early access — free 14-day trial
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
       </a>
+      <a href="#contact" class="btn-ghost">Talk to founder first</a>
     </div>
-    <p class="mt-3 text-xs text-neutral-500">14-day free trial · No credit card · Works with any GitHub repo</p>
-  </section>
+    <p class="early-note">No credit card required · Cancel anytime · Only 20 early access spots</p>
+  </div>
+</section>
 
-  <!-- The problem -->
-  <section class="py-12">
-    <h2 class="text-2xl font-semibold tracking-tight">The question every CTO is being asked right now</h2>
-    <p class="mt-4 text-lg italic text-neutral-700">
-      "We're spending $X on AI coding tools. Is it working?"
-    </p>
-    <p class="mt-4 leading-relaxed text-neutral-700">
-      Most teams can't answer. Merge speed went up — but so did rework. Cursor feels fast — but is it
-      shipping bugs? No dashboard tells you the truth. You're flying blind with a growing invoice.
-    </p>
-  </section>
+<!-- ─── CONTACT ────────────────────────────── -->
+<section id="contact" class="contact-section">
+  <div class="section-label">// contact</div>
+  <h2 class="section-title">Get in touch</h2>
+  <p class="section-sub" style="max-width:420px;">
+    I reply within 24 hours, usually same-day. Direct line to the founder.
+  </p>
 
-  <!-- How it works -->
-  <section id="how-it-works" class="py-12">
-    <h2 class="text-2xl font-semibold tracking-tight">How it works</h2>
-    <ol class="mt-6 space-y-6">
-      <li>
-        <div class="text-sm font-semibold text-neutral-500">1.</div>
-        <h3 class="mt-1 text-lg font-semibold">Connect GitHub in 2 clicks</h3>
-        <p class="mt-1 text-neutral-700">
-          Install the Grassion GitHub App. Pick repos. Done. We read PR metadata only — never code content.
-        </p>
-      </li>
-      <li>
-        <div class="text-sm font-semibold text-neutral-500">2.</div>
-        <h3 class="mt-1 text-lg font-semibold">We detect AI-generated PRs automatically</h3>
-        <p class="mt-1 text-neutral-700">
-          Via commit trailers (Copilot, Claude Code), PR labels, and heuristics. No agent, no IDE plugin,
-          no disruption.
-        </p>
-      </li>
-      <li>
-        <div class="text-sm font-semibold text-neutral-500">3.</div>
-        <h3 class="mt-1 text-lg font-semibold">You get the ROI verdict every Monday</h3>
-        <p class="mt-1 text-neutral-700">
-          One email. Four numbers. One verdict — <em>net positive, net negative, or unclear.</em> Plus
-          the problem PRs worth reviewing.
-        </p>
-      </li>
-    </ol>
-  </section>
-
-  <!-- What you get -->
-  <section class="py-12">
-    <h2 class="text-2xl font-semibold tracking-tight">What you get</h2>
-    <div class="mt-6 grid gap-4 sm:grid-cols-2">
-      <div class="rounded-lg border border-neutral-200 p-5">
-        <h3 class="font-semibold">Weekly ROI email</h3>
-        <p class="mt-1 text-sm text-neutral-600">Plain English, under 200 words. You'll read it.</p>
-      </div>
-      <div class="rounded-lg border border-neutral-200 p-5">
-        <h3 class="font-semibold">One-page dashboard</h3>
-        <p class="mt-1 text-sm text-neutral-600">No charts, just the 4 numbers that matter.</p>
-      </div>
-      <div class="rounded-lg border border-neutral-200 p-5">
-        <h3 class="font-semibold">Problem PR list</h3>
-        <p class="mt-1 text-sm text-neutral-600">Which AI-assisted PRs caused rework, with AI-written summaries.</p>
-      </div>
-      <div class="rounded-lg border border-neutral-200 p-5">
-        <h3 class="font-semibold">Honest detection</h3>
-        <p class="mt-1 text-sm text-neutral-600">We tell you what we catch and what we miss. No fake precision.</p>
-      </div>
+  <form class="contact-form" id="contact-form">
+    <div class="form-row">
+      <input required name="name" placeholder="Your name" class="form-input" autocomplete="name" maxlength="120" />
+      <input required name="email" type="email" placeholder="your@email.com" class="form-input" autocomplete="email" />
     </div>
-  </section>
-
-  <!-- Who it's for -->
-  <section class="py-12">
-    <h2 class="text-2xl font-semibold tracking-tight">Who it's for</h2>
-    <p class="mt-4 leading-relaxed text-neutral-700">
-      Engineering teams with 5-50 developers who pay for AI coding tools and want to know if it's working.
-      If your team spends $500+/month on Cursor, Copilot, or Claude Code, Grassion pays for itself on the
-      first problem PR you catch.
-    </p>
-  </section>
-
-  <!-- Pricing -->
-  <section class="py-12">
-    <h2 class="text-2xl font-semibold tracking-tight">Simple pricing. Charged per active developer.</h2>
-    <div class="mt-6 overflow-hidden rounded-lg border border-neutral-200">
-      <table class="w-full text-sm">
-        <thead class="bg-neutral-50 text-left">
-          <tr>
-            <th class="px-4 py-3 font-semibold">Plan</th>
-            <th class="px-4 py-3 font-semibold">Price</th>
-            <th class="px-4 py-3 font-semibold">Best for</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-neutral-100">
-          <tr>
-            <td class="px-4 py-3 font-medium">Starter</td>
-            <td class="px-4 py-3">₹2,400 / $29 per dev / month</td>
-            <td class="px-4 py-3 text-neutral-600">5-10 devs</td>
-          </tr>
-          <tr>
-            <td class="px-4 py-3 font-medium">Team</td>
-            <td class="px-4 py-3">₹1,600 / $19 per dev / month (min 10 seats)</td>
-            <td class="px-4 py-3 text-neutral-600">10-30 devs</td>
-          </tr>
-          <tr>
-            <td class="px-4 py-3 font-medium">Business</td>
-            <td class="px-4 py-3">₹41,000 / $499 flat / month</td>
-            <td class="px-4 py-3 text-neutral-600">30-50 devs</td>
-          </tr>
-          <tr>
-            <td class="px-4 py-3 font-medium">Enterprise</td>
-            <td class="px-4 py-3">Contact us</td>
-            <td class="px-4 py-3 text-neutral-600">50+ devs</td>
-          </tr>
-        </tbody>
-      </table>
+    <textarea required name="message" placeholder="Tell me about your team — how many devs, which AI tools you use..." class="form-input form-textarea" rows="4" maxlength="2000"></textarea>
+    <!-- honeypot -->
+    <input type="text" name="website" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
+    <div class="form-footer">
+      <span id="form-status" class="form-status"></span>
+      <button type="submit" class="btn-primary">Send message →</button>
     </div>
-    <p class="mt-4 text-sm text-neutral-600">14-day free trial. No credit card to start. Cancel anytime.</p>
-    <a
-      href={trialUrl}
-      class="mt-6 inline-block rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800"
-    >
-      Start free trial →
-    </a>
-  </section>
+  </form>
 
-  <!-- FAQ -->
-  <section class="py-12">
-    <h2 class="text-2xl font-semibold tracking-tight">FAQ</h2>
-    <div class="mt-6 divide-y divide-neutral-100">
-      <details class="group py-4">
-        <summary class="cursor-pointer font-medium">Does my code leave my servers?</summary>
-        <p class="mt-2 text-neutral-700">
-          No. Grassion only reads PR metadata — titles, labels, commit messages, merge status, CI results.
-          We never fetch or store code content.
-        </p>
-      </details>
-      <details class="group py-4">
-        <summary class="cursor-pointer font-medium">How accurate is AI detection?</summary>
-        <p class="mt-2 text-neutral-700">
-          Near 100% for GitHub Copilot code review and Claude Code (they leave trailers). 30-50% for
-          manual Cursor usage without trailers. Teams improve accuracy by using our PR labels (one click).
-          We're transparent about what we miss.
-        </p>
-      </details>
-      <details class="group py-4">
-        <summary class="cursor-pointer font-medium">Do I need to install anything in my IDE?</summary>
-        <p class="mt-2 text-neutral-700">
-          No. Grassion is a GitHub App. No IDE plugin, no agent, no developer friction.
-        </p>
-      </details>
-      <details class="group py-4">
-        <summary class="cursor-pointer font-medium">What does "ROI" actually mean?</summary>
-        <p class="mt-2 text-neutral-700">
-          We estimate hours saved by AI (faster merges) vs hours lost to rework (reverts, hotfixes,
-          follow-up fixes). Multiplied by your team's hourly rate. It's directional, not precise, and we
-          tell you our confidence level.
-        </p>
-      </details>
-      <details class="group py-4">
-        <summary class="cursor-pointer font-medium">Who built this?</summary>
-        <p class="mt-2 text-neutral-700">
-          Grassion is built by Mukti Prasad Behera, a Node.js developer who spent years wondering if his
-          own AI tool spend was working. Now you'll know.
-        </p>
-      </details>
+  <p class="contact-alt">Prefer email? <a href="mailto:hello@grassion.com">hello@grassion.com</a></p>
+</section>
+
+<!-- ─── FOOTER ────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <img src="/grassion-logo.png" alt="Grassion" class="footer-logo" id="footer-logo"
+        onerror="this.style.display='none'; document.getElementById('footer-logo-text').style.display='block'" />
+      <span id="footer-logo-text" style="display:none; font-weight:700; color:rgba(255,255,255,0.7);">GRASSION</span>
+      <span class="footer-copy">© {new Date().getFullYear()} Cluenuts Technology · Bhubaneswar, India</span>
     </div>
-  </section>
+    <div class="footer-links">
+      <a href="/about/">About</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/contact/">Contact</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href={signinUrl} class="footer-highlight">Sign in</a>
+      <a href={trialUrl} class="footer-highlight">Get started →</a>
+    </div>
+  </div>
+</footer>
 
-  <!-- Final CTA -->
-  <section class="mt-16 rounded-2xl bg-ink px-8 py-12 text-center text-white">
-    <h2 class="text-2xl font-semibold">Stop guessing. Start knowing.</h2>
-    <a
-      href={trialUrl}
-      class="mt-6 inline-block rounded-md bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-neutral-100"
-    >
-      Start your 14-day free trial →
-    </a>
-  </section>
-</Base>
+<!-- ─── STYLES ─────────────────────────────── -->
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #060C18;
+    --bg2: #0A1020;
+    --teal: #22bac4;
+    --teal2: #1da8b2;
+    --white: #ffffff;
+    --dim: rgba(255,255,255,0.5);
+    --dimmer: rgba(255,255,255,0.28);
+    --border: rgba(255,255,255,0.07);
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Sora', system-ui, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--white);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* cursor glow */
+  .cg {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    transition: opacity 0.3s;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(6,12,24,0.85);
+    backdrop-filter: blur(12px);
+  }
+  .logo-link { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .logo-img { height: 2.2rem; width: auto; }
+  .logo-fallback { display: flex; align-items: center; gap: 0.5rem; }
+  .logo-icon {
+    width: 2rem; height: 2rem; border-radius: 0.375rem;
+    background: var(--teal); color: var(--bg);
+    font-weight: 900; font-size: 0.875rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-text { font-weight: 700; color: var(--white); letter-spacing: 0.05em; font-size: 1rem; }
+  .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-a { color: var(--dimmer); font-size: 0.875rem; text-decoration: none; transition: color 0.2s; }
+  .nav-a:hover { color: var(--white); }
+  .hidden { display: none !important; }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.6rem 1.1rem;
+    background: var(--teal); color: var(--bg);
+    font-weight: 700; font-size: 0.875rem;
+    border: none; border-radius: 0.6rem;
+    text-decoration: none; cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 0 20px rgba(34,186,196,0.2);
+    font-family: var(--sans);
+  }
+  .btn-primary:hover { background: var(--teal2); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
+  .btn-lg { padding: 0.85rem 1.6rem; font-size: 1rem; }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid var(--border); color: var(--dim);
+    font-weight: 600; font-size: 0.875rem;
+    border-radius: 0.6rem; text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+    font-family: var(--sans);
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 88vh;
+    display: flex; flex-direction: column; justify-content: center;
+    overflow: hidden;
+    padding: 4rem 2rem 5rem;
+  }
+  .grid-bg {
+    position: absolute; inset: 0; opacity: 0.035;
+    background-image:
+      linear-gradient(rgba(34,186,196,1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,186,196,1) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none;
+  }
+  .ambient {
+    position: absolute; top: 40%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px; height: 500px;
+    background: radial-gradient(ellipse, rgba(34,186,196,0.12) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .hero-inner {
+    position: relative; z-index: 10;
+    max-width: 760px; margin: 0 auto; text-align: center;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid rgba(34,186,196,0.3);
+    background: rgba(34,186,196,0.08);
+    border-radius: 9999px;
+    color: var(--teal);
+    font-family: var(--mono); font-size: 0.72rem;
+    margin-bottom: 1.75rem;
+    letter-spacing: 0.04em;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+
+  .headline {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800; line-height: 1.08; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.25rem;
+  }
+  .headline-accent {
+    background: linear-gradient(135deg, #22bac4, #7dd3fc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subline {
+    font-size: 1.05rem; color: var(--dim); line-height: 1.7;
+    max-width: 580px; margin: 0 auto 2rem; font-weight: 400;
+  }
+  .subline em { color: rgba(255,255,255,0.75); font-style: italic; }
+  .cta-row { display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .trust-row {
+    display: flex; align-items: center; justify-content: center; gap: 1.5rem; flex-wrap: wrap;
+    font-size: 0.8rem; color: var(--dimmer); font-family: var(--mono);
+  }
+  .trust-row span { display: flex; align-items: center; gap: 0.35rem; }
+
+  /* ── SECTION COMMON ── */
+  .section-label {
+    font-family: var(--mono); font-size: 0.72rem;
+    color: var(--teal); letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 0.6rem;
+  }
+  .section-title {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+    font-weight: 800; color: var(--white); line-height: 1.15;
+    letter-spacing: -0.015em; margin-bottom: 0.75rem;
+  }
+  .section-sub {
+    font-size: 0.95rem; color: var(--dim); line-height: 1.65; margin-bottom: 2rem;
+  }
+
+  /* ── CONSOLE ── */
+  .console-section {
+    padding: 5rem 2rem;
+    max-width: 820px; margin: 0 auto;
+    text-align: center;
+  }
+  .console-wrap {
+    border-radius: 0.875rem;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.025);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(34,186,196,0.06);
+    text-align: left;
+  }
+  .console-chrome {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .chrome-dots { display: flex; gap: 0.4rem; align-items: center; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: rgba(239,68,68,0.6); }
+  .dot-y { background: rgba(234,179,8,0.6); }
+  .dot-g { background: rgba(34,197,94,0.6); }
+  .chrome-title { font-family: var(--mono); font-size: 0.72rem; color: var(--dimmer); }
+  .chrome-right { display: flex; align-items: center; }
+  .live-pill {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-family: var(--mono); font-size: 0.65rem;
+    color: var(--teal); border: 1px solid rgba(34,186,196,0.3);
+    padding: 0.15rem 0.5rem; border-radius: 9999px;
+    background: rgba(34,186,196,0.08);
+  }
+  .live-dot {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--teal);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .console-body {
+    padding: 1rem 1.25rem;
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.65;
+    color: #94a3b8;
+    height: 300px; overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+  .console-body::-webkit-scrollbar { width: 4px; }
+  .console-body::-webkit-scrollbar-track { background: transparent; }
+  .console-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+  .c-dim { color: rgba(255,255,255,0.18); }
+
+  /* ── WHAT SECTION ── */
+  .what-section {
+    padding: 5rem 2rem;
+    max-width: 900px; margin: 0 auto;
+    text-align: center;
+  }
+  .what-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+    background: var(--border); border: 1px solid var(--border); border-radius: 0.875rem; overflow: hidden;
+    text-align: left; margin-top: 2rem;
+  }
+  @media(max-width:600px){ .what-grid { grid-template-columns: 1fr; } }
+  .what-card {
+    display: flex; align-items: flex-start; gap: 0.875rem;
+    padding: 1.5rem;
+    background: rgba(255,255,255,0.02);
+    transition: background 0.2s;
+  }
+  .what-card:hover { background: rgba(255,255,255,0.04); }
+  .what-icon {
+    font-size: 1.1rem; color: var(--teal);
+    flex-shrink: 0; margin-top: 0.1rem;
+  }
+  .what-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--white); margin-bottom: 0.35rem; }
+  .what-card p { font-size: 0.83rem; color: var(--dim); line-height: 1.6; }
+
+  /* ── ABOUT ── */
+  .about-section {
+    padding: 5rem 2rem;
+    max-width: 900px; margin: 0 auto;
+    border-top: 1px solid var(--border);
+  }
+  .about-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 4rem; align-items: start;
+  }
+  @media(max-width:640px){ .about-inner { grid-template-columns: 1fr; gap: 2rem; } }
+  .about-text p { font-size: 0.95rem; color: var(--dim); line-height: 1.75; }
+  .about-text strong { color: var(--white); }
+  .about-text em { color: rgba(255,255,255,0.7); font-style: italic; }
+  .about-stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--border); border: 1px solid var(--border);
+    border-radius: 0.875rem; overflow: hidden; flex-shrink: 0;
+  }
+  .stat-card {
+    padding: 1.25rem 1.5rem;
+    background: rgba(255,255,255,0.02);
+    text-align: center;
+  }
+  .stat-n { font-size: 1.75rem; font-weight: 800; color: var(--teal); line-height: 1; }
+  .stat-l { font-size: 0.72rem; color: var(--dimmer); margin-top: 0.3rem; font-family: var(--mono); }
+
+  /* ── EARLY ACCESS ── */
+  .early-section {
+    padding: 5rem 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .early-inner {
+    max-width: 620px; margin: 0 auto; text-align: center;
+  }
+  .early-title {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 800; color: var(--white);
+    letter-spacing: -0.02em; margin-bottom: 0.75rem;
+  }
+  .early-sub { font-size: 1rem; color: var(--dim); margin-bottom: 2rem; }
+  .early-list {
+    list-style: none; text-align: left;
+    display: inline-flex; flex-direction: column; gap: 0.6rem;
+    margin: 0 auto 2rem; font-size: 0.9rem; color: rgba(255,255,255,0.75);
+  }
+  .early-list li { display: flex; align-items: flex-start; gap: 0.6rem; }
+  .tick { color: var(--teal); flex-shrink: 0; font-weight: 700; }
+  .early-cta-row { display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .early-note { font-size: 0.75rem; color: var(--dimmer); font-family: var(--mono); }
+
+  /* ── CONTACT ── */
+  .contact-section {
+    padding: 5rem 2rem;
+    max-width: 620px; margin: 0 auto;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .contact-form { text-align: left; margin-top: 1.5rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+  @media(max-width:500px){ .form-row { grid-template-columns: 1fr; } }
+  .form-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--white);
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.875rem;
+    font-size: 0.875rem;
+    font-family: var(--sans);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 0;
+  }
+  .form-input::placeholder { color: var(--dimmer); }
+  .form-input:focus { border-color: rgba(34,186,196,0.5); }
+  .form-textarea { resize: vertical; min-height: 110px; display: block; margin-bottom: 0.75px; }
+  .form-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.75rem; }
+  .form-status { font-size: 0.8rem; color: var(--dim); font-family: var(--mono); }
+  .form-status.ok { color: #4ade80; }
+  .form-status.err { color: #f87171; }
+  .contact-alt { margin-top: 1.25rem; font-size: 0.875rem; color: var(--dimmer); }
+  .contact-alt a { color: var(--teal); text-decoration: none; }
+  .contact-alt a:hover { text-decoration: underline; }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 1rem 2rem;
+    background: rgba(255,255,255,0.01);
+  }
+  .footer-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .footer-left { display: flex; align-items: center; gap: 0.75rem; }
+  .footer-logo { height: 1.5rem; width: auto; opacity: 0.7; }
+  .footer-copy { font-size: 0.72rem; color: var(--dimmer); font-family: var(--mono); }
+  .footer-links { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+  .footer-links a { font-size: 0.78rem; color: var(--dimmer); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--white); }
+  .footer-highlight { color: var(--teal) !important; font-weight: 600; }
+</style>
+
+<!-- ─── SCRIPTS ─────────────────────────────── -->
+<script>
+  // cursor glow
+  const cg = document.getElementById('cg');
+  if (cg) {
+    document.addEventListener('mousemove', (e) => {
+      cg.style.background = `radial-gradient(350px at ${e.clientX}px ${e.clientY}px, rgba(34,186,196,0.05), transparent 60%)`;
+    });
+  }
+
+  // logo fallback
+  const img = document.getElementById('logo-img');
+  const fb  = document.getElementById('logo-fallback');
+  if (img && fb) {
+    img.addEventListener('error', () => {
+      img.style.display = 'none';
+      fb.classList.remove('hidden');
+      fb.style.display = 'flex';
+    });
+  }
+
+  // ── CONSOLE ANIMATION ──
+  const out = document.getElementById('console-output');
+  if (out) {
+    const lines = [
+      { t: '', d: 0 },
+      { t: '<span style="color:#94a3b8">[webhook] PR #247 opened — "Add payment retry logic"</span>', d: 400, fast: true },
+      { t: '<span style="color:#64748b">[auth]    Installation ID: 48291 · Repo: acme/backend</span>', d: 800, fast: true },
+      { t: '', d: 1100 },
+      { t: '<span style="color:#22bac4">◈ Running AI detection...</span>', d: 1200 },
+      { t: '<span style="color:#64748b">  Scanning 3 commits for trailers...</span>', d: 1800, fast: true },
+      { t: '<span style="color:#4ade80">  ✓ Co-authored-by: Claude &lt;noreply@anthropic.com&gt;</span>', d: 2300, fast: true },
+      { t: '<span style="color:#4ade80">  ✓ Source: claude · Confidence: 95%</span>', d: 2700, fast: true },
+      { t: '', d: 3000 },
+      { t: '<span style="color:#22bac4">◈ Outcome check scheduled → 2025-04-29</span>', d: 3100, fast: true },
+      { t: '', d: 3500 },
+      { t: '<span style="color:#f59e0b">━━━ 7 days later ━━━━━━━━━━━━━━━━━━━━━━</span>', d: 3700, fast: true },
+      { t: '', d: 4000 },
+      { t: '<span style="color:#22bac4">◈ Computing outcomes for PR #247...</span>', d: 4100 },
+      { t: '<span style="color:#ef4444">  ✗ Reverted in PR #251 (3 days after merge)</span>', d: 4700, fast: true },
+      { t: '<span style="color:#ef4444">  ✗ Downstream fix: PR #253 "fix: remove retry dup"</span>', d: 5100, fast: true },
+      { t: '<span style="color:#f59e0b">  ⚠ CI failures: 1 before merge</span>', d: 5500, fast: true },
+      { t: '<span style="color:#ef4444">  ✗ Rework score: 72 / 100</span>', d: 5900, fast: true },
+      { t: '', d: 6200 },
+      { t: '<span style="color:#22bac4">◈ Generating AI summary...</span>', d: 6300 },
+      { t: '<span style="color:#e2e8f0">  "Reverted after causing duplicate payment charges;</span>', d: 6900, fast: true },
+      { t: '<span style="color:#e2e8f0">   1 downstream fix required to clean up retry state."</span>', d: 7200, fast: true },
+      { t: '', d: 7500 },
+      { t: '<span style="color:#4ade80">✓ Monday digest queued for team@acme.com</span>', d: 7700, fast: true },
+      { t: '<span style="color:#4ade80">✓ Dashboard updated · PR flagged · Verdict: ⚠ rework</span>', d: 8000, fast: true },
+      { t: '', d: 8300 },
+    ];
+
+    function runConsole() {
+      out.innerHTML = '<div class="c-dim">$ grassion analyze --pr 247 --repo acme/backend</div>';
+      let i = 0;
+      function next() {
+        if (i >= lines.length) { setTimeout(runConsole, 4000); return; }
+        const ln = lines[i++];
+        const prev = i > 1 ? (lines[i-2]?.d ?? 0) : 0;
+        setTimeout(() => {
+          if (!ln.t) {
+            const d = document.createElement('div');
+            d.innerHTML = '&nbsp;';
+            d.style.lineHeight = '0.4';
+            out.appendChild(d);
+            out.scrollTop = out.scrollHeight;
+            next(); return;
+          }
+          const d = document.createElement('div');
+          out.appendChild(d);
+          if (ln.fast) {
+            d.innerHTML = ln.t;
+            out.scrollTop = out.scrollHeight;
+            next();
+          } else {
+            // typed effect for non-fast lines (strip tags first for typing)
+            const plain = ln.t.replace(/<[^>]+>/g, '');
+            let c = 0;
+            const tick = () => {
+              if (c < plain.length) { d.textContent = plain.slice(0, ++c); out.scrollTop = out.scrollHeight; setTimeout(tick, 16); }
+              else { d.innerHTML = ln.t; out.scrollTop = out.scrollHeight; next(); }
+            };
+            tick();
+          }
+        }, ln.d - prev);
+      }
+      next();
+    }
+
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) { runConsole(); obs.disconnect(); }
+    }, { threshold: 0.3 });
+    obs.observe(out);
+  }
+
+  // ── CONTACT FORM ──
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const status = document.getElementById('form-status');
+  const API_URL = (import.meta as any).env?.PUBLIC_API_URL || 'https://api.grassion.com';
+
+  if (form && status) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      btn.disabled = true;
+      status.textContent = 'Sending…';
+      status.className = 'form-status';
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await fetch(`${API_URL}/api/contact`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error(`http_${res.status}`);
+        status.textContent = "Got it — I'll reply within 24 hours.";
+        status.className = 'form-status ok';
+        form.reset();
+      } catch (err: any) {
+        status.textContent = `Failed — email hello@grassion.com instead.`;
+        status.className = 'form-status err';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
