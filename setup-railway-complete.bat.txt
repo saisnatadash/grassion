@@ -1,0 +1,106 @@
+@echo off
+echo ========================================
+echo GRASSION RAILWAY COMPLETE SETUP
+echo ========================================
+echo.
+
+REM ===== API SERVICE VARIABLES =====
+echo [1/2] Setting up API service variables...
+echo.
+
+railway variables --service api set DATABASE_URL="postgresql://neondb_owner:npg_VOyImu5tJxs8@ep-floral-silence-anbascin-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+railway variables --service api set GITHUB_APP_ID="3469091"
+
+railway variables --service api set GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA2R3x7vJebBI1P8o8ohHfudwcYbDOX915Mcocf9IcRe71g0rn\nX1a0QBrrXWpBxjEtIdcr3oMgqEJUllNmLfU7xkRBKVTCA9ImeAMCJuxVNUNbHq8v\neMMcIJFW/fTEm188l1p5XX7q42+tcduZHdUr/INRm20ublGRsA5Toz8nkPM6hqI/\ndMmoHss5rRtUeC0pvS0koHTms2RVfU0EM8cJIyrHREWH3S98fnUNJ2oaZg8QUJHe\n5Ip1uUaDBn3Qqg4/cmD2hrEpwbzvGc9YzhsEBqLR7DobyAwuFnLRxuQG8NK8EXJm\nMWEWtaqUcec1L26Cr/Yv48g7wgzRI38DkOuXmQIDAQABAoIBAQCcq4IX9aby/xST\nqmCkZpd1a4LDb60L+inpJrn39mrWf/+DtTpOTqeVFpe+ed1qobO6lqUeVKrtH6gg\nLaAvC6YNhNUseO/jh/KgaTNVWPaHj8oh0zJDRy91xMrsSILSxx9W7D9lmx7t7XlQ\nDrFnmJq8BRqPOHLnwk6Jp1ztELaBXd2XX99a4G/GGAwx+XauxwKmM2ptxb+HxWKw\nLClVgyLh2CDTvSykd25ELkPbfIhPZwSjQx+2EgInoCrDYvVF2n5l6lu5qLmAPNHT\nrV4OU0yj33vz5FoLvVMI2khMfZ9x+wh7eGJH/jqDq+S46JwYzkJ7OrHVXDmGrSPw\nFko3uwHxAoGBAPlL+uRn1SzKlTvWD6SVDqAuBWAfOOUn3zh3Sr//cAoh4RIlv4sI\nWRfY7uNk6Rbxd6Tgt9rKtqfNc5xf8VhiSlnTHeyxcLPlOKBZOIcGUC77YRznxNmE\nIrZCQKZHQPzE85HfFPiI3ycDzJDHqx+eafyjVoKbPczF3jvCnvw+mPHdAoGBAN70\ndQIS3K5wOcS6y6ezc5VQ04tP95HOcejx0Ato8vY1Yqi9YF5b9VC47CTYihOSN3ak\nEy+Z3pYg3Iz/gF4Y5fCWVM0mYN0OIL76XTk1XcKNHY7eLzYQL5v9HQOSRRThigsx\nLLy03QSCauNAUmRzvv5mf+qxAvYKtopZrfsnAobtAoGAA3/ljb9HZtGRNr3SimTt\nR6JdwPOvQMhGgexqyDc1w26mUjLldXYwif0pnVeVThUlsNLWweOGnORtcwyFvs/i\na1BjYyc6hcv594ZJHNwh1AcDXfyC7urD8fsMHUlyyBmbsbiH+tUxDMMo4/9pj5AR\nvNIuLLcxLua4L+6TfMcELqECgYEAwm0NqIxIU/pb9jorJQhx0BFXGRLYQxdz8H8H\nPRv9XEW7zoivBDpPGGDa1VrcNir5IQX+ETGukN8BVhftmqE9y+tc8jX4nG0Yk1KD\nf0MRi3pB/3e0VgIRcodtCNNCWO5B0nbEm59hafBNQ/WwpBbnxLQf8ssAWQ2Il+eS\nuAURyBUCgYAV8kjiQTN1TZVkJy3K3UekW/cxMDdqZxjr+l/PAmUnFpsU3dmxA4hD\nmsudogySxN5GHaIiOqnmpLbtHSYb6pTQxPSCqnUNIPQCY6FlBi8U4EeE5aI291wo\n9p/8Y+cry1uuv1UF9C645snl/as8+E/NPVllLskT83kjbuKnjKkkQA==\n-----END RSA PRIVATE KEY-----"
+
+railway variables --service api set GITHUB_APP_CLIENT_ID="Iv23li4zgYf76ytLYLey"
+
+railway variables --service api set GITHUB_APP_CLIENT_SECRET="3613f5644b827adb5da767a25e4864860a025ee8"
+
+railway variables --service api set GITHUB_APP_WEBHOOK_SECRET="7f3a9b2e4c8d1f6a0e5b9c3d7f2a8e4b1c6d9f3a7b2e5c8d1f4a0e6b9c2d5f8a"
+
+railway variables --service api set GITHUB_APP_SLUG="grassion"
+
+railway variables --service api set JWT_SECRET="ChC1YHZfVyZUz6VrpM0UIJtAJSyhJyb8e+tmr6hAuXA="
+
+railway variables --service api set SESSION_COOKIE_DOMAIN=".grassion.com"
+
+railway variables --service api set RAZORPAY_KEY_ID="rzp_test_Sgtp6mGa06NeTA"
+
+railway variables --service api set RAZORPAY_KEY_SECRET="NUQ39tV3xBWXgWPLidSqtr0C"
+
+railway variables --service api set RAZORPAY_WEBHOOK_SECRET="2ff3671acdaf29354a253cb54c26940768336c12c5556a838d9840685c8e1c2a"
+
+railway variables --service api set RAZORPAY_PLAN_ID_STARTER="plan_SgyTlhvjdqjG04"
+
+railway variables --service api set OPENAI_API_KEY="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"
+
+railway variables --service api set OPENAI_MODEL="gpt-4o-mini"
+
+railway variables --service api set OPENAI_MONTHLY_BUDGET_USD="10"
+
+railway variables --service api set RESEND_API_KEY="re_HsLZH8cY_H3xDEKVejkYSYLXba1yjTQhb"
+
+railway variables --service api set EMAIL_FROM="Grassion <info@grassion.com>"
+
+railway variables --service api set ZOHO_SMTP_HOST="smtp.zoho.in"
+
+railway variables --service api set ZOHO_SMTP_PORT="587"
+
+railway variables --service api set ZOHO_SMTP_USER="info@grassion.com"
+
+railway variables --service api set ZOHO_SMTP_PASS="TND04y6q8WSr"
+
+railway variables --service api set ZOHO_FROM_ADDRESS="info@grassion.com"
+
+railway variables --service api set ZOHO_TO_ADDRESS="info@grassion.com"
+
+railway variables --service api set APP_URL="https://app.grassion.com"
+
+railway variables --service api set API_URL="https://api.grassion.com"
+
+railway variables --service api set MARKETING_URL="https://grassion.com"
+
+railway variables --service api set NODE_ENV="production"
+
+railway variables --service api set PORT="3001"
+
+railway variables --service api set LOG_LEVEL="info"
+
+echo API service variables set! ✓
+echo.
+
+REM ===== WORKER SERVICE VARIABLES =====
+echo [2/2] Setting up Worker service variables...
+echo.
+
+railway variables --service worker set DATABASE_URL="postgresql://neondb_owner:npg_VOyImu5tJxs8@ep-floral-silence-anbascin-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+railway variables --service worker set NODE_ENV="production"
+
+railway variables --service worker set LOG_LEVEL="info"
+
+railway variables --service worker set OUTCOME_CRON="0 */6 * * *"
+
+railway variables --service worker set OPENAI_API_KEY="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"
+
+railway variables --service worker set OPENAI_MODEL="gpt-4o-mini"
+
+railway variables --service worker set APP_URL="https://app.grassion.com"
+
+railway variables --service worker set API_URL="https://api.grassion.com"
+
+echo Worker service variables set! ✓
+echo.
+
+echo ========================================
+echo ✓ ALL VARIABLES SET SUCCESSFULLY!
+echo ========================================
+echo.
+echo Next steps:
+echo 1. Check Railway dashboard to verify
+echo 2. Services will auto-redeploy
+echo 3. Check logs: railway logs --service api
+echo.
+pause
