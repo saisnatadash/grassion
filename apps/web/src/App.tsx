@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/Dashboard.js'
 import { SettingsPage } from './pages/Settings.js'
 import { BillingPage } from './pages/Billing.js'
 import { OnboardingPage } from './pages/Onboarding.js'
+import { SeatWastePage } from './pages/SeatWaste.js'
 import { NotFoundPage } from './pages/NotFound.js'
 
 const queryClient = new QueryClient({
@@ -32,6 +33,7 @@ export function App() {
           <Route path="/install" element={<InstallPage />} />
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/seat-waste" element={<SeatWastePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />

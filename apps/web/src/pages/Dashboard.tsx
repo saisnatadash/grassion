@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, GitPullRequest, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../lib/api.js'
 import { formatUsd, cn } from '../lib/utils.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -8,6 +9,7 @@ import { Alert, Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner
 
 export function DashboardPage() {
   const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary })
+  const weekly = useQuery({ queryKey: ['metrics', 'weekly'], queryFn: api.metrics.weekly })
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
 
@@ -56,6 +58,8 @@ export function DashboardPage() {
           sub={`${data.totalPrs > 0 ? Math.round((data.aiPrs / data.totalPrs) * 100) : 0}% of total`}
         />
       </div>
+
+      <WeeklyTrendCard data={weekly.data ?? []} loading={weekly.isLoading} />
 
       <ProblemPRsList prs={problemPrs.data ?? []} loading={problemPrs.isLoading} />
 
@@ -127,6 +131,92 @@ function StatCard({
           {value}
         </div>
         <div className="mt-1 text-xs text-neutral-500">{sub}</div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function formatWeekLabel(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
+}
+
+function WeeklyTrendCard({
+  data,
+  loading,
+}: {
+  data: Array<{ weekStart: string; netDollar: number; aiPrs: number }>
+  loading: boolean
+}) {
+  const allZero = data.every((w) => w.netDollar === 0)
+  const chartData = data.map((w) => ({ ...w, week: formatWeekLabel(w.weekStart) }))
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>12-Week Trend</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-neutral-500 py-8 justify-center">
+            <Spinner /> Loading trend…
+          </div>
+        ) : allZero ? (
+          <p className="text-sm text-neutral-400 py-8 text-center">
+            Trend will populate after 2+ weeks of data
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+              <defs>
+                <linearGradient id="netFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#16a34a" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="week"
+                tick={{ fontSize: 11, fill: '#737373' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#737373' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `$${v}`}
+                width={48}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const row = payload[0]?.payload as {
+                    week: string
+                    netDollar: number
+                    aiPrs: number
+                  }
+                  return (
+                    <div className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs shadow-sm">
+                      <div className="font-medium text-neutral-700">{row.week}</div>
+                      <div className={cn('mt-1', row.netDollar >= 0 ? 'text-green-700' : 'text-red-700')}>
+                        Net {row.netDollar >= 0 ? '+' : ''}{formatUsd(row.netDollar)}
+                      </div>
+                      <div className="text-neutral-500">{row.aiPrs} AI PRs</div>
+                    </div>
+                  )
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="netDollar"
+                stroke="#16a34a"
+                strokeWidth={2}
+                fill="url(#netFill)"
+                dot={false}
+                activeDot={{ r: 4, fill: '#16a34a' }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )

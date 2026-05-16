@@ -46,6 +46,19 @@ export class ApiError extends Error {
   }
 }
 
+export interface SeatWasteUser {
+  githubLogin: string
+  avatarUrl: string | null
+  lastActivity: string | null
+}
+
+export interface SeatWasteResponse {
+  totalSeats: number
+  activeUsers: Array<SeatWasteUser & { weeklyAiPrs: number }>
+  inactiveUsers: Array<SeatWasteUser & { monthlyCost: number }>
+  totalMonthlySavings: number
+}
+
 export const api = {
   me: () => request<MeResponse>('/auth/me'),
   logout: () => request<{ ok: true }>('/auth/logout', { method: 'POST' }),
@@ -71,6 +84,10 @@ export const api = {
   metrics: {
     summary: () => request<DashboardSummary>('/api/metrics/summary'),
     weekly: () => request<WeeklyMetricDto[]>('/api/metrics/weekly'),
+  },
+
+  analytics: {
+    seatWaste: () => request<SeatWasteResponse>('/api/analytics/seat-waste'),
   },
 
   prs: {

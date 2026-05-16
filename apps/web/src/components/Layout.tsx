@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { DollarSign } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { cn } from '../lib/utils.js'
 import { Button } from './ui.js'
@@ -27,6 +28,11 @@ export function AppLayout() {
             </Link>
             <nav className="flex items-center gap-2 text-sm">
               <NavItem to="/dashboard">Dashboard</NavItem>
+              <NavItem to="/seat-waste">
+                <span className="flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5" />Seat Waste
+                </span>
+              </NavItem>
               <NavItem to="/settings">Settings</NavItem>
               <NavItem to="/billing">Billing</NavItem>
             </nav>

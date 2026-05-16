@@ -1,209 +1,654 @@
 ---
-// apps/marketing/src/pages/index.astro
-import Layout from '../layouts/Layout.astro';
-
-const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com';
+// Grassion Marketing Landing Page
+// File: apps/marketing/src/pages/index.astro
+// Drop this file directly into your pages folder — no other changes needed
 ---
 
-<Layout title="Grassion - AI-Powered GitHub Issue Management">
-  <main class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-emerald-50">
-    
-    <!-- Navigation -->
-    <nav class="container mx-auto px-6 py-6 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-teal-600 to-emerald-600 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-          </svg>
-        </div>
-        <span class="text-2xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-          Grassion
-        </span>
-      </div>
-      <a 
-        href={`${appUrl}/install`}
-        class="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-lg font-medium hover:shadow-lg transition-all"
-      >
-        Sign In
-      </a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grassion — Where AI Code Meets Accountability</title>
+  <meta name="description" content="The first system that tells engineering teams whether AI is creating value or silently creating rework." />
+  <meta property="og:title" content="Grassion — AI Code Accountability Layer" />
+  <meta property="og:description" content="Find out which Copilot/Cursor seats your team isn't using and whether AI is actually improving your codebase." />
+  <meta property="og:url" content="https://grassion.com" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,200;0,300;0,400;1,300&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --dim: rgba(255,255,255,0.35);
+      --line: rgba(255,255,255,0.1);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* —— HEADER —— */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 48px;
+      z-index: 100;
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo {
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    .logo span {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: white;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    nav { display: flex; gap: 36px; }
+
+    nav a {
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--white); }
+
+    /* —— MAIN LAYOUT —— */
+    main {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 0 48px;
+    }
+
+    /* —— LEFT COPY —— */
+    .copy { padding-right: 60px; }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .eyebrow::before {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--dim);
+    }
+
+    h1 {
+      font-family: 'DM Sans', sans-serif;
+      font-size: clamp(30px, 3.2vw, 48px);
+      font-weight: 200;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    h1 em { font-style: italic; font-weight: 300; }
+
+    .sub {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.7;
+      max-width: 380px;
+      margin-bottom: 40px;
+    }
+
+    .flow {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .flow-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 5px 10px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .flow-tag::after {
+      content: '→';
+      color: rgba(255,255,255,0.2);
+      font-size: 9px;
+    }
+
+    .flow-tag:last-child::after { display: none; }
+
+    .cta-wrap {
+      display: flex;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      max-width: 400px;
+      transition: border-color 0.2s;
+    }
+
+    .cta-wrap:focus-within { border-color: rgba(255,255,255,0.6); }
+
+    .cta-wrap input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--white);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      padding: 14px 18px;
+    }
+
+    .cta-wrap input::placeholder { color: var(--dim); }
+
+    .cta-wrap button {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 14px 22px;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    .cta-wrap button:hover { opacity: 0.85; }
+
+    .hint {
+      margin-top: 14px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.22);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* —— RIGHT: 3D SCENE —— */
+    .scene {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      position: relative;
+    }
+
+    .orbit {
+      width: 320px;
+      height: 320px;
+      position: relative;
+      perspective: 900px;
+    }
+
+    .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.12);
+      animation: spinRing 18s linear infinite;
+      transform-style: preserve-3d;
+    }
+
+    .ring::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: -4px;
+      width: 8px; height: 8px;
+      background: white;
+      border-radius: 50%;
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px 3px rgba(255,255,255,0.4);
+    }
+
+    .ring-2 {
+      inset: 40px;
+      border-color: rgba(255,255,255,0.08);
+      animation: spinRing 11s linear infinite reverse;
+    }
+
+    .ring-2::after {
+      background: rgba(255,255,255,0.6);
+      width: 5px; height: 5px;
+      left: -2.5px;
+      box-shadow: 0 0 8px 2px rgba(255,255,255,0.3);
+    }
+
+    @keyframes spinRing {
+      from { transform: rotateX(68deg) rotateZ(0deg); }
+      to   { transform: rotateX(68deg) rotateZ(360deg); }
+    }
+
+    .cube-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cube {
+      width: 80px; height: 80px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: rotateCube 9s ease-in-out infinite;
+    }
+
+    @keyframes rotateCube {
+      0%   { transform: rotateX(15deg) rotateY(0deg); }
+      25%  { transform: rotateX(15deg) rotateY(90deg); }
+      50%  { transform: rotateX(15deg) rotateY(180deg); }
+      75%  { transform: rotateX(15deg) rotateY(270deg); }
+      100% { transform: rotateX(15deg) rotateY(360deg); }
+    }
+
+    .face {
+      position: absolute;
+      width: 80px; height: 80px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.25);
+    }
+
+    .face-front  { transform: translateZ(40px); }
+    .face-back   { transform: rotateY(180deg) translateZ(40px); }
+    .face-left   { transform: rotateY(-90deg) translateZ(40px); }
+    .face-right  { transform: rotateY(90deg) translateZ(40px); }
+    .face-top    { transform: rotateX(90deg) translateZ(40px); }
+    .face-bottom { transform: rotateX(-90deg) translateZ(40px); }
+
+    .glow {
+      position: absolute;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .stats {
+      position: absolute;
+      bottom: 60px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .stat {
+      padding: 12px 20px;
+      border: 1px solid var(--line);
+      border-right: none;
+      text-align: center;
+    }
+
+    .stat:last-child { border-right: 1px solid var(--line); }
+
+    .stat-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 18px;
+      font-weight: 400;
+      color: white;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    /* —— ASK WIDGET —— */
+    .ask-btn {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      width: 44px; height: 44px;
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .ask-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 8px rgba(255,255,255,0.06);
+    }
+
+    .ask-btn svg { width: 18px; height: 18px; }
+
+    .ask-panel {
+      position: fixed;
+      bottom: 84px; right: 28px;
+      width: 300px;
+      background: #0a0a0a;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 200;
+      transform: scale(0.92) translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s ease;
+      transform-origin: bottom right;
+    }
+
+    .ask-panel.open {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .ask-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ask-dot {
+      width: 7px; height: 7px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .ask-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--white);
+    }
+
+    .ask-body { padding: 14px 16px; }
+
+    .ask-body p {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .ask-form {
+      display: flex;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .ask-form input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--white);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 10px 12px;
+    }
+
+    .ask-form input::placeholder { color: rgba(255,255,255,0.2); }
+
+    .ask-form button {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      padding: 10px 14px;
+      transition: opacity 0.2s;
+    }
+
+    .ask-form button:hover { opacity: 0.8; }
+
+    footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--line);
+    }
+
+    footer span {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 0.08em;
+    }
+
+    .success-msg {
+      display: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--dim);
+      letter-spacing: 0.08em;
+      padding: 14px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="/"><span></span>Grassion</a>
+    <nav>
+      <a href="#about">About</a>
+      <a href="mailto:info@grassion.com">Contact</a>
     </nav>
+  </header>
 
-    <!-- Hero Section -->
-    <section class="container mx-auto px-6 pt-20 pb-32 text-center">
-      <div class="inline-block mb-6 px-4 py-2 bg-teal-100 text-teal-700 rounded-full text-sm font-semibold">
-        🚀 Now in Beta - Free for Early Adopters
-      </div>
-      
-      <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-        AI That Resolves Your<br/>
-        <span class="bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-          GitHub Issues
-        </span>
-      </h1>
-      
-      <p class="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-        Connect your repository, let Grassion analyze issues, and watch as AI generates pull requests with working solutions—automatically.
+  <main>
+    <div class="copy">
+      <div class="eyebrow">AI Coding ROI Intelligence</div>
+      <h1>Where AI Code<br>Meets<br><em>Accountability.</em></h1>
+      <p class="sub">
+        The first system that tells engineering teams whether AI is creating value — or silently creating rework.
       </p>
-      
-      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-        <a 
-          href={`${appUrl}/install`}
-          class="group px-8 py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl transition-all flex items-center gap-2"
-        >
-          Get Early Access
-          <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-          </svg>
-        </a>
-        
-        <a 
-          href="#how-it-works"
-          class="px-8 py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-lg hover:border-teal-600 hover:text-teal-600 transition-all"
-        >
-          See How It Works
-        </a>
+      <div class="flow">
+        <span class="flow-tag">Connect</span>
+        <span class="flow-tag">Detect</span>
+        <span class="flow-tag">Measure</span>
+        <span class="flow-tag">Decide</span>
       </div>
-
-      <p class="mt-8 text-sm text-gray-500">
-        No credit card required • 5 free AI resolutions • Install in 30 seconds
-      </p>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="container mx-auto px-6 pb-20">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-white rounded-2xl p-8 shadow-lg text-center">
-          <div class="text-5xl font-bold text-teal-600 mb-2">5min</div>
-          <div class="text-gray-600">Average Resolution Time</div>
-        </div>
-        <div class="bg-white rounded-2xl p-8 shadow-lg text-center">
-          <div class="text-5xl font-bold text-teal-600 mb-2">87%</div>
-          <div class="text-gray-600">Success Rate</div>
-        </div>
-        <div class="bg-white rounded-2xl p-8 shadow-lg text-center">
-          <div class="text-5xl font-bold text-teal-600 mb-2">24/7</div>
-          <div class="text-gray-600">Automated Monitoring</div>
-        </div>
+      <div class="cta-wrap" id="ctaWrap">
+        <input type="email" id="emailInput" placeholder="your@company.com" autocomplete="off" />
+        <button id="joinBtn">Join the Standard</button>
       </div>
-    </section>
+      <p class="hint" id="hintText">14-day free trial &nbsp;·&nbsp; 5-minute GitHub setup</p>
+      <div class="success-msg" id="successMsg">✓ &nbsp;You're on the list. We'll be in touch.</div>
+    </div>
 
-    <!-- How It Works -->
-    <section id="how-it-works" class="container mx-auto px-6 py-20">
-      <h2 class="text-4xl font-bold text-center mb-16">How It Works</h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-        <div class="text-center">
-          <div class="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <span class="text-3xl font-bold text-teal-600">1</span>
+    <div class="scene">
+      <div class="orbit">
+        <div class="ring"></div>
+        <div class="ring ring-2"></div>
+        <div class="cube-wrap">
+          <div class="glow"></div>
+          <div class="cube">
+            <div class="face face-front">ROI</div>
+            <div class="face face-back">DETECT</div>
+            <div class="face face-left">TRACK</div>
+            <div class="face face-right">SIGNAL</div>
+            <div class="face face-top"></div>
+            <div class="face face-bottom"></div>
           </div>
-          <h3 class="text-xl font-bold mb-3">Install GitHub App</h3>
-          <p class="text-gray-600">Connect Grassion to your repositories in one click. Works with public and private repos.</p>
-        </div>
-
-        <div class="text-center">
-          <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <span class="text-3xl font-bold text-emerald-600">2</span>
-          </div>
-          <h3 class="text-xl font-bold mb-3">AI Analyzes Issues</h3>
-          <p class="text-gray-600">Our AI reads your issue, understands context, and analyzes your codebase to find the root cause.</p>
-        </div>
-
-        <div class="text-center">
-          <div class="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <span class="text-3xl font-bold text-teal-600">3</span>
-          </div>
-          <h3 class="text-xl font-bold mb-3">Get Pull Requests</h3>
-          <p class="text-gray-600">Receive a PR with the fix, complete with tests and explanation. Review and merge when ready.</p>
         </div>
       </div>
-    </section>
-
-    <!-- Pricing -->
-    <section class="container mx-auto px-6 py-20">
-      <h2 class="text-4xl font-bold text-center mb-16">Simple, Transparent Pricing</h2>
-      
-      <div class="max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-teal-600">
-        <div class="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-8 text-center">
-          <h3 class="text-2xl font-bold mb-2">Starter Plan</h3>
-          <div class="text-5xl font-bold mb-2">₹499<span class="text-2xl font-normal">/mo</span></div>
-          <p class="text-teal-100">Perfect for solo developers</p>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-num">85%</span>
+          <span class="stat-label">devs use AI tools</span>
         </div>
-        
-        <div class="p-8">
-          <ul class="space-y-4 mb-8">
-            <li class="flex items-start gap-3">
-              <svg class="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              <span class="text-gray-700">25 AI resolutions per month</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <svg class="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              <span class="text-gray-700">Connect unlimited repositories</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <svg class="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              <span class="text-gray-700">Priority support</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <svg class="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              <span class="text-gray-700">Advanced AI models (GPT-4o)</span>
-            </li>
-          </ul>
-          
-          <a 
-            href={`${appUrl}/install`}
-            class="block w-full py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-center hover:shadow-lg transition-all"
-          >
-            Start Free Trial
-          </a>
-          
-          <p class="text-center text-sm text-gray-500 mt-4">
-            5 free resolutions • No credit card required
-          </p>
+        <div class="stat">
+          <span class="stat-num">0%</span>
+          <span class="stat-label">have ROI visibility</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">5 min</span>
+          <span class="stat-label">to first insight</span>
         </div>
       </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="container mx-auto px-6 py-20">
-      <div class="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-3xl p-12 text-center text-white">
-        <h2 class="text-4xl font-bold mb-4">Ready to Ship Faster?</h2>
-        <p class="text-xl mb-8 text-teal-100">Join developers who are resolving issues 10x faster with AI</p>
-        <a 
-          href={`${appUrl}/install`}
-          class="inline-block px-8 py-4 bg-white text-teal-600 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all"
-        >
-          Get Started Free
-        </a>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="container mx-auto px-6 py-12 border-t border-gray-200">
-      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-gradient-to-br from-teal-600 to-emerald-600 rounded-lg"></div>
-          <span class="text-xl font-bold text-gray-800">Grassion</span>
-        </div>
-        
-        <div class="flex gap-8 text-gray-600">
-          <a href="#" class="hover:text-teal-600 transition-colors">Privacy</a>
-          <a href="#" class="hover:text-teal-600 transition-colors">Terms</a>
-          <a href="mailto:info@grassion.com" class="hover:text-teal-600 transition-colors">Contact</a>
-        </div>
-      </div>
-      
-      <div class="text-center mt-8 text-gray-500 text-sm">
-        © 2024 Grassion. All rights reserved.
-      </div>
-    </footer>
-
+    </div>
   </main>
-</Layout>
+
+  <footer>
+    <span>© 2026 Grassion Intelligence</span>
+    <span>Where AI Code Meets Accountability</span>
+  </footer>
+
+  <button class="ask-btn" id="askToggle" title="Ask us anything">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="ask-panel" id="askPanel">
+    <div class="ask-header">
+      <div class="ask-dot"></div>
+      <span class="ask-title">Ask us anything</span>
+    </div>
+    <div class="ask-body">
+      <p>Question about Grassion or want early access? We reply personally.</p>
+      <div class="ask-form">
+        <input type="text" id="askInput" placeholder="Type your question..." />
+        <button id="askSend">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    // —— Ask widget ————————————————————————————————————————
+    const askPanel  = document.getElementById('askPanel');
+    const askToggle = document.getElementById('askToggle');
+    const askInput  = document.getElementById('askInput');
+    const askSend   = document.getElementById('askSend');
+
+    askToggle.addEventListener('click', () => askPanel.classList.toggle('open'));
+
+    document.addEventListener('click', e => {
+      if (!askPanel.contains(e.target) && !askToggle.contains(e.target)) {
+        askPanel.classList.remove('open');
+      }
+    });
+
+    function sendAsk() {
+      const q = askInput.value.trim();
+      if (!q) return;
+      window.location.href =
+        `mailto:info@grassion.com?subject=Question via grassion.com&body=${encodeURIComponent(q)}`;
+      askInput.value = '';
+    }
+
+    askSend.addEventListener('click', sendAsk);
+    askInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendAsk(); });
+
+    // —— Waitlist join ————————————————————————————————————
+    // ⚠️  REPLACE the value below with your real Tally form ID
+    //     Go to tally.so → create form → copy the ID from the URL
+    const WAITLIST_URL = 'https://tally.so/r/YOUR_FORM_ID';
+
+    const joinBtn    = document.getElementById('joinBtn');
+    const emailInput = document.getElementById('emailInput');
+    const ctaWrap    = document.getElementById('ctaWrap');
+    const hintText   = document.getElementById('hintText');
+    const successMsg = document.getElementById('successMsg');
+
+    function handleJoin() {
+      const email = emailInput.value.trim();
+      if (!email || !email.includes('@')) { emailInput.focus(); return; }
+      window.open(`${WAITLIST_URL}?email=${encodeURIComponent(email)}`, '_blank');
+      ctaWrap.style.display    = 'none';
+      hintText.style.display   = 'none';
+      successMsg.style.display = 'block';
+    }
+
+    joinBtn.addEventListener('click', handleJoin);
+    emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleJoin(); });
+
+    // —— Stat entrance animation ——————————————————————————
+    window.addEventListener('load', () => {
+      document.querySelectorAll('.stat').forEach((s, i) => {
+        s.style.cssText = 'opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease';
+        setTimeout(() => { s.style.opacity='1'; s.style.transform='translateY(0)'; }, 600 + i*120);
+      });
+    });
+  </script>
+
+</body>
+</html>

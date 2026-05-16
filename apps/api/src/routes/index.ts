@@ -5,6 +5,7 @@ import { reposRouter } from './repos.js'
 import { metricsRouter } from './metrics.js'
 import { billingRouter } from './billing.js'
 import { contactRouter } from './contact.js'
+import { analyticsRouter } from './analytics.js'
 
 export const router = Router()
 
@@ -18,3 +19,4 @@ router.use(reposRouter)
 router.use(metricsRouter)
 router.use(billingRouter)
 router.use(contactRouter)
+router.use(analyticsRouter)
