@@ -6,7 +6,7 @@ import { closeDb } from '@grassion/db'
 const e = env()
 const app = buildApp()
 
-const server = app.listen(e.PORT, () => {
+const server = app.listen(e.PORT, '0.0.0.0', () => {
   logger.info({ port: e.PORT, env: e.NODE_ENV }, 'grassion api listening')
 })
 

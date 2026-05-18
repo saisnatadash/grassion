@@ -42,8 +42,9 @@ export function setSessionCookie(res: Response, token: string) {
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: e.NODE_ENV === 'production',
-    sameSite: 'lax',
-    domain: e.SESSION_COOKIE_DOMAIN || undefined,
+    // SameSite=None required for cross-origin fetch (app.grassion.com → grassion-api.fly.dev).
+    // Lax in dev avoids the Secure requirement on http://localhost.
+    sameSite: e.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
     path: '/',
   })
@@ -52,8 +53,9 @@ export function setSessionCookie(res: Response, token: string) {
 export function clearSessionCookie(res: Response) {
   const e = env()
   res.clearCookie(SESSION_COOKIE, {
-    domain: e.SESSION_COOKIE_DOMAIN || undefined,
     path: '/',
+    sameSite: e.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: e.NODE_ENV === 'production',
   })
 }
 

@@ -23,8 +23,8 @@ export function AppLayout() {
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/dashboard" className="font-semibold tracking-tight">
-              Grassion
+            <Link to="/dashboard" className="flex items-center">
+              <img src="/grassion-logo-dark.svg" alt="Grassion" style={{ height: '32px' }} />
             </Link>
             <nav className="flex items-center gap-2 text-sm">
               <NavItem to="/dashboard">Dashboard</NavItem>

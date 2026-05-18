@@ -8,6 +8,7 @@ import { SettingsPage } from './pages/Settings.js'
 import { BillingPage } from './pages/Billing.js'
 import { OnboardingPage } from './pages/Onboarding.js'
 import { SeatWastePage } from './pages/SeatWaste.js'
+import { AuthCallbackPage } from './pages/AuthCallback.js'
 import { NotFoundPage } from './pages/NotFound.js'
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/install" element={<InstallPage />} />
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
