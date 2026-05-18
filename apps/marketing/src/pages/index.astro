@@ -39,33 +39,12 @@
       top: 0; left: 0; right: 0;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       padding: 18px 52px;
       z-index: 100;
       border-bottom: 1px solid var(--line);
       background: rgba(0,0,0,0.75);
       backdrop-filter: blur(16px);
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      text-decoration: none;
-    }
-
-    .logo img {
-      width: 34px;
-      height: 34px;
-    }
-
-    .logo-name {
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--white);
     }
 
     nav { display: flex; gap: 40px; align-items: center; }
@@ -557,11 +536,11 @@
 </head>
 <body>
 
+  <a href="/" style="position:fixed; top:20px; left:24px; z-index:1000;">
+    <img src="/grassion-logo-white.png" alt="Grassion" style="height:36px;" />
+  </a>
+
   <header>
-    <a class="logo" href="/">
-      <img src="/grassion-logo-white.svg" alt="Grassion mark" width="34" height="34" />
-      <span class="logo-name">Grassion</span>
-    </a>
     <nav>
       <a href="/about/">About</a>
       <a href="mailto:info@grassion.com">Contact</a>
