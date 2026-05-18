@@ -15,13 +15,11 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --black: #08080a;
+      --black: #000000;
       --white: #ffffff;
       --dim: rgba(255,255,255,0.38);
       --dimmer: rgba(255,255,255,0.18);
       --line: rgba(255,255,255,0.09);
-      --accent: #818cf8;
-      --green: #34d399;
     }
 
     html, body {
@@ -39,39 +37,35 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 24px 52px;
+      padding: 18px 52px;
       z-index: 100;
       border-bottom: 1px solid var(--line);
-      background: rgba(8,8,10,0.7);
+      background: rgba(0,0,0,0.75);
       backdrop-filter: blur(16px);
     }
 
     .logo {
-      font-family: 'DM Mono', monospace;
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--white);
-      text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
+      text-decoration: none;
     }
 
-    .logo-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: dotpulse 2.6s ease-in-out infinite;
+    .logo img {
+      width: 34px;
+      height: 34px;
     }
 
-    @keyframes dotpulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50% { opacity:0.35; transform:scale(0.6); }
+    .logo-name {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--white);
     }
 
-    nav { display: flex; gap: 40px; }
+    nav { display: flex; gap: 40px; align-items: center; }
 
     nav a {
       font-size: 11px;
@@ -90,7 +84,7 @@
       height: 100vh;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      padding-top: 76px;
+      padding-top: 71px;
     }
 
     /* ── LEFT ───────────────────────────────── */
@@ -98,7 +92,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 0 52px 0 52px;
+      padding: 0 52px;
       border-right: 1px solid var(--line);
     }
 
@@ -119,7 +113,7 @@
       content: '';
       display: block;
       width: 36px; height: 1px;
-      background: rgba(129,140,248,0.5);
+      background: rgba(255,255,255,0.28);
     }
 
     h1 {
@@ -130,7 +124,7 @@
       margin-bottom: 22px;
     }
 
-    h1 em { font-style: italic; font-weight: 300; color: var(--accent); }
+    h1 em { font-style: italic; font-weight: 300; color: var(--white); }
 
     .sub {
       font-size: 14px;
@@ -165,55 +159,33 @@
 
     .flow-tag::after {
       content: '→';
-      color: var(--accent);
+      color: rgba(255,255,255,0.45);
       font-size: 10px;
-      opacity: 0.6;
     }
 
     .flow-tag:last-child::after { display: none; }
 
-    .cta-wrap {
-      display: flex;
-      border: 1px solid rgba(255,255,255,0.16);
-      border-radius: 4px;
-      overflow: hidden;
-      max-width: 420px;
-      transition: border-color 0.2s;
-    }
-
-    .cta-wrap:focus-within { border-color: rgba(129,140,248,0.6); }
-
-    .cta-wrap input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--white);
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      font-weight: 300;
-      letter-spacing: 0.05em;
-      padding: 15px 20px;
-    }
-
-    .cta-wrap input::placeholder { color: var(--dimmer); }
-
-    .cta-wrap button {
+    /* ── GITHUB BUTTON ──────────────────────── */
+    .github-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       background: var(--white);
       color: var(--black);
-      border: none;
-      cursor: pointer;
+      text-decoration: none;
       font-family: 'DM Mono', monospace;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 500;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      padding: 15px 22px;
-      transition: opacity 0.2s, background 0.2s;
-      white-space: nowrap;
+      padding: 14px 24px;
+      border-radius: 3px;
+      transition: opacity 0.2s;
+      width: fit-content;
     }
 
-    .cta-wrap button:hover { opacity: 0.88; }
+    .github-btn:hover { opacity: 0.87; }
+    .github-btn svg { flex-shrink: 0; }
 
     .hint {
       margin-top: 12px;
@@ -221,15 +193,6 @@
       color: var(--dimmer);
       font-family: 'DM Mono', monospace;
       letter-spacing: 0.06em;
-    }
-
-    .success-msg {
-      display: none;
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      color: var(--green);
-      letter-spacing: 0.06em;
-      padding: 14px 0;
     }
 
     /* ── RIGHT ──────────────────────────────── */
@@ -242,13 +205,12 @@
       overflow: hidden;
     }
 
-    /* Background glow */
     .right::before {
       content: '';
       position: absolute;
       width: 500px; height: 500px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(129,140,248,0.07) 0%, transparent 65%);
+      background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 65%);
       pointer-events: none;
     }
 
@@ -260,7 +222,6 @@
       margin-bottom: 32px;
     }
 
-    /* Outer ring */
     .ring {
       position: absolute;
       inset: 0;
@@ -275,13 +236,12 @@
       position: absolute;
       top: 50%; left: -5px;
       width: 10px; height: 10px;
-      background: var(--accent);
+      background: var(--white);
       border-radius: 50%;
       transform: translateY(-50%);
-      box-shadow: 0 0 16px 4px rgba(129,140,248,0.5);
+      box-shadow: 0 0 16px 4px rgba(255,255,255,0.28);
     }
 
-    /* Middle ring */
     .ring-2 {
       inset: 50px;
       border-color: rgba(255,255,255,0.06);
@@ -289,13 +249,12 @@
     }
 
     .ring-2::after {
-      background: rgba(52,211,153,0.8);
+      background: rgba(255,255,255,0.7);
       width: 7px; height: 7px;
       left: -3.5px;
-      box-shadow: 0 0 12px 3px rgba(52,211,153,0.4);
+      box-shadow: 0 0 12px 3px rgba(255,255,255,0.18);
     }
 
-    /* Inner ring */
     .ring-3 {
       inset: 100px;
       border-color: rgba(255,255,255,0.04);
@@ -306,7 +265,7 @@
       width: 5px; height: 5px;
       left: -2.5px;
       background: rgba(255,255,255,0.5);
-      box-shadow: 0 0 8px 2px rgba(255,255,255,0.3);
+      box-shadow: 0 0 8px 2px rgba(255,255,255,0.15);
     }
 
     @keyframes spinRing {
@@ -314,7 +273,6 @@
       to   { transform: rotateX(70deg) rotateZ(360deg); }
     }
 
-    /* Cube */
     .cube-wrap {
       position: absolute;
       inset: 0;
@@ -341,8 +299,8 @@
     .face {
       position: absolute;
       width: 90px; height: 90px;
-      border: 1px solid rgba(129,140,248,0.22);
-      background: rgba(129,140,248,0.04);
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.03);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -350,7 +308,7 @@
       font-size: 9px;
       font-weight: 500;
       letter-spacing: 0.18em;
-      color: rgba(129,140,248,0.55);
+      color: rgba(255,255,255,0.38);
     }
 
     .face-front  { transform: translateZ(45px); }
@@ -360,13 +318,12 @@
     .face-top    { transform: rotateX(90deg) translateZ(45px); }
     .face-bottom { transform: rotateX(-90deg) translateZ(45px); }
 
-    /* Verdict card floating */
+    /* ── FLOATING CARDS ─────────────────────── */
     .verdict-card {
       position: absolute;
-      top: 24px;
-      right: -10px;
-      background: rgba(10,12,18,0.92);
-      border: 1px solid rgba(52,211,153,0.3);
+      top: 24px; right: -10px;
+      background: rgba(0,0,0,0.92);
+      border: 1px solid rgba(255,255,255,0.18);
       border-radius: 8px;
       padding: 12px 16px;
       font-family: 'DM Mono', monospace;
@@ -390,15 +347,13 @@
     .verdict-value {
       font-size: 13px;
       font-weight: 500;
-      color: var(--green);
+      color: var(--white);
     }
 
-    /* Waste card floating */
     .waste-card {
       position: absolute;
-      bottom: 32px;
-      left: -10px;
-      background: rgba(10,12,18,0.92);
+      bottom: 32px; left: -10px;
+      background: rgba(0,0,0,0.92);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 8px;
       padding: 12px 16px;
@@ -418,7 +373,7 @@
     .waste-value {
       font-size: 13px;
       font-weight: 500;
-      color: #f87171;
+      color: rgba(255,255,255,0.72);
     }
 
     /* ── STATS ROW ───────────────────────────── */
@@ -444,7 +399,7 @@
       font-family: 'DM Mono', monospace;
       font-size: 22px;
       font-weight: 400;
-      color: white;
+      color: var(--white);
       display: block;
       margin-bottom: 4px;
     }
@@ -466,7 +421,7 @@
       align-items: center;
       justify-content: space-between;
       border-top: 1px solid var(--line);
-      background: rgba(8,8,10,0.6);
+      background: rgba(0,0,0,0.6);
       backdrop-filter: blur(12px);
     }
 
@@ -505,7 +460,7 @@
       position: fixed;
       bottom: 114px; right: 30px;
       width: 296px;
-      background: #0c0d10;
+      background: #0a0a0a;
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 10px;
       overflow: hidden;
@@ -533,9 +488,14 @@
 
     .ask-dot {
       width: 7px; height: 7px;
-      background: var(--green);
+      background: var(--white);
       border-radius: 50%;
       animation: dotpulse 2s ease-in-out infinite;
+    }
+
+    @keyframes dotpulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.3; transform:scale(0.6); }
     }
 
     .ask-title {
@@ -595,9 +555,12 @@
 <body>
 
   <header>
-    <a class="logo" href="/"><div class="logo-dot"></div>Grassion</a>
+    <a class="logo" href="/">
+      <img src="/grassion-logo-white.svg" alt="Grassion mark" width="34" height="34" />
+      <span class="logo-name">Grassion</span>
+    </a>
     <nav>
-      <a href="#about">About</a>
+      <a href="/about/">About</a>
       <a href="mailto:info@grassion.com">Contact</a>
     </nav>
   </header>
@@ -620,23 +583,22 @@
         <span class="flow-tag">Decide</span>
       </div>
 
-      <div class="cta-wrap" id="ctaWrap">
-        <input type="email" id="emailInput" placeholder="your@company.com" autocomplete="off" />
-        <button id="joinBtn">Join the Standard</button>
-      </div>
-      <p class="hint" id="hintText">14-day free trial &nbsp;·&nbsp; 5-minute GitHub setup</p>
-      <div class="success-msg" id="successMsg">✓ &nbsp;You're on the list. We'll be in touch.</div>
+      <a class="github-btn" href="https://grassion-api.fly.dev/auth/github">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        Sign in with GitHub
+      </a>
+      <p class="hint">14-day free trial &nbsp;·&nbsp; 5-minute GitHub setup</p>
     </div>
 
     <!-- RIGHT: 3D + STATS -->
     <div class="right">
-      <!-- Floating verdict card -->
       <div class="verdict-card" style="z-index:10;">
         <div class="verdict-label">This month</div>
         <div class="verdict-value">NET POSITIVE +$1,220</div>
       </div>
 
-      <!-- 3D Scene -->
       <div class="scene">
         <div class="ring"></div>
         <div class="ring ring-2"></div>
@@ -653,13 +615,11 @@
         </div>
       </div>
 
-      <!-- Floating waste card -->
       <div class="waste-card" style="z-index:10;">
         <div class="waste-label">Unused seats found</div>
         <div class="waste-value">8 seats · $152/mo wasted</div>
       </div>
 
-      <!-- Stats -->
       <div class="stats">
         <div class="stat" id="s1">
           <span class="stat-num">85%</span>
@@ -704,7 +664,6 @@
   </div>
 
   <script is:inline>
-    // Ask widget
     const panel = document.getElementById('askPanel');
     const toggle = document.getElementById('askToggle');
     toggle.addEventListener('click', () => panel.classList.toggle('open'));
@@ -723,24 +682,6 @@
       if (e.key === 'Enter') document.getElementById('askSend').click();
     });
 
-    // Waitlist
-    const WAITLIST_URL = 'https://tally.so/r/YOUR_FORM_ID';
-    document.getElementById('joinBtn').addEventListener('click', () => {
-      const email = document.getElementById('emailInput').value.trim();
-      if (!email || !email.includes('@')) {
-        document.getElementById('emailInput').focus(); return;
-      }
-      window.open(`${WAITLIST_URL}?email=${encodeURIComponent(email)}`, '_blank');
-      document.getElementById('ctaWrap').style.display = 'none';
-      document.getElementById('hintText').style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
-    });
-
-    document.getElementById('emailInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('joinBtn').click();
-    });
-
-    // Stat entrance animation
     window.addEventListener('load', () => {
       ['s1','s2','s3'].forEach((id, i) => {
         setTimeout(() => {
