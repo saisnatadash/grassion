@@ -1,8 +1,7 @@
 {
-  "buildCommand": "pnpm --filter @grassion/web... build",
-  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
   "outputDirectory": "dist",
-  "framework": "vite",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "env": {
     "VITE_API_URL": "https://grassion-api.fly.dev"
