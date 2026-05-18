@@ -9,11 +9,13 @@ import { upsertUser } from '../services/teams.js'
 
 export const authRouter = Router()
 
+const GITHUB_CALLBACK_URL = 'https://grassion-api.fly.dev/auth/github/callback'
+
 authRouter.get('/auth/github', (_req: Request, res: Response) => {
   const e = env()
   const url = new URL('https://github.com/login/oauth/authorize')
   url.searchParams.set('client_id', e.GITHUB_APP_CLIENT_ID)
-  url.searchParams.set('redirect_uri', `${e.API_URL}/auth/github/callback`)
+  url.searchParams.set('redirect_uri', GITHUB_CALLBACK_URL)
   url.searchParams.set('scope', 'read:user user:email')
   url.searchParams.set('state', generateState())
   res.redirect(url.toString())
@@ -34,7 +36,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         client_id: e.GITHUB_APP_CLIENT_ID,
         client_secret: e.GITHUB_APP_CLIENT_SECRET,
         code,
-        redirect_uri: `${e.API_URL}/auth/github/callback`,
+        redirect_uri: GITHUB_CALLBACK_URL,
       }),
     })
     const tokenJson = (await tokenRes.json()) as { access_token?: string; error?: string }
@@ -104,7 +106,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
 
     const token = await createSession(userRow.id)
     setSessionCookie(res, token)
-    res.redirect(`${e.APP_URL}/dashboard`)
+    res.redirect(`${e.APP_URL}/auth/callback?token=${encodeURIComponent(token)}`)
   } catch (err) {
     logger.error({ err }, 'github oauth callback failed')
     res.status(500).json({ error: 'oauth_failed' })
