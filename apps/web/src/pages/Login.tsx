@@ -5,7 +5,7 @@ import { loginUrl } from '../lib/api.js'
 export function LoginPage() {
   return (
     <div className="min-h-full flex flex-col items-center justify-center p-6 bg-black">
-      <img src="/grassion-logo-white.png" alt="Grassion" style={{ height: '48px' }} className="mb-10" />
+      <img src="/grassion-logo-white.svg" alt="Grassion" style={{ height: '48px' }} className="mb-10" />
       <div className="w-full max-w-md rounded-xl border border-neutral-800 bg-neutral-950 p-8">
         <h1 className="text-2xl font-semibold tracking-tight text-white">Sign in to Grassion</h1>
         <p className="mt-2 text-sm text-neutral-400">
