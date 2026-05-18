@@ -1,7 +1,5 @@
 ---
 // Grassion Marketing Landing Page
-// File: apps/marketing/src/pages/index.astro
-// Drop this file directly into your pages folder — no other changes needed
 ---
 
 <!DOCTYPE html>
@@ -11,20 +9,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grassion — Where AI Code Meets Accountability</title>
   <meta name="description" content="The first system that tells engineering teams whether AI is creating value or silently creating rework." />
-  <meta property="og:title" content="Grassion — AI Code Accountability Layer" />
-  <meta property="og:description" content="Find out which Copilot/Cursor seats your team isn't using and whether AI is actually improving your codebase." />
-  <meta property="og:url" content="https://grassion.com" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,200;0,300;0,400;1,300&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --black: #000000;
+      --black: #08080a;
       --white: #ffffff;
-      --dim: rgba(255,255,255,0.35);
-      --line: rgba(255,255,255,0.1);
+      --dim: rgba(255,255,255,0.38);
+      --dimmer: rgba(255,255,255,0.18);
+      --line: rgba(255,255,255,0.09);
+      --accent: #818cf8;
+      --green: #34d399;
     }
 
     html, body {
@@ -35,50 +32,51 @@
       font-family: 'DM Sans', sans-serif;
     }
 
-    /* —— HEADER —— */
+    /* ── HEADER ─────────────────────────────── */
     header {
       position: fixed;
       top: 0; left: 0; right: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 28px 48px;
+      padding: 24px 52px;
       z-index: 100;
       border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(12px);
+      background: rgba(8,8,10,0.7);
+      backdrop-filter: blur(16px);
     }
 
     .logo {
       font-family: 'DM Mono', monospace;
+      font-size: 14px;
       font-weight: 500;
-      font-size: 15px;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--white);
       text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .logo span {
-      display: inline-block;
-      width: 7px; height: 7px;
-      background: white;
+    .logo-dot {
+      width: 8px; height: 8px;
       border-radius: 50%;
-      margin-right: 8px;
-      vertical-align: middle;
-      animation: pulse 2.4s ease-in-out infinite;
+      background: var(--accent);
+      animation: dotpulse 2.6s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
+    @keyframes dotpulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.35; transform:scale(0.6); }
     }
 
-    nav { display: flex; gap: 36px; }
+    nav { display: flex; gap: 40px; }
 
     nav a {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 300;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--dim);
       text-decoration: none;
@@ -87,99 +85,103 @@
 
     nav a:hover { color: var(--white); }
 
-    /* —— MAIN LAYOUT —— */
+    /* ── MAIN ───────────────────────────────── */
     main {
       height: 100vh;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      align-items: center;
-      padding: 0 48px;
+      padding-top: 76px;
     }
 
-    /* —— LEFT COPY —— */
-    .copy { padding-right: 60px; }
+    /* ── LEFT ───────────────────────────────── */
+    .left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 52px 0 52px;
+      border-right: 1px solid var(--line);
+    }
 
     .eyebrow {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
       font-weight: 400;
-      letter-spacing: 0.25em;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
       color: var(--dim);
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .eyebrow::before {
       content: '';
       display: block;
-      width: 32px;
-      height: 1px;
-      background: var(--dim);
+      width: 36px; height: 1px;
+      background: rgba(129,140,248,0.5);
     }
 
     h1 {
-      font-family: 'DM Sans', sans-serif;
-      font-size: clamp(30px, 3.2vw, 48px);
+      font-size: clamp(34px, 3.6vw, 54px);
       font-weight: 200;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      margin-bottom: 24px;
+      line-height: 1.13;
+      letter-spacing: -0.025em;
+      margin-bottom: 22px;
     }
 
-    h1 em { font-style: italic; font-weight: 300; }
+    h1 em { font-style: italic; font-weight: 300; color: var(--accent); }
 
     .sub {
       font-size: 14px;
       font-weight: 300;
       color: var(--dim);
-      line-height: 1.7;
-      max-width: 380px;
-      margin-bottom: 40px;
+      line-height: 1.75;
+      max-width: 400px;
+      margin-bottom: 36px;
     }
 
     .flow {
       display: flex;
-      gap: 8px;
-      margin-bottom: 32px;
       flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 36px;
     }
 
     .flow-tag {
       font-family: 'DM Mono', monospace;
       font-size: 9px;
       font-weight: 500;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-      border: 1px solid rgba(255,255,255,0.12);
-      padding: 5px 10px;
+      color: rgba(255,255,255,0.42);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 6px 12px;
       border-radius: 2px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .flow-tag::after {
       content: '→';
-      color: rgba(255,255,255,0.2);
-      font-size: 9px;
+      color: var(--accent);
+      font-size: 10px;
+      opacity: 0.6;
     }
 
     .flow-tag:last-child::after { display: none; }
 
     .cta-wrap {
       display: flex;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 4px;
       overflow: hidden;
-      max-width: 400px;
+      max-width: 420px;
       transition: border-color 0.2s;
     }
 
-    .cta-wrap:focus-within { border-color: rgba(255,255,255,0.6); }
+    .cta-wrap:focus-within { border-color: rgba(129,140,248,0.6); }
 
     .cta-wrap input {
       flex: 1;
@@ -191,10 +193,10 @@
       font-size: 12px;
       font-weight: 300;
       letter-spacing: 0.05em;
-      padding: 14px 18px;
+      padding: 15px 20px;
     }
 
-    .cta-wrap input::placeholder { color: var(--dim); }
+    .cta-wrap input::placeholder { color: var(--dimmer); }
 
     .cta-wrap button {
       background: var(--white);
@@ -202,79 +204,117 @@
       border: none;
       cursor: pointer;
       font-family: 'DM Mono', monospace;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      padding: 14px 22px;
-      transition: opacity 0.2s;
+      padding: 15px 22px;
+      transition: opacity 0.2s, background 0.2s;
       white-space: nowrap;
     }
 
-    .cta-wrap button:hover { opacity: 0.85; }
+    .cta-wrap button:hover { opacity: 0.88; }
 
     .hint {
-      margin-top: 14px;
+      margin-top: 12px;
       font-size: 11px;
-      color: rgba(255,255,255,0.22);
+      color: var(--dimmer);
       font-family: 'DM Mono', monospace;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
     }
 
-    /* —— RIGHT: 3D SCENE —— */
-    .scene {
+    .success-msg {
+      display: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--green);
+      letter-spacing: 0.06em;
+      padding: 14px 0;
+    }
+
+    /* ── RIGHT ──────────────────────────────── */
+    .right {
+      position: relative;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      position: relative;
+      overflow: hidden;
     }
 
-    .orbit {
-      width: 320px;
-      height: 320px;
-      position: relative;
-      perspective: 900px;
+    /* Background glow */
+    .right::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(129,140,248,0.07) 0%, transparent 65%);
+      pointer-events: none;
     }
 
+    /* ── 3D SCENE ───────────────────────────── */
+    .scene {
+      position: relative;
+      width: 360px; height: 360px;
+      perspective: 1100px;
+      margin-bottom: 32px;
+    }
+
+    /* Outer ring */
     .ring {
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.12);
-      animation: spinRing 18s linear infinite;
+      border: 1px solid rgba(255,255,255,0.1);
       transform-style: preserve-3d;
+      animation: spinRing 20s linear infinite;
     }
 
     .ring::after {
       content: '';
       position: absolute;
-      top: 50%; left: -4px;
-      width: 8px; height: 8px;
-      background: white;
+      top: 50%; left: -5px;
+      width: 10px; height: 10px;
+      background: var(--accent);
       border-radius: 50%;
       transform: translateY(-50%);
-      box-shadow: 0 0 12px 3px rgba(255,255,255,0.4);
+      box-shadow: 0 0 16px 4px rgba(129,140,248,0.5);
     }
 
+    /* Middle ring */
     .ring-2 {
-      inset: 40px;
-      border-color: rgba(255,255,255,0.08);
-      animation: spinRing 11s linear infinite reverse;
+      inset: 50px;
+      border-color: rgba(255,255,255,0.06);
+      animation: spinRing 13s linear infinite reverse;
     }
 
     .ring-2::after {
-      background: rgba(255,255,255,0.6);
+      background: rgba(52,211,153,0.8);
+      width: 7px; height: 7px;
+      left: -3.5px;
+      box-shadow: 0 0 12px 3px rgba(52,211,153,0.4);
+    }
+
+    /* Inner ring */
+    .ring-3 {
+      inset: 100px;
+      border-color: rgba(255,255,255,0.04);
+      animation: spinRing 8s linear infinite;
+    }
+
+    .ring-3::after {
       width: 5px; height: 5px;
       left: -2.5px;
+      background: rgba(255,255,255,0.5);
       box-shadow: 0 0 8px 2px rgba(255,255,255,0.3);
     }
 
     @keyframes spinRing {
-      from { transform: rotateX(68deg) rotateZ(0deg); }
-      to   { transform: rotateX(68deg) rotateZ(360deg); }
+      from { transform: rotateX(70deg) rotateZ(0deg); }
+      to   { transform: rotateX(70deg) rotateZ(360deg); }
     }
 
+    /* Cube */
     .cube-wrap {
       position: absolute;
       inset: 0;
@@ -284,74 +324,129 @@
     }
 
     .cube {
-      width: 80px; height: 80px;
+      width: 90px; height: 90px;
       position: relative;
       transform-style: preserve-3d;
-      animation: rotateCube 9s ease-in-out infinite;
+      animation: spinCube 11s ease-in-out infinite;
     }
 
-    @keyframes rotateCube {
-      0%   { transform: rotateX(15deg) rotateY(0deg); }
-      25%  { transform: rotateX(15deg) rotateY(90deg); }
-      50%  { transform: rotateX(15deg) rotateY(180deg); }
-      75%  { transform: rotateX(15deg) rotateY(270deg); }
-      100% { transform: rotateX(15deg) rotateY(360deg); }
+    @keyframes spinCube {
+      0%   { transform: rotateX(12deg) rotateY(0deg); }
+      25%  { transform: rotateX(12deg) rotateY(90deg); }
+      50%  { transform: rotateX(12deg) rotateY(180deg); }
+      75%  { transform: rotateX(12deg) rotateY(270deg); }
+      100% { transform: rotateX(12deg) rotateY(360deg); }
     }
 
     .face {
       position: absolute;
-      width: 80px; height: 80px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.02);
+      width: 90px; height: 90px;
+      border: 1px solid rgba(129,140,248,0.22);
+      background: rgba(129,140,248,0.04);
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'DM Mono', monospace;
       font-size: 9px;
-      font-weight: 400;
-      letter-spacing: 0.15em;
-      color: rgba(255,255,255,0.25);
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      color: rgba(129,140,248,0.55);
     }
 
-    .face-front  { transform: translateZ(40px); }
-    .face-back   { transform: rotateY(180deg) translateZ(40px); }
-    .face-left   { transform: rotateY(-90deg) translateZ(40px); }
-    .face-right  { transform: rotateY(90deg) translateZ(40px); }
-    .face-top    { transform: rotateX(90deg) translateZ(40px); }
-    .face-bottom { transform: rotateX(-90deg) translateZ(40px); }
+    .face-front  { transform: translateZ(45px); }
+    .face-back   { transform: rotateY(180deg) translateZ(45px); }
+    .face-left   { transform: rotateY(-90deg) translateZ(45px); }
+    .face-right  { transform: rotateY(90deg) translateZ(45px); }
+    .face-top    { transform: rotateX(90deg) translateZ(45px); }
+    .face-bottom { transform: rotateX(-90deg) translateZ(45px); }
 
-    .glow {
+    /* Verdict card floating */
+    .verdict-card {
       position: absolute;
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
-      pointer-events: none;
+      top: 24px;
+      right: -10px;
+      background: rgba(10,12,18,0.92);
+      border: 1px solid rgba(52,211,153,0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      backdrop-filter: blur(12px);
+      animation: floatCard 4s ease-in-out infinite;
     }
 
+    @keyframes floatCard {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .verdict-label {
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 4px;
+    }
+
+    .verdict-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--green);
+    }
+
+    /* Waste card floating */
+    .waste-card {
+      position: absolute;
+      bottom: 32px;
+      left: -10px;
+      background: rgba(10,12,18,0.92);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      backdrop-filter: blur(12px);
+      animation: floatCard 4s ease-in-out 2s infinite;
+    }
+
+    .waste-label {
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 4px;
+    }
+
+    .waste-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: #f87171;
+    }
+
+    /* ── STATS ROW ───────────────────────────── */
     .stats {
-      position: absolute;
-      bottom: 60px;
-      left: 0; right: 0;
       display: flex;
-      justify-content: center;
+      border-top: 1px solid var(--line);
+      width: 100%;
     }
 
     .stat {
-      padding: 12px 20px;
-      border: 1px solid var(--line);
-      border-right: none;
+      flex: 1;
+      padding: 18px 20px;
       text-align: center;
+      border-right: 1px solid var(--line);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
 
-    .stat:last-child { border-right: 1px solid var(--line); }
+    .stat:last-child { border-right: none; }
 
     .stat-num {
       font-family: 'DM Mono', monospace;
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 400;
       color: white;
       display: block;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
 
     .stat-label {
@@ -362,11 +457,31 @@
       color: var(--dim);
     }
 
-    /* —— ASK WIDGET —— */
+    /* ── FOOTER ─────────────────────────────── */
+    footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 14px 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--line);
+      background: rgba(8,8,10,0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    footer span {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--dimmer);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── ASK WIDGET ─────────────────────────── */
     .ask-btn {
       position: fixed;
-      bottom: 28px; right: 28px;
-      width: 44px; height: 44px;
+      bottom: 56px; right: 30px;
+      width: 46px; height: 46px;
       background: var(--white);
       color: var(--black);
       border: none;
@@ -388,14 +503,14 @@
 
     .ask-panel {
       position: fixed;
-      bottom: 84px; right: 28px;
-      width: 300px;
-      background: #0a0a0a;
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 8px;
+      bottom: 114px; right: 30px;
+      width: 296px;
+      background: #0c0d10;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
       overflow: hidden;
       z-index: 200;
-      transform: scale(0.92) translateY(12px);
+      transform: scale(0.9) translateY(14px);
       opacity: 0;
       pointer-events: none;
       transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s ease;
@@ -409,7 +524,7 @@
     }
 
     .ask-header {
-      padding: 14px 16px;
+      padding: 14px 18px;
       border-bottom: 1px solid var(--line);
       display: flex;
       align-items: center;
@@ -418,9 +533,9 @@
 
     .ask-dot {
       width: 7px; height: 7px;
-      background: white;
+      background: var(--green);
       border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
+      animation: dotpulse 2s ease-in-out infinite;
     }
 
     .ask-title {
@@ -431,20 +546,20 @@
       color: var(--white);
     }
 
-    .ask-body { padding: 14px 16px; }
+    .ask-body { padding: 14px 18px; }
 
     .ask-body p {
       font-size: 12px;
       font-weight: 300;
       color: var(--dim);
       line-height: 1.6;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .ask-form {
       display: flex;
       border: 1px solid var(--line);
-      border-radius: 3px;
+      border-radius: 4px;
       overflow: hidden;
     }
 
@@ -475,38 +590,12 @@
     }
 
     .ask-form button:hover { opacity: 0.8; }
-
-    footer {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      padding: 16px 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-top: 1px solid var(--line);
-    }
-
-    footer span {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      color: rgba(255,255,255,0.18);
-      letter-spacing: 0.08em;
-    }
-
-    .success-msg {
-      display: none;
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      color: var(--dim);
-      letter-spacing: 0.08em;
-      padding: 14px 0;
-    }
   </style>
 </head>
 <body>
 
   <header>
-    <a class="logo" href="/"><span></span>Grassion</a>
+    <a class="logo" href="/"><div class="logo-dot"></div>Grassion</a>
     <nav>
       <a href="#about">About</a>
       <a href="mailto:info@grassion.com">Contact</a>
@@ -514,18 +603,23 @@
   </header>
 
   <main>
-    <div class="copy">
+    <!-- LEFT: COPY -->
+    <div class="left">
       <div class="eyebrow">AI Coding ROI Intelligence</div>
+
       <h1>Where AI Code<br>Meets<br><em>Accountability.</em></h1>
+
       <p class="sub">
         The first system that tells engineering teams whether AI is creating value — or silently creating rework.
       </p>
+
       <div class="flow">
         <span class="flow-tag">Connect</span>
         <span class="flow-tag">Detect</span>
         <span class="flow-tag">Measure</span>
         <span class="flow-tag">Decide</span>
       </div>
+
       <div class="cta-wrap" id="ctaWrap">
         <input type="email" id="emailInput" placeholder="your@company.com" autocomplete="off" />
         <button id="joinBtn">Join the Standard</button>
@@ -534,15 +628,23 @@
       <div class="success-msg" id="successMsg">✓ &nbsp;You're on the list. We'll be in touch.</div>
     </div>
 
-    <div class="scene">
-      <div class="orbit">
+    <!-- RIGHT: 3D + STATS -->
+    <div class="right">
+      <!-- Floating verdict card -->
+      <div class="verdict-card" style="z-index:10;">
+        <div class="verdict-label">This month</div>
+        <div class="verdict-value">NET POSITIVE +$1,220</div>
+      </div>
+
+      <!-- 3D Scene -->
+      <div class="scene">
         <div class="ring"></div>
         <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
         <div class="cube-wrap">
-          <div class="glow"></div>
           <div class="cube">
             <div class="face face-front">ROI</div>
-            <div class="face face-back">DETECT</div>
+            <div class="face face-back">DATA</div>
             <div class="face face-left">TRACK</div>
             <div class="face face-right">SIGNAL</div>
             <div class="face face-top"></div>
@@ -550,18 +652,26 @@
           </div>
         </div>
       </div>
+
+      <!-- Floating waste card -->
+      <div class="waste-card" style="z-index:10;">
+        <div class="waste-label">Unused seats found</div>
+        <div class="waste-value">8 seats · $152/mo wasted</div>
+      </div>
+
+      <!-- Stats -->
       <div class="stats">
-        <div class="stat">
+        <div class="stat" id="s1">
           <span class="stat-num">85%</span>
-          <span class="stat-label">devs use AI tools</span>
+          <span class="stat-label">Devs use AI tools</span>
         </div>
-        <div class="stat">
+        <div class="stat" id="s2">
           <span class="stat-num">0%</span>
-          <span class="stat-label">have ROI visibility</span>
+          <span class="stat-label">Have ROI visibility</span>
         </div>
-        <div class="stat">
+        <div class="stat" id="s3">
           <span class="stat-num">5 min</span>
-          <span class="stat-label">to first insight</span>
+          <span class="stat-label">To first insight</span>
         </div>
       </div>
     </div>
@@ -572,6 +682,7 @@
     <span>Where AI Code Meets Accountability</span>
   </footer>
 
+  <!-- ASK WIDGET -->
   <button class="ask-btn" id="askToggle" title="Ask us anything">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -593,59 +704,49 @@
   </div>
 
   <script is:inline>
-    // —— Ask widget ————————————————————————————————————————
-    const askPanel  = document.getElementById('askPanel');
-    const askToggle = document.getElementById('askToggle');
-    const askInput  = document.getElementById('askInput');
-    const askSend   = document.getElementById('askSend');
-
-    askToggle.addEventListener('click', () => askPanel.classList.toggle('open'));
-
+    // Ask widget
+    const panel = document.getElementById('askPanel');
+    const toggle = document.getElementById('askToggle');
+    toggle.addEventListener('click', () => panel.classList.toggle('open'));
     document.addEventListener('click', e => {
-      if (!askPanel.contains(e.target) && !askToggle.contains(e.target)) {
-        askPanel.classList.remove('open');
-      }
+      if (!panel.contains(e.target) && !toggle.contains(e.target))
+        panel.classList.remove('open');
     });
 
-    function sendAsk() {
-      const q = askInput.value.trim();
+    document.getElementById('askSend').addEventListener('click', () => {
+      const q = document.getElementById('askInput').value.trim();
       if (!q) return;
-      window.location.href =
-        `mailto:info@grassion.com?subject=Question via grassion.com&body=${encodeURIComponent(q)}`;
-      askInput.value = '';
-    }
+      window.location.href = `mailto:info@grassion.com?subject=Question via grassion.com&body=${encodeURIComponent(q)}`;
+    });
 
-    askSend.addEventListener('click', sendAsk);
-    askInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendAsk(); });
+    document.getElementById('askInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('askSend').click();
+    });
 
-    // —— Waitlist join ————————————————————————————————————
-    // ⚠️  REPLACE the value below with your real Tally form ID
-    //     Go to tally.so → create form → copy the ID from the URL
+    // Waitlist
     const WAITLIST_URL = 'https://tally.so/r/YOUR_FORM_ID';
-
-    const joinBtn    = document.getElementById('joinBtn');
-    const emailInput = document.getElementById('emailInput');
-    const ctaWrap    = document.getElementById('ctaWrap');
-    const hintText   = document.getElementById('hintText');
-    const successMsg = document.getElementById('successMsg');
-
-    function handleJoin() {
-      const email = emailInput.value.trim();
-      if (!email || !email.includes('@')) { emailInput.focus(); return; }
+    document.getElementById('joinBtn').addEventListener('click', () => {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email || !email.includes('@')) {
+        document.getElementById('emailInput').focus(); return;
+      }
       window.open(`${WAITLIST_URL}?email=${encodeURIComponent(email)}`, '_blank');
-      ctaWrap.style.display    = 'none';
-      hintText.style.display   = 'none';
-      successMsg.style.display = 'block';
-    }
+      document.getElementById('ctaWrap').style.display = 'none';
+      document.getElementById('hintText').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
 
-    joinBtn.addEventListener('click', handleJoin);
-    emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleJoin(); });
+    document.getElementById('emailInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('joinBtn').click();
+    });
 
-    // —— Stat entrance animation ——————————————————————————
+    // Stat entrance animation
     window.addEventListener('load', () => {
-      document.querySelectorAll('.stat').forEach((s, i) => {
-        s.style.cssText = 'opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease';
-        setTimeout(() => { s.style.opacity='1'; s.style.transform='translateY(0)'; }, 600 + i*120);
+      ['s1','s2','s3'].forEach((id, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }
+        }, 500 + i * 150);
       });
     });
   </script>
