@@ -1,106 +1,603 @@
 ---
-import Base from '../layouts/Base.astro'
-
 const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
-const trialUrl = `${APP_URL}/login`
-
-const plans = [
-  {
-    name: 'Starter',
-    inr: '₹2,400',
-    usd: '$29',
-    unit: 'per dev / month',
-    best: '5-10 devs',
-    primary: true,
-  },
-  {
-    name: 'Team',
-    inr: '₹1,600',
-    usd: '$19',
-    unit: 'per dev / month (min 10 seats)',
-    best: '10-30 devs',
-  },
-  {
-    name: 'Business',
-    inr: '₹41,000',
-    usd: '$499',
-    unit: 'flat / month',
-    best: '30-50 devs',
-  },
-  {
-    name: 'Enterprise',
-    inr: 'Contact us',
-    usd: '',
-    unit: 'tailored to your usage',
-    best: '50+ devs',
-  },
-]
 ---
 
-<Base title="Pricing" description="Simple per-developer pricing. 14-day free trial, no credit card required.">
-  <section>
-    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Simple pricing</h1>
-    <p class="mt-4 text-lg text-neutral-700">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing · Grassion</title>
+  <meta name="description" content="Simple per-developer pricing. 14-day free trial. No credit card required." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --dim: rgba(255,255,255,0.38);
+      --dimmer: rgba(255,255,255,0.18);
+      --line: rgba(255,255,255,0.09);
+    }
+
+    html, body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── HEADER ─────────────────────────────── */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 18px 52px;
+      z-index: 100;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(16px);
+    }
+
+    nav { display: flex; gap: 40px; align-items: center; }
+    nav a {
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav a:hover, nav a.active { color: var(--white); }
+
+    .logo-link {
+      position: fixed;
+      top: 20px; left: 24px;
+      z-index: 1000;
+    }
+    .logo-link img { height: 36px; display: block; }
+
+    /* ── MAIN ───────────────────────────────── */
+    main {
+      padding: 120px 52px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .eyebrow::before {
+      content: '';
+      display: block;
+      width: 36px; height: 1px;
+      background: rgba(255,255,255,0.28);
+    }
+
+    h1 {
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 200;
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+      margin-bottom: 16px;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--dim);
+      margin-bottom: 60px;
+      line-height: 1.7;
+    }
+
+    /* ── PLAN GRID ──────────────────────────── */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      margin-bottom: 80px;
+    }
+
+    .plan-card {
+      background: var(--black);
+      padding: 40px 28px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .plan-card.featured {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .plan-popular {
+      position: absolute;
+      top: -1px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'DM Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: var(--white);
+      color: var(--black);
+      padding: 4px 12px;
+      white-space: nowrap;
+    }
+
+    .plan-name {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 20px;
+    }
+
+    .plan-price {
+      font-size: 32px;
+      font-weight: 200;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .plan-price-usd {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 8px;
+    }
+
+    .plan-unit {
+      font-size: 12px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 4px;
+    }
+
+    .plan-best {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.22);
+      margin-bottom: 28px;
+      text-transform: uppercase;
+    }
+
+    .plan-divider {
+      height: 1px;
+      background: var(--line);
+      margin-bottom: 24px;
+    }
+
+    .plan-features {
+      list-style: none;
+      flex: 1;
+      margin-bottom: 32px;
+    }
+
+    .plan-features li {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dim);
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.4;
+    }
+
+    .plan-features li::before {
+      content: '·';
+      color: rgba(255,255,255,0.3);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .plan-features li.inherit {
+      color: rgba(255,255,255,0.22);
+      font-size: 12px;
+    }
+    .plan-features li.inherit::before { content: '↳'; font-size: 10px; }
+
+    .plan-cta {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 13px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--white);
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .plan-cta:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    .plan-card.featured .plan-cta {
+      background: var(--white);
+      color: var(--black);
+      border-color: var(--white);
+    }
+    .plan-card.featured .plan-cta:hover { opacity: 0.87; }
+
+    .plan-hint {
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.1em;
+      margin-top: 10px;
+    }
+
+    /* ── RAZORPAY NOTE ──────────────────────── */
+    .payment-note {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--line);
+      padding: 18px 24px;
+      margin-bottom: 60px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .payment-note-icon {
+      width: 36px; height: 36px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.06em;
+    }
+
+    .payment-note-text {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.6;
+    }
+
+    .payment-note-text strong {
+      color: var(--white);
+      font-weight: 400;
+    }
+
+    /* ── FAQ ────────────────────────────────── */
+    .faq-section { margin-bottom: 60px; }
+
+    .faq-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 28px;
+    }
+
+    details {
+      border-bottom: 1px solid var(--line);
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 20px 0;
+      font-size: 15px;
+      font-weight: 300;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--white);
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: '+';
+      font-family: 'DM Mono', monospace;
+      font-size: 18px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.3);
+      transition: transform 0.2s;
+    }
+
+    details[open] summary::after {
+      transform: rotate(45deg);
+    }
+
+    details p {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.7;
+      padding-bottom: 20px;
+    }
+
+    details a { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* ── FOOTER ─────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 20px 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    footer span {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--dimmer);
+      letter-spacing: 0.08em;
+    }
+
+    footer a {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--dimmer);
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    footer a:hover { color: var(--white); }
+
+    /* ── FLOATING ELEMENT ───────────────────── */
+    .float-badge {
+      position: fixed;
+      bottom: 80px;
+      right: 28px;
+      background: rgba(10,10,10,0.95);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      backdrop-filter: blur(12px);
+      z-index: 50;
+      animation: floatBadge 4s ease-in-out infinite;
+    }
+    @keyframes floatBadge {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .float-badge-label {
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 4px;
+    }
+    .float-badge-value {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--white);
+    }
+
+    /* ── MOBILE ─────────────────────────────── */
+    @media (max-width: 1023px) {
+      .plans-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 767px) {
+      .logo-link { top: 14px; left: 16px; }
+      .logo-link img { height: 28px; }
+      header { padding: 14px 16px; }
+      nav { gap: 16px; }
+
+      main { padding: 88px 24px 60px; }
+
+      h1 { font-size: clamp(28px, 9vw, 40px); }
+
+      .plans-grid { grid-template-columns: 1fr; }
+
+      .payment-note { flex-direction: column; align-items: flex-start; }
+
+      footer { padding: 16px 24px; flex-direction: column; gap: 8px; text-align: center; }
+
+      .float-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="logo-link">
+    <img src="/grassion-logo-white.svg" alt="Grassion" onerror="this.style.display='none'" />
+  </a>
+
+  <header>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/about/">About</a>
+      <a href="/pricing/" class="active">Pricing</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="eyebrow">Pricing</div>
+    <h1>Simple, honest pricing.</h1>
+    <p class="hero-sub">
       Charged per active developer. 14-day free trial. No credit card to start. Cancel anytime.
+      Features unlock instantly after payment · managed in your dashboard.
     </p>
-  </section>
 
-  <section class="mt-10 grid gap-4 sm:grid-cols-2">
-    {plans.map((p) => (
-      <div
-        class={`rounded-xl border p-6 ${
-          p.primary ? 'border-ink shadow-sm' : 'border-neutral-200'
-        }`}
-      >
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold">{p.name}</h2>
-          {p.primary && (
-            <span class="rounded-full bg-ink px-2 py-0.5 text-xs font-medium text-white">
-              Most popular
-            </span>
-          )}
-        </div>
-        <div class="mt-3 text-3xl font-semibold tracking-tight">
-          {p.inr}
-          {p.usd && <span class="ml-2 text-base font-normal text-neutral-500">/ {p.usd}</span>}
-        </div>
-        <div class="mt-1 text-sm text-neutral-500">{p.unit}</div>
-        <div class="mt-4 text-sm text-neutral-600">Best for: {p.best}</div>
-        <a
-          href={p.name === 'Enterprise' ? '/contact/' : trialUrl}
-          class={`mt-6 inline-block w-full rounded-md px-4 py-2 text-center text-sm font-medium ${
-            p.primary
-              ? 'bg-ink text-white hover:bg-neutral-800'
-              : 'border border-neutral-300 text-neutral-800 hover:bg-neutral-50'
-          }`}
-        >
-          {p.name === 'Enterprise' ? 'Contact sales' : 'Start free trial'}
-        </a>
+    <!-- PLAN CARDS -->
+    <div class="plans-grid">
+
+      <!-- Starter -->
+      <div class="plan-card">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">₹2,400</div>
+        <div class="plan-price-usd">~$29 USD</div>
+        <div class="plan-unit">per developer / month</div>
+        <div class="plan-best">Best for 5–10 devs</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>All active repos monitored</li>
+          <li>AI PR detection — label, trailer &amp; heuristic</li>
+          <li>Weekly ROI verdict (Net Positive / Neutral / Negative)</li>
+          <li>Problem PR alerts with OpenAI summaries</li>
+          <li>Seat waste analysis — see unused Copilot seats</li>
+          <li>Weekly email digest for your team</li>
+          <li>GitHub App · 5-minute setup</li>
+          <li>Email support</li>
+        </ul>
+        <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
+        <p class="plan-hint">14-day trial · no card required</p>
       </div>
-    ))}
-  </section>
 
-  <section class="mt-14">
-    <h2 class="text-xl font-semibold tracking-tight">Billing FAQ</h2>
-    <div class="mt-4 divide-y divide-neutral-100">
-      <details class="py-3">
-        <summary class="cursor-pointer font-medium">Do you charge per repo or per developer?</summary>
-        <p class="mt-2 text-neutral-700">Per active developer. Repos are unlimited.</p>
+      <!-- Team (featured) -->
+      <div class="plan-card featured">
+        <div class="plan-popular">Most Popular</div>
+        <div class="plan-name">Team</div>
+        <div class="plan-price">₹1,600</div>
+        <div class="plan-price-usd">~$19 USD</div>
+        <div class="plan-unit">per developer / month</div>
+        <div class="plan-best">Min 10 seats · Best for 10–30 devs</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li class="inherit">Everything in Starter</li>
+          <li>Per-developer ROI breakdown</li>
+          <li>Multi-repo analytics dashboard</li>
+          <li>Custom ROI thresholds &amp; alerts</li>
+          <li>Developer-level seat waste report</li>
+          <li>Priority email support</li>
+          <li>API access (coming Q3 2026)</li>
+        </ul>
+        <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
+        <p class="plan-hint">14-day trial · no card required</p>
+      </div>
+
+      <!-- Business -->
+      <div class="plan-card">
+        <div class="plan-name">Business</div>
+        <div class="plan-price">₹41,000</div>
+        <div class="plan-price-usd">~$499 USD</div>
+        <div class="plan-unit">flat / month</div>
+        <div class="plan-best">Best for 30–50 devs</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li class="inherit">Everything in Team</li>
+          <li>Unlimited developers</li>
+          <li>Monthly executive ROI report</li>
+          <li>Dedicated onboarding session</li>
+          <li>Custom integrations on request</li>
+          <li>24h support SLA</li>
+          <li>Slack notifications (coming Q3 2026)</li>
+        </ul>
+        <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
+        <p class="plan-hint">14-day trial · no card required</p>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="plan-card">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price" style="font-size: 20px; padding-top: 8px;">Contact us</div>
+        <div class="plan-price-usd">&nbsp;</div>
+        <div class="plan-unit">tailored to your usage</div>
+        <div class="plan-best">50+ devs</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li class="inherit">Everything in Business</li>
+          <li>Custom contract &amp; SLA</li>
+          <li>SSO / SAML (roadmap)</li>
+          <li>On-premise deployment option</li>
+          <li>Dedicated account manager</li>
+          <li>Custom data retention policy</li>
+          <li>Team benchmarking (coming Q3 2026)</li>
+        </ul>
+        <a class="plan-cta" href="/contact/">Contact Sales</a>
+        <p class="plan-hint">We respond within 24 hours</p>
+      </div>
+
+    </div>
+
+    <!-- RAZORPAY NOTE -->
+    <div class="payment-note">
+      <div class="payment-note-icon">PAY</div>
+      <p class="payment-note-text">
+        <strong>Powered by Razorpay.</strong> Pay via UPI, debit/credit card, or netbanking.
+        Clicking "Start Free Trial" takes you to the dashboard — select your plan there to go directly to
+        the Razorpay checkout. Features activate instantly after payment.
+      </p>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <div class="faq-label">Billing FAQ</div>
+
+      <details>
+        <summary>Do you charge per repo or per developer?</summary>
+        <p>Per active developer. Repos are unlimited across all plans.</p>
       </details>
-      <details class="py-3">
-        <summary class="cursor-pointer font-medium">Which payment methods are supported?</summary>
-        <p class="mt-2 text-neutral-700">
-          UPI, debit/credit cards (domestic and international), and netbanking via Razorpay. Annual
-          invoicing available on request.
-        </p>
+
+      <details>
+        <summary>Which payment methods are supported?</summary>
+        <p>UPI, debit/credit cards (domestic and international), and netbanking via Razorpay. Annual invoicing available on Business and Enterprise plans.</p>
       </details>
-      <details class="py-3">
-        <summary class="cursor-pointer font-medium">Do you offer refunds?</summary>
-        <p class="mt-2 text-neutral-700">
-          Pro-rated refunds for annual plans. Monthly plans are evaluated case-by-case — write to{' '}
-          <a href="mailto:billing@grassion.com">billing@grassion.com</a>.
-        </p>
+
+      <details>
+        <summary>What happens after the free trial?</summary>
+        <p>You'll be prompted to add a payment method. No charge is made until you confirm. If you don't subscribe, data is retained for 30 days.</p>
+      </details>
+
+      <details>
+        <summary>Do you offer refunds?</summary>
+        <p>Pro-rated refunds for annual plans. Monthly plans are evaluated case-by-case — write to <a href="mailto:info@grassion.com">info@grassion.com</a>.</p>
+      </details>
+
+      <details>
+        <summary>Can I upgrade or downgrade anytime?</summary>
+        <p>Yes. Plan changes take effect at the next billing cycle. Upgrades can be applied immediately on request.</p>
       </details>
     </div>
-  </section>
-</Base>
+
+  </main>
+
+  <footer>
+    <span>© 2026 Grassion Intelligence</span>
+    <div style="display:flex; gap:24px;">
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href="mailto:info@grassion.com">info@grassion.com</a>
+    </div>
+  </footer>
+
+  <!-- Floating element -->
+  <div class="float-badge">
+    <div class="float-badge-label">Free Trial</div>
+    <div class="float-badge-value">14 days · no card</div>
+  </div>
+
+</body>
+</html>

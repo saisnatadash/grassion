@@ -1,113 +1,541 @@
 ---
-import Base from '../layouts/Base.astro'
-
-const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.grassion.com'
+const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
 ---
 
-<Base title="Contact" description="Reach Grassion. Replies within 24 hours, usually faster.">
-  <section>
-    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Contact Grassion</h1>
-    <p class="mt-4 text-lg text-neutral-700">
-      Email me directly — the fastest way to reach a human (me) is the form below. I reply within 24
-      hours, usually same-day.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact · Grassion</title>
+  <meta name="description" content="Reach the Grassion team. We reply within 24 hours." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --dim: rgba(255,255,255,0.38);
+      --dimmer: rgba(255,255,255,0.18);
+      --line: rgba(255,255,255,0.09);
+    }
+
+    html, body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── HEADER ─────────────────────────────── */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 18px 52px;
+      z-index: 100;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(16px);
+    }
+
+    nav { display: flex; gap: 40px; align-items: center; }
+    nav a {
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav a:hover, nav a.active { color: var(--white); }
+
+    .logo-link {
+      position: fixed;
+      top: 20px; left: 24px;
+      z-index: 1000;
+    }
+    .logo-link img { height: 36px; display: block; }
+
+    /* ── MAIN ───────────────────────────────── */
+    main {
+      padding: 120px 52px 80px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .eyebrow::before {
+      content: '';
+      display: block;
+      width: 36px; height: 1px;
+      background: rgba(255,255,255,0.28);
+    }
+
+    h1 {
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 200;
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+      margin-bottom: 16px;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--dim);
+      margin-bottom: 60px;
+      max-width: 420px;
+      line-height: 1.7;
+    }
+
+    /* ── TWO-COL LAYOUT ─────────────────────── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      margin-bottom: 80px;
+    }
+
+    /* ── LEFT PANEL ─────────────────────────── */
+    .contact-info {
+      background: var(--black);
+      padding: 48px 40px;
+    }
+
+    .info-section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 28px;
+    }
+
+    .info-item {
+      margin-bottom: 32px;
+    }
+
+    .info-item-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      margin-bottom: 6px;
+    }
+
+    .info-item-value {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--white);
+    }
+
+    .info-item-value a {
+      color: var(--white);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      transition: border-color 0.2s;
+    }
+    .info-item-value a:hover { border-color: rgba(255,255,255,0.5); }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 32px 0;
+    }
+
+    .collab-section {
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .collab-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 10px;
+    }
+
+    .collab-title {
+      font-size: 16px;
+      font-weight: 300;
+      margin-bottom: 10px;
+    }
+
+    .collab-desc {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    .collab-link {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.25);
+      transition: border-color 0.2s;
+    }
+    .collab-link:hover { border-color: var(--white); }
+
+    /* ── FORM PANEL ─────────────────────────── */
+    .contact-form-panel {
+      background: var(--black);
+      padding: 48px 48px;
+    }
+
+    .form-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 28px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field span {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      border-radius: 0;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder { color: rgba(255,255,255,0.18); }
+
+    .field select option { background: #111; color: #fff; }
+
+    .field textarea { resize: vertical; min-height: 120px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 24px;
+    }
+
+    #contact-status {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--dim);
+    }
+
+    .submit-btn {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 13px 24px;
+      transition: opacity 0.2s;
+    }
+    .submit-btn:hover { opacity: 0.87; }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── FOOTER ─────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 20px 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    footer span {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--dimmer);
+      letter-spacing: 0.08em;
+    }
+
+    footer a {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--dimmer);
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    footer a:hover { color: var(--white); }
+
+    /* ── FLOATING ELEMENT ───────────────────── */
+    .float-badge {
+      position: fixed;
+      bottom: 80px;
+      right: 28px;
+      background: rgba(10,10,10,0.95);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      backdrop-filter: blur(12px);
+      z-index: 50;
+      animation: floatBadge 4s ease-in-out infinite;
+    }
+    @keyframes floatBadge {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .float-badge-label {
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 4px;
+    }
+    .float-badge-value {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--white);
+    }
+
+    /* ── MOBILE ─────────────────────────────── */
+    @media (max-width: 767px) {
+      .logo-link { top: 14px; left: 16px; }
+      .logo-link img { height: 28px; }
+      header { padding: 14px 16px; }
+      nav { gap: 16px; }
+
+      main { padding: 88px 24px 60px; }
+
+      h1 { font-size: clamp(28px, 9vw, 40px); }
+
+      .contact-grid { grid-template-columns: 1fr; }
+      .field-row { grid-template-columns: 1fr; }
+
+      .contact-info { padding: 32px 24px; }
+      .contact-form-panel { padding: 32px 24px; }
+
+      footer { padding: 16px 24px; flex-direction: column; gap: 8px; text-align: center; }
+
+      .float-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="logo-link">
+    <img src="/grassion-logo-white.svg" alt="Grassion" onerror="this.style.display='none'" />
+  </a>
+
+  <header>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/about/">About</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/contact/" class="active">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="eyebrow">Get in Touch</div>
+    <h1>We reply personally.</h1>
+    <p class="hero-sub">
+      A question, a partnership, or just feedback — we read every message.
+      Usually same-day. Always a human.
     </p>
-  </section>
 
-  <section class="mt-8">
-    <form id="contact-form" class="space-y-4 rounded-xl border border-neutral-200 p-6">
-      <div class="grid gap-4 sm:grid-cols-2">
-        <label class="block text-sm">
-          <span class="font-medium text-neutral-800">Name</span>
-          <input
-            required
-            name="name"
-            autocomplete="name"
-            maxlength="120"
-            class="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink"
-          />
-        </label>
-        <label class="block text-sm">
-          <span class="font-medium text-neutral-800">Email</span>
-          <input
-            required
-            name="email"
-            type="email"
-            autocomplete="email"
-            class="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink"
-          />
-        </label>
+    <div class="contact-grid">
+
+      <!-- LEFT: Info -->
+      <div class="contact-info">
+        <div class="info-section-label">Contact Details</div>
+
+        <div class="info-item">
+          <div class="info-item-label">Email</div>
+          <div class="info-item-value">
+            <a href="mailto:info@grassion.com">info@grassion.com</a>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-item-label">Response Time</div>
+          <div class="info-item-value">Within 24 hours</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-item-label">Support Hours</div>
+          <div class="info-item-value">Mon – Fri, IST</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collab-section">
+          <div class="collab-label">Collaborate with Us</div>
+          <div class="collab-title">Partner or invest in Grassion</div>
+          <p class="collab-desc">
+            Interested in a partnership, integration, or investment? We're open to
+            conversations that create real value for engineering teams.
+          </p>
+          <a class="collab-link" href="mailto:info@grassion.com?subject=Collaboration with Grassion">
+            Start the conversation →
+          </a>
+        </div>
       </div>
-      <label class="block text-sm">
-        <span class="font-medium text-neutral-800">Topic</span>
-        <select
-          name="topic"
-          class="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink"
-        >
-          <option value="sales">Sales</option>
-          <option value="support">Support</option>
-          <option value="bug">Bug report</option>
-          <option value="other" selected>Other</option>
-        </select>
-      </label>
-      <label class="block text-sm">
-        <span class="font-medium text-neutral-800">Message</span>
-        <textarea
-          required
-          name="message"
-          rows="6"
-          maxlength="5000"
-          class="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink"
-        ></textarea>
-      </label>
-      <!-- Honeypot — humans never fill this. Bots usually fill every field. -->
-      <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
-      <div class="flex items-center justify-between gap-4">
-        <p id="contact-status" class="text-sm text-neutral-500"></p>
-        <button
-          type="submit"
-          class="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
-        >
-          Send message
-        </button>
+
+      <!-- RIGHT: Form -->
+      <div class="contact-form-panel">
+        <div class="form-label">Send a Message</div>
+
+        <form id="contact-form">
+          <div class="field-row">
+            <div class="field">
+              <span>Name</span>
+              <input required name="name" autocomplete="name" maxlength="120" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <span>Email</span>
+              <input required name="email" type="email" autocomplete="email" placeholder="you@company.com" />
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Topic</span>
+            <select name="topic">
+              <option value="sales">Sales</option>
+              <option value="support">Support</option>
+              <option value="collaborate">Collaborate</option>
+              <option value="bug">Bug report</option>
+              <option value="other" selected>Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <span>Message</span>
+            <textarea required name="message" rows="6" maxlength="5000" placeholder="Tell us what's on your mind..."></textarea>
+          </div>
+
+          <!-- Honeypot -->
+          <input type="text" name="website" tabindex="-1" autocomplete="off" style="display:none;" aria-hidden="true" />
+
+          <div class="form-footer">
+            <p id="contact-status"></p>
+            <button type="submit" class="submit-btn">Send Message</button>
+          </div>
+        </form>
       </div>
-    </form>
 
-    <p class="mt-6 text-sm text-neutral-600">
-      Prefer email? <a class="underline" href="mailto:hello@grassion.com">hello@grassion.com</a>
-    </p>
-  </section>
-</Base>
+    </div>
+  </main>
 
-<script is:inline define:vars={{ API_URL }}>
-  const form = document.getElementById('contact-form')
-  const status = document.getElementById('contact-status')
-  if (form && status) {
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault()
-      const submit = form.querySelector('button[type="submit"]')
-      submit.disabled = true
-      status.textContent = 'Sending…'
-      status.className = 'text-sm text-neutral-500'
-      const data = Object.fromEntries(new FormData(form).entries())
-      try {
-        const res = await fetch(`${API_URL}/api/contact`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(data),
-        })
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}))
-          throw new Error(body.error || `http_${res.status}`)
+  <footer>
+    <span>© 2026 Grassion Intelligence</span>
+    <div style="display:flex; gap:24px;">
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href="mailto:info@grassion.com">info@grassion.com</a>
+    </div>
+  </footer>
+
+  <!-- Floating element -->
+  <div class="float-badge">
+    <div class="float-badge-label">Reply Time</div>
+    <div class="float-badge-value">&lt; 24 hours</div>
+  </div>
+
+  <script is:inline define:vars={{ API_URL }}>
+    const form = document.getElementById('contact-form')
+    const status = document.getElementById('contact-status')
+
+    if (form && status) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const btn = form.querySelector('button[type="submit"]')
+        btn.disabled = true
+        status.textContent = 'Sending…'
+        status.style.color = 'rgba(255,255,255,0.4)'
+
+        const data = Object.fromEntries(new FormData(form).entries())
+        try {
+          const res = await fetch(`${API_URL}/api/contact`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(data),
+          })
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}))
+            throw new Error(body.error || `http_${res.status}`)
+          }
+          status.textContent = 'Sent. You'll hear back within 24 hours.'
+          status.style.color = 'rgba(100,220,140,0.9)'
+          form.reset()
+        } catch (err) {
+          status.textContent = `Could not send — email info@grassion.com instead.`
+          status.style.color = 'rgba(220,100,100,0.9)'
+        } finally {
+          btn.disabled = false
         }
-        status.textContent = 'Got it. You will hear back from me within 24 hours.'
-        status.className = 'text-sm text-green-700'
-        form.reset()
-      } catch (err) {
-        status.textContent = `Could not send — ${err.message}. Email hello@grassion.com instead.`
-        status.className = 'text-sm text-red-700'
-      } finally {
-        submit.disabled = false
-      }
-    })
-  }
-</script>
+      })
+    }
+  </script>
+
+</body>
+</html>

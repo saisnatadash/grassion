@@ -7,7 +7,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grassion — Where AI Code Meets Accountability</title>
+  <title>Grassion · Where AI Code Meets Accountability</title>
   <meta name="description" content="The first system that tells engineering teams whether AI is creating value or silently creating rework." />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -530,6 +530,66 @@
     }
 
     .ask-form button:hover { opacity: 0.8; }
+
+    /* ── MOBILE ─────────────────────────────── */
+    @media (max-width: 767px) {
+      html, body { height: auto; overflow: auto; }
+
+      a[href="/"] img { height: 28px; }
+      a[href="/"] { top: 14px; left: 16px; }
+
+      header { padding: 14px 16px; justify-content: flex-end; }
+      nav { gap: 20px; }
+
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+        padding-top: 60px;
+        padding-bottom: 56px;
+      }
+
+      .left {
+        padding: 36px 24px 40px;
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1 { font-size: clamp(28px, 9vw, 42px); margin-bottom: 16px; }
+      .sub { font-size: 13px; margin-bottom: 28px; }
+      .flow { margin-bottom: 28px; }
+
+      .right {
+        padding: 40px 24px 32px;
+        min-height: 420px;
+      }
+
+      .scene { width: 240px; height: 240px; }
+      .ring-2 { inset: 32px; }
+      .ring-3 { inset: 64px; }
+      .cube { width: 60px; height: 60px; }
+      .face { width: 60px; height: 60px; font-size: 8px; }
+      .face-front  { transform: translateZ(30px); }
+      .face-back   { transform: rotateY(180deg) translateZ(30px); }
+      .face-left   { transform: rotateY(-90deg) translateZ(30px); }
+      .face-right  { transform: rotateY(90deg) translateZ(30px); }
+      .face-top    { transform: rotateX(90deg) translateZ(30px); }
+      .face-bottom { transform: rotateX(-90deg) translateZ(30px); }
+
+      .verdict-card { top: 16px; right: 8px; }
+      .waste-card   { bottom: 16px; left: 8px; }
+
+      .stats { flex-wrap: wrap; }
+      .stat { min-width: 33%; }
+
+      footer {
+        padding: 12px 16px;
+        position: static;
+        margin-top: 0;
+      }
+
+      .ask-btn { bottom: 20px; right: 16px; }
+      .ask-panel { right: 16px; width: calc(100vw - 32px); bottom: 76px; }
+    }
   </style>
 </head>
 <body>
@@ -541,7 +601,8 @@
   <header>
     <nav>
       <a href="/about/">About</a>
-      <a href="mailto:info@grassion.com">Contact</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/contact/">Contact</a>
     </nav>
   </header>
 
@@ -553,7 +614,7 @@
       <h1>Where AI Code<br>Meets<br><em>Accountability.</em></h1>
 
       <p class="sub">
-        The first system that tells engineering teams whether AI is creating value — or silently creating rework.
+        The first system that tells engineering teams whether AI is creating value · or silently creating rework.
       </p>
 
       <div class="flow">
