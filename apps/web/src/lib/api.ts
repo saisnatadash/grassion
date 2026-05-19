@@ -7,6 +7,7 @@ import type {
   MemberDto,
   SubscriptionDto,
   CreateSubscriptionResponse,
+  CheckoutOrderResponse,
   ContactInput,
 } from '@grassion/shared'
 
@@ -101,17 +102,24 @@ export const api = {
   },
 
   billing: {
+    /** Order-based checkout (primary flow). Creates a Razorpay Order for ₹2400 × seats. */
+    checkout: (seatCount: number) =>
+      request<CheckoutOrderResponse>('/api/billing/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ seatCount }),
+      }),
+    /** Legacy subscription-based checkout. Requires RAZORPAY_PLAN_ID_STARTER on the server. */
     subscribe: (seatCount: number) =>
       request<CreateSubscriptionResponse>('/api/billing/subscribe', {
         method: 'POST',
         body: JSON.stringify({ seatCount }),
       }),
-    verify: (payload: {
-      razorpay_payment_id: string
-      razorpay_subscription_id: string
-      razorpay_signature: string
-    }) =>
-      request<{ ok: true; status: string }>('/api/billing/verify', {
+    /** Verifies a completed payment. Accepts either order-based or subscription-based fields. */
+    verify: (payload:
+      | { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string; seatCount?: number }
+      | { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }
+    ) =>
+      request<{ ok: true; status: string; plan?: string }>('/api/billing/verify', {
         method: 'POST',
         body: JSON.stringify(payload),
       }),

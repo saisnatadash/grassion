@@ -20,6 +20,14 @@ export const verifyPaymentSchema = z.object({
   razorpay_signature: z.string().min(1),
 })
 
+// Order-based (one-time) payment verification — uses razorpay_order_id instead of subscription_id
+export const verifyOrderPaymentSchema = z.object({
+  razorpay_payment_id: z.string().min(1),
+  razorpay_order_id: z.string().min(1),
+  razorpay_signature: z.string().min(1),
+  seatCount: z.number().int().min(1).max(500).optional().default(1),
+})
+
 export const repoToggleSchema = z.object({
   isActive: z.boolean(),
 })
@@ -36,5 +44,6 @@ export const contactSchema = z.object({
 export type UpdateTeamInput = z.infer<typeof updateTeamSchema>
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 export type VerifyPaymentInput = z.infer<typeof verifyPaymentSchema>
+export type VerifyOrderPaymentInput = z.infer<typeof verifyOrderPaymentSchema>
 export type RepoToggleInput = z.infer<typeof repoToggleSchema>
 export type ContactInput = z.infer<typeof contactSchema>

@@ -46,6 +46,42 @@ export async function cancelSubscription(subscriptionId: string, cancelAtCycleEn
 }
 
 /**
+ * Creates a Razorpay Order for a one-time payment.
+ * amount is in the smallest currency unit (paise for INR: ₹2400 = 240000 paise).
+ */
+export async function createOrder(params: {
+  amount: number
+  currency: string
+  receipt: string
+}) {
+  return razorpay().orders.create({
+    amount: params.amount,
+    currency: params.currency,
+    receipt: params.receipt,
+  })
+}
+
+/**
+ * Verifies the payment signature returned by Razorpay Checkout (order flow).
+ * Razorpay docs: HMAC-SHA256(order_id + '|' + payment_id, RAZORPAY_KEY_SECRET).
+ */
+export function verifyOrderSignature(params: {
+  razorpayPaymentId: string
+  razorpayOrderId: string
+  razorpaySignature: string
+}): boolean {
+  const payload = `${params.razorpayOrderId}|${params.razorpayPaymentId}`
+  const expected = crypto
+    .createHmac('sha256', env().RAZORPAY_KEY_SECRET)
+    .update(payload)
+    .digest('hex')
+  const a = Buffer.from(expected, 'utf8')
+  const b = Buffer.from(params.razorpaySignature, 'utf8')
+  if (a.length !== b.length) return false
+  return crypto.timingSafeEqual(a, b)
+}
+
+/**
  * Verifies the X-Razorpay-Signature header on an inbound webhook.
  * Compares HMAC-SHA256(rawBody, RAZORPAY_WEBHOOK_SECRET) to the header in constant time.
  */

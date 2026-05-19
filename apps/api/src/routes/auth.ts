@@ -7,6 +7,7 @@ import { logger } from '../logger.js'
 import { createSession, setSessionCookie, clearSessionCookie, requireAuth } from '../auth.js'
 import { upsertUser, slugify, ensureUniqueSlug } from '../services/teams.js'
 import { addDays } from '@grassion/shared'
+import { sendWelcomeEmail } from '../lib/email.js'
 
 export const authRouter = Router()
 
@@ -152,6 +153,13 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         avatarUrl: profile.avatar_url ?? null,
         role: 'owner',
       })
+
+      // Fire-and-forget: email failure must never block login
+      if (email) {
+        sendWelcomeEmail(email, profile.login).catch((err) => {
+          logger.warn({ err, email }, 'welcome email failed')
+        })
+      }
     } else {
       userRow = await upsertUser({
         teamId: userRow.teamId,

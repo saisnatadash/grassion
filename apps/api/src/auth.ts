@@ -32,9 +32,18 @@ export async function createSession(userId: string): Promise<string> {
   const tokenHash = hashToken(token)
   const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000)
   await db.insert(sessions).values({ userId, tokenHash, expiresAt })
-  // The cookie value is a JWT carrying just the raw token. JWT signing prevents
-  // tampering and lets us cheaply verify integrity before a DB lookup.
-  return jwt.sign({ t: token }, e.JWT_SECRET, { expiresIn: `${SESSION_TTL_DAYS}d` })
+
+  // Embed the team's plan so the frontend can read feature flags without an extra API call.
+  // Security: the JWT is signed — plan is only used for UI gating; all server routes enforce plan server-side.
+  const teamRow = await db
+    .select({ plan: teams.plan })
+    .from(users)
+    .innerJoin(teams, eq(teams.id, users.teamId))
+    .where(eq(users.id, userId))
+    .limit(1)
+  const plan = teamRow[0]?.plan ?? 'trial'
+
+  return jwt.sign({ t: token, plan }, e.JWT_SECRET, { expiresIn: `${SESSION_TTL_DAYS}d` })
 }
 
 export function setSessionCookie(res: Response, token: string) {

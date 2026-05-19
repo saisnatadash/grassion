@@ -524,7 +524,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
             const body = await res.json().catch(() => ({}))
             throw new Error(body.error || `http_${res.status}`)
           }
-          status.textContent = 'Sent. You'll hear back within 24 hours.'
+          status.textContent = "Sent. You'll hear back within 24 hours."
           status.style.color = 'rgba(100,220,140,0.9)'
           form.reset()
         } catch (err) {

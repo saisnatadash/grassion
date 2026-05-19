@@ -112,3 +112,11 @@ export interface CreateSubscriptionResponse {
   planId: string
   seatCount: number
 }
+
+export interface CheckoutOrderResponse {
+  orderId: string
+  keyId: string
+  amount: number
+  currency: string
+  seatCount: number
+}

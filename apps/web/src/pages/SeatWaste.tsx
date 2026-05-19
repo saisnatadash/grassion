@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { UserX, Users, TrendingDown, AlertCircle, Download, Lock } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { api, type SeatWasteResponse } from '../lib/api.js'
 import { formatUsd, cn } from '../lib/utils.js'
-import { Alert, Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner } from '../components/ui.js'
+import { usePlan } from '../lib/plan.js'
+import { Alert, Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner, StatCard } from '../components/ui.js'
 
 type ActiveUser = SeatWasteResponse['activeUsers'][number]
 type InactiveUser = SeatWasteResponse['inactiveUsers'][number]
@@ -20,12 +23,13 @@ export function SeatWastePage() {
     queryKey: ['analytics', 'seat-waste'],
     queryFn: api.analytics.seatWaste,
   })
+  const { isPaid } = usePlan()
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24 text-neutral-500">
+      <div className="flex items-center justify-center gap-3 py-32 text-[#888888]">
         <Spinner />
-        <span className="ml-2">Analysing seat usage…</span>
+        <span className="text-sm">Analysing seat usage…</span>
       </div>
     )
   }
@@ -34,9 +38,7 @@ export function SeatWastePage() {
     return (
       <div className="space-y-4">
         <Alert tone="red">Failed to load seat data. Check your connection and try again.</Alert>
-        <Button variant="secondary" onClick={() => refetch()}>
-          Retry
-        </Button>
+        <Button variant="secondary" onClick={() => refetch()}>Retry</Button>
       </div>
     )
   }
@@ -44,8 +46,8 @@ export function SeatWastePage() {
   const monthlyWaste = data.totalMonthlySavings
   const annualWaste = monthlyWaste * 12
   const hasInactive = data.inactiveUsers.length > 0
+  const perSeat = data.inactiveUsers[0]?.monthlyCost ?? 0
 
-  // Inactive first, then active
   const allUsers: Array<{ user: ActiveUser | InactiveUser; active: boolean }> = [
     ...data.inactiveUsers.map((u) => ({ user: u, active: false })),
     ...data.activeUsers.map((u) => ({ user: u, active: true })),
@@ -53,79 +55,93 @@ export function SeatWastePage() {
 
   return (
     <div className="space-y-6">
+
+      {/* ── HEADER ── */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Seat Waste Calculator</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Every developer who pushed a PR in the last 30 days is tracked. Those with zero AI-assisted PRs in the last 7 days are flagged as inactive seats.
+        <h1 className="text-2xl font-semibold text-white">Seat Waste Calculator</h1>
+        <p className="mt-1 text-sm text-[#888888]">
+          Every developer who pushed a PR in the last 30 days is tracked. Those with zero
+          AI-assisted PRs in the last 7 days are flagged as inactive seats.
         </p>
       </div>
 
-      {/* Summary card */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div>
-              <div className="text-xs uppercase tracking-wide text-neutral-500">Active devs</div>
-              <div className="mt-1 text-3xl font-semibold tabular-nums text-green-700">
-                {data.activeUsers.length}
-              </div>
-              <div className="mt-1 text-xs text-neutral-400">AI PR in last 7d</div>
+      {/* ── SUMMARY STAT CARDS ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Seats"
+          value={data.totalSeats}
+          sub="active PR authors · 30d"
+        />
+        <StatCard
+          label="Active Seats"
+          value={data.activeUsers.length}
+          sub="AI PR in last 7d"
+          tone="green"
+        />
+        <StatCard
+          label="Inactive Seats"
+          value={data.inactiveUsers.length}
+          sub={`of ${data.totalSeats} total seats`}
+          tone={hasInactive ? 'red' : 'white'}
+        />
+        <StatCard
+          label="Monthly Waste"
+          value={formatUsd(monthlyWaste)}
+          sub={perSeat > 0 ? `${formatUsd(perSeat)}/seat` : 'no waste detected'}
+          tone={monthlyWaste > 0 ? 'red' : 'white'}
+        />
+      </div>
+
+      {/* ── ANNUAL WASTE BANNER ── */}
+      {hasInactive && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-red-500/10 p-2">
+              <TrendingDown className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-neutral-500">Inactive seats</div>
-              <div
-                className={cn(
-                  'mt-1 text-3xl font-semibold tabular-nums',
-                  hasInactive ? 'text-red-700' : 'text-green-700',
-                )}
-              >
-                {data.inactiveUsers.length}
-              </div>
-              <div className="mt-1 text-xs text-neutral-400">of {data.totalSeats} total</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-neutral-500">Monthly waste</div>
-              <div className={cn('mt-1 text-3xl font-semibold tabular-nums', hasInactive ? 'text-red-700' : 'text-green-700')}>
-                {formatUsd(monthlyWaste)}
-              </div>
-              <div className="mt-1 text-xs text-neutral-400">
-                {data.inactiveUsers[0] ? `${formatUsd(data.inactiveUsers[0].monthlyCost)}/seat` : '—'}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-neutral-500">Annual waste</div>
-              <div className={cn('mt-1 text-3xl font-semibold tabular-nums', hasInactive ? 'text-red-700' : 'text-green-700')}>
-                {formatUsd(annualWaste)}
-              </div>
-              <div className="mt-2">
-                <Badge tone={hasInactive ? 'red' : 'green'}>
-                  {hasInactive ? `Action required` : 'All seats active'}
-                </Badge>
-              </div>
+              <div className="text-sm font-medium text-white">Projected Annual Waste</div>
+              <div className="text-xs text-[#888888]">{data.inactiveUsers.length} inactive seat{data.inactiveUsers.length === 1 ? '' : 's'} × 12 months</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-3">
+            <div className="text-2xl font-bold text-red-500 tabular-nums">{formatUsd(annualWaste)}</div>
+            <Badge tone="red">Action required</Badge>
+          </div>
+        </div>
+      )}
 
-      {/* Developer grid */}
+      {/* ── DEVELOPER LIST ── */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Team seat usage</CardTitle>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs text-[#555555]">
+              <span className="h-2 w-2 rounded-full bg-green-500" /> Active
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-[#555555]">
+              <span className="h-2 w-2 rounded-full bg-red-500" /> Inactive
+            </span>
+            <CsvExportButton isPaid={isPaid} data={data} />
+          </div>
         </CardHeader>
         <CardContent>
           {allUsers.length === 0 ? (
-            <p className="text-sm text-neutral-500">No team members found.</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {allUsers.map(({ user, active }) => (
-                <DevCard key={user.githubLogin} user={user} active={active} />
-              ))}
+            <div className="py-8 text-center">
+              <Users className="mx-auto h-8 w-8 text-[#333] mb-3" />
+              <p className="text-sm text-[#555555]">No team members found.</p>
             </div>
+          ) : (
+            <ul className="divide-y divide-[#1a1a1a]">
+              {allUsers.map(({ user, active }) => (
+                <DevRow key={user.githubLogin} user={user} active={active} />
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>
 
-      {/* Recommended actions */}
+      {/* ── RECOMMENDED ACTIONS ── */}
       {data.inactiveUsers.length > 0 && (
         <RecommendedActions inactiveUsers={data.inactiveUsers} />
       )}
@@ -133,37 +149,105 @@ export function SeatWastePage() {
   )
 }
 
-function DevCard({ user, active }: { user: ActiveUser | InactiveUser; active: boolean }) {
+/* ── CSV EXPORT BUTTON ── */
+function CsvExportButton({
+  isPaid,
+  data,
+}: {
+  isPaid: boolean
+  data: SeatWasteResponse | undefined
+}) {
+  function exportCsv() {
+    if (!data) return
+    const rows = [
+      ['Username', 'Status', 'Weekly AI PRs', 'Last Active', 'Monthly Cost'],
+      ...data.activeUsers.map((u) => [u.githubLogin, 'Active', String(u.weeklyAiPrs), u.lastActivity ?? 'N/A', '$0']),
+      ...data.inactiveUsers.map((u) => [u.githubLogin, 'Inactive', '0', u.lastActivity ?? 'N/A', `$${u.monthlyCost}`]),
+    ]
+    const csv = rows.map((r) => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'seat-waste.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  if (!isPaid) {
+    return (
+      <Link
+        to="/billing"
+        title="Upgrade to Pro to export CSV"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[#333] bg-[#0a0a0a] px-2.5 py-1.5 text-xs font-medium text-[#555555] cursor-pointer hover:border-yellow-500/40 hover:text-yellow-400 transition-colors"
+      >
+        <Lock className="h-3 w-3" />
+        Export CSV
+      </Link>
+    )
+  }
+
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
+    <button
+      onClick={exportCsv}
+      disabled={!data}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-[#333] bg-[#0a0a0a] px-2.5 py-1.5 text-xs font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors disabled:opacity-40"
+    >
+      <Download className="h-3 w-3" />
+      Export CSV
+    </button>
+  )
+}
+
+/* ── DEV ROW ── */
+function DevRow({ user, active }: { user: ActiveUser | InactiveUser; active: boolean }) {
+  return (
+    <li className="py-3.5 flex items-center gap-4">
+      {/* Avatar */}
       {user.avatarUrl ? (
         <img
           src={user.avatarUrl}
           alt={user.githubLogin}
-          className="h-9 w-9 rounded-full flex-shrink-0"
+          className="h-9 w-9 rounded-full border border-[#333] flex-shrink-0"
         />
       ) : (
-        <div className="h-9 w-9 rounded-full bg-neutral-200 flex-shrink-0 flex items-center justify-center text-xs font-medium text-neutral-600">
+        <div className="h-9 w-9 rounded-full bg-[#222] border border-[#333] flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white">
           {user.githubLogin[0]?.toUpperCase()}
         </div>
       )}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
+
+      {/* Name + sub */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
           <span
-            className={cn('h-2 w-2 rounded-full flex-shrink-0', active ? 'bg-green-500' : 'bg-red-500')}
+            className={cn(
+              'h-2 w-2 rounded-full flex-shrink-0',
+              active ? 'bg-green-500' : 'bg-red-500',
+            )}
           />
-          <span className="truncate text-sm font-medium text-neutral-900">@{user.githubLogin}</span>
+          <span className="text-sm font-medium text-white truncate">@{user.githubLogin}</span>
         </div>
-        <div className="text-xs text-neutral-500 mt-0.5">
+        <div className="text-xs text-[#888888] mt-0.5 pl-4">
           {active
             ? `${(user as ActiveUser).weeklyAiPrs} AI PR${(user as ActiveUser).weeklyAiPrs === 1 ? '' : 's'} this week`
             : `Last active ${daysAgo(user.lastActivity)}`}
         </div>
       </div>
-    </div>
+
+      {/* Right: cost + badge */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {!active && (
+          <span className="text-sm font-medium text-red-500 tabular-nums">
+            {formatUsd((user as InactiveUser).monthlyCost)}/mo
+          </span>
+        )}
+        <Badge tone={active ? 'green' : 'red'}>{active ? 'Active' : 'Inactive'}</Badge>
+      </div>
+    </li>
   )
 }
 
+/* ── RECOMMENDED ACTIONS ── */
 function RecommendedActions({ inactiveUsers }: { inactiveUsers: InactiveUser[] }) {
   const [copied, setCopied] = useState(false)
 
@@ -178,34 +262,45 @@ function RecommendedActions({ inactiveUsers }: { inactiveUsers: InactiveUser[] }
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Recommended actions</CardTitle>
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-red-500" />
+          <CardTitle>Recommended actions</CardTitle>
+        </div>
         <Button variant="secondary" size="sm" onClick={copyUsernames}>
           {copied ? 'Copied!' : 'Copy usernames'}
         </Button>
       </CardHeader>
       <CardContent>
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-[#1a1a1a]">
           {inactiveUsers.map((u) => (
-            <li key={u.githubLogin} className="py-3 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {u.avatarUrl ? (
-                  <img src={u.avatarUrl} alt={u.githubLogin} className="h-7 w-7 rounded-full" />
-                ) : (
-                  <div className="h-7 w-7 rounded-full bg-neutral-200 flex items-center justify-center text-xs font-medium text-neutral-600">
-                    {u.githubLogin[0]?.toUpperCase()}
-                  </div>
-                )}
-                <span className="text-sm text-neutral-700">
-                  <span className="font-medium">@{u.githubLogin}</span>
-                  {' · '}last active {daysAgo(u.lastActivity)}
-                  {' · '}
-                  <span className="text-red-700 font-medium">{formatUsd(u.monthlyCost)}/month wasted</span>
-                </span>
+            <li key={u.githubLogin} className="py-3.5 flex items-center gap-4">
+              {u.avatarUrl ? (
+                <img src={u.avatarUrl} alt={u.githubLogin} className="h-8 w-8 rounded-full border border-[#333] flex-shrink-0" />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-[#222] border border-[#333] flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white">
+                  {u.githubLogin[0]?.toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className="text-sm text-white font-medium">@{u.githubLogin}</span>
+                <span className="text-xs text-[#888888]"> · last active {daysAgo(u.lastActivity)}</span>
               </div>
-              <Badge tone="red">Inactive</Badge>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <span className="text-sm font-medium text-red-500 tabular-nums">
+                  {formatUsd(u.monthlyCost)}/mo
+                </span>
+                <Badge tone="red">
+                  <UserX className="h-3 w-3 mr-1" />
+                  Inactive
+                </Badge>
+              </div>
             </li>
           ))}
         </ul>
+        <div className="mt-4 rounded-lg border border-[#222] bg-[#0a0a0a] px-4 py-3 text-xs text-[#888888]">
+          Reach out to these developers to re-onboard them on your AI coding tools, or consider
+          removing their seats to reclaim the budget.
+        </div>
       </CardContent>
     </Card>
   )

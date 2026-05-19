@@ -20,7 +20,7 @@ const schema = z.object({
   RAZORPAY_KEY_ID: z.string().min(1),
   RAZORPAY_KEY_SECRET: z.string().min(1),
   RAZORPAY_WEBHOOK_SECRET: z.string().min(1),
-  RAZORPAY_PLAN_ID_STARTER: z.string().min(1),
+  RAZORPAY_PLAN_ID_STARTER: z.string().min(1).optional(),
 
   ZOHO_SMTP_HOST: z.string().min(1).default('smtp.zoho.in'),
   ZOHO_SMTP_PORT: z.coerce.number().int().default(587),
