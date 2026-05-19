@@ -1,11 +1,12 @@
 import { Router, type Request, type Response } from 'express'
 import { eq } from 'drizzle-orm'
-import { teams, users } from '@grassion/db'
+import { teams, users, type NewTeam } from '@grassion/db'
 import { db } from '../db.js'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
 import { createSession, setSessionCookie, clearSessionCookie, requireAuth } from '../auth.js'
-import { upsertUser } from '../services/teams.js'
+import { upsertUser, slugify, ensureUniqueSlug } from '../services/teams.js'
+import { addDays } from '@grassion/shared'
 
 export const authRouter = Router()
 
@@ -122,13 +123,29 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         .where(eq(teams.githubAccountLogin, profile.login))
         .limit(1)
       console.log('[auth/github/callback] teamMatch found:', !!teamMatch[0])
+
+      let teamId: string
       if (!teamMatch[0]) {
-        console.log('[auth/github/callback] no team — redirecting to install flow')
-        res.redirect(`${e.APP_URL}/install?login=${encodeURIComponent(profile.login)}`)
-        return
+        // No team exists — auto-create one so the user lands on the dashboard immediately.
+        console.log('[auth/github/callback] no team — auto-creating for:', profile.login)
+        const slug = await ensureUniqueSlug(slugify(profile.login))
+        const insert: NewTeam = {
+          name: `${profile.login}'s Team`,
+          slug,
+          githubAccountLogin: profile.login,
+          githubAccountType: 'User',
+          plan: 'trial',
+          trialEndsAt: addDays(new Date(), 14),
+        }
+        const [newTeam] = await db.insert(teams).values(insert).returning()
+        teamId = newTeam!.id
+        console.log('[auth/github/callback] auto-created teamId:', teamId)
+      } else {
+        teamId = teamMatch[0].id
       }
+
       userRow = await upsertUser({
-        teamId: teamMatch[0].id,
+        teamId,
         githubUserId: profile.id,
         githubLogin: profile.login,
         email,
