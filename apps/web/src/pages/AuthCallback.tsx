@@ -1,18 +1,22 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export function AuthCallbackPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
-    // The API set the session cookie before redirecting here.
-    // SameSite=None lets subsequent fetch() calls carry it cross-origin.
-    // Navigate straight to dashboard — AppLayout will verify the session.
-    navigate('/dashboard', { replace: true })
-  }, [navigate])
+    const token = searchParams.get('token')
+    if (token) {
+      localStorage.setItem('grassion_token', token)
+      navigate('/dashboard', { replace: true })
+    } else {
+      navigate('/login', { replace: true })
+    }
+  }, [navigate, searchParams])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black text-white text-sm">
+    <div className="flex min-h-screen items-center justify-center bg-white text-neutral-600 text-sm">
       Signing you in…
     </div>
   )

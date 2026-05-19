@@ -92,7 +92,9 @@ async function readSession(token: string | undefined): Promise<SessionUser | nul
 }
 
 export async function attachSession(req: Request, _res: Response, next: NextFunction) {
-  const token = req.cookies?.[SESSION_COOKIE]
+  const authHeader = req.headers.authorization
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+  const token = bearerToken ?? req.cookies?.[SESSION_COOKIE]
   const sess = await readSession(token)
   if (sess) req.session = sess
   next()

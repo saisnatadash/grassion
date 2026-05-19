@@ -13,15 +13,18 @@ import type {
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem('grassion_token')
   const res = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
     ...init,
     headers: {
       'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(init.headers ?? {}),
     },
   })
   if (res.status === 401) {
+    localStorage.removeItem('grassion_token')
     throw new ApiError(401, 'unauthorized')
   }
   if (!res.ok) {
@@ -61,7 +64,10 @@ export interface SeatWasteResponse {
 
 export const api = {
   me: () => request<MeResponse>('/auth/me'),
-  logout: () => request<{ ok: true }>('/auth/logout', { method: 'POST' }),
+  logout: async () => {
+    localStorage.removeItem('grassion_token')
+    return request<{ ok: true }>('/auth/logout', { method: 'POST' })
+  },
 
   team: {
     get: () => request<MeResponse['team']>('/api/team'),
