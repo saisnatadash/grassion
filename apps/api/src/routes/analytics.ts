@@ -1,15 +1,15 @@
 import { Router, type Request, type Response } from 'express'
 import { eq, and, gte, isNotNull } from 'drizzle-orm'
-import { users, pullRequests } from '@grassion/db'
+import { teams, pullRequests } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
 
 export const analyticsRouter = Router()
 
-const SEAT_COST_USD = 19
+const FALLBACK_SEAT_COST_USD = 19
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
-// In-memory cache per teamId — Redis not available in this deployment
+// In-memory cache per teamId (Redis not available in this deployment)
 const cache = new Map<string, { data: unknown; expiresAt: number }>()
 
 analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Request, res: Response) => {
@@ -23,9 +23,29 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
 
   try {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
-    const [teamUsers, recentAiPrs, allPrs] = await Promise.all([
-      db.select().from(users).where(eq(users.teamId, sess.teamId)),
+    // Load team config for per-seat cost calculation
+    const teamRow = (await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
+    const monthlyAiSpend = teamRow?.monthlyAiSpendUsd ?? 0
+
+    // Scan all PRs from the last 30 days — this covers all developers who have
+    // pushed code regardless of whether they have signed in to Grassion.
+    const [recentPrs, recentAiPrs] = await Promise.all([
+      db
+        .select({
+          authorGithubId: pullRequests.authorGithubId,
+          authorLogin: pullRequests.authorLogin,
+          openedAt: pullRequests.openedAt,
+        })
+        .from(pullRequests)
+        .where(
+          and(
+            eq(pullRequests.teamId, sess.teamId),
+            gte(pullRequests.openedAt, thirtyDaysAgo),
+            isNotNull(pullRequests.authorLogin),
+          ),
+        ),
       db
         .select({ authorGithubId: pullRequests.authorGithubId })
         .from(pullRequests)
@@ -33,72 +53,90 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
           and(
             eq(pullRequests.teamId, sess.teamId),
             isNotNull(pullRequests.aiSource),
-            gte(pullRequests.createdAt, sevenDaysAgo),
+            gte(pullRequests.openedAt, sevenDaysAgo),
+            isNotNull(pullRequests.authorLogin),
           ),
         ),
-      db
-        .select({ authorGithubId: pullRequests.authorGithubId, openedAt: pullRequests.openedAt })
-        .from(pullRequests)
-        .where(eq(pullRequests.teamId, sess.teamId)),
     ])
 
-    // Count AI PRs in the last 7 days per author
-    const weeklyAiCounts = new Map<number, number>()
-    for (const pr of recentAiPrs) {
-      if (pr.authorGithubId === null) continue
-      weeklyAiCounts.set(pr.authorGithubId, (weeklyAiCounts.get(pr.authorGithubId) ?? 0) + 1)
-    }
+    // Build a per-author map keyed by GitHub numeric user ID
+    const authorMap = new Map<
+      number,
+      { login: string; lastActivity: Date; weeklyAiPrs: number }
+    >()
 
-    // Most recent PR open date per author (any PR, not just AI)
-    const lastActivityMap = new Map<number, Date>()
-    for (const pr of allPrs) {
-      if (pr.authorGithubId === null) continue
-      const existing = lastActivityMap.get(pr.authorGithubId)
-      if (!existing || pr.openedAt > existing) {
-        lastActivityMap.set(pr.authorGithubId, pr.openedAt)
+    for (const pr of recentPrs) {
+      if (!pr.authorGithubId || !pr.authorLogin) continue
+      const existing = authorMap.get(pr.authorGithubId)
+      if (!existing) {
+        authorMap.set(pr.authorGithubId, {
+          login: pr.authorLogin,
+          lastActivity: pr.openedAt,
+          weeklyAiPrs: 0,
+        })
+      } else if (pr.openedAt > existing.lastActivity) {
+        existing.lastActivity = pr.openedAt
       }
     }
+
+    // Tally AI PR counts for the last 7 days
+    for (const pr of recentAiPrs) {
+      if (!pr.authorGithubId) continue
+      const author = authorMap.get(pr.authorGithubId)
+      if (author) author.weeklyAiPrs++
+    }
+
+    const totalSeats = authorMap.size
+    // Per-seat cost: spread total monthly AI spend across all seats, floor at $19 fallback
+    const perSeatCost =
+      totalSeats > 0 && monthlyAiSpend > 0
+        ? Math.round((monthlyAiSpend / totalSeats) * 100) / 100
+        : FALLBACK_SEAT_COST_USD
 
     const activeUsers: Array<{
       githubLogin: string
-      avatarUrl: string | null
+      avatarUrl: string
       weeklyAiPrs: number
-      lastActivity: string | null
+      lastActivity: string
     }> = []
     const inactiveUsers: Array<{
       githubLogin: string
-      avatarUrl: string | null
-      lastActivity: string | null
+      avatarUrl: string
+      lastActivity: string
       monthlyCost: number
     }> = []
 
-    for (const user of teamUsers) {
-      const weeklyAiPrs = weeklyAiCounts.get(user.githubUserId) ?? 0
-      const lastDate = lastActivityMap.get(user.githubUserId)
-      const lastActivity = lastDate ? lastDate.toISOString() : null
-
-      if (weeklyAiPrs === 0) {
-        inactiveUsers.push({
-          githubLogin: user.githubLogin,
-          avatarUrl: user.avatarUrl,
-          lastActivity,
-          monthlyCost: SEAT_COST_USD,
+    for (const [githubId, author] of authorMap) {
+      // Use GitHub's public avatar CDN — works without any stored avatar URL
+      const avatarUrl = `https://avatars.githubusercontent.com/u/${githubId}?v=4&s=72`
+      if (author.weeklyAiPrs > 0) {
+        activeUsers.push({
+          githubLogin: author.login,
+          avatarUrl,
+          weeklyAiPrs: author.weeklyAiPrs,
+          lastActivity: author.lastActivity.toISOString(),
         })
       } else {
-        activeUsers.push({
-          githubLogin: user.githubLogin,
-          avatarUrl: user.avatarUrl,
-          weeklyAiPrs,
-          lastActivity,
+        inactiveUsers.push({
+          githubLogin: author.login,
+          avatarUrl,
+          lastActivity: author.lastActivity.toISOString(),
+          monthlyCost: perSeatCost,
         })
       }
     }
 
+    // Sort: active → most AI PRs first; inactive → most dormant first
+    activeUsers.sort((a, b) => b.weeklyAiPrs - a.weeklyAiPrs)
+    inactiveUsers.sort(
+      (a, b) => new Date(a.lastActivity).getTime() - new Date(b.lastActivity).getTime(),
+    )
+
     const result = {
-      totalSeats: teamUsers.length,
+      totalSeats,
       activeUsers,
       inactiveUsers,
-      totalMonthlySavings: inactiveUsers.length * SEAT_COST_USD,
+      totalMonthlySavings: Math.round(inactiveUsers.length * perSeatCost * 100) / 100,
     }
 
     cache.set(sess.teamId, { data: result, expiresAt: Date.now() + CACHE_TTL_MS })

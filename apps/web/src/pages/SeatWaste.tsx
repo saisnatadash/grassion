@@ -56,43 +56,52 @@ export function SeatWastePage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Seat Waste Calculator</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Developers who haven't opened an AI-assisted PR in the last 7 days are counted as inactive.
+          Every developer who pushed a PR in the last 30 days is tracked. Those with zero AI-assisted PRs in the last 7 days are flagged as inactive seats.
         </p>
       </div>
 
       {/* Summary card */}
       <Card>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-neutral-500">Total seats</div>
-            <div className="mt-1 text-3xl font-semibold tabular-nums">{data.totalSeats}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-neutral-500">Inactive seats</div>
-            <div
-              className={cn(
-                'mt-1 text-3xl font-semibold tabular-nums',
-                hasInactive ? 'text-red-700' : 'text-green-700',
-              )}
-            >
-              {data.inactiveUsers.length}
+        <CardContent className="p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-neutral-500">Active devs</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums text-green-700">
+                {data.activeUsers.length}
+              </div>
+              <div className="mt-1 text-xs text-neutral-400">AI PR in last 7d</div>
             </div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-neutral-500">Monthly waste</div>
-            <div className={cn('mt-1 text-3xl font-semibold tabular-nums', hasInactive ? 'text-red-700' : 'text-green-700')}>
-              {formatUsd(monthlyWaste)}
+            <div>
+              <div className="text-xs uppercase tracking-wide text-neutral-500">Inactive seats</div>
+              <div
+                className={cn(
+                  'mt-1 text-3xl font-semibold tabular-nums',
+                  hasInactive ? 'text-red-700' : 'text-green-700',
+                )}
+              >
+                {data.inactiveUsers.length}
+              </div>
+              <div className="mt-1 text-xs text-neutral-400">of {data.totalSeats} total</div>
             </div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-neutral-500">Annual waste</div>
-            <div className={cn('mt-1 text-3xl font-semibold tabular-nums', hasInactive ? 'text-red-700' : 'text-green-700')}>
-              {formatUsd(annualWaste)}
+            <div>
+              <div className="text-xs uppercase tracking-wide text-neutral-500">Monthly waste</div>
+              <div className={cn('mt-1 text-3xl font-semibold tabular-nums', hasInactive ? 'text-red-700' : 'text-green-700')}>
+                {formatUsd(monthlyWaste)}
+              </div>
+              <div className="mt-1 text-xs text-neutral-400">
+                {data.inactiveUsers[0] ? `${formatUsd(data.inactiveUsers[0].monthlyCost)}/seat` : '—'}
+              </div>
             </div>
-            <div className="mt-2">
-              <Badge tone={hasInactive ? 'red' : 'green'}>
-                {hasInactive ? `${data.inactiveUsers.length} unused` : 'All seats active'}
-              </Badge>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-neutral-500">Annual waste</div>
+              <div className={cn('mt-1 text-3xl font-semibold tabular-nums', hasInactive ? 'text-red-700' : 'text-green-700')}>
+                {formatUsd(annualWaste)}
+              </div>
+              <div className="mt-2">
+                <Badge tone={hasInactive ? 'red' : 'green'}>
+                  {hasInactive ? `Action required` : 'All seats active'}
+                </Badge>
+              </div>
             </div>
           </div>
         </CardContent>
