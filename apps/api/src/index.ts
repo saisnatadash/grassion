@@ -6,8 +6,10 @@ import { closeDb } from '@grassion/db'
 const e = env()
 const app = buildApp()
 
-const server = app.listen(e.PORT, '0.0.0.0', () => {
-  logger.info({ port: e.PORT, env: e.NODE_ENV }, 'grassion api listening')
+const PORT = Number(process.env.PORT) || 3001
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log('Server listening on 0.0.0.0:' + PORT)
+  logger.info({ port: PORT, env: e.NODE_ENV }, 'grassion api listening')
 })
 
 function shutdown(signal: string) {
