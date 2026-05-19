@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock } from 'lucide-react'
+import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { usePlan } from '../lib/plan.js'
@@ -21,10 +21,34 @@ import {
 import { cn } from '../lib/utils.js'
 
 const AI_TOOLS = [
-  { id: 'copilot', label: 'GitHub Copilot', description: 'Detects Copilot trailer tags and labels' },
-  { id: 'cursor', label: 'Cursor', description: 'Detects Cursor-generated PR markers' },
-  { id: 'claude-code', label: 'Claude Code', description: 'Detects Claude Code commit signatures' },
-  { id: 'codeium', label: 'Codeium', description: 'Detects Codeium assistant markers' },
+  {
+    id: 'copilot',
+    label: 'GitHub Copilot',
+    label_signal: 'copilot',
+    trailer_signal: 'Co-authored-by: GitHub Copilot',
+    body_signal: 'generated with copilot',
+  },
+  {
+    id: 'cursor',
+    label: 'Cursor',
+    label_signal: 'cursor',
+    trailer_signal: 'Co-authored-by: cursor-ai',
+    body_signal: 'generated with cursor',
+  },
+  {
+    id: 'claude-code',
+    label: 'Claude Code',
+    label_signal: 'claude-code',
+    trailer_signal: 'Co-Authored-By: Claude',
+    body_signal: 'generated with claude',
+  },
+  {
+    id: 'codeium',
+    label: 'Codeium',
+    label_signal: 'codeium',
+    trailer_signal: 'Co-authored-by: Codeium',
+    body_signal: 'generated with codeium',
+  },
 ]
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -75,7 +99,7 @@ function GitHubSection() {
                 <div className="flex items-center gap-2">
                   <Github className="h-4 w-4 text-[#888888]" />
                   <span className="text-sm font-medium text-white">@{me.data.user.githubLogin}</span>
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-white" />
                 </div>
                 <div className="text-xs text-[#888888] mt-0.5">
                   {me.data.team.name} · {me.data.user.email ?? 'Connected'}
@@ -192,23 +216,62 @@ function TeamSettings() {
       {/* AI tools */}
       <Card>
         <CardHeader>
-          <CardTitle>AI tools detected</CardTitle>
+          <CardTitle>How AI is detected</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xs text-[#888888] mb-4">
-            Grassion auto-detects AI tool usage from PR labels, trailer tags, and body patterns. Toggle which tools you use.
+            Grassion checks three signals in priority order on every merged PR. The first match wins.
           </p>
+          <div className="flex items-start gap-6 mb-5 flex-wrap">
+            <div className="flex items-center gap-2 text-xs text-[#888888]">
+              <Tag className="h-3.5 w-3.5 text-white flex-shrink-0" />
+              <span><span className="text-white font-medium">1. PR Label</span> — highest priority</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-[#888888]">
+              <MessageSquare className="h-3.5 w-3.5 text-white flex-shrink-0" />
+              <span><span className="text-white font-medium">2. Git Trailer</span> — in commit message</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-[#888888]">
+              <Hash className="h-3.5 w-3.5 text-white flex-shrink-0" />
+              <span><span className="text-white font-medium">3. Body Regex</span> — fallback pattern match</span>
+            </div>
+          </div>
           <div className="divide-y divide-[#1a1a1a]">
             {AI_TOOLS.map((tool) => (
-              <div key={tool.id} className="flex items-center justify-between py-3">
-                <div>
+              <div key={tool.id} className="py-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="text-sm font-medium text-white">{tool.label}</div>
-                  <div className="text-xs text-[#888888] mt-0.5">{tool.description}</div>
+                  <Badge tone="gray">Auto-detected</Badge>
                 </div>
-                <Badge tone="green">Auto-detected</Badge>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="rounded-md bg-[#0a0a0a] border border-[#222] px-3 py-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Tag className="h-3 w-3 text-[#555555]" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Label</span>
+                    </div>
+                    <code className="text-xs text-[#cccccc] font-mono">{tool.label_signal}</code>
+                  </div>
+                  <div className="rounded-md bg-[#0a0a0a] border border-[#222] px-3 py-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <MessageSquare className="h-3 w-3 text-[#555555]" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Trailer</span>
+                    </div>
+                    <code className="text-xs text-[#cccccc] font-mono break-all">{tool.trailer_signal}</code>
+                  </div>
+                  <div className="rounded-md bg-[#0a0a0a] border border-[#222] px-3 py-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Hash className="h-3 w-3 text-[#555555]" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Body</span>
+                    </div>
+                    <code className="text-xs text-[#cccccc] font-mono">{tool.body_signal}</code>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+          <p className="mt-4 text-xs text-[#555555]">
+            To ensure accurate detection, add a label or git trailer to your AI-assisted PRs. No configuration required — detection is automatic once the signal is present.
+          </p>
         </CardContent>
       </Card>
 
@@ -231,7 +294,7 @@ function TeamSettings() {
                 <select
                   value={form.emailDigestDay}
                   onChange={(e) => setForm({ ...form, emailDigestDay: Number(e.target.value) })}
-                  className="block w-full rounded-lg border border-[#222222] bg-[#0a0a0a] px-3 py-2 text-sm text-white focus:border-green-500/50 focus:outline-none focus:ring-1 focus:ring-green-500/30"
+                  className="block w-full rounded-lg border border-[#222222] bg-[#0a0a0a] px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/10"
                 >
                   {DAYS.map((d, i) => (
                     <option key={d} value={i} className="bg-[#111]">{d}</option>
@@ -281,7 +344,7 @@ function TeamSettings() {
         <Button type="submit" disabled={update.isPending}>
           {update.isPending ? 'Saving…' : 'Save changes'}
         </Button>
-        {update.isSuccess && <span className="text-sm text-green-500">Changes saved.</span>}
+        {update.isSuccess && <span className="text-sm text-white">Changes saved.</span>}
         {update.isError && <span className="text-sm text-red-500">Save failed. Try again.</span>}
       </div>
     </form>

@@ -3,11 +3,11 @@ import type { Plan } from '@grassion/shared'
 import { api } from './api.js'
 import { decodePlanFromToken } from './utils.js'
 
-const PAID_PLANS: Plan[] = ['starter', 'team', 'business']
-
-export function isPaidPlan(plan: Plan | null | undefined): boolean {
+export function isPaidPlan(plan: Plan | string | null | undefined): boolean {
   if (!plan) return false
-  return PAID_PLANS.includes(plan)
+  // Any plan except 'trial' is considered paid — covers 'starter', 'team',
+  // 'business', and any custom value set directly in the DB (e.g. 'pro').
+  return plan !== 'trial'
 }
 
 export interface UsePlanResult {

@@ -31,9 +31,10 @@ export function DashboardPage() {
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial } = usePlan()
 
-  if (summary.isLoading) {
+  if (summary.isLoading || repos.isLoading) {
     return (
       <div className="flex items-center justify-center gap-3 py-32 text-[#888888]">
         <Spinner />
@@ -47,9 +48,10 @@ export function DashboardPage() {
   }
 
   const data = summary.data!
+  const activeRepos = (repos.data ?? []).filter((r) => r.isActive)
 
   if (data.verdict === 'insufficient_data') {
-    return <EmptyState totalPrs={data.totalPrs} />
+    return <EmptyState totalPrs={data.totalPrs} hasRepos={activeRepos.length > 0} />
   }
 
   const sw = seatWaste.data
@@ -291,7 +293,7 @@ function WeeklyTrendCard({
                   return (
                     <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
                       <div className="font-medium text-white mb-1">{row.week}</div>
-                      <div className={cn(row.netDollar >= 0 ? 'text-green-500' : 'text-red-500')}>
+                      <div className={cn(row.netDollar >= 0 ? 'text-white' : 'text-red-500')}>
                         Net {row.netDollar >= 0 ? '+' : ''}{formatUsd(row.netDollar)}
                       </div>
                       <div className="text-[#888888]">{row.aiPrs} AI PRs</div>
@@ -302,10 +304,10 @@ function WeeklyTrendCard({
               <Line
                 type="monotone"
                 dataKey="netDollar"
-                stroke="#22c55e"
+                stroke="#ffffff"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: '#ffffff', strokeWidth: 0 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -357,7 +359,7 @@ function ProblemPRsList({
                     href={p.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-medium text-white hover:text-green-400 transition-colors text-sm flex items-center gap-1.5"
+                    className="font-medium text-white hover:text-[#ccc] transition-colors text-sm flex items-center gap-1.5"
                   >
                     #{p.number} {p.title}
                     <ExternalLink className="h-3 w-3 flex-shrink-0" />
@@ -378,34 +380,145 @@ function ProblemPRsList({
 }
 
 /* ── EMPTY STATE ───────────────────────────────────── */
-function EmptyState({ totalPrs }: { totalPrs: number }) {
+function EmptyState({ totalPrs, hasRepos }: { totalPrs: number; hasRepos: boolean }) {
+  const prsNeeded = Math.max(0, 5 - totalPrs)
+
+  if (!hasRepos) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-[#222222] bg-[#111111] px-8 py-14 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-[#333]">
+            <GitPullRequest className="h-6 w-6 text-[#888888]" />
+          </div>
+          <h2 className="text-xl font-semibold text-white">No repositories connected yet</h2>
+          <p className="mt-2 text-sm text-[#888888] max-w-md mx-auto">
+            Install the Grassion GitHub App on your repos so we can track PRs and measure your AI ROI.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href="https://github.com/apps/grassion/installations/new"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-[#e5e5e5] transition-colors"
+            >
+              Install GitHub App
+              <ArrowRight className="h-4 w-4" />
+            </a>
+            <Link
+              to="/settings"
+              className="inline-flex items-center gap-2 rounded-lg border border-[#333] px-5 py-2.5 text-sm font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors"
+            >
+              Go to Settings
+            </Link>
+          </div>
+        </div>
+        <OnboardingChecklist step={1} totalPrs={0} />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-[#222222] bg-[#111111] px-8 py-16 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
-          <GitPullRequest className="h-6 w-6 text-green-500" />
+      <div className="rounded-xl border border-[#222222] bg-[#111111] px-8 py-14 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-[#333]">
+          <GitPullRequest className="h-6 w-6 text-[#888888]" />
         </div>
-        <h2 className="text-xl font-semibold text-white">Connect your first repo to see ROI data</h2>
+        <h2 className="text-xl font-semibold text-white">
+          {totalPrs === 0
+            ? 'Waiting for your first merged PR'
+            : `${prsNeeded} more PR${prsNeeded === 1 ? '' : 's'} until your first verdict`}
+        </h2>
         <p className="mt-2 text-sm text-[#888888] max-w-md mx-auto">
-          Grassion needs at least 5 merged PRs in a week to compute a verdict.
-          {totalPrs > 0 && ` You have ${totalPrs} so far — keep going.`}
+          {totalPrs === 0
+            ? 'Grassion is connected and watching. Once a developer merges a PR, we start tracking.'
+            : `You have ${totalPrs} merged PR${totalPrs === 1 ? '' : 's'} so far. Grassion needs 5 in a week to compute your first ROI verdict.`}
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
-            to="/settings"
-            className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-green-400 transition-colors"
+            to="/seat-waste"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-[#e5e5e5] transition-colors"
           >
-            Connect Repository
+            View Seat Waste
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            to="/seat-waste"
+            to="/settings"
             className="inline-flex items-center gap-2 rounded-lg border border-[#333] px-5 py-2.5 text-sm font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors"
           >
-            View Seat Waste
+            Settings
           </Link>
         </div>
       </div>
+      <OnboardingChecklist step={totalPrs === 0 ? 2 : 3} totalPrs={totalPrs} />
     </div>
+  )
+}
+
+/* ── ONBOARDING CHECKLIST ──────────────────────────── */
+function OnboardingChecklist({ step, totalPrs }: { step: number; totalPrs: number }) {
+  const steps = [
+    {
+      n: 1,
+      title: 'Install GitHub App',
+      desc: 'Connect Grassion to your repositories from the Settings page.',
+      done: step > 1,
+    },
+    {
+      n: 2,
+      title: 'Merge your first PR',
+      desc: 'Grassion watches every merged PR and detects whether it was AI-assisted.',
+      done: step > 2,
+    },
+    {
+      n: 3,
+      title: 'Reach 5 merged PRs',
+      desc: `${totalPrs}/5 PRs merged. Your ROI verdict unlocks after 5 merges in a week.`,
+      done: false,
+    },
+    {
+      n: 4,
+      title: 'Read your ROI verdict',
+      desc: 'See net dollar value, speed delta, rework rate, and seat waste — all in one view.',
+      done: false,
+    },
+  ]
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Getting started</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ol className="space-y-4">
+          {steps.map((s) => (
+            <li key={s.n} className="flex items-start gap-3">
+              <div
+                className={cn(
+                  'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                  s.done
+                    ? 'bg-white text-black'
+                    : s.n === step
+                      ? 'bg-white/10 border border-white/30 text-white'
+                      : 'bg-[#1a1a1a] border border-[#333] text-[#555555]',
+                )}
+              >
+                {s.done ? '✓' : s.n}
+              </div>
+              <div>
+                <div
+                  className={cn(
+                    'text-sm font-medium',
+                    s.done ? 'text-[#555555] line-through' : s.n === step ? 'text-white' : 'text-[#555555]',
+                  )}
+                >
+                  {s.title}
+                </div>
+                <div className="text-xs text-[#555555] mt-0.5">{s.desc}</div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
   )
 }

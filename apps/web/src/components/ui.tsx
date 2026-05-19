@@ -47,9 +47,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
     const base =
-      'inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] disabled:opacity-40 disabled:pointer-events-none'
+      'inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] disabled:opacity-40 disabled:pointer-events-none'
     const variants: Record<string, string> = {
-      primary: 'bg-green-500 text-black hover:bg-green-400 active:bg-green-600',
+      primary: 'bg-white text-black hover:bg-[#e5e5e5] active:bg-[#d0d0d0]',
       secondary: 'bg-transparent text-white border border-[#333333] hover:bg-[#1a1a1a] hover:border-[#444444]',
       ghost: 'bg-transparent text-[#888888] hover:bg-[#1a1a1a] hover:text-white',
       destructive: 'bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20',
@@ -131,7 +131,7 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     <input
       ref={ref}
       className={cn(
-        'block w-full rounded-lg border border-[#222222] bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-[#555555] transition-colors focus:border-green-500/50 focus:outline-none focus:ring-1 focus:ring-green-500/30',
+        'block w-full rounded-lg border border-[#222222] bg-[#0a0a0a] px-3 py-2 text-sm text-white placeholder-[#555555] transition-colors focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/10',
         className,
       )}
       {...props}
@@ -164,14 +164,14 @@ export function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]',
-          checked ? 'bg-green-500' : 'bg-[#333333]',
+          'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]',
+          checked ? 'bg-white' : 'bg-[#333333]',
         )}
       >
         <span
           className={cn(
-            'pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
-            checked ? 'translate-x-4' : 'translate-x-0',
+            'pointer-events-none inline-block h-4 w-4 rounded-full shadow-sm transition-transform',
+            checked ? 'bg-[#0a0a0a] translate-x-4' : 'bg-white translate-x-0',
           )}
         />
       </button>

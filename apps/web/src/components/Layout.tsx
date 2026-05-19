@@ -26,7 +26,7 @@ export function AppLayout() {
   if (me.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#333] border-t-green-500" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#333] border-t-white" />
       </div>
     )
   }
@@ -89,7 +89,7 @@ export function AppLayout() {
                 'hidden sm:inline-flex rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                 team.plan === 'trial'
                   ? 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/15'
-                  : 'text-green-500 bg-green-500/10 border border-green-500/20',
+                  : 'text-white bg-white/10 border border-white/20 hover:bg-white/15',
               )}
             >
               {team.plan === 'trial' ? '14-day trial' : `✓ ${team.plan.charAt(0).toUpperCase() + team.plan.slice(1)}`}
