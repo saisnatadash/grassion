@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap } from 'lucide-react'
+import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, Lock, BarChart2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
@@ -32,7 +32,7 @@ export function DashboardPage() {
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
-  const { isPaid, isTrial } = usePlan()
+  const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
 
   if (summary.isLoading || repos.isLoading) {
     return (
@@ -119,6 +119,30 @@ export function DashboardPage() {
 
       {/* ── PROBLEM PRS ── */}
       <ProblemPRsList prs={problemPrs.data ?? []} loading={problemPrs.isLoading} />
+
+      {/* ── TEAM PLAN: PER-DEVELOPER BREAKDOWN ── */}
+      {isTeam ? (
+        <DeveloperBreakdown sw={seatWaste.data} loading={seatWaste.isLoading} />
+      ) : isPaid ? (
+        <LockedFeatureCard
+          title="Developer Breakdown"
+          description="See per-developer AI PR count, adoption rate, and seat waste — broken down by team member."
+          requiredPlan="Team"
+          icon={<Users className="h-5 w-5 text-[#555555]" />}
+        />
+      ) : null}
+
+      {/* ── BUSINESS PLAN: EXECUTIVE REPORT ── */}
+      {isBusiness ? (
+        <ExecutiveReport data={data} monthlyWaste={sw?.totalMonthlySavings ?? 0} />
+      ) : isPaid ? (
+        <LockedFeatureCard
+          title="Executive Report"
+          description="Annual ROI projection, efficiency score, and one-line recommendation for your leadership team."
+          requiredPlan="Business"
+          icon={<BarChart2 className="h-5 w-5 text-[#555555]" />}
+        />
+      ) : null}
 
       <p className="text-xs text-[#555555] pb-4">
         Estimates use a 30% damper on speed savings and assume 3 hours of rework per problem PR.
@@ -374,6 +398,177 @@ function ProblemPRsList({
             ))}
           </ul>
         )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── LOCKED FEATURE CARD ───────────────────────────── */
+function LockedFeatureCard({
+  title,
+  description,
+  requiredPlan,
+  icon,
+}: {
+  title: string
+  description: string
+  requiredPlan: string
+  icon: React.ReactNode
+}) {
+  return (
+    <Card>
+      <CardContent className="py-6">
+        <div className="flex items-start gap-4">
+          <div className="mt-0.5 flex-shrink-0">{icon}</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-medium text-[#555555]">{title}</span>
+              <Lock className="h-3.5 w-3.5 text-[#444444]" />
+            </div>
+            <p className="text-xs text-[#444444]">{description}</p>
+          </div>
+          <Link
+            to="/billing"
+            className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-[#333] px-3 py-1.5 text-xs font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors"
+          >
+            Upgrade to {requiredPlan}
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── DEVELOPER BREAKDOWN (Team+) ───────────────────── */
+function DeveloperBreakdown({
+  sw,
+  loading,
+}: {
+  sw: { activeUsers: Array<{ githubLogin: string; avatarUrl: string | null; weeklyAiPrs: number; lastActivity: string | null }>; inactiveUsers: Array<{ githubLogin: string; avatarUrl: string | null; lastActivity: string | null; monthlyCost: number }> } | undefined
+  loading: boolean
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Developer Breakdown</CardTitle>
+        <Badge tone="blue">Team</Badge>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading…</div>
+        ) : !sw || (sw.activeUsers.length + sw.inactiveUsers.length) === 0 ? (
+          <p className="text-sm text-[#555555] py-4 text-center">No developer data yet — merge some PRs first.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#1a1a1a]">
+                  <th className="text-left py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">Developer</th>
+                  <th className="text-right py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">AI PRs / week</th>
+                  <th className="text-right py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">Status</th>
+                  <th className="text-right py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">Cost</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#111]">
+                {sw.activeUsers.map((u) => (
+                  <tr key={u.githubLogin}>
+                    <td className="py-2.5">
+                      <div className="flex items-center gap-2">
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full border border-[#333]" />
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-semibold text-white">
+                            {u.githubLogin[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-white font-medium">@{u.githubLogin}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 text-right tabular-nums text-white">{u.weeklyAiPrs}</td>
+                    <td className="py-2.5 text-right"><Badge tone="green">Active</Badge></td>
+                    <td className="py-2.5 text-right text-[#555555]">—</td>
+                  </tr>
+                ))}
+                {sw.inactiveUsers.map((u) => (
+                  <tr key={u.githubLogin}>
+                    <td className="py-2.5">
+                      <div className="flex items-center gap-2">
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full border border-[#333]" />
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-semibold text-white">
+                            {u.githubLogin[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-[#555555]">@{u.githubLogin}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 text-right tabular-nums text-[#555555]">0</td>
+                    <td className="py-2.5 text-right"><Badge tone="red">Inactive</Badge></td>
+                    <td className="py-2.5 text-right text-red-500 tabular-nums">${u.monthlyCost}/mo</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── EXECUTIVE REPORT (Business+) ──────────────────── */
+function ExecutiveReport({
+  data,
+  monthlyWaste,
+}: {
+  data: { netDollar: number; aiPrs: number; totalPrs: number; monthlySpend: number; speedDeltaPercent: number; reworkMultiplier: number }
+  monthlyWaste: number
+}) {
+  const adoptionRate = data.totalPrs > 0 ? Math.round((data.aiPrs / data.totalPrs) * 100) : 0
+  const annualProjection = data.netDollar * 52
+  const efficiency = data.monthlySpend > 0
+    ? Math.round((data.netDollar / data.monthlySpend) * 100)
+    : null
+  let recommendation = ''
+  if (adoptionRate < 30) recommendation = `Low AI adoption (${adoptionRate}%) — consider re-onboarding developers on AI tools.`
+  else if (data.reworkMultiplier > 1.5) recommendation = `High rework rate (${data.reworkMultiplier}×) — review problem PRs and tighten AI review process.`
+  else if (monthlyWaste > 200) recommendation = `$${monthlyWaste}/month in unused AI seats — reallocate or downgrade inactive members.`
+  else recommendation = `AI coding tools are delivering measurable ROI. Maintain current adoption pace.`
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Executive Report</CardTitle>
+        <Badge tone="gray">Business</Badge>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
+            <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">AI Adoption</div>
+            <div className="text-2xl font-semibold text-white tabular-nums">{adoptionRate}%</div>
+            <div className="text-xs text-[#555555] mt-0.5">of all PRs are AI-assisted</div>
+          </div>
+          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
+            <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">Annual Projection</div>
+            <div className={cn('text-2xl font-semibold tabular-nums', annualProjection >= 0 ? 'text-white' : 'text-red-500')}>
+              {annualProjection >= 0 ? '+' : ''}{formatUsd(annualProjection)}
+            </div>
+            <div className="text-xs text-[#555555] mt-0.5">estimated annual net value</div>
+          </div>
+          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
+            <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">ROI Efficiency</div>
+            <div className="text-2xl font-semibold text-white tabular-nums">
+              {efficiency !== null ? `${efficiency}%` : '—'}
+            </div>
+            <div className="text-xs text-[#555555] mt-0.5">net value ÷ AI spend</div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-[#222] bg-[#0a0a0a] px-4 py-3">
+          <div className="text-xs text-[#555555] uppercase tracking-widest mb-1.5">Recommendation</div>
+          <p className="text-sm text-white">{recommendation}</p>
+        </div>
       </CardContent>
     </Card>
   )

@@ -129,7 +129,7 @@ export function BillingPage() {
         amount: order.amount,
         currency: order.currency,
         name: 'Grassion',
-        description: `Pro plan · ${seatCount} developer${seatCount === 1 ? '' : 's'}`,
+        description: `Grassion Pro · ${seatCount} developer seat${seatCount === 1 ? '' : 's'}`,
         image: '/favicon.svg',
         prefill: {
           email: me.data?.user.email ?? undefined,
@@ -309,7 +309,6 @@ function UpgradeCard({
   isTrial: boolean
 }) {
   const monthlyUsd = seatCount * 19
-  const monthlyInr = seatCount * 1600
 
   return (
     <Card>
@@ -332,11 +331,7 @@ function UpgradeCard({
             />
             <div className="mt-3 rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span className="text-[#888888]">{seatCount} seat{seatCount === 1 ? '' : 's'} × ₹1,600</span>
-                <span className="text-white font-medium tabular-nums">₹{monthlyInr.toLocaleString('en-IN')}/mo</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[#888888]">{seatCount} seat{seatCount === 1 ? '' : 's'} × $19</span>
+                <span className="text-[#888888]">{seatCount} seat{seatCount === 1 ? '' : 's'} × $19/seat</span>
                 <span className="text-white font-medium tabular-nums">${monthlyUsd}/mo</span>
               </div>
               {memberCount > 0 && seatCount < memberCount && (
@@ -350,7 +345,7 @@ function UpgradeCard({
                 {busy ? 'Opening checkout…' : isTrial ? 'Upgrade from trial' : 'Start subscription'}
               </Button>
               <div className="mt-2 text-xs text-[#555555]">
-                Powered by Razorpay · Cancel anytime · 14-day free trial included
+                Billed in USD via Razorpay · Cancel anytime
               </div>
             </div>
           </div>

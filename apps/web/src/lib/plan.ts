@@ -10,10 +10,25 @@ export function isPaidPlan(plan: Plan | string | null | undefined): boolean {
   return plan !== 'trial'
 }
 
+const TEAM_PLANS = ['team', 'business']
+const BUSINESS_PLANS = ['business']
+
+export function isTeamPlan(plan: Plan | string | null | undefined): boolean {
+  if (!plan) return false
+  return TEAM_PLANS.includes(plan)
+}
+
+export function isBusinessPlan(plan: Plan | string | null | undefined): boolean {
+  if (!plan) return false
+  return BUSINESS_PLANS.includes(plan)
+}
+
 export interface UsePlanResult {
   plan: Plan | null
   isPaid: boolean
   isTrial: boolean
+  isTeam: boolean
+  isBusiness: boolean
   isLoading: boolean
 }
 
@@ -32,6 +47,8 @@ export function usePlan(): UsePlanResult {
     plan,
     isPaid: isPaidPlan(plan),
     isTrial: plan === 'trial' || plan === null,
+    isTeam: isTeamPlan(plan),
+    isBusiness: isBusinessPlan(plan),
     isLoading: team.isLoading && !jwtPlan,
   }
 }
