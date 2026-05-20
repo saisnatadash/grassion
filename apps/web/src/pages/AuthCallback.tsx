@@ -11,12 +11,12 @@ export function AuthCallbackPage() {
       localStorage.setItem('grassion_token', token)
       navigate('/dashboard', { replace: true })
     } else {
-      navigate('/login', { replace: true })
+      window.location.href = 'https://grassion.com'
     }
   }, [navigate, searchParams])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white text-neutral-600 text-sm">
+    <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] text-[#888888] text-sm">
       Signing you in…
     </div>
   )

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, Lock, BarChart2, CheckCircle2, Clock } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -23,6 +24,7 @@ import {
   Spinner,
   StatCard,
 } from '../components/ui.js'
+import { OnboardingModal } from '../components/OnboardingModal.js'
 
 /* ── helpers ── */
 function daysAgo(iso: string | null): string {
@@ -69,6 +71,13 @@ export function DashboardPage() {
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
 
+  const shouldShowOnboarding =
+    !localStorage.getItem('grassion_onboarded') &&
+    team.data !== undefined &&
+    (team.data.monthlyAiSpendUsd === 0 || team.data.monthlyAiSpendUsd === null)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
+  const showOnboarding = shouldShowOnboarding && !onboardingDismissed
+
   if (summary.isLoading) {
     return (
       <div className="flex items-center justify-center gap-3 py-32 text-[#888888]">
@@ -94,6 +103,9 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      {showOnboarding && (
+        <OnboardingModal onClose={() => setOnboardingDismissed(true)} />
+      )}
 
       {/* ── A: COLLECTING BANNER (subtle, non-blocking) ── */}
       {data.verdict === 'insufficient_data' && (

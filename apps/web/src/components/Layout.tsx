@@ -34,7 +34,7 @@ export function AppLayout() {
     )
   }
   if (me.isError || !me.data) {
-    navigate('/login', { replace: true })
+    window.location.href = 'https://grassion.com'
     return null
   }
 
@@ -44,7 +44,9 @@ export function AppLayout() {
   async function signOut() {
     await api.logout()
     qc.clear()
-    navigate('/login', { replace: true })
+    localStorage.removeItem('grassion_token')
+    localStorage.removeItem('grassion_onboarded')
+    window.location.href = 'https://grassion.com'
   }
 
   const navLinks = [
