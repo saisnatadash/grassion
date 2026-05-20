@@ -65,20 +65,33 @@ function loadRazorpayScript(): Promise<void> {
   })
 }
 
-const PRO_FEATURES = [
-  'Unlimited repositories',
-  'Full team analytics & seat waste',
-  'Weekly email digest reports',
-  'OpenAI PR summaries',
-  'Priority support',
-  'Export data to CSV',
+const STARTER_FEATURES = [
+  'All repos monitored, no limit',
+  'AI PR detection (label, git trailer & body)',
+  'Weekly ROI verdict: Net Positive / Neutral / Negative',
+  'Problem PR alerts with AI-generated summaries',
+  'Seat waste analysis: spot unused AI seats',
+  'Weekly email digest',
+  'GitHub App · 5-minute setup',
+  'Email support',
 ]
 
-const FREE_FEATURES = [
-  'Up to 2 repositories',
-  'Basic ROI verdict',
-  'Problem PR detection',
-  '30-day PR history',
+const TEAM_EXTRAS = [
+  'Per-developer seat waste breakdown',
+  'AI adoption rate by team member',
+  'Priority email support',
+]
+
+const BUSINESS_EXTRAS = [
+  'Dedicated onboarding session',
+  '24h support SLA',
+  'Custom data retention policy',
+]
+
+const ENTERPRISE_EXTRAS = [
+  'Custom contract & SLA',
+  'Dedicated account manager',
+  'On-premise deployment option',
 ]
 
 export function BillingPage() {
@@ -235,7 +248,7 @@ export function BillingPage() {
       )}
 
       {/* ── PLAN COMPARISON ── */}
-      <PlanComparison isPro={isPro} />
+      <PlanComparison plan={plan ?? 'trial'} />
     </div>
   )
 }
@@ -367,11 +380,11 @@ function UpgradeCard({
             </div>
           </div>
 
-          {/* Pro features */}
+          {/* Starter features */}
           <div>
             <div className="text-sm font-medium text-white mb-3">What's included</div>
             <ul className="space-y-2">
-              {PRO_FEATURES.map((f) => (
+              {STARTER_FEATURES.map((f) => (
                 <li key={f} className="flex items-center gap-2.5 text-sm text-[#888888]">
                   <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                   {f}
@@ -386,49 +399,115 @@ function UpgradeCard({
 }
 
 /* ── PLAN COMPARISON ── */
-function PlanComparison({ isPro }: { isPro: boolean }) {
+function PlanComparison({ plan }: { plan: string }) {
+  const isStarter = ['starter', 'pro', 'admin'].includes(plan)
+  const isTeam = plan === 'team'
+  const isBusiness = plan === 'business'
+
+  type Tier = { name: string; price: string; unit: string; best: string; features: string[]; inherited: string | null; cta: string; ctaHref?: string; isCurrent: boolean; isFeatured: boolean }
+  const tiers: Tier[] = [
+    {
+      name: 'Starter',
+      price: '$19',
+      unit: '/seat/mo',
+      best: 'Best for 1–10 devs',
+      features: STARTER_FEATURES,
+      inherited: null,
+      cta: isStarter ? 'Current plan' : 'Upgrade',
+      isCurrent: isStarter,
+      isFeatured: false,
+    },
+    {
+      name: 'Team',
+      price: '$15',
+      unit: '/seat/mo · min 10',
+      best: 'Best for 10–30 devs',
+      features: TEAM_EXTRAS,
+      inherited: 'Everything in Starter',
+      cta: isTeam ? 'Current plan' : 'Contact sales',
+      ctaHref: isTeam ? undefined : 'mailto:info@grassion.com?subject=Team plan',
+      isCurrent: isTeam,
+      isFeatured: true,
+    },
+    {
+      name: 'Business',
+      price: '$499',
+      unit: '/mo flat · unlimited',
+      best: 'Best for 30–50 devs',
+      features: BUSINESS_EXTRAS,
+      inherited: 'Everything in Team',
+      cta: isBusiness ? 'Current plan' : 'Contact sales',
+      ctaHref: isBusiness ? undefined : 'mailto:info@grassion.com?subject=Business plan',
+      isCurrent: isBusiness,
+      isFeatured: false,
+    },
+    {
+      name: 'Enterprise',
+      price: 'Contact us',
+      unit: 'tailored pricing',
+      best: '50+ devs',
+      features: ENTERPRISE_EXTRAS,
+      inherited: 'Everything in Business',
+      cta: 'Contact sales',
+      ctaHref: 'mailto:info@grassion.com?subject=Enterprise plan',
+      isCurrent: false,
+      isFeatured: false,
+    },
+  ]
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Plan comparison</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Free */}
-          <div className={cn('rounded-lg border p-4', !isPro ? 'border-green-500/30 bg-green-500/5' : 'border-[#222]')}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-semibold text-white">Free</div>
-              {!isPro && <Badge tone="green">Current</Badge>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {tiers.map((tier) => (
+            <div
+              key={tier.name}
+              className={cn(
+                'rounded-lg border p-4 flex flex-col',
+                tier.isCurrent ? 'border-green-500/30 bg-green-500/5' : tier.isFeatured ? 'border-white/20 bg-white/3' : 'border-[#222]',
+              )}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#888888]">{tier.name}</div>
+                {tier.isCurrent && <Badge tone="green">Current</Badge>}
+                {tier.isFeatured && !tier.isCurrent && <Badge tone="gray">Popular</Badge>}
+              </div>
+              <div className="mb-1">
+                <span className="text-2xl font-bold text-white">{tier.price}</span>
+                <span className="text-xs text-[#555555] ml-1">{tier.unit}</span>
+              </div>
+              <div className="text-xs text-[#555555] mb-4">{tier.best}</div>
+              <ul className="space-y-1.5 flex-1 mb-4">
+                {tier.inherited && (
+                  <li className="flex items-start gap-2 text-xs text-[#444444] italic">
+                    <span className="mt-0.5 flex-shrink-0">↳</span>
+                    {tier.inherited}
+                  </li>
+                )}
+                {tier.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#888888]">
+                    <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {tier.ctaHref ? (
+                <a
+                  href={tier.ctaHref}
+                  className="block text-center rounded-md border border-[#333] px-3 py-2 text-xs font-medium text-[#888888] hover:text-white hover:border-white/40 transition-colors"
+                >
+                  {tier.cta}
+                </a>
+              ) : (
+                <div className={cn('text-center rounded-md px-3 py-2 text-xs font-medium', tier.isCurrent ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'border border-[#333] text-[#555]')}>
+                  {tier.cta}
+                </div>
+              )}
             </div>
-            <div className="text-2xl font-bold text-white mb-4">$0<span className="text-sm font-normal text-[#888888]">/mo</span></div>
-            <ul className="space-y-2">
-              {FREE_FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-[#888888]">
-                  <Check className="h-3.5 w-3.5 text-[#555555] flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Pro */}
-          <div className={cn('rounded-lg border p-4', isPro ? 'border-green-500/30 bg-green-500/5' : 'border-[#222]')}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-semibold text-white">Pro</div>
-              {isPro && <Badge tone="green">Current</Badge>}
-            </div>
-            <div className="text-2xl font-bold text-white mb-4">
-              $19<span className="text-sm font-normal text-[#888888]">/seat/mo</span>
-            </div>
-            <ul className="space-y-2">
-              {PRO_FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-[#888888]">
-                  <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </div>
+          ))}
         </div>
       </CardContent>
     </Card>
