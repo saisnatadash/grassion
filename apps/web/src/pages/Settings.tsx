@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
 import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
@@ -398,67 +397,124 @@ function ReposSection() {
   })
 
   return (
+    <div className="space-y-4">
+      {/* Manual connect form */}
+      <ConnectRepoForm onConnected={() => qc.invalidateQueries({ queryKey: ['repos'] })} />
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Connected repositories</CardTitle>
+          <a
+            href="https://github.com/apps/grassion"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-[#888888] hover:text-white transition-colors"
+          >
+            <Github className="h-3.5 w-3.5" />
+            GitHub App
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </CardHeader>
+        <CardContent>
+          {repos.isLoading ? (
+            <Spinner />
+          ) : repos.data && repos.data.length === 0 ? (
+            <div className="text-sm text-[#555555] py-2">
+              No repos connected yet. Paste a GitHub URL above to connect one.
+            </div>
+          ) : (
+            <ul className="divide-y divide-[#1a1a1a]">
+              {repos.data?.map((r) => (
+                <li key={r.id} className="py-3.5 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Github className="h-3.5 w-3.5 text-[#555555] flex-shrink-0" />
+                      <span className="text-sm font-medium text-white truncate">
+                        {r.owner}/{r.name}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#555555] mt-0.5 pl-5">
+                      {r.defaultBranch} · connected {new Date(r.connectedAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <Badge tone={r.isActive ? 'green' : 'gray'}>{r.isActive ? 'Active' : 'Paused'}</Badge>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => toggle.mutate({ id: r.id, isActive: !r.isActive })}
+                      disabled={toggle.isPending}
+                    >
+                      {r.isActive ? 'Pause' : 'Activate'}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+/* ── CONNECT REPO FORM ── */
+function ConnectRepoForm({ onConnected }: { onConnected: () => void }) {
+  const [url, setUrl] = useState('')
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+  const connect = useMutation({
+    mutationFn: (repoUrl: string) => api.repos.connect(repoUrl),
+    onSuccess: (data) => {
+      setUrl('')
+      setStatus({
+        type: 'success',
+        msg: data.alreadyConnected
+          ? `${data.repoName} is already connected.`
+          : `${data.repoName} connected! Grassion will start tracking PRs.`,
+      })
+      onConnected()
+    },
+    onError: (err: { message?: string }) => {
+      setStatus({ type: 'error', msg: err?.message ?? 'Failed to connect. Check the URL and try again.' })
+    },
+  })
+
+  return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Connected repositories</CardTitle>
-        <a
-          href="https://github.com/apps/grassion"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-[#888888] hover:text-white transition-colors"
-        >
-          <Github className="h-3.5 w-3.5" />
-          Connect repo
-          <ExternalLink className="h-3 w-3" />
-        </a>
+      <CardHeader>
+        <CardTitle>Connect a repository</CardTitle>
       </CardHeader>
       <CardContent>
-        {repos.isLoading ? (
-          <Spinner />
-        ) : repos.data && repos.data.length === 0 ? (
-          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
-            <p className="text-sm text-yellow-400">
-              No repos connected. Install the Grassion GitHub App to add repositories.
-            </p>
-            <a
-              href="https://github.com/apps/grassion"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-flex items-center gap-1.5 text-xs text-yellow-400/70 hover:text-yellow-400 transition-colors"
-            >
-              Install GitHub App <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
-        ) : (
-          <ul className="divide-y divide-[#1a1a1a]">
-            {repos.data?.map((r) => (
-              <li key={r.id} className="py-3.5 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Github className="h-3.5 w-3.5 text-[#555555] flex-shrink-0" />
-                    <span className="text-sm font-medium text-white truncate">
-                      {r.owner}/{r.name}
-                    </span>
-                  </div>
-                  <div className="text-xs text-[#555555] mt-0.5 pl-5">
-                    {r.defaultBranch} · connected {new Date(r.connectedAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <Badge tone={r.isActive ? 'green' : 'gray'}>{r.isActive ? 'Active' : 'Paused'}</Badge>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => toggle.mutate({ id: r.id, isActive: !r.isActive })}
-                    disabled={toggle.isPending}
-                  >
-                    {r.isActive ? 'Pause' : 'Activate'}
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
+        <p className="text-xs text-[#555555] mb-4">
+          Paste a public GitHub repo URL to start tracking it — no GitHub App installation needed.
+        </p>
+        <div className="flex gap-2">
+          <Input
+            type="url"
+            placeholder="https://github.com/owner/repo"
+            value={url}
+            onChange={(e) => { setUrl(e.target.value); setStatus(null) }}
+            className="flex-1"
+          />
+          <Button
+            onClick={() => connect.mutate(url)}
+            disabled={connect.isPending || !url.trim()}
+          >
+            {connect.isPending ? <Spinner className="h-4 w-4" /> : 'Connect'}
+          </Button>
+        </div>
+        {status && (
+          <p className={cn('mt-2 text-xs', status.type === 'success' ? 'text-white' : 'text-red-400')}>
+            {status.msg}
+          </p>
         )}
+        <p className="mt-3 text-xs text-[#444444]">
+          For private repos, install the{' '}
+          <a href="https://github.com/apps/grassion" target="_blank" rel="noreferrer" className="text-[#888888] hover:text-white underline transition-colors">
+            Grassion GitHub App
+          </a>{' '}
+          instead.
+        </p>
       </CardContent>
     </Card>
   )
@@ -522,13 +578,14 @@ function MembersSection() {
 
 /* ── DANGER ZONE ── */
 function DangerZone() {
-  const navigate = useNavigate()
   const qc = useQueryClient()
 
   async function signOut() {
     await api.logout()
     qc.clear()
-    navigate('/login', { replace: true })
+    localStorage.removeItem('grassion_token')
+    localStorage.removeItem('grassion_onboarded')
+    window.location.href = 'https://grassion.com'
   }
 
   return (

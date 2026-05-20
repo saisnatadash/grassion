@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, Lock, BarChart2, CheckCircle2, Clock } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, BarChart2, CheckCircle2, Clock, RefreshCw, Crown, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
@@ -12,7 +12,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { api } from '../lib/api.js'
-import { formatUsd, cn } from '../lib/utils.js'
+import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
 import {
@@ -64,12 +64,26 @@ function buildChartData(
 
 /* ── PAGE ── */
 export function DashboardPage() {
+  const qc = useQueryClient()
   const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary })
   const weekly = useQuery({ queryKey: ['metrics', 'weekly'], queryFn: api.metrics.weekly })
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
+
+  const [refreshing, setRefreshing] = useState(false)
+  async function refresh() {
+    setRefreshing(true)
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['metrics'] }),
+      qc.invalidateQueries({ queryKey: ['prs'] }),
+      qc.invalidateQueries({ queryKey: ['analytics'] }),
+      qc.invalidateQueries({ queryKey: ['team'] }),
+      qc.invalidateQueries({ queryKey: ['me'] }),
+    ])
+    setTimeout(() => setRefreshing(false), 800)
+  }
 
   const shouldShowOnboarding =
     !localStorage.getItem('grassion_onboarded') &&
@@ -106,6 +120,40 @@ export function DashboardPage() {
       {showOnboarding && (
         <OnboardingModal onClose={() => setOnboardingDismissed(true)} />
       )}
+
+      {/* ── PAGE HEADER ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Dashboard</h1>
+          <p className="text-sm text-[#555555] mt-0.5">
+            Real-time AI coding ROI for your team
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Plan badge */}
+          {plan && (
+            <div className={cn(
+              'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium',
+              isTrial
+                ? 'border-yellow-500/30 bg-yellow-500/5 text-yellow-400'
+                : 'border-white/20 bg-white/5 text-white',
+            )}>
+              <Crown className="h-3.5 w-3.5" />
+              {planDisplayLabel(plan)}
+            </div>
+          )}
+          {/* Refresh button */}
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 rounded-lg border border-[#333] bg-[#111] px-3 py-1.5 text-xs text-[#888888] hover:border-white/20 hover:text-white transition-colors disabled:opacity-50"
+            title="Refresh dashboard"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+      </div>
 
       {/* ── A: COLLECTING BANNER (subtle, non-blocking) ── */}
       {data.verdict === 'insufficient_data' && (
@@ -218,28 +266,28 @@ export function DashboardPage() {
       <ProblemPRsList prs={problemPrs.data ?? []} loading={problemPrs.isLoading} />
 
       {/* ── TEAM PLAN: PER-DEVELOPER BREAKDOWN ── */}
-      {isTeam ? (
+      {isPaid ? (
         <DeveloperBreakdown sw={seatWaste.data} loading={seatWaste.isLoading} />
-      ) : isPaid ? (
+      ) : (
         <LockedFeatureCard
           title="Developer Breakdown"
           description="Per-developer AI PR count, adoption rate, and cost — broken down by team member."
-          requiredPlan="Team"
+          requiredPlan="Pro"
           icon={<Users className="h-5 w-5 text-[#444]" />}
         />
-      ) : null}
+      )}
 
       {/* ── BUSINESS PLAN: EXECUTIVE REPORT ── */}
-      {isBusiness ? (
+      {isPaid ? (
         <ExecutiveReport data={data} monthlyWaste={monthlyWaste} />
-      ) : isPaid ? (
+      ) : (
         <LockedFeatureCard
           title="Executive Report"
           description="Annual ROI projection, efficiency score, and one-line recommendation."
-          requiredPlan="Business"
+          requiredPlan="Pro"
           icon={<BarChart2 className="h-5 w-5 text-[#444]" />}
         />
-      ) : null}
+      )}
 
       <p className="text-xs text-[#444444] pb-4">
         Estimates use a 30% damper on speed savings and assume 3 hours of rework per problem PR.

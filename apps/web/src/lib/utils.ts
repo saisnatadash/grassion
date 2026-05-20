@@ -12,6 +12,20 @@ export function formatUsd(n: number): string {
   return `${sign}$${abs.toLocaleString('en-US')}`
 }
 
+const PLAN_LABELS: Record<string, string> = {
+  trial: '14-day Trial',
+  starter: 'Pro',
+  team: 'Team',
+  business: 'Business',
+  pro: 'Pro',
+  admin: 'Pro',
+}
+
+export function planDisplayLabel(plan: string | null | undefined): string {
+  if (!plan) return 'Free'
+  return PLAN_LABELS[plan] ?? plan.charAt(0).toUpperCase() + plan.slice(1)
+}
+
 /**
  * Decodes the plan field embedded in the Grassion JWT without verifying the signature.
  * Safe for UI gating only — the server re-validates on every request.

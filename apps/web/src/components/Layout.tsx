@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard } from 'lucide-react'
 import { api } from '../lib/api.js'
-import { cn } from '../lib/utils.js'
+import { cn, planDisplayLabel } from '../lib/utils.js'
 
 export function AppLayout() {
   const navigate = useNavigate()
@@ -57,9 +57,7 @@ export function AppLayout() {
   ]
 
   const isTrial = team.plan === 'trial'
-  const planLabel = isTrial
-    ? '14-day trial'
-    : `${team.plan.charAt(0).toUpperCase() + team.plan.slice(1)}`
+  const planLabel = planDisplayLabel(team.plan)
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">

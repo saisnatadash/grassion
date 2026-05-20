@@ -15,7 +15,7 @@ import {
   Input,
   Spinner,
 } from '../components/ui.js'
-import { cn } from '../lib/utils.js'
+import { cn, planDisplayLabel } from '../lib/utils.js'
 
 declare global {
   interface Window {
@@ -194,7 +194,7 @@ export function BillingPage() {
           <Check className="h-5 w-5 text-white flex-shrink-0" />
           <div>
             <div className="text-sm font-semibold text-white">
-              Your plan: {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Pro'}
+              Your plan: {planDisplayLabel(plan)}
             </div>
             <div className="text-xs text-[#888888] mt-0.5">
               All Pro features are active. Manage your subscription below.
@@ -261,9 +261,11 @@ function CurrentPlanCard({
   onCancel: () => void
 }) {
   const planConfig = {
-    starter: { border: 'border-green-500/40', bg: 'bg-green-500/5', icon: <Star className="h-5 w-5 text-green-500" />, badgeTone: 'green' as const, label: 'Starter' },
-    team:    { border: 'border-green-500/40', bg: 'bg-green-500/5', icon: <Star className="h-5 w-5 text-green-500" />, badgeTone: 'green' as const, label: 'Team' },
-    business:{ border: 'border-green-500/40', bg: 'bg-green-500/5', icon: <Star className="h-5 w-5 text-green-500" />, badgeTone: 'green' as const, label: 'Business' },
+    starter: { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
+    team:    { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Team' },
+    business:{ border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Business' },
+    pro:     { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
+    admin:   { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
     trial:   { border: 'border-yellow-500/40', bg: 'bg-yellow-500/5', icon: <Zap className="h-5 w-5 text-yellow-400" />, badgeTone: 'yellow' as const, label: '14-day Trial' },
     free:    { border: 'border-[#333]', bg: 'bg-white/2', icon: <Shield className="h-5 w-5 text-[#888888]" />, badgeTone: 'gray' as const, label: 'Free' },
   }
