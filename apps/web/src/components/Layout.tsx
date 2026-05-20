@@ -71,14 +71,11 @@ export function AppLayout() {
             className="flex items-center gap-2.5 select-none flex-shrink-0"
           >
             <img
-              src="/White.png"
-              alt=""
-              style={{ height: '24px', width: '24px' }}
+              src="/W+L.png"
+              alt="Grassion"
+              style={{ height: '26px' }}
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
-            <span className="text-white font-semibold text-base tracking-tight">
-              Grassion
-            </span>
           </Link>
 
           {/* Center: Nav links (desktop) */}

@@ -62,6 +62,53 @@ function buildChartData(
   })
 }
 
+/* ── ONBOARDING PROGRESS BAR ── */
+function OnboardingProgressBar({
+  hasRepos,
+  totalMergedPrs,
+  hasVerdict,
+}: {
+  hasRepos: boolean
+  totalMergedPrs: number
+  hasVerdict: boolean
+}) {
+  const steps = [
+    { label: 'Sign in', done: true },
+    { label: 'Connect a repo', done: hasRepos },
+    { label: 'Merge 5 PRs', done: totalMergedPrs >= 5 },
+    { label: 'Get ROI verdict', done: hasVerdict },
+  ]
+  const allDone = steps.every((s) => s.done)
+  if (allDone) {
+    localStorage.setItem('onboarding_complete', '1')
+    return null
+  }
+  if (localStorage.getItem('onboarding_complete')) return null
+  return (
+    <div className="rounded-xl border border-[#222] bg-[#111] px-5 py-4">
+      <p className="mb-3 text-xs font-medium uppercase tracking-wider text-[#555]">Getting started</p>
+      <div className="flex flex-wrap items-center gap-2">
+        {steps.map((step, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className={cn(
+              'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium',
+              step.done
+                ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                : 'border-[#333] bg-[#0a0a0a] text-[#555]',
+            )}>
+              {step.done
+                ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                : <div className="h-3.5 w-3.5 flex-shrink-0 rounded-full border border-[#444]" />}
+              {step.label}
+            </div>
+            {i < steps.length - 1 && <ArrowRight className="h-3 w-3 flex-shrink-0 text-[#444]" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ── PAGE ── */
 export function DashboardPage() {
   const qc = useQueryClient()
@@ -70,6 +117,7 @@ export function DashboardPage() {
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
 
   const [refreshing, setRefreshing] = useState(false)
@@ -115,10 +163,24 @@ export function DashboardPage() {
   const chartData = buildChartData(weekly.data ?? [])
   const hasChartData = chartData.some((w) => w.aiPrs > 0)
 
+  const hasRepos = (repos.data?.length ?? 0) > 0
+  const totalMergedAllTime = (weekly.data ?? []).reduce((s, w) => s + w.totalPrs, 0)
+  const hasVerdict = data.verdict !== 'insufficient_data'
+  const showProgressBar = !localStorage.getItem('onboarding_complete')
+
   return (
     <div className="space-y-5">
       {showOnboarding && (
         <OnboardingModal onClose={() => setOnboardingDismissed(true)} />
+      )}
+
+      {/* ── ONBOARDING STEPS ── */}
+      {showProgressBar && (
+        <OnboardingProgressBar
+          hasRepos={hasRepos}
+          totalMergedPrs={totalMergedAllTime}
+          hasVerdict={hasVerdict}
+        />
       )}
 
       {/* ── PAGE HEADER ── */}

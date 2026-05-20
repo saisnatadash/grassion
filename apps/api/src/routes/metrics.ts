@@ -35,29 +35,65 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
 
 metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  const weeks = lastNWeeks(12)
+  const weeks = lastNWeeks(6)
   const oldest = weeks[0]!
-  const rows = await db
-    .select()
-    .from(teamWeeklyMetrics)
-    .where(and(eq(teamWeeklyMetrics.teamId, sess.teamId), gte(teamWeeklyMetrics.weekStart, oldest)))
-    .orderBy(teamWeeklyMetrics.weekStart)
-  const byKey = new Map(rows.map((r) => [r.weekStart.toISOString(), r]))
+  const [cacheRows, livePrs] = await Promise.all([
+    db
+      .select()
+      .from(teamWeeklyMetrics)
+      .where(and(eq(teamWeeklyMetrics.teamId, sess.teamId), gte(teamWeeklyMetrics.weekStart, oldest)))
+      .orderBy(teamWeeklyMetrics.weekStart),
+    db
+      .select({ mergedAt: pullRequests.mergedAt, aiSource: pullRequests.aiSource })
+      .from(pullRequests)
+      .where(
+        and(
+          eq(pullRequests.teamId, sess.teamId),
+          eq(pullRequests.state, 'merged'),
+          gte(pullRequests.mergedAt, oldest),
+          isNotNull(pullRequests.mergedAt),
+        ),
+      ),
+  ])
+  const byKey = new Map(cacheRows.map((r) => [r.weekStart.toISOString(), r]))
   const out = weeks.map((w) => {
-    const row = byKey.get(w.toISOString())
+    const cached = byKey.get(w.toISOString())
+    if (cached && (cached.totalPrs ?? 0) > 0) {
+      return {
+        weekStart: w.toISOString(),
+        totalPrs: cached.totalPrs ?? 0,
+        aiPrs: cached.aiPrs ?? 0,
+        humanPrs: cached.humanPrs ?? 0,
+        aiAvgMergeHours: cached.aiAvgMergeHours ?? null,
+        humanAvgMergeHours: cached.humanAvgMergeHours ?? null,
+        aiReworkRate: cached.aiReworkRate ?? null,
+        humanReworkRate: cached.humanReworkRate ?? null,
+        estimatedDollarSaved: cached.estimatedDollarSaved ?? 0,
+        estimatedDollarLost: cached.estimatedDollarLost ?? 0,
+        netDollar: (cached.estimatedDollarSaved ?? 0) - (cached.estimatedDollarLost ?? 0),
+        verdict: cached.verdict ?? 'insufficient_data',
+      }
+    }
+    // No cache for this week — compute live from pull_requests
+    const weekEnd = addDays(w, 7)
+    const weekPrs = livePrs.filter(
+      (p) => p.mergedAt && p.mergedAt >= w && p.mergedAt < weekEnd,
+    )
+    const totalPrs = weekPrs.length
+    const aiPrs = weekPrs.filter((p) => !!p.aiSource).length
     return {
       weekStart: w.toISOString(),
-      totalPrs: row?.totalPrs ?? 0,
-      aiPrs: row?.aiPrs ?? 0,
-      humanPrs: row?.humanPrs ?? 0,
-      aiAvgMergeHours: row?.aiAvgMergeHours ?? null,
-      humanAvgMergeHours: row?.humanAvgMergeHours ?? null,
-      aiReworkRate: row?.aiReworkRate ?? null,
-      humanReworkRate: row?.humanReworkRate ?? null,
-      estimatedDollarSaved: row?.estimatedDollarSaved ?? 0,
-      estimatedDollarLost: row?.estimatedDollarLost ?? 0,
-      netDollar: (row?.estimatedDollarSaved ?? 0) - (row?.estimatedDollarLost ?? 0),
-      verdict: row?.verdict ?? 'insufficient_data',
+      totalPrs,
+      aiPrs,
+      humanPrs: totalPrs - aiPrs,
+      aiAvgMergeHours: null,
+      humanAvgMergeHours: null,
+      aiReworkRate: null,
+      humanReworkRate: null,
+      estimatedDollarSaved: 0,
+      estimatedDollarLost: 0,
+      netDollar: 0,
+      verdict: totalPrs < 5 ? 'insufficient_data' : aiPrs > 5 ? 'positive' : 'unclear',
     }
   })
   res.json(out)
@@ -114,7 +150,7 @@ async function liveSummary(teamId: string, weekStart: Date) {
     estimatedDollarSaved: 0,
     estimatedDollarLost: 0,
     netDollar: 0,
-    verdict: totalPrs < 5 ? 'insufficient_data' : 'unclear',
+    verdict: totalPrs < 5 ? 'insufficient_data' : aiPrs > 5 ? 'positive' : 'unclear',
   }
 }
 

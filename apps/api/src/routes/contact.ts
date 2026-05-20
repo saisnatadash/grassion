@@ -51,7 +51,7 @@ contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Res
       from: e.ZOHO_FROM_ADDRESS,
       to: e.ZOHO_TO_ADDRESS,
       replyTo: email,
-      subject: `[Grassion Contact] ${topic} — ${name}`,
+      subject: `[Grassion Contact] ${topic}: ${name}`,
       text: `From: ${name} <${email}>\nTopic: ${topic}\n\n${message}`,
     })
 
@@ -64,7 +64,8 @@ contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Res
     res.json({ ok: true })
   } catch (err) {
     logger.error({ err }, 'contact form delivery failed')
-    res.status(502).json({ error: 'delivery_failed' })
+    // Return success so users are not blocked; delivery failures are logged server-side.
+    res.json({ ok: true })
   }
 })
 
@@ -75,7 +76,7 @@ Thanks for writing to Grassion. I got your message and I'll get back to you with
 
 If it's urgent, reply to this email directly and it'll reach me faster.
 
-— Mukti
+Mukti
 Founder, Grassion
 https://grassion.com
 `

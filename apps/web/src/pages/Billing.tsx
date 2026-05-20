@@ -130,7 +130,7 @@ export function BillingPage() {
         currency: order.currency,
         name: 'Grassion',
         description: `Grassion Pro · ${seatCount} developer seat${seatCount === 1 ? '' : 's'}`,
-        image: '/White.png',
+        image: '/W+L.png',
         prefill: {
           email: me.data?.user.email ?? undefined,
           name: me.data?.user.githubLogin,
@@ -281,7 +281,7 @@ function CurrentPlanCard({
           </div>
           <div className="flex items-center gap-3">
             <span className="text-2xl font-semibold text-white capitalize">{cfg.label}</span>
-            <Badge tone={cfg.badgeTone}>{isLive ? 'Active' : isTrial ? 'Trial' : 'Free'}</Badge>
+            <Badge tone={cfg.badgeTone}>{isPro || isLive ? 'Active' : isTrial ? 'Trial' : 'Free'}</Badge>
           </div>
           {isLoading ? (
             <div className="mt-2"><Spinner className="h-4 w-4" /></div>

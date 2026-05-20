@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About · Grassion</title>
   <meta name="description" content="Grassion's mission: make AI coding ROI visible and actionable for every engineering team." />
-  <link rel="icon" type="image/png" href="/White.png" />
+  <link rel="icon" type="image/png" href="/W+L.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
   <style>
@@ -34,7 +34,7 @@
       top: 0; left: 0; right: 0;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       padding: 18px 52px;
       z-index: 100;
       border-bottom: 1px solid var(--line);
@@ -377,11 +377,8 @@
 </head>
 <body>
 
-  <a href="/" class="logo-link">
-    <img src="/White.png" alt="Grassion" onerror="this.style.display='none'" />
-  </a>
-
   <header>
+    <a href="/"><img src="/W+L.png" alt="Grassion" style="height:28px;" onerror="this.style.display='none'" /></a>
     <nav>
       <a href="/" >Home</a>
       <a href="/about/" class="active">About</a>
@@ -402,7 +399,7 @@
           Most have no way to know if it's working. Grassion changes that.
         </p>
         <p>
-          We read GitHub metadata — commits, PRs, reverts, CI signals — and turn it into
+          We read GitHub metadata: commits, PRs, reverts, CI signals, and turn it into
           a single, honest verdict: Net Positive, Neutral, or Negative. No code ever leaves
           your servers. No agents. No prompts on your codebase.
         </p>

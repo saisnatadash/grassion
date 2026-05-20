@@ -9,7 +9,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact · Grassion</title>
   <meta name="description" content="Reach the Grassion team. We reply within 24 hours." />
-  <link rel="icon" type="image/png" href="/White.png" />
+  <link rel="icon" type="image/png" href="/W+L.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
   <style>
@@ -35,7 +35,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
       top: 0; left: 0; right: 0;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       padding: 18px 52px;
       z-index: 100;
       border-bottom: 1px solid var(--line);
@@ -382,11 +382,8 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
 </head>
 <body>
 
-  <a href="/" class="logo-link">
-    <img src="/White.png" alt="Grassion" onerror="this.style.display='none'" />
-  </a>
-
   <header>
+    <a href="/"><img src="/W+L.png" alt="Grassion" style="height:28px;" onerror="this.style.display='none'" /></a>
     <nav>
       <a href="/">Home</a>
       <a href="/about/">About</a>
@@ -399,7 +396,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
     <div class="eyebrow">Get in Touch</div>
     <h1>We reply personally.</h1>
     <p class="hero-sub">
-      A question, a partnership, or just feedback — we read every message.
+      A question, a partnership, or just feedback. We read every message.
       Usually same-day. Always a human.
     </p>
 
@@ -528,7 +525,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
           status.style.color = 'rgba(100,220,140,0.9)'
           form.reset()
         } catch (err) {
-          status.textContent = `Could not send — email info@grassion.com instead.`
+          status.textContent = 'Could not send. Email info@grassion.com instead.'
           status.style.color = 'rgba(220,100,100,0.9)'
         } finally {
           btn.disabled = false
