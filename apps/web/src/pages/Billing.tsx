@@ -288,7 +288,7 @@ function CurrentPlanCard({
               {subData.currentPeriodEnd && (
                 <span>Renews {new Date(subData.currentPeriodEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               )}
-              {subData.trialEndsAt && !isLive && (
+              {subData.trialEndsAt && !isLive && !isPro && (
                 <span>Trial ends {new Date(subData.trialEndsAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               )}
               {subData.seatCount > 0 && (

@@ -199,9 +199,11 @@ billingRouter.get('/api/billing/subscription', requireAuth, async (req: Request,
     return
   }
   if (!team.razorpaySubscriptionId) {
+    // Order-based payment: no subscription ID, but subscriptionStatus was set to 'active'
+    // on verify. Return that DB status so the frontend shows the correct Active badge.
     res.json({
       plan: team.plan,
-      status: 'none',
+      status: team.subscriptionStatus ?? 'none',
       trialEndsAt: team.trialEndsAt?.toISOString() ?? null,
       currentPeriodEnd: team.currentPeriodEnd?.toISOString() ?? null,
       seatCount: 0,

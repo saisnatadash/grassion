@@ -10,9 +10,10 @@ export function isPaidPlan(plan: Plan | string | null | undefined): boolean {
   return plan !== 'trial'
 }
 
-// 'pro' and 'admin' are custom DB values treated as highest tier
-const TEAM_PLANS = ['team', 'business', 'pro', 'admin']
-const BUSINESS_PLANS = ['business', 'pro', 'admin']
+// 'starter' is the base paid plan — MVP gives it full access.
+// 'pro' and 'admin' are custom DB values that also map to highest tier.
+const TEAM_PLANS = ['starter', 'team', 'business', 'pro', 'admin']
+const BUSINESS_PLANS = ['starter', 'team', 'business', 'pro', 'admin']
 
 export function isTeamPlan(plan: Plan | string | null | undefined): boolean {
   if (!plan) return false
