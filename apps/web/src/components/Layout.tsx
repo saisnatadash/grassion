@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut } from 'lucide-react'
+import { ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { cn } from '../lib/utils.js'
 
@@ -26,7 +26,10 @@ export function AppLayout() {
   if (me.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#333] border-t-white" />
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#333] border-t-white" />
+          <span className="text-sm text-[#555]">Loading…</span>
+        </div>
       </div>
     )
   }
@@ -47,8 +50,14 @@ export function AppLayout() {
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: BarChart2 },
     { to: '/seat-waste', label: 'Seat Waste', icon: DollarSign },
+    { to: '/billing', label: 'Billing', icon: CreditCard },
     { to: '/settings', label: 'Settings', icon: Settings },
   ]
+
+  const isTrial = team.plan === 'trial'
+  const planLabel = isTrial
+    ? '14-day trial'
+    : `${team.plan.charAt(0).toUpperCase() + team.plan.slice(1)}`
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -56,9 +65,20 @@ export function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-[#222222] bg-[#111111]">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
 
-          {/* Left: Logo */}
-          <Link to="/dashboard" className="flex items-center gap-2 select-none">
-            <img src="/grassion-logo-white.svg" alt="Grassion" style={{ height: '28px' }} />
+          {/* Left: Logo — always visible wordmark */}
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2.5 select-none flex-shrink-0"
+          >
+            <img
+              src="/grassion-logo-white.svg"
+              alt=""
+              style={{ height: '24px', width: '24px' }}
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+            <span className="text-white font-semibold text-base tracking-tight">
+              Grassion
+            </span>
           </Link>
 
           {/* Center: Nav links (desktop) */}
@@ -71,7 +91,7 @@ export function AppLayout() {
                   cn(
                     'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-white/5 text-white'
+                      ? 'bg-white/8 text-white'
                       : 'text-[#888888] hover:bg-white/5 hover:text-white',
                   )
                 }
@@ -81,19 +101,19 @@ export function AppLayout() {
             ))}
           </nav>
 
-          {/* Right: Profile + Billing + Hamburger */}
+          {/* Right: Plan badge + Profile */}
           <div className="flex items-center gap-2">
-            <Link
-              to="/billing"
+            {/* Plan badge */}
+            <span
               className={cn(
-                'hidden sm:inline-flex rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                team.plan === 'trial'
-                  ? 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/15'
-                  : 'text-white bg-white/10 border border-white/20 hover:bg-white/15',
+                'hidden sm:inline-flex rounded-md px-2.5 py-1 text-xs font-medium',
+                isTrial
+                  ? 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20'
+                  : 'text-white bg-white/10 border border-white/20',
               )}
             >
-              {team.plan === 'trial' ? '14-day trial' : `✓ ${team.plan.charAt(0).toUpperCase() + team.plan.slice(1)}`}
-            </Link>
+              {planLabel}
+            </span>
 
             {/* Profile dropdown */}
             <div className="relative" ref={dropRef}>
@@ -108,17 +128,26 @@ export function AppLayout() {
                     {user.githubLogin[0]?.toUpperCase()}
                   </div>
                 )}
-                <span className="hidden sm:block text-[#888888] font-medium">{user.githubLogin}</span>
+                <span className="hidden sm:block text-[#888888] text-sm font-medium">
+                  {user.githubLogin}
+                </span>
                 <ChevronDown className={cn('h-3.5 w-3.5 text-[#555] transition-transform', dropdownOpen && 'rotate-180')} />
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-52 rounded-xl border border-[#222222] bg-[#111111] py-1 shadow-xl shadow-black/50">
-                  <div className="px-3 py-2 border-b border-[#222222]">
-                    <div className="text-xs font-medium text-white">{user.githubLogin}</div>
+                <div className="absolute right-0 top-full mt-1.5 w-56 rounded-xl border border-[#222222] bg-[#111111] py-1 shadow-xl shadow-black/50">
+                  <div className="px-3 py-2.5 border-b border-[#222222]">
+                    <div className="text-xs font-semibold text-white">@{user.githubLogin}</div>
                     <div className="text-xs text-[#555555] mt-0.5">{team.name}</div>
+                    <div className={cn(
+                      'mt-1.5 inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+                      isTrial ? 'bg-yellow-500/15 text-yellow-400' : 'bg-white/10 text-white',
+                    )}>
+                      {planLabel}
+                    </div>
                   </div>
                   <DropItem icon={Settings} label="Settings" onClick={() => { navigate('/settings'); setDropdownOpen(false) }} />
+                  <DropItem icon={CreditCard} label="Billing" onClick={() => { navigate('/billing'); setDropdownOpen(false) }} />
                   <DropItem icon={LogOut} label="Sign out" onClick={signOut} danger />
                 </div>
               )}
@@ -146,7 +175,7 @@ export function AppLayout() {
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                    isActive ? 'bg-white/5 text-white' : 'text-[#888888] hover:text-white',
+                    isActive ? 'bg-white/8 text-white' : 'text-[#888888] hover:text-white',
                   )
                 }
               >

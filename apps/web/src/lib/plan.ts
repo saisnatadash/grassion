@@ -10,8 +10,9 @@ export function isPaidPlan(plan: Plan | string | null | undefined): boolean {
   return plan !== 'trial'
 }
 
-const TEAM_PLANS = ['team', 'business']
-const BUSINESS_PLANS = ['business']
+// 'pro' and 'admin' are custom DB values treated as highest tier
+const TEAM_PLANS = ['team', 'business', 'pro', 'admin']
+const BUSINESS_PLANS = ['business', 'pro', 'admin']
 
 export function isTeamPlan(plan: Plan | string | null | undefined): boolean {
   if (!plan) return false

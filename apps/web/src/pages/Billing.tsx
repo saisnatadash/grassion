@@ -188,6 +188,21 @@ export function BillingPage() {
 
   return (
     <div className="space-y-6">
+      {/* Pro status banner — shown whenever user is on a paid plan */}
+      {isPro && !success && (
+        <div className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-6 py-4">
+          <Check className="h-5 w-5 text-white flex-shrink-0" />
+          <div>
+            <div className="text-sm font-semibold text-white">
+              Your plan: {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Pro'}
+            </div>
+            <div className="text-xs text-[#888888] mt-0.5">
+              All Pro features are active. Manage your subscription below.
+            </div>
+          </div>
+        </div>
+      )}
+
       {success && (
         <Alert tone="green">
           Payment successful! You're now on Pro. Your plan has been upgraded.

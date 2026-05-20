@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, Lock, BarChart2 } from 'lucide-react'
+import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, Lock, BarChart2, CheckCircle2, Clock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -15,7 +15,6 @@ import { formatUsd, cn } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
 import {
-  Alert,
   Badge,
   Card,
   CardContent,
@@ -25,16 +24,52 @@ import {
   StatCard,
 } from '../components/ui.js'
 
+/* ── helpers ── */
+function daysAgo(iso: string | null): string {
+  if (!iso) return 'never'
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+  if (d === 0) return 'today'
+  if (d === 1) return 'yesterday'
+  return `${d}d ago`
+}
+
+function buildChartData(
+  weekly: Array<{ weekStart: string; aiPrs: number }>,
+) {
+  // Last 6 Mon-aligned weeks ending this week
+  const now = new Date()
+  const day = now.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const thisMonday = new Date(now)
+  thisMonday.setDate(now.getDate() + diff)
+  thisMonday.setHours(0, 0, 0, 0)
+
+  const weeks: Array<{ label: string; iso: string }> = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(thisMonday)
+    d.setDate(d.getDate() - i * 7)
+    weeks.push({
+      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      iso: d.toISOString().slice(0, 10),
+    })
+  }
+
+  return weeks.map(({ label, iso }) => {
+    const match = weekly.find((w) => w.weekStart.slice(0, 10) === iso)
+    return { week: label, aiPrs: match?.aiPrs ?? 0 }
+  })
+}
+
+/* ── PAGE ── */
 export function DashboardPage() {
   const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary })
   const weekly = useQuery({ queryKey: ['metrics', 'weekly'], queryFn: api.metrics.weekly })
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
-  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
 
-  if (summary.isLoading || repos.isLoading) {
+  if (summary.isLoading) {
     return (
       <div className="flex items-center justify-center gap-3 py-32 text-[#888888]">
         <Spinner />
@@ -44,78 +79,128 @@ export function DashboardPage() {
   }
 
   if (summary.isError) {
-    return <Alert tone="red">Failed to load metrics. Please refresh.</Alert>
+    return (
+      <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+        Failed to load metrics. Please refresh.
+      </div>
+    )
   }
 
   const data = summary.data!
-  const activeRepos = (repos.data ?? []).filter((r) => r.isActive)
-
-  if (data.verdict === 'insufficient_data') {
-    return <EmptyState totalPrs={data.totalPrs} hasRepos={activeRepos.length > 0} />
-  }
-
   const sw = seatWaste.data
   const monthlyWaste = sw?.totalMonthlySavings ?? 0
+  const chartData = buildChartData(weekly.data ?? [])
+  const hasChartData = chartData.some((w) => w.aiPrs > 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      {/* ── ROI VERDICT BANNER ── */}
-      <VerdictBanner verdict={data.verdict} netDollar={data.netDollar} aiPrs={data.aiPrs} totalPrs={data.totalPrs} />
+      {/* ── A: COLLECTING BANNER (subtle, non-blocking) ── */}
+      {data.verdict === 'insufficient_data' && (
+        <CollectingBanner totalPrs={data.totalPrs} />
+      )}
 
       {/* ── TRIAL UPGRADE PROMPT ── */}
       {isTrial && !isPaid && <TrialBanner />}
 
-      {/* ── 4 STAT CARDS ── */}
+      {/* ── A: ROI VERDICT CARD ── */}
+      <VerdictBanner
+        verdict={data.verdict}
+        netDollar={data.netDollar}
+        aiPrs={data.aiPrs}
+        totalPrs={data.totalPrs}
+      />
+
+      {/* ── B: 4 STAT CARDS (always visible, 0 if no data) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Seats"
-          value={sw?.totalSeats ?? '—'}
-          sub="active PR authors · 30d"
-        />
-        <StatCard
-          label="Active Seats"
-          value={sw?.activeUsers.length ?? '—'}
-          sub="AI PR in last 7d"
-          tone="green"
-        />
+        <StatCard label="Total Seats" value={sw?.totalSeats ?? 0} sub="active PR authors · 30d" />
+        <StatCard label="Active Seats" value={sw?.activeUsers.length ?? 0} sub="AI PR in last 7d" tone="green" />
         <StatCard
           label="Inactive Seats"
-          value={sw?.inactiveUsers.length ?? '—'}
+          value={sw?.inactiveUsers.length ?? 0}
           sub="no AI usage this week"
           tone={sw && sw.inactiveUsers.length > 0 ? 'red' : 'white'}
         />
         <StatCard
           label="Monthly Waste"
           value={formatUsd(monthlyWaste)}
-          sub="unused AI seats"
+          sub="from unused AI seats"
           tone={monthlyWaste > 0 ? 'red' : 'white'}
         />
       </div>
 
-      {/* ── METRICS ROW ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard
-          label="AI Merge Speed"
-          value={`${data.speedDeltaPercent > 0 ? '+' : ''}${data.speedDeltaPercent}%`}
-          sub="vs human PRs"
-          tone={data.speedDeltaPercent > 0 ? 'green' : 'red'}
-        />
-        <StatCard
-          label="AI Rework Rate"
-          value={`${data.reworkMultiplier}×`}
-          sub="multiplier vs humans"
-          tone={data.reworkMultiplier < 1.2 ? 'green' : 'red'}
-        />
-        <StatCard
-          label="AI Spend"
-          value={formatUsd(data.monthlySpend)}
-          sub={`${team.data?.avgDevHourlyRateUsd ?? 75} $/hr dev rate`}
-        />
-      </div>
+      {/* ── C: WEEKLY TREND CHART (AreaChart, AI PRs) ── */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Weekly AI-Assisted PRs</CardTitle>
+          <TrendingUp className="h-4 w-4 text-[#555555]" />
+        </CardHeader>
+        <CardContent>
+          {weekly.isLoading ? (
+            <div className="flex items-center gap-2 py-12 text-[#888888]">
+              <Spinner /> <span className="text-sm">Loading…</span>
+            </div>
+          ) : (
+            <div>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="aiPrsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                  <XAxis
+                    dataKey="week"
+                    tick={{ fontSize: 11, fill: '#555555' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: '#555555' }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                    width={32}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null
+                      const row = payload[0]?.payload as { week: string; aiPrs: number }
+                      return (
+                        <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
+                          <div className="font-medium text-white mb-1">{row.week}</div>
+                          <div className="text-[#888888]">
+                            <span className="text-white font-semibold">{row.aiPrs}</span> AI PRs
+                          </div>
+                        </div>
+                      )
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="aiPrs"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    fill="url(#aiPrsGradient)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              {!hasChartData && (
+                <p className="text-center text-xs text-[#555555] mt-2">
+                  Merge AI-assisted PRs to see your weekly trend
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* ── WEEKLY TREND CHART ── */}
-      <WeeklyTrendCard data={weekly.data ?? []} loading={weekly.isLoading} />
+      {/* ── D: SEAT WASTE SUMMARY TABLE (always visible) ── */}
+      <SeatWasteSummary sw={sw} loading={seatWaste.isLoading} />
 
       {/* ── PROBLEM PRS ── */}
       <ProblemPRsList prs={problemPrs.data ?? []} loading={problemPrs.isLoading} />
@@ -126,31 +211,46 @@ export function DashboardPage() {
       ) : isPaid ? (
         <LockedFeatureCard
           title="Developer Breakdown"
-          description="See per-developer AI PR count, adoption rate, and seat waste — broken down by team member."
+          description="Per-developer AI PR count, adoption rate, and cost — broken down by team member."
           requiredPlan="Team"
-          icon={<Users className="h-5 w-5 text-[#555555]" />}
+          icon={<Users className="h-5 w-5 text-[#444]" />}
         />
       ) : null}
 
       {/* ── BUSINESS PLAN: EXECUTIVE REPORT ── */}
       {isBusiness ? (
-        <ExecutiveReport data={data} monthlyWaste={sw?.totalMonthlySavings ?? 0} />
+        <ExecutiveReport data={data} monthlyWaste={monthlyWaste} />
       ) : isPaid ? (
         <LockedFeatureCard
           title="Executive Report"
-          description="Annual ROI projection, efficiency score, and one-line recommendation for your leadership team."
+          description="Annual ROI projection, efficiency score, and one-line recommendation."
           requiredPlan="Business"
-          icon={<BarChart2 className="h-5 w-5 text-[#555555]" />}
+          icon={<BarChart2 className="h-5 w-5 text-[#444]" />}
         />
       ) : null}
 
-      <p className="text-xs text-[#555555] pb-4">
+      <p className="text-xs text-[#444444] pb-4">
         Estimates use a 30% damper on speed savings and assume 3 hours of rework per problem PR.
-        Adjust your AI spend and dev hourly rate in{' '}
+        Set your AI spend and dev hourly rate in{' '}
         <Link to="/settings" className="text-[#888888] underline hover:text-white">
           Settings
         </Link>{' '}
         for a more accurate verdict.
+      </p>
+    </div>
+  )
+}
+
+/* ── COLLECTING BANNER ─────────────────────────────── */
+function CollectingBanner({ totalPrs }: { totalPrs: number }) {
+  const needed = Math.max(0, 5 - totalPrs)
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-[#333] bg-[#111] px-4 py-2.5">
+      <Clock className="h-4 w-4 text-[#555555] flex-shrink-0" />
+      <p className="text-sm text-[#888888]">
+        Collecting data —{' '}
+        <span className="text-white font-medium">{totalPrs}/5</span> PRs merged this week.
+        {needed > 0 && ` Verdict unlocks after ${needed} more.`}
       </p>
     </div>
   )
@@ -173,7 +273,7 @@ function TrialBanner() {
       </div>
       <Link
         to="/billing"
-        className="inline-flex items-center gap-2 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-400 transition-colors flex-shrink-0"
+        className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-[#e5e5e5] transition-colors flex-shrink-0"
       >
         Upgrade to Pro
         <ArrowRight className="h-3.5 w-3.5" />
@@ -194,40 +294,17 @@ function VerdictBanner({
   aiPrs: number
   totalPrs: number
 }) {
-  const configs = {
-    net_positive: {
-      border: 'border-green-500/40',
-      bg: 'bg-green-500/5',
-      valueColor: 'text-green-500',
-      badgeTone: 'green' as const,
-    },
-    net_negative: {
-      border: 'border-red-500/40',
-      bg: 'bg-red-500/5',
-      valueColor: 'text-red-500',
-      badgeTone: 'red' as const,
-    },
-    neutral: {
-      border: 'border-yellow-500/40',
-      bg: 'bg-yellow-500/5',
-      valueColor: 'text-yellow-400',
-      badgeTone: 'yellow' as const,
-    },
-    unclear: {
-      border: 'border-[#333]',
-      bg: 'bg-white/2',
-      valueColor: 'text-white',
-      badgeTone: 'gray' as const,
-    },
-    insufficient_data: {
-      border: 'border-[#333]',
-      bg: 'bg-white/2',
-      valueColor: 'text-white',
-      badgeTone: 'gray' as const,
-    },
+  type CfgEntry = { border: string; bg: string; valueColor: string; badgeTone: 'green' | 'red' | 'yellow' | 'gray' }
+  const fallback: CfgEntry = { border: 'border-[#333]', bg: 'bg-[#111]', valueColor: 'text-white', badgeTone: 'gray' }
+  const configs: Record<Verdict, CfgEntry> = {
+    net_positive: { border: 'border-green-500/40', bg: 'bg-green-500/5', valueColor: 'text-green-400', badgeTone: 'green' },
+    net_negative: { border: 'border-red-500/40', bg: 'bg-red-500/5', valueColor: 'text-red-400', badgeTone: 'red' },
+    unclear: { border: 'border-yellow-500/40', bg: 'bg-yellow-500/5', valueColor: 'text-yellow-400', badgeTone: 'yellow' },
+    insufficient_data: { border: 'border-[#333]', bg: 'bg-[#111]', valueColor: 'text-[#555555]', badgeTone: 'gray' },
   }
-  const cfg = configs[verdict] ?? configs.unclear
+  const cfg: CfgEntry = configs[verdict] ?? fallback
   const aiPct = totalPrs > 0 ? Math.round((aiPrs / totalPrs) * 100) : 0
+  const isInsufficient = verdict === 'insufficient_data'
 
   return (
     <div className={cn('rounded-xl border px-6 py-5', cfg.border, cfg.bg)}>
@@ -238,103 +315,79 @@ function VerdictBanner({
             <span className="uppercase tracking-widest font-medium">ROI Verdict · This Week</span>
           </div>
           <div className="text-2xl sm:text-3xl font-semibold text-white">
-            {verdictEmoji(verdict)}&nbsp;{verdictLabel(verdict)}
+            {isInsufficient
+              ? 'Awaiting data…'
+              : `${verdictEmoji(verdict)} ${verdictLabel(verdict)}`}
           </div>
           <div className="mt-1 text-sm text-[#888888]">
-            {aiPrs} AI PRs out of {totalPrs} total ({aiPct}%)
+            {isInsufficient
+              ? 'Need 5+ merged PRs in a week to compute a verdict'
+              : `${aiPrs} AI PRs out of ${totalPrs} total (${aiPct}%)`}
           </div>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2">
           <div className="text-xs text-[#888888]">Estimated net value</div>
           <div className={cn('text-4xl font-bold tabular-nums', cfg.valueColor)}>
-            {netDollar >= 0 ? '+' : ''}{formatUsd(netDollar)}
+            {isInsufficient ? '—' : `${netDollar >= 0 ? '+' : ''}${formatUsd(netDollar)}`}
           </div>
-          <Badge tone={cfg.badgeTone}>{verdictLabel(verdict)}</Badge>
+          <Badge tone={cfg.badgeTone}>{isInsufficient ? 'No verdict yet' : verdictLabel(verdict)}</Badge>
         </div>
       </div>
     </div>
   )
 }
 
-/* ── WEEKLY TREND CHART ────────────────────────────── */
-function WeeklyTrendCard({
-  data,
+/* ── SEAT WASTE SUMMARY TABLE ──────────────────────── */
+function SeatWasteSummary({
+  sw,
   loading,
 }: {
-  data: Array<{ weekStart: string; netDollar: number; aiPrs: number; totalPrs: number }>
+  sw: { activeUsers: Array<{ githubLogin: string; avatarUrl: string | null; weeklyAiPrs: number; lastActivity: string | null }>; inactiveUsers: Array<{ githubLogin: string; avatarUrl: string | null; lastActivity: string | null; monthlyCost: number }> } | undefined
   loading: boolean
 }) {
-  const chartData = data
-    .slice(-12)
-    .map((w) => ({
-      ...w,
-      week: new Date(w.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    }))
-  const allZero = chartData.every((w) => w.netDollar === 0 && w.totalPrs === 0)
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>12-Week Trend</CardTitle>
-        <TrendingUp className="h-4 w-4 text-[#555555]" />
+        <CardTitle>Seat Usage</CardTitle>
+        <Link to="/seat-waste" className="text-xs text-[#555555] hover:text-white transition-colors flex items-center gap-1">
+          Full report <ArrowRight className="h-3 w-3" />
+        </Link>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-[#888888]">
-            <Spinner /> <span className="text-sm">Loading…</span>
-          </div>
-        ) : allZero ? (
-          <div className="py-12 text-center">
-            <p className="text-sm text-[#555555]">
-              Trend will populate after 2+ weeks of PR activity.
-            </p>
+          <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading…</div>
+        ) : !sw || (sw.activeUsers.length + sw.inactiveUsers.length) === 0 ? (
+          <div className="py-6 text-center">
+            <Users className="mx-auto h-7 w-7 text-[#333] mb-2" />
+            <p className="text-sm text-[#555555]">No seat data yet — seat usage appears after PRs are merged.</p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-              <XAxis
-                dataKey="week"
-                tick={{ fontSize: 11, fill: '#555555' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: '#555555' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => `$${v}`}
-                width={52}
-              />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null
-                  const row = payload[0]?.payload as {
-                    week: string
-                    netDollar: number
-                    aiPrs: number
-                  }
-                  return (
-                    <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
-                      <div className="font-medium text-white mb-1">{row.week}</div>
-                      <div className={cn(row.netDollar >= 0 ? 'text-white' : 'text-red-500')}>
-                        Net {row.netDollar >= 0 ? '+' : ''}{formatUsd(row.netDollar)}
-                      </div>
-                      <div className="text-[#888888]">{row.aiPrs} AI PRs</div>
-                    </div>
-                  )
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="netDollar"
-                stroke="#ffffff"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, fill: '#ffffff', strokeWidth: 0 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <ul className="divide-y divide-[#111]">
+            {[
+              ...sw.inactiveUsers.map((u) => ({ ...u, active: false, aiPrs: 0 })),
+              ...sw.activeUsers.map((u) => ({ ...u, active: true })),
+            ].map((u) => (
+              <li key={u.githubLogin} className="flex items-center gap-3 py-2.5">
+                {u.avatarUrl ? (
+                  <img src={u.avatarUrl} alt="" className="h-8 w-8 rounded-full border border-[#333] flex-shrink-0" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-[#222] border border-[#333] flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white">
+                    {u.githubLogin[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn('h-1.5 w-1.5 rounded-full flex-shrink-0', u.active ? 'bg-green-500' : 'bg-red-500')} />
+                    <span className="text-sm font-medium text-white truncate">@{u.githubLogin}</span>
+                  </div>
+                  <div className="text-xs text-[#555555] mt-0.5">
+                    {u.active ? `${(u as { weeklyAiPrs?: number }).weeklyAiPrs ?? 0} AI PRs this week` : `Last active ${daysAgo(u.lastActivity)}`}
+                  </div>
+                </div>
+                <Badge tone={u.active ? 'green' : 'red'}>{u.active ? 'Active' : 'Inactive'}</Badge>
+              </li>
+            ))}
+          </ul>
         )}
       </CardContent>
     </Card>
@@ -370,8 +423,9 @@ function ProblemPRsList({
             <Spinner /> Loading…
           </div>
         ) : prs.length === 0 ? (
-          <div className="py-4 text-center text-sm text-[#555555]">
-            No problem PRs this week.
+          <div className="py-4 text-center">
+            <CheckCircle2 className="mx-auto h-6 w-6 text-[#333] mb-2" />
+            <p className="text-sm text-[#555555]">No problem PRs this week.</p>
           </div>
         ) : (
           <ul className="divide-y divide-[#1a1a1a]">
@@ -405,31 +459,25 @@ function ProblemPRsList({
 
 /* ── LOCKED FEATURE CARD ───────────────────────────── */
 function LockedFeatureCard({
-  title,
-  description,
-  requiredPlan,
-  icon,
+  title, description, requiredPlan, icon,
 }: {
-  title: string
-  description: string
-  requiredPlan: string
-  icon: React.ReactNode
+  title: string; description: string; requiredPlan: string; icon: React.ReactNode
 }) {
   return (
     <Card>
-      <CardContent className="py-6">
+      <CardContent className="py-5">
         <div className="flex items-start gap-4">
           <div className="mt-0.5 flex-shrink-0">{icon}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium text-[#555555]">{title}</span>
-              <Lock className="h-3.5 w-3.5 text-[#444444]" />
+              <span className="text-sm font-medium text-[#444]">{title}</span>
+              <Lock className="h-3.5 w-3.5 text-[#3a3a3a]" />
             </div>
-            <p className="text-xs text-[#444444]">{description}</p>
+            <p className="text-xs text-[#3a3a3a]">{description}</p>
           </div>
           <Link
             to="/billing"
-            className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-[#333] px-3 py-1.5 text-xs font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors"
+            className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-[#2a2a2a] px-3 py-1.5 text-xs font-medium text-[#555] hover:text-white hover:border-[#555] transition-colors"
           >
             Upgrade to {requiredPlan}
             <ArrowRight className="h-3 w-3" />
@@ -458,55 +506,47 @@ function DeveloperBreakdown({
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading…</div>
         ) : !sw || (sw.activeUsers.length + sw.inactiveUsers.length) === 0 ? (
-          <p className="text-sm text-[#555555] py-4 text-center">No developer data yet — merge some PRs first.</p>
+          <p className="text-sm text-[#555555] py-4 text-center">No developer data yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#1a1a1a]">
-                  <th className="text-left py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">Developer</th>
-                  <th className="text-right py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">AI PRs / week</th>
-                  <th className="text-right py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">Status</th>
-                  <th className="text-right py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">Cost</th>
+                  <th className="text-left py-2 pr-4 text-xs font-medium uppercase tracking-widest text-[#555555]">Developer</th>
+                  <th className="text-right py-2 pr-4 text-xs font-medium uppercase tracking-widest text-[#555555]">AI PRs / wk</th>
+                  <th className="text-right py-2 pr-4 text-xs font-medium uppercase tracking-widest text-[#555555]">Status</th>
+                  <th className="text-right py-2 text-xs font-medium uppercase tracking-widest text-[#555555]">Wasted $/mo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#111]">
                 {sw.activeUsers.map((u) => (
                   <tr key={u.githubLogin}>
-                    <td className="py-2.5">
+                    <td className="py-2.5 pr-4">
                       <div className="flex items-center gap-2">
-                        {u.avatarUrl ? (
-                          <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full border border-[#333]" />
-                        ) : (
-                          <div className="h-6 w-6 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-semibold text-white">
-                            {u.githubLogin[0]?.toUpperCase()}
-                          </div>
-                        )}
-                        <span className="text-white font-medium">@{u.githubLogin}</span>
+                        {u.avatarUrl
+                          ? <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full border border-[#333]" />
+                          : <div className="h-6 w-6 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-semibold text-white">{u.githubLogin[0]?.toUpperCase()}</div>}
+                        <span className="text-white">@{u.githubLogin}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right tabular-nums text-white">{u.weeklyAiPrs}</td>
-                    <td className="py-2.5 text-right"><Badge tone="green">Active</Badge></td>
+                    <td className="py-2.5 pr-4 text-right tabular-nums text-white">{u.weeklyAiPrs}</td>
+                    <td className="py-2.5 pr-4 text-right"><Badge tone="green">Active</Badge></td>
                     <td className="py-2.5 text-right text-[#555555]">—</td>
                   </tr>
                 ))}
                 {sw.inactiveUsers.map((u) => (
                   <tr key={u.githubLogin}>
-                    <td className="py-2.5">
+                    <td className="py-2.5 pr-4">
                       <div className="flex items-center gap-2">
-                        {u.avatarUrl ? (
-                          <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full border border-[#333]" />
-                        ) : (
-                          <div className="h-6 w-6 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-semibold text-white">
-                            {u.githubLogin[0]?.toUpperCase()}
-                          </div>
-                        )}
+                        {u.avatarUrl
+                          ? <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full border border-[#333]" />
+                          : <div className="h-6 w-6 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-semibold text-white">{u.githubLogin[0]?.toUpperCase()}</div>}
                         <span className="text-[#555555]">@{u.githubLogin}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right tabular-nums text-[#555555]">0</td>
-                    <td className="py-2.5 text-right"><Badge tone="red">Inactive</Badge></td>
-                    <td className="py-2.5 text-right text-red-500 tabular-nums">${u.monthlyCost}/mo</td>
+                    <td className="py-2.5 pr-4 text-right tabular-nums text-[#555555]">0</td>
+                    <td className="py-2.5 pr-4 text-right"><Badge tone="red">Inactive</Badge></td>
+                    <td className="py-2.5 text-right text-red-500 tabular-nums">${u.monthlyCost}</td>
                   </tr>
                 ))}
               </tbody>
@@ -528,14 +568,13 @@ function ExecutiveReport({
 }) {
   const adoptionRate = data.totalPrs > 0 ? Math.round((data.aiPrs / data.totalPrs) * 100) : 0
   const annualProjection = data.netDollar * 52
-  const efficiency = data.monthlySpend > 0
-    ? Math.round((data.netDollar / data.monthlySpend) * 100)
-    : null
+  const efficiency = data.monthlySpend > 0 ? Math.round((data.netDollar / data.monthlySpend) * 100) : null
+
   let recommendation = ''
-  if (adoptionRate < 30) recommendation = `Low AI adoption (${adoptionRate}%) — consider re-onboarding developers on AI tools.`
-  else if (data.reworkMultiplier > 1.5) recommendation = `High rework rate (${data.reworkMultiplier}×) — review problem PRs and tighten AI review process.`
-  else if (monthlyWaste > 200) recommendation = `$${monthlyWaste}/month in unused AI seats — reallocate or downgrade inactive members.`
-  else recommendation = `AI coding tools are delivering measurable ROI. Maintain current adoption pace.`
+  if (adoptionRate < 30) recommendation = `Low AI adoption (${adoptionRate}%) — re-onboard developers on AI tools.`
+  else if (data.reworkMultiplier > 1.5) recommendation = `High rework rate (${data.reworkMultiplier}×) — tighten AI PR review process.`
+  else if (monthlyWaste > 200) recommendation = `$${monthlyWaste}/month in unused seats — reallocate or downgrade inactive members.`
+  else recommendation = 'AI coding tools are delivering measurable ROI. Maintain current adoption pace.'
 
   return (
     <Card>
@@ -545,174 +584,22 @@ function ExecutiveReport({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
-            <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">AI Adoption</div>
-            <div className="text-2xl font-semibold text-white tabular-nums">{adoptionRate}%</div>
-            <div className="text-xs text-[#555555] mt-0.5">of all PRs are AI-assisted</div>
-          </div>
-          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
-            <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">Annual Projection</div>
-            <div className={cn('text-2xl font-semibold tabular-nums', annualProjection >= 0 ? 'text-white' : 'text-red-500')}>
-              {annualProjection >= 0 ? '+' : ''}{formatUsd(annualProjection)}
+          {[
+            { label: 'AI Adoption', value: `${adoptionRate}%`, sub: 'of all PRs are AI-assisted' },
+            { label: 'Annual Projection', value: `${annualProjection >= 0 ? '+' : ''}${formatUsd(annualProjection)}`, sub: 'estimated annual net value' },
+            { label: 'ROI Efficiency', value: efficiency !== null ? `${efficiency}%` : '—', sub: 'net value ÷ AI spend' },
+          ].map((item) => (
+            <div key={item.label} className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
+              <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">{item.label}</div>
+              <div className="text-2xl font-semibold text-white tabular-nums">{item.value}</div>
+              <div className="text-xs text-[#555555] mt-0.5">{item.sub}</div>
             </div>
-            <div className="text-xs text-[#555555] mt-0.5">estimated annual net value</div>
-          </div>
-          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
-            <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">ROI Efficiency</div>
-            <div className="text-2xl font-semibold text-white tabular-nums">
-              {efficiency !== null ? `${efficiency}%` : '—'}
-            </div>
-            <div className="text-xs text-[#555555] mt-0.5">net value ÷ AI spend</div>
-          </div>
+          ))}
         </div>
         <div className="rounded-lg border border-[#222] bg-[#0a0a0a] px-4 py-3">
           <div className="text-xs text-[#555555] uppercase tracking-widest mb-1.5">Recommendation</div>
           <p className="text-sm text-white">{recommendation}</p>
         </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-/* ── EMPTY STATE ───────────────────────────────────── */
-function EmptyState({ totalPrs, hasRepos }: { totalPrs: number; hasRepos: boolean }) {
-  const prsNeeded = Math.max(0, 5 - totalPrs)
-
-  if (!hasRepos) {
-    return (
-      <div className="space-y-6">
-        <div className="rounded-xl border border-[#222222] bg-[#111111] px-8 py-14 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-[#333]">
-            <GitPullRequest className="h-6 w-6 text-[#888888]" />
-          </div>
-          <h2 className="text-xl font-semibold text-white">No repositories connected yet</h2>
-          <p className="mt-2 text-sm text-[#888888] max-w-md mx-auto">
-            Install the Grassion GitHub App on your repos so we can track PRs and measure your AI ROI.
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="https://github.com/apps/grassion/installations/new"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-[#e5e5e5] transition-colors"
-            >
-              Install GitHub App
-              <ArrowRight className="h-4 w-4" />
-            </a>
-            <Link
-              to="/settings"
-              className="inline-flex items-center gap-2 rounded-lg border border-[#333] px-5 py-2.5 text-sm font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors"
-            >
-              Go to Settings
-            </Link>
-          </div>
-        </div>
-        <OnboardingChecklist step={1} totalPrs={0} />
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-[#222222] bg-[#111111] px-8 py-14 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-[#333]">
-          <GitPullRequest className="h-6 w-6 text-[#888888]" />
-        </div>
-        <h2 className="text-xl font-semibold text-white">
-          {totalPrs === 0
-            ? 'Waiting for your first merged PR'
-            : `${prsNeeded} more PR${prsNeeded === 1 ? '' : 's'} until your first verdict`}
-        </h2>
-        <p className="mt-2 text-sm text-[#888888] max-w-md mx-auto">
-          {totalPrs === 0
-            ? 'Grassion is connected and watching. Once a developer merges a PR, we start tracking.'
-            : `You have ${totalPrs} merged PR${totalPrs === 1 ? '' : 's'} so far. Grassion needs 5 in a week to compute your first ROI verdict.`}
-        </p>
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            to="/seat-waste"
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-[#e5e5e5] transition-colors"
-          >
-            View Seat Waste
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/settings"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#333] px-5 py-2.5 text-sm font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors"
-          >
-            Settings
-          </Link>
-        </div>
-      </div>
-      <OnboardingChecklist step={totalPrs === 0 ? 2 : 3} totalPrs={totalPrs} />
-    </div>
-  )
-}
-
-/* ── ONBOARDING CHECKLIST ──────────────────────────── */
-function OnboardingChecklist({ step, totalPrs }: { step: number; totalPrs: number }) {
-  const steps = [
-    {
-      n: 1,
-      title: 'Install GitHub App',
-      desc: 'Connect Grassion to your repositories from the Settings page.',
-      done: step > 1,
-    },
-    {
-      n: 2,
-      title: 'Merge your first PR',
-      desc: 'Grassion watches every merged PR and detects whether it was AI-assisted.',
-      done: step > 2,
-    },
-    {
-      n: 3,
-      title: 'Reach 5 merged PRs',
-      desc: `${totalPrs}/5 PRs merged. Your ROI verdict unlocks after 5 merges in a week.`,
-      done: false,
-    },
-    {
-      n: 4,
-      title: 'Read your ROI verdict',
-      desc: 'See net dollar value, speed delta, rework rate, and seat waste — all in one view.',
-      done: false,
-    },
-  ]
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Getting started</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ol className="space-y-4">
-          {steps.map((s) => (
-            <li key={s.n} className="flex items-start gap-3">
-              <div
-                className={cn(
-                  'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                  s.done
-                    ? 'bg-white text-black'
-                    : s.n === step
-                      ? 'bg-white/10 border border-white/30 text-white'
-                      : 'bg-[#1a1a1a] border border-[#333] text-[#555555]',
-                )}
-              >
-                {s.done ? '✓' : s.n}
-              </div>
-              <div>
-                <div
-                  className={cn(
-                    'text-sm font-medium',
-                    s.done ? 'text-[#555555] line-through' : s.n === step ? 'text-white' : 'text-[#555555]',
-                  )}
-                >
-                  {s.title}
-                </div>
-                <div className="text-xs text-[#555555] mt-0.5">{s.desc}</div>
-              </div>
-            </li>
-          ))}
-        </ol>
       </CardContent>
     </Card>
   )
