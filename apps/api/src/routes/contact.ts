@@ -2,6 +2,8 @@ import { Router, type Request, type Response } from 'express'
 import nodemailer from 'nodemailer'
 import rateLimit from 'express-rate-limit'
 import { contactSchema } from '@grassion/shared'
+import { contactSubmissions } from '@grassion/db'
+import { db } from '../db.js'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
 
@@ -32,6 +34,9 @@ const contactLimiter = rateLimit({
 })
 
 contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Response) => {
+  console.log('[contact] POST received')
+  console.log('contact body:', req.body)
+
   const parsed = contactSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ error: 'invalid_input', issues: parsed.error.flatten().fieldErrors })
@@ -61,12 +66,16 @@ contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Res
       subject: 'Thanks for reaching out to Grassion',
       text: autoReplyText(name),
     })
-    res.json({ ok: true })
   } catch (err) {
-    logger.error({ err }, 'contact form delivery failed')
-    // Return success so users are not blocked; delivery failures are logged server-side.
-    res.json({ ok: true })
+    logger.error({ err }, 'contact form delivery failed — saving to DB')
+    try {
+      await db.insert(contactSubmissions).values({ name, email, topic, message })
+    } catch (dbErr) {
+      logger.error({ dbErr }, 'contact_submissions insert failed')
+    }
   }
+
+  res.json({ success: true, message: 'Message received' })
 })
 
 function autoReplyText(name: string): string {

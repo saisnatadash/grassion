@@ -247,6 +247,16 @@ export const outcomeCheckQueue = pgTable(
   }),
 )
 
+// ============ CONTACT SUBMISSIONS ============
+export const contactSubmissions = pgTable('contact_submissions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  topic: text('topic').notNull(),
+  message: text('message').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -301,3 +311,5 @@ export type OutcomeCheckQueueRow = typeof outcomeCheckQueue.$inferSelect
 export type NewOutcomeCheckQueueRow = typeof outcomeCheckQueue.$inferInsert
 export type LlmUsageLogRow = typeof llmUsageLog.$inferSelect
 export type NewLlmUsageLogRow = typeof llmUsageLog.$inferInsert
+export type ContactSubmission = typeof contactSubmissions.$inferSelect
+export type NewContactSubmission = typeof contactSubmissions.$inferInsert
