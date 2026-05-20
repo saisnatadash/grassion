@@ -34,15 +34,17 @@ export interface UsePlanResult {
 }
 
 /**
- * Returns the current user's plan.
- * - Reads the JWT immediately (synchronous) so there's no loading flash.
- * - Also fetches /api/team so the UI updates if the plan changes after a payment.
- * - The API value takes precedence over the JWT when both are available.
+ * Returns the current user's plan, always sourced from the DB.
+ * Priority: /api/team response > /auth/me response > stale JWT claim.
+ * The JWT is only used as the instant first-render value before any fetch
+ * completes — once either server query resolves, the DB value takes over.
  */
 export function usePlan(): UsePlanResult {
   const jwtPlan = decodePlanFromToken()
+  const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
-  const plan = (team.data?.plan ?? jwtPlan) as Plan | null
+  // Both me and team read plan from the DB (not JWT). team query wins if both resolve.
+  const plan = (team.data?.plan ?? me.data?.team.plan ?? jwtPlan) as Plan | null
 
   return {
     plan,
@@ -50,6 +52,6 @@ export function usePlan(): UsePlanResult {
     isTrial: plan === 'trial' || plan === null,
     isTeam: isTeamPlan(plan),
     isBusiness: isBusinessPlan(plan),
-    isLoading: team.isLoading && !jwtPlan,
+    isLoading: team.isLoading && me.isLoading && !jwtPlan,
   }
 }

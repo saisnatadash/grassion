@@ -202,6 +202,9 @@ authRouter.post('/auth/logout', (_req: Request, res: Response) => {
   res.json({ ok: true })
 })
 
+// plan is read directly from the teams table on every request — never from the JWT.
+// The JWT only authenticates the request; plan may have been updated in the DB
+// since the JWT was issued, so the DB value is always authoritative.
 authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const userRow = await db.select().from(users).where(eq(users.id, sess.userId)).limit(1)

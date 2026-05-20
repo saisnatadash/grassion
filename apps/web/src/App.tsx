@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/Layout.js'
 import { LoginPage } from './pages/Login.js'
@@ -24,9 +25,21 @@ const queryClient = new QueryClient({
   },
 })
 
+/** Forces a fresh /auth/me and /api/team fetch on every page load so the plan
+ *  displayed in the UI always reflects the DB value, even if the JWT is stale. */
+function AppInit() {
+  const qc = useQueryClient()
+  useEffect(() => {
+    void qc.invalidateQueries({ queryKey: ['me'] })
+    void qc.invalidateQueries({ queryKey: ['team'] })
+  }, [qc])
+  return null
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <AppInit />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
