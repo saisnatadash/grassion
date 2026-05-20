@@ -71,7 +71,7 @@ export function AppLayout() {
             className="flex items-center gap-2.5 select-none flex-shrink-0"
           >
             <img
-              src="/grassion-logo-white.svg"
+              src="/White.png"
               alt=""
               style={{ height: '24px', width: '24px' }}
               onError={(e) => { e.currentTarget.style.display = 'none' }}

@@ -130,7 +130,7 @@ export function BillingPage() {
         currency: order.currency,
         name: 'Grassion',
         description: `Grassion Pro · ${seatCount} developer seat${seatCount === 1 ? '' : 's'}`,
-        image: '/favicon.svg',
+        image: '/White.png',
         prefill: {
           email: me.data?.user.email ?? undefined,
           name: me.data?.user.githubLogin,
