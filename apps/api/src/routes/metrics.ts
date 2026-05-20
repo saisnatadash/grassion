@@ -1,14 +1,15 @@
 import { Router, type Request, type Response } from 'express'
-import { eq, and, gte, lt, desc, isNotNull } from 'drizzle-orm'
+import { eq, and, gte, lt, desc, isNotNull, sql } from 'drizzle-orm'
 import { teams, teamWeeklyMetrics, pullRequests, prOutcomes, repos } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
-import { startOfWeekUtc, addDays, lastNWeeks } from '@grassion/shared'
+import { startOfWeekUtc, addDays } from '@grassion/shared'
 
 export const metricsRouter = Router()
 
 metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
+  console.log('[metrics/summary] teamId from auth:', sess.teamId)
   const team = (await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
   if (!team) {
     res.status(404).json({ error: 'not_found' })
@@ -35,68 +36,85 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
 
 metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  const weeks = lastNWeeks(6)
-  const oldest = weeks[0]!
-  const [cacheRows, livePrs] = await Promise.all([
-    db
-      .select()
-      .from(teamWeeklyMetrics)
-      .where(and(eq(teamWeeklyMetrics.teamId, sess.teamId), gte(teamWeeklyMetrics.weekStart, oldest)))
-      .orderBy(teamWeeklyMetrics.weekStart),
-    db
-      .select({ mergedAt: pullRequests.mergedAt, aiSource: pullRequests.aiSource })
+  console.log('[metrics/weekly] teamId from auth:', sess.teamId)
+
+  try {
+    const twelveWeeksAgo = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000)
+
+    // Query directly from pull_requests using DATE_TRUNC for exact grouping
+    const liveRows = await db
+      .select({
+        weekStart: sql<string>`DATE_TRUNC('week', ${pullRequests.mergedAt})::date::text`,
+        totalPrs: sql<number>`COUNT(*)::int`,
+        aiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)::int`,
+      })
       .from(pullRequests)
       .where(
         and(
           eq(pullRequests.teamId, sess.teamId),
+          gte(pullRequests.mergedAt, twelveWeeksAgo),
           eq(pullRequests.state, 'merged'),
-          gte(pullRequests.mergedAt, oldest),
           isNotNull(pullRequests.mergedAt),
         ),
-      ),
-  ])
-  const byKey = new Map(cacheRows.map((r) => [r.weekStart.toISOString(), r]))
-  const out = weeks.map((w) => {
-    const cached = byKey.get(w.toISOString())
-    if (cached && (cached.totalPrs ?? 0) > 0) {
-      return {
-        weekStart: w.toISOString(),
-        totalPrs: cached.totalPrs ?? 0,
-        aiPrs: cached.aiPrs ?? 0,
-        humanPrs: cached.humanPrs ?? 0,
-        aiAvgMergeHours: cached.aiAvgMergeHours ?? null,
-        humanAvgMergeHours: cached.humanAvgMergeHours ?? null,
-        aiReworkRate: cached.aiReworkRate ?? null,
-        humanReworkRate: cached.humanReworkRate ?? null,
-        estimatedDollarSaved: cached.estimatedDollarSaved ?? 0,
-        estimatedDollarLost: cached.estimatedDollarLost ?? 0,
-        netDollar: (cached.estimatedDollarSaved ?? 0) - (cached.estimatedDollarLost ?? 0),
-        verdict: cached.verdict ?? 'insufficient_data',
-      }
+      )
+      .groupBy(sql`DATE_TRUNC('week', ${pullRequests.mergedAt})`)
+      .orderBy(sql`DATE_TRUNC('week', ${pullRequests.mergedAt}) ASC`)
+
+    console.log('[metrics/weekly] DB rows:', liveRows.length, JSON.stringify(liveRows))
+
+    // Build 12-week Monday-aligned grid matching frontend expectations
+    const now = new Date()
+    const dayOfWeek = now.getUTCDay()
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const thisMonday = new Date(now)
+    thisMonday.setUTCDate(now.getUTCDate() + daysToMonday)
+    thisMonday.setUTCHours(0, 0, 0, 0)
+
+    const byKey = new Map(liveRows.map((r) => [r.weekStart, r]))
+
+    const out: Array<{
+      weekStart: string
+      totalPrs: number
+      aiPrs: number
+      humanPrs: number
+      aiAvgMergeHours: null
+      humanAvgMergeHours: null
+      aiReworkRate: null
+      humanReworkRate: null
+      estimatedDollarSaved: number
+      estimatedDollarLost: number
+      netDollar: number
+      verdict: string
+    }> = []
+
+    for (let i = 11; i >= 0; i--) {
+      const weekDate = new Date(thisMonday)
+      weekDate.setUTCDate(thisMonday.getUTCDate() - i * 7)
+      const isoDate = weekDate.toISOString().slice(0, 10)
+      const row = byKey.get(isoDate)
+      const totalPrs = row?.totalPrs ?? 0
+      const aiPrs = row?.aiPrs ?? 0
+      out.push({
+        weekStart: weekDate.toISOString(),
+        totalPrs,
+        aiPrs,
+        humanPrs: totalPrs - aiPrs,
+        aiAvgMergeHours: null,
+        humanAvgMergeHours: null,
+        aiReworkRate: null,
+        humanReworkRate: null,
+        estimatedDollarSaved: 0,
+        estimatedDollarLost: 0,
+        netDollar: 0,
+        verdict: totalPrs < 5 ? 'insufficient_data' : aiPrs > 5 ? 'positive' : 'unclear',
+      })
     }
-    // No cache for this week — compute live from pull_requests
-    const weekEnd = addDays(w, 7)
-    const weekPrs = livePrs.filter(
-      (p) => p.mergedAt && p.mergedAt >= w && p.mergedAt < weekEnd,
-    )
-    const totalPrs = weekPrs.length
-    const aiPrs = weekPrs.filter((p) => !!p.aiSource).length
-    return {
-      weekStart: w.toISOString(),
-      totalPrs,
-      aiPrs,
-      humanPrs: totalPrs - aiPrs,
-      aiAvgMergeHours: null,
-      humanAvgMergeHours: null,
-      aiReworkRate: null,
-      humanReworkRate: null,
-      estimatedDollarSaved: 0,
-      estimatedDollarLost: 0,
-      netDollar: 0,
-      verdict: totalPrs < 5 ? 'insufficient_data' : aiPrs > 5 ? 'positive' : 'unclear',
-    }
-  })
-  res.json(out)
+
+    res.json(out)
+  } catch (err) {
+    console.error('[metrics/weekly]', err)
+    res.status(500).json({ error: 'internal_error' })
+  }
 })
 
 function toSummary(row: typeof teamWeeklyMetrics.$inferSelect, monthlySpend: number) {

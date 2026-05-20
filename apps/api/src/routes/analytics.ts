@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express'
-import { eq, and, gte, isNotNull, sql } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { pullRequests, users } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
@@ -11,96 +11,59 @@ const SEAT_COST_USD = 19
 analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
 
+  console.log('[seat-waste] teamId from auth:', sess.teamId)
+
   try {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-
-    // 1. All users registered to this team
-    const teamUsers = await db
-      .select()
-      .from(users)
-      .where(eq(users.teamId, sess.teamId))
-
-    if (teamUsers.length === 0) {
-      res.json({ totalSeats: 0, activeUsers: [], inactiveUsers: [], totalMonthlySavings: 0 })
-      return
-    }
-
-    // 2. Count AI PRs merged in the last 7 days, grouped by author_login
-    const aiPrRows = await db
+    // Single LEFT JOIN query: all team users with their AI PR count (merged last 7 days)
+    const rows = await db
       .select({
-        authorLogin: pullRequests.authorLogin,
-        count: sql<number>`count(*)::int`,
+        githubLogin: users.githubLogin,
+        avatarUrl: users.avatarUrl,
+        aiPrCount: sql<number>`COUNT(${pullRequests.id}) FILTER (
+          WHERE ${pullRequests.aiSource} IS NOT NULL
+          AND ${pullRequests.mergedAt} > NOW() - INTERVAL '7 days'
+        )::int`,
+        lastActivity: sql<string | null>`MAX(${pullRequests.openedAt})::text`,
       })
-      .from(pullRequests)
-      .where(
+      .from(users)
+      .leftJoin(
+        pullRequests,
         and(
-          eq(pullRequests.teamId, sess.teamId),
-          isNotNull(pullRequests.aiSource),
-          gte(pullRequests.mergedAt, sevenDaysAgo),
-          isNotNull(pullRequests.authorLogin),
+          eq(pullRequests.authorLogin, users.githubLogin),
+          eq(pullRequests.teamId, users.teamId),
         ),
       )
-      .groupBy(pullRequests.authorLogin)
+      .where(eq(users.teamId, sess.teamId))
+      .groupBy(users.githubLogin, users.avatarUrl)
 
-    // 3. Last PR date per author_login for lastActivity display
-    const lastPrRows = await db
-      .select({
-        authorLogin: pullRequests.authorLogin,
-        lastActivity: sql<string>`max(${pullRequests.openedAt})::text`,
+    console.log('[seat-waste] users returned:', rows.length)
+
+    const activeUsers = rows
+      .filter((r) => r.aiPrCount > 0)
+      .map((r) => ({
+        githubLogin: r.githubLogin,
+        avatarUrl: r.avatarUrl,
+        weeklyAiPrs: r.aiPrCount,
+        lastActivity: r.lastActivity,
+      }))
+      .sort((a, b) => b.weeklyAiPrs - a.weeklyAiPrs)
+
+    const inactiveUsers = rows
+      .filter((r) => r.aiPrCount === 0)
+      .map((r) => ({
+        githubLogin: r.githubLogin,
+        avatarUrl: r.avatarUrl,
+        lastActivity: r.lastActivity,
+        monthlyCost: SEAT_COST_USD,
+      }))
+      .sort((a, b) => {
+        const ta = a.lastActivity ? new Date(a.lastActivity).getTime() : 0
+        const tb = b.lastActivity ? new Date(b.lastActivity).getTime() : 0
+        return ta - tb
       })
-      .from(pullRequests)
-      .where(and(eq(pullRequests.teamId, sess.teamId), isNotNull(pullRequests.authorLogin)))
-      .groupBy(pullRequests.authorLogin)
-
-    const aiCountMap = new Map<string, number>(
-      aiPrRows.map((r) => [r.authorLogin!, r.count]),
-    )
-    const lastActivityMap = new Map<string, string>(
-      lastPrRows.map((r) => [r.authorLogin!, r.lastActivity]),
-    )
-
-    const activeUsers: Array<{
-      githubLogin: string
-      avatarUrl: string | null
-      weeklyAiPrs: number
-      lastActivity: string | null
-    }> = []
-    const inactiveUsers: Array<{
-      githubLogin: string
-      avatarUrl: string | null
-      lastActivity: string | null
-      monthlyCost: number
-    }> = []
-
-    for (const user of teamUsers) {
-      const weeklyAiPrs = aiCountMap.get(user.githubLogin) ?? 0
-      const lastActivity = lastActivityMap.get(user.githubLogin) ?? null
-      if (weeklyAiPrs > 0) {
-        activeUsers.push({
-          githubLogin: user.githubLogin,
-          avatarUrl: user.avatarUrl,
-          weeklyAiPrs,
-          lastActivity,
-        })
-      } else {
-        inactiveUsers.push({
-          githubLogin: user.githubLogin,
-          avatarUrl: user.avatarUrl,
-          lastActivity,
-          monthlyCost: SEAT_COST_USD,
-        })
-      }
-    }
-
-    activeUsers.sort((a, b) => b.weeklyAiPrs - a.weeklyAiPrs)
-    inactiveUsers.sort((a, b) => {
-      const ta = a.lastActivity ? new Date(a.lastActivity).getTime() : 0
-      const tb = b.lastActivity ? new Date(b.lastActivity).getTime() : 0
-      return ta - tb
-    })
 
     res.json({
-      totalSeats: teamUsers.length,
+      totalSeats: rows.length,
       activeUsers,
       inactiveUsers,
       totalMonthlySavings: inactiveUsers.length * SEAT_COST_USD,
