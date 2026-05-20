@@ -87,7 +87,7 @@ export const api = {
         body: JSON.stringify({ isActive }),
       }),
     connect: (repoUrl: string) =>
-      request<{ ok: true; repoName: string; prCount: number; alreadyConnected?: boolean }>('/api/repos/connect', {
+      request<{ ok: true; repoName: string; prsSynced: number; alreadyConnected?: boolean }>('/api/repos/connect', {
         method: 'POST',
         body: JSON.stringify({ repoUrl }),
       }),

@@ -158,6 +158,7 @@ export function DashboardPage() {
   }
 
   const data = summary.data!
+  console.log('dashboard data:', summary.data, seatWaste.data, weekly.data)
   const sw = seatWaste.data
   const monthlyWaste = sw?.totalMonthlySavings ?? 0
   const chartData = buildChartData(weekly.data ?? [])

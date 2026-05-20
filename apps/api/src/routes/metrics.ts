@@ -1,16 +1,22 @@
 import { Router, type Request, type Response } from 'express'
 import { eq, and, gte, lt, desc, isNotNull, sql } from 'drizzle-orm'
-import { teams, teamWeeklyMetrics, pullRequests, prOutcomes, repos } from '@grassion/db'
+import { teams, teamWeeklyMetrics, pullRequests, prOutcomes, repos, users } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
 import { startOfWeekUtc, addDays } from '@grassion/shared'
+
+async function freshTeamId(githubLogin: string, fallback: string): Promise<string> {
+  const row = await db.select({ teamId: users.teamId }).from(users).where(eq(users.githubLogin, githubLogin)).limit(1)
+  return row[0]?.teamId ?? fallback
+}
 
 export const metricsRouter = Router()
 
 metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  console.log('[metrics/summary] teamId from auth:', sess.teamId)
-  const team = (await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  console.log('[metrics/summary] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
+  const team = (await db.select().from(teams).where(eq(teams.id, teamId)).limit(1))[0]
   if (!team) {
     res.status(404).json({ error: 'not_found' })
     return
@@ -20,7 +26,7 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
     await db
       .select()
       .from(teamWeeklyMetrics)
-      .where(and(eq(teamWeeklyMetrics.teamId, sess.teamId), eq(teamWeeklyMetrics.weekStart, weekStart)))
+      .where(and(eq(teamWeeklyMetrics.teamId, teamId), eq(teamWeeklyMetrics.weekStart, weekStart)))
       .limit(1)
   )[0]
 
@@ -30,13 +36,14 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
   }
 
   // Fall back to live computation if cache empty.
-  const live = await liveSummary(sess.teamId, weekStart)
+  const live = await liveSummary(teamId, weekStart)
   res.json({ ...live, monthlySpend: team.monthlyAiSpendUsd ?? 0 })
 })
 
 metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  console.log('[metrics/weekly] teamId from auth:', sess.teamId)
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  console.log('[metrics/weekly] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
 
   try {
     const twelveWeeksAgo = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000)
@@ -51,7 +58,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
       .from(pullRequests)
       .where(
         and(
-          eq(pullRequests.teamId, sess.teamId),
+          eq(pullRequests.teamId, teamId),
           gte(pullRequests.mergedAt, twelveWeeksAgo),
           eq(pullRequests.state, 'merged'),
           isNotNull(pullRequests.mergedAt),

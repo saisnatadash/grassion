@@ -470,7 +470,7 @@ function ConnectRepoForm({ onConnected }: { onConnected: () => void }) {
         type: 'success',
         msg: data.alreadyConnected
           ? `${data.repoName} is already connected.`
-          : `${data.repoName} connected! Grassion will start tracking PRs.`,
+          : `✅ Connected! Synced ${data.prsSynced} PRs from ${data.repoName}`,
       })
       onConnected()
     },

@@ -8,10 +8,15 @@ export const analyticsRouter = Router()
 
 const SEAT_COST_USD = 19
 
+async function freshTeamId(githubLogin: string, fallback: string): Promise<string> {
+  const row = await db.select({ teamId: users.teamId }).from(users).where(eq(users.githubLogin, githubLogin)).limit(1)
+  return row[0]?.teamId ?? fallback
+}
+
 analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-
-  console.log('[seat-waste] teamId from auth:', sess.teamId)
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  console.log('[seat-waste] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
 
   try {
     // Single LEFT JOIN query: all team users with their AI PR count (merged last 7 days)
@@ -33,7 +38,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
           eq(pullRequests.teamId, users.teamId),
         ),
       )
-      .where(eq(users.teamId, sess.teamId))
+      .where(eq(users.teamId, teamId))
       .groupBy(users.githubLogin, users.avatarUrl)
 
     console.log('[seat-waste] users returned:', rows.length)
