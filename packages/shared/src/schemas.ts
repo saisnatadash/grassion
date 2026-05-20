@@ -35,7 +35,7 @@ export const repoToggleSchema = z.object({
 export const contactSchema = z.object({
   name: z.string().min(1).max(120),
   email: z.string().email().max(254),
-  topic: z.enum(['sales', 'support', 'bug', 'other']).optional().default('other'),
+  topic: z.enum(['sales', 'support', 'collaborate', 'bug', 'other']).optional().default('other'),
   message: z.string().min(1).max(5000),
   // Honeypot — must be empty. Submissions from bots usually fill every field.
   website: z.string().max(0).optional(),

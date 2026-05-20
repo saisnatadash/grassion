@@ -18,6 +18,12 @@ export function buildApp() {
   app.set('trust proxy', 1)
   app.use(pinoHttp({ logger }))
   app.use(helmet({ crossOriginResourcePolicy: false }))
+
+  // Public contact endpoint — no cookies needed, allow any origin so the marketing
+  // site can POST regardless of whether MARKETING_URL is configured in env.
+  app.options('/api/contact', cors())
+  app.use('/api/contact', cors())
+
   app.use(
     cors({
       origin: [e.APP_URL, ...(e.MARKETING_URL ? [e.MARKETING_URL] : [])],
