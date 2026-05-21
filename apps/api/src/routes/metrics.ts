@@ -36,7 +36,12 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
   }
 
   // Fall back to live computation if cache empty.
-  const live = await liveSummary(teamId, weekStart)
+  const live = await liveSummary(
+    teamId,
+    weekStart,
+    team.avgDevHourlyRateUsd ?? 75,
+    team.monthlyAiSpendUsd ?? 30,
+  )
   res.json({ ...live, monthlySpend: team.monthlyAiSpendUsd ?? 0 })
 })
 
@@ -47,6 +52,16 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
 
   try {
     const twelveWeeksAgo = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000)
+
+    const teamRow = (
+      await db
+        .select({ avgDevHourlyRateUsd: teams.avgDevHourlyRateUsd, monthlyAiSpendUsd: teams.monthlyAiSpendUsd })
+        .from(teams)
+        .where(eq(teams.id, teamId))
+        .limit(1)
+    )[0]
+    const hourlyRate = teamRow?.avgDevHourlyRateUsd ?? 75
+    const monthlySpend = teamRow?.monthlyAiSpendUsd ?? 30
 
     // Query directly from pull_requests using DATE_TRUNC for exact grouping
     const liveRows = await db
@@ -101,6 +116,16 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
       const row = byKey.get(isoDate)
       const totalPrs = row?.totalPrs ?? 0
       const aiPrs = row?.aiPrs ?? 0
+      const estimatedDollarSaved = aiPrs * hourlyRate * 2
+      const netDollar = estimatedDollarSaved - monthlySpend
+      const verdict =
+        totalPrs < 5
+          ? 'insufficient_data'
+          : netDollar > 0
+            ? 'net_positive'
+            : netDollar < 0
+              ? 'net_negative'
+              : 'unclear'
       out.push({
         weekStart: weekDate.toISOString(),
         totalPrs,
@@ -110,10 +135,10 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
         humanAvgMergeHours: null,
         aiReworkRate: null,
         humanReworkRate: null,
-        estimatedDollarSaved: 0,
-        estimatedDollarLost: 0,
-        netDollar: 0,
-        verdict: totalPrs < 5 ? 'insufficient_data' : aiPrs > 5 ? 'positive' : 'unclear',
+        estimatedDollarSaved,
+        estimatedDollarLost: monthlySpend,
+        netDollar,
+        verdict,
       })
     }
 
@@ -149,7 +174,12 @@ function toSummary(row: typeof teamWeeklyMetrics.$inferSelect, monthlySpend: num
   }
 }
 
-async function liveSummary(teamId: string, weekStart: Date) {
+async function liveSummary(
+  teamId: string,
+  weekStart: Date,
+  avgDevHourlyRateUsd: number,
+  monthlyAiSpendUsd: number,
+) {
   const weekEnd = addDays(weekStart, 7)
   const merged = await db
     .select()
@@ -165,6 +195,16 @@ async function liveSummary(teamId: string, weekStart: Date) {
     )
   const totalPrs = merged.length
   const aiPrs = merged.filter((p) => !!p.aiSource).length
+  const estimatedDollarSaved = aiPrs * avgDevHourlyRateUsd * 2
+  const netDollar = estimatedDollarSaved - monthlyAiSpendUsd
+  const verdict =
+    totalPrs < 5
+      ? 'insufficient_data'
+      : netDollar > 0
+        ? 'net_positive'
+        : netDollar < 0
+          ? 'net_negative'
+          : 'unclear'
   return {
     weekStart: weekStart.toISOString(),
     totalPrs,
@@ -172,10 +212,10 @@ async function liveSummary(teamId: string, weekStart: Date) {
     humanPrs: totalPrs - aiPrs,
     speedDeltaPercent: 0,
     reworkMultiplier: 1,
-    estimatedDollarSaved: 0,
-    estimatedDollarLost: 0,
-    netDollar: 0,
-    verdict: totalPrs < 5 ? 'insufficient_data' : aiPrs > 5 ? 'positive' : 'unclear',
+    estimatedDollarSaved,
+    estimatedDollarLost: monthlyAiSpendUsd,
+    netDollar,
+    verdict,
   }
 }
 

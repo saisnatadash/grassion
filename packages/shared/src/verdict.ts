@@ -3,13 +3,13 @@ import type { Verdict } from './types.js'
 export function verdictLabel(v: Verdict): string {
   switch (v) {
     case 'net_positive':
-      return 'Net positive'
+      return 'ROI Positive'
     case 'net_negative':
-      return 'Net negative'
+      return 'ROI Negative'
     case 'unclear':
-      return 'Unclear'
+      return 'Breaking Even'
     case 'insufficient_data':
-      return 'Not enough data yet'
+      return 'Awaiting data'
   }
 }
 
