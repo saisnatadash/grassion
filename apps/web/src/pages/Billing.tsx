@@ -102,6 +102,9 @@ export function BillingPage() {
   const sub = useQuery({ queryKey: ['subscription'], queryFn: api.billing.subscription })
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const members = useQuery({ queryKey: ['members'], queryFn: api.team.members })
+  const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary })
+  const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
+  const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const qc = useQueryClient()
   const memberCount = members.data?.length ?? 1
   const [seatCount, setSeatCount] = useState<number>(Math.max(1, memberCount))
@@ -245,6 +248,18 @@ export function BillingPage() {
           onCheckout={startCheckout}
           isTrial={isTrial}
         />
+      )}
+
+      {/* ── ROI SAVINGS ── */}
+      <RoiSavings
+        summaryData={summary.data}
+        seatWasteData={seatWaste.data}
+        monthlySpend={team.data?.monthlyAiSpendUsd ?? 0}
+      />
+
+      {/* ── SUBSCRIPTION RECEIPT ── */}
+      {(isPro || isLive) && sub.data && (
+        <SubscriptionReceipt subData={sub.data} plan={plan ?? 'starter'} />
       )}
 
       {/* ── PLAN COMPARISON ── */}
@@ -509,6 +524,117 @@ function PlanComparison({ plan }: { plan: string }) {
             </div>
           ))}
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── ROI SAVINGS ── */
+function RoiSavings({
+  summaryData,
+  seatWasteData,
+  monthlySpend,
+}: {
+  summaryData: import('@grassion/shared').DashboardSummary | undefined
+  seatWasteData: import('../lib/api.js').SeatWasteResponse | undefined
+  monthlySpend: number
+}) {
+  const saved = summaryData?.estimatedDollarSaved ?? 0
+  const lost = summaryData?.estimatedDollarLost ?? 0
+  const net = summaryData?.netDollar ?? 0
+  const inactiveSeats = seatWasteData?.inactiveUsers.length ?? 0
+  const seatSavingsPotential = seatWasteData?.totalMonthlySavings ?? 0
+  const aiPrs = summaryData?.totalPrs ?? 0
+
+  const rows: { label: string; value: string; color?: string }[] = [
+    { label: 'Monthly AI tool spend', value: monthlySpend > 0 ? `$${monthlySpend.toFixed(0)}/mo` : '—' },
+    { label: 'Estimated value delivered (this week)', value: saved > 0 ? `+$${saved.toFixed(0)}` : '—', color: saved > 0 ? 'text-green-400' : undefined },
+    { label: 'Estimated rework cost (this week)', value: lost > 0 ? `-$${lost.toFixed(0)}` : '—', color: lost > 0 ? 'text-red-400' : undefined },
+    { label: 'Net ROI (this week)', value: aiPrs > 0 ? `${net >= 0 ? '+' : ''}$${net.toFixed(0)}` : '—', color: net >= 0 ? 'text-green-400' : 'text-red-400' },
+    { label: `Unused AI seats (${inactiveSeats} devs)`, value: seatSavingsPotential > 0 ? `$${seatSavingsPotential}/mo recoverable` : '—', color: seatSavingsPotential > 0 ? 'text-yellow-400' : undefined },
+  ]
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>ROI &amp; Savings</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-[#555555] mb-4">
+          Savings are estimated based on your hourly rate setting and AI PR merge time vs baseline.
+          Set your monthly spend and hourly rate in{' '}
+          <a href="/settings" className="underline hover:text-white transition-colors">Settings → ROI calibration</a>{' '}
+          for accurate numbers.
+        </p>
+        <div className="divide-y divide-[#1a1a1a]">
+          {rows.map(({ label, value, color }) => (
+            <div key={label} className="flex items-center justify-between py-3">
+              <span className="text-sm text-[#888888]">{label}</span>
+              <span className={cn('text-sm font-medium tabular-nums', color ?? 'text-white')}>{value}</span>
+            </div>
+          ))}
+        </div>
+        {aiPrs < 5 && (
+          <p className="mt-4 text-xs text-[#555555] rounded-lg bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2">
+            Merge at least 5 AI-assisted PRs this week to unlock ROI calculations.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── SUBSCRIPTION RECEIPT ── */
+function SubscriptionReceipt({
+  subData,
+  plan,
+}: {
+  subData: import('@grassion/shared').SubscriptionDto
+  plan: string
+}) {
+  const PLAN_PRICE: Record<string, number> = { starter: 19, pro: 19, admin: 19, team: 15, business: 499 }
+  const pricePerSeat = PLAN_PRICE[plan] ?? 19
+  const seats = subData.seatCount > 0 ? subData.seatCount : 1
+  const isFlat = plan === 'business'
+  const monthly = isFlat ? pricePerSeat : seats * pricePerSeat
+
+  const planLabel = plan === 'business' ? 'Business' : plan === 'team' ? 'Team' : 'Starter'
+  const rows = [
+    { label: 'Plan', value: planLabel },
+    { label: isFlat ? 'Flat monthly rate' : `Seats (${seats} × $${pricePerSeat})`, value: `$${monthly}/mo` },
+    {
+      label: 'Next billing date',
+      value: subData.currentPeriodEnd
+        ? new Date(subData.currentPeriodEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        : '—',
+    },
+    { label: 'Payment method', value: 'Razorpay · UPI / Card' },
+    { label: 'Billing currency', value: 'USD' },
+  ]
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Subscription details</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="divide-y divide-[#1a1a1a]">
+          {rows.map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between py-3">
+              <span className="text-sm text-[#888888]">{label}</span>
+              <span className="text-sm font-medium text-white tabular-nums">{value}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
+          <span className="text-sm font-semibold text-white">Total charged per month</span>
+          <span className="text-lg font-bold text-white tabular-nums">${monthly}</span>
+        </div>
+        <p className="mt-3 text-xs text-[#555555]">
+          To update seat count, contact{' '}
+          <a href="mailto:info@grassion.com" className="underline hover:text-white transition-colors">info@grassion.com</a>{' '}
+          or use the Cancel button above.
+        </p>
       </CardContent>
     </Card>
   )
