@@ -1,10 +1,11 @@
 import { Router, type Request, type Response } from 'express'
 import { eq, and } from 'drizzle-orm'
-import { repos, pullRequests } from '@grassion/db'
+import { repos, pullRequests, teams } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth, requireRole } from '../auth.js'
 import { repoToggleSchema } from '@grassion/shared'
 import { logger } from '../logger.js'
+import { getInstallationOctokit } from '../github.js'
 
 export const reposRouter = Router()
 
@@ -125,17 +126,40 @@ async function syncHistoricalPrs(
   owner: string,
   repoName: string,
 ): Promise<number> {
+  // Build authenticated headers when a GitHub App installation is available.
+  // Without auth: 60 req/hr limit; 100 PRs × 2 calls = 200 requests → needs auth.
+  const teamRow = (
+    await db
+      .select({ githubInstallationId: teams.githubInstallationId })
+      .from(teams)
+      .where(eq(teams.id, teamId))
+      .limit(1)
+  )[0]
+
+  const ghHeaders: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'grassion-app',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+
+  const installationId = teamRow?.githubInstallationId ?? null
+  if (installationId) {
+    try {
+      const octokit = await getInstallationOctokit(installationId)
+      const auth = await (octokit as unknown as { auth: (o: { type: string }) => Promise<{ token: string }> })
+        .auth({ type: 'installation' })
+      ghHeaders['Authorization'] = `Bearer ${auth.token}`
+    } catch (err) {
+      logger.warn({ err }, 'installation token unavailable, falling back to unauthenticated sync')
+    }
+  }
+
+  // Fetch last 100 closed PRs
   let ghPrs: GhPr[] = []
   try {
     const res = await fetch(
       `https://api.github.com/repos/${owner}/${repoName}/pulls?state=closed&per_page=100&sort=updated`,
-      {
-        headers: {
-          Accept: 'application/vnd.github+json',
-          'User-Agent': 'grassion-app',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-      },
+      { headers: ghHeaders },
     )
     if (!res.ok) {
       logger.warn({ status: res.status, owner, repoName }, 'github pulls fetch failed during sync')
@@ -150,27 +174,49 @@ async function syncHistoricalPrs(
   const merged = ghPrs.filter((p) => !!p.merged_at)
   if (merged.length === 0) return 0
 
-  const rows = merged.map((pr) => {
-    const labels = (pr.labels ?? []).map((l) => l.name)
-    const aiSource = detectAiSource(labels, pr.title, pr.body)
-    return {
+  // Deep detection for each PR (commits + files in parallel per PR)
+  const rows: Array<{
+    teamId: string
+    repoId: string
+    githubPrId: number
+    githubPrNumber: number
+    title: string
+    state: 'merged'
+    authorLogin: string | null
+    authorGithubId: number | null
+    openedAt: Date
+    mergedAt: Date
+    closedAt: Date | null
+    additions: number
+    deletions: number
+    changedFiles: number
+    aiSource: string | null
+    aiDetectionMethod: string | null
+    aiConfidence: number
+  }> = []
+
+  for (const pr of merged) {
+    const d = await detectAiSourceDeep(owner, repoName, pr, ghHeaders)
+    rows.push({
       teamId,
       repoId,
       githubPrId: pr.id,
       githubPrNumber: pr.number,
       title: pr.title,
-      state: 'merged' as const,
+      state: 'merged',
       authorLogin: pr.user?.login ?? null,
+      authorGithubId: pr.user?.id ?? null,
       openedAt: new Date(pr.created_at),
       mergedAt: new Date(pr.merged_at!),
       closedAt: pr.closed_at ? new Date(pr.closed_at) : null,
-      additions: 0,
-      deletions: 0,
-      changedFiles: 0,
-      aiSource,
-      aiDetectionMethod: aiSource ? 'body_regex' : null,
-    }
-  })
+      additions: d.additions,
+      deletions: d.deletions,
+      changedFiles: d.changedFiles,
+      aiSource: d.aiSource,
+      aiDetectionMethod: d.aiDetectionMethod,
+      aiConfidence: d.aiConfidence,
+    })
+  }
 
   try {
     await db.insert(pullRequests).values(rows).onConflictDoNothing()
@@ -179,8 +225,14 @@ async function syncHistoricalPrs(
     return 0
   }
 
+  logger.info(
+    { teamId, repoName, total: rows.length, aiDetected: rows.filter((r) => r.aiSource).length },
+    'historical PR sync complete',
+  )
   return rows.length
 }
+
+/* ── GitHub API types ─────────────────────────────────── */
 
 interface GhPr {
   id: number
@@ -191,22 +243,208 @@ interface GhPr {
   merged_at: string | null
   closed_at: string | null
   created_at: string
-  user: { login: string } | null
+  commits?: number
+  user: { login: string; id: number } | null
   labels: { name: string }[]
 }
 
-function detectAiSource(labels: string[], title: string, body: string | null): string | null {
-  const lowerLabels = labels.map((l) => l.toLowerCase())
-  if (lowerLabels.some((l) => l.includes('copilot'))) return 'copilot'
-  if (lowerLabels.some((l) => l.includes('cursor'))) return 'cursor'
-  if (lowerLabels.some((l) => l.includes('claude'))) return 'claude-code'
-  if (lowerLabels.some((l) => l.includes('codeium'))) return 'codeium'
+interface GhCommit {
+  commit: { message: string }
+}
+
+interface GhFile {
+  filename: string
+  additions: number
+  deletions: number
+  changes: number
+}
+
+interface DetectionResult {
+  aiSource: string | null
+  aiDetectionMethod: string | null
+  aiConfidence: number
+  additions: number
+  deletions: number
+  changedFiles: number
+}
+
+/* ── Fetch helper ─────────────────────────────────────── */
+
+async function fetchGhJson<T>(url: string, headers: Record<string, string>): Promise<T | null> {
+  try {
+    const res = await fetch(url, { headers })
+    if (!res.ok) return null
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
+}
+
+/* ── Main detection orchestrator ──────────────────────── */
+
+async function detectAiSourceDeep(
+  owner: string,
+  repoName: string,
+  pr: GhPr,
+  ghHeaders: Record<string, string>,
+): Promise<DetectionResult> {
+  // 1. Labels — explicit signal, no extra API call needed
+  const labelResult = detectFromLabels(pr.labels ?? [])
+  if (labelResult) {
+    return { ...labelResult, additions: 0, deletions: 0, changedFiles: 0 }
+  }
+
+  // 2 + 3. Fetch commits and files in parallel
+  const [commitsData, filesData] = await Promise.allSettled([
+    fetchGhJson<GhCommit[]>(
+      `https://api.github.com/repos/${owner}/${repoName}/pulls/${pr.number}/commits?per_page=100`,
+      ghHeaders,
+    ),
+    fetchGhJson<GhFile[]>(
+      `https://api.github.com/repos/${owner}/${repoName}/pulls/${pr.number}/files?per_page=100`,
+      ghHeaders,
+    ),
+  ])
+
+  let additions = 0
+  let deletions = 0
+  let changedFiles = 0
+
+  // 2. Commit message analysis (strongest after labels)
+  if (commitsData.status === 'fulfilled' && commitsData.value) {
+    const commitResult = analyzeCommits(commitsData.value)
+    if (commitResult) {
+      // Still collect file stats even if we already have a commit signal
+      if (filesData.status === 'fulfilled' && filesData.value) {
+        const files = filesData.value
+        additions = files.reduce((s, f) => s + (f.additions ?? 0), 0)
+        deletions = files.reduce((s, f) => s + (f.deletions ?? 0), 0)
+        changedFiles = files.length
+      }
+      return { ...commitResult, additions, deletions, changedFiles }
+    }
+  }
+
+  // 3a. File change pattern analysis + collect actual file stats
+  if (filesData.status === 'fulfilled' && filesData.value) {
+    const files = filesData.value
+    additions = files.reduce((s, f) => s + (f.additions ?? 0), 0)
+    deletions = files.reduce((s, f) => s + (f.deletions ?? 0), 0)
+    changedFiles = files.length
+    const fileResult = analyzeFiles(files)
+    if (fileResult) return { ...fileResult, additions, deletions, changedFiles }
+  }
+
+  // 3b. PR metadata signals (uses commit count from PR list response)
+  const metaResult = analyzeMetadata(pr, additions)
+  if (metaResult) return { ...metaResult, additions, deletions, changedFiles }
+
+  // 4. Body / title keyword fallback
+  const bodyResult = detectFromBody(pr.title, pr.body)
+  if (bodyResult) return { ...bodyResult, additions, deletions, changedFiles }
+
+  return { aiSource: null, aiDetectionMethod: null, aiConfidence: 0, additions, deletions, changedFiles }
+}
+
+/* ── Signal detectors (in priority order) ────────────── */
+
+type PartialResult = { aiSource: string; aiDetectionMethod: string; aiConfidence: number }
+
+function detectFromLabels(labels: { name: string }[]): PartialResult | null {
+  const lower = labels.map((l) => l.name.toLowerCase())
+  if (lower.some((l) => l.includes('copilot')))  return { aiSource: 'copilot',     aiDetectionMethod: 'label', aiConfidence: 0.95 }
+  if (lower.some((l) => l.includes('cursor')))   return { aiSource: 'cursor',      aiDetectionMethod: 'label', aiConfidence: 0.95 }
+  if (lower.some((l) => l.includes('claude')))   return { aiSource: 'claude-code', aiDetectionMethod: 'label', aiConfidence: 0.95 }
+  if (lower.some((l) => l.includes('codeium')))  return { aiSource: 'codeium',     aiDetectionMethod: 'label', aiConfidence: 0.95 }
+  if (lower.some((l) => l.includes('windsurf'))) return { aiSource: 'windsurf',    aiDetectionMethod: 'label', aiConfidence: 0.95 }
+  if (lower.some((l) => l.includes('tabnine')))  return { aiSource: 'tabnine',     aiDetectionMethod: 'label', aiConfidence: 0.95 }
+  return null
+}
+
+function analyzeCommits(commits: GhCommit[]): PartialResult | null {
+  for (const c of commits) {
+    const lower = c.commit.message.toLowerCase()
+    // Co-authored-by trailer is the strongest commit signal — the tool signed it explicitly
+    if (lower.includes('co-authored-by: github copilot')) return { aiSource: 'copilot',     aiDetectionMethod: 'commit_coauthor', aiConfidence: 1.0 }
+    if (lower.includes('co-authored-by: cursor'))         return { aiSource: 'cursor',      aiDetectionMethod: 'commit_coauthor', aiConfidence: 1.0 }
+    if (lower.includes('co-authored-by: claude'))         return { aiSource: 'claude-code', aiDetectionMethod: 'commit_coauthor', aiConfidence: 1.0 }
+    if (lower.includes('co-authored-by: codeium'))        return { aiSource: 'codeium',     aiDetectionMethod: 'commit_coauthor', aiConfidence: 1.0 }
+    // Robot emoji is a common AI-generation marker
+    if (c.commit.message.includes('🤖'))                  return { aiSource: 'ai-assisted', aiDetectionMethod: 'commit_emoji',    aiConfidence: 0.80 }
+    // Keyword matches — weaker but reliable
+    if (lower.includes('claude'))   return { aiSource: 'claude-code', aiDetectionMethod: 'commit_keyword', aiConfidence: 0.85 }
+    if (lower.includes('codeium'))  return { aiSource: 'codeium',     aiDetectionMethod: 'commit_keyword', aiConfidence: 0.85 }
+    if (lower.includes('copilot'))  return { aiSource: 'copilot',     aiDetectionMethod: 'commit_keyword', aiConfidence: 0.85 }
+    if (lower.includes('cursor'))   return { aiSource: 'cursor',      aiDetectionMethod: 'commit_keyword', aiConfidence: 0.85 }
+    if (lower.includes('tabnine'))  return { aiSource: 'tabnine',     aiDetectionMethod: 'commit_keyword', aiConfidence: 0.85 }
+    if (lower.includes('windsurf')) return { aiSource: 'windsurf',    aiDetectionMethod: 'commit_keyword', aiConfidence: 0.85 }
+  }
+  return null
+}
+
+function analyzeFiles(files: GhFile[]): PartialResult | null {
+  // Single file with 200+ pure additions and zero deletions → bulk generation
+  if (files.some((f) => f.additions > 200 && f.deletions === 0)) {
+    return { aiSource: 'ai-assisted', aiDetectionMethod: 'file_pattern', aiConfidence: 0.75 }
+  }
+  // Average changes per file > 50 across the whole PR → high-volume AI output
+  const totalChanges = files.reduce((s, f) => s + f.changes, 0)
+  if (files.length > 0 && totalChanges / files.length > 50) {
+    return { aiSource: 'ai-assisted', aiDetectionMethod: 'file_ratio', aiConfidence: 0.65 }
+  }
+  return null
+}
+
+function analyzeMetadata(pr: GhPr, additions: number): PartialResult | null {
+  if (pr.merged_at) {
+    const minutesDelta =
+      (new Date(pr.merged_at).getTime() - new Date(pr.created_at).getTime()) / 60_000
+    // Merged within 30 min of opening — uncommon for human-written + reviewed code
+    if (minutesDelta >= 0 && minutesDelta <= 30) {
+      return { aiSource: 'ai-assisted', aiDetectionMethod: 'time_pattern', aiConfidence: 0.65 }
+    }
+  }
+  // 500+ additions but only 1–2 commits → bulk generation in a single pass
+  if (additions >= 500 && (pr.commits ?? 999) <= 2) {
+    return { aiSource: 'ai-assisted', aiDetectionMethod: 'bulk_generation', aiConfidence: 0.70 }
+  }
+  return null
+}
+
+function detectFromBody(title: string, body: string | null): PartialResult | null {
+  // Ordered: longer/more specific phrases first to avoid partial matches overriding them
+  const matchers: Array<[string, string]> = [
+    ['co-authored-by: github copilot', 'copilot'],
+    ['co-authored-by: cursor',         'cursor'],
+    ['co-authored-by: claude',         'claude-code'],
+    ['co-authored-by: codeium',        'codeium'],
+    ['github copilot',                 'copilot'],
+    ['ai generated',                   'ai-assisted'],
+    ['generated by ai',                'ai-assisted'],
+    ['generated by',                   'ai-assisted'],
+    ['copilot',                        'copilot'],
+    ['claude code',                    'claude-code'],
+    ['cursor ai',                      'cursor'],
+    ['claude',                         'claude-code'],
+    ['cursor',                         'cursor'],
+    ['codeium',                        'codeium'],
+    ['tabnine',                        'tabnine'],
+    ['windsurf',                       'windsurf'],
+  ]
 
   const lowerBody = (body ?? '').toLowerCase()
-  if (lowerBody.includes('co-authored-by: github copilot')) return 'copilot'
-  if (lowerBody.includes('cursor')) return 'cursor'
+  for (const [pattern, source] of matchers) {
+    if (lowerBody.includes(pattern)) {
+      return { aiSource: source, aiDetectionMethod: 'body_keyword', aiConfidence: 0.60 }
+    }
+  }
 
-  if (/^(feat|fix|add)[\s:(]/i.test(title)) return 'copilot'
+  const lowerTitle = title.toLowerCase()
+  for (const [pattern, source] of matchers) {
+    if (lowerTitle.includes(pattern)) {
+      return { aiSource: source, aiDetectionMethod: 'title_keyword', aiConfidence: 0.50 }
+    }
+  }
 
   return null
 }
