@@ -249,6 +249,25 @@ export const outcomeCheckQueue = pgTable(
   }),
 )
 
+// ============ SAVINGS EVENTS ============
+// Logged once per ~6h when inactive seats are detected; powers the Savings Unlocked dashboard card.
+export const savingsEvents = pgTable(
+  'savings_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    inactiveCount: integer('inactive_count').notNull(),
+    monthlyWasteUsd: real('monthly_waste_usd').notNull(),
+    detectedAt: timestamp('detected_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    teamIdx: index('savings_events_team_idx').on(t.teamId),
+    teamDateIdx: index('savings_events_team_date_idx').on(t.teamId, t.detectedAt),
+  }),
+)
+
 // ============ CONTACT SUBMISSIONS ============
 export const contactSubmissions = pgTable('contact_submissions', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -315,3 +334,5 @@ export type LlmUsageLogRow = typeof llmUsageLog.$inferSelect
 export type NewLlmUsageLogRow = typeof llmUsageLog.$inferInsert
 export type ContactSubmission = typeof contactSubmissions.$inferSelect
 export type NewContactSubmission = typeof contactSubmissions.$inferInsert
+export type SavingsEvent = typeof savingsEvents.$inferSelect
+export type NewSavingsEvent = typeof savingsEvents.$inferInsert

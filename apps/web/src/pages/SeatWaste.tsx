@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { UserX, Users, TrendingDown, AlertCircle, Download, Lock } from 'lucide-react'
+import { UserX, Users, TrendingDown, AlertCircle, Download, Lock, ExternalLink, Copy, Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api, type SeatWasteResponse } from '../lib/api.js'
 import { formatUsd, cn } from '../lib/utils.js'
@@ -261,14 +261,11 @@ function RecommendedActions({ inactiveUsers }: { inactiveUsers: InactiveUser[] }
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <div className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-red-500" />
           <CardTitle>Recommended actions</CardTitle>
         </div>
-        <Button variant="secondary" size="sm" onClick={copyUsernames}>
-          {copied ? 'Copied!' : 'Copy usernames'}
-        </Button>
       </CardHeader>
       <CardContent>
         <ul className="divide-y divide-[#1a1a1a]">
@@ -297,9 +294,30 @@ function RecommendedActions({ inactiveUsers }: { inactiveUsers: InactiveUser[] }
             </li>
           ))}
         </ul>
-        <div className="mt-4 rounded-lg border border-[#222] bg-[#0a0a0a] px-4 py-3 text-xs text-[#888888]">
-          Reach out to these developers to re-onboard them on your AI coding tools, or consider
-          removing their seats to reclaim the budget.
+
+        {/* Action strip */}
+        <div className="mt-5 rounded-xl border border-[#222] bg-[#0a0a0a] px-5 py-4 space-y-3">
+          <p className="text-sm text-[#cccccc] leading-relaxed">
+            Paste these usernames in{' '}
+            <span className="text-white font-medium">GitHub → Settings → Copilot → Manage seats</span>{' '}
+            to remove inactive seats and stop the waste.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={copyUsernames} className="flex items-center gap-1.5">
+              {copied
+                ? <><Check className="h-3.5 w-3.5 text-green-400" /> Copied!</>
+                : <><Copy className="h-3.5 w-3.5" /> Copy Usernames</>}
+            </Button>
+            <a
+              href="https://github.com/organizations/settings/copilot/seat_management"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#333] bg-[#111] px-3 py-1.5 text-xs font-medium text-[#888888] hover:text-white hover:border-[#555] transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open GitHub Copilot Settings
+            </a>
+          </div>
         </div>
       </CardContent>
     </Card>

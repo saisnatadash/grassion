@@ -63,6 +63,12 @@ export interface SeatWasteResponse {
   totalMonthlySavings: number
 }
 
+export interface SavingsHistoryResponse {
+  totalWasteIdentified: number
+  thisMonthWaste: number
+  monthlyHistory: Array<{ month: string; wasteUsd: number }>
+}
+
 export const api = {
   me: () => request<MeResponse>('/auth/me'),
   logout: async () => {
@@ -109,6 +115,7 @@ export const api = {
 
   analytics: {
     seatWaste: () => request<SeatWasteResponse>('/api/analytics/seat-waste'),
+    savingsHistory: () => request<SavingsHistoryResponse>('/api/analytics/savings-history'),
   },
 
   prs: {

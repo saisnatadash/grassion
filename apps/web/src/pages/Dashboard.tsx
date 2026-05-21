@@ -6,12 +6,15 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
+  Cell,
 } from 'recharts'
-import { api } from '../lib/api.js'
+import { api, type SavingsHistoryResponse } from '../lib/api.js'
 import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -116,6 +119,7 @@ export function DashboardPage() {
   const weekly = useQuery({ queryKey: ['metrics', 'weekly'], queryFn: api.metrics.weekly })
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
+  const savingsHistory = useQuery({ queryKey: ['analytics', 'savings-history'], queryFn: api.analytics.savingsHistory })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
@@ -129,6 +133,7 @@ export function DashboardPage() {
       qc.invalidateQueries({ queryKey: ['analytics'] }),
       qc.invalidateQueries({ queryKey: ['team'] }),
       qc.invalidateQueries({ queryKey: ['me'] }),
+      qc.invalidateQueries({ queryKey: ['analytics', 'savings-history'] }),
     ])
     setTimeout(() => setRefreshing(false), 800)
   }
@@ -351,6 +356,9 @@ export function DashboardPage() {
           icon={<BarChart2 className="h-5 w-5 text-[#444]" />}
         />
       )}
+
+      {/* ── SAVINGS UNLOCKED ── */}
+      <SavingsUnlockedCard data={savingsHistory.data} loading={savingsHistory.isLoading} />
 
       <p className="text-xs text-[#444444] pb-4">
         Estimates use a 30% damper on speed savings and assume 3 hours of rework per problem PR.
@@ -674,6 +682,137 @@ function DeveloperBreakdown({
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── SAVINGS UNLOCKED ──────────────────────────────── */
+function SavingsUnlockedCard({
+  data,
+  loading,
+}: {
+  data: SavingsHistoryResponse | undefined
+  loading: boolean
+}) {
+  const hasSavings = data && data.totalWasteIdentified > 0
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Savings Unlocked by Grassion</CardTitle>
+          <p className="text-xs text-[#555555] mt-0.5">Running total of waste identified since you connected</p>
+        </div>
+        <Link
+          to="/seat-waste"
+          className="text-xs text-[#555555] hover:text-white transition-colors flex items-center gap-1"
+        >
+          Seat details <ArrowRight className="h-3 w-3" />
+        </Link>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading…</div>
+        ) : !hasSavings ? (
+          <div className="py-6 text-center">
+            <Sparkles className="mx-auto h-7 w-7 text-[#333] mb-2" />
+            <p className="text-sm text-[#555555]">No waste detected yet — savings appear once inactive seats are identified.</p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {/* Summary row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-4 py-3">
+                <div className="text-xs text-[#888888] mb-1">Identified since joining</div>
+                <div className="text-2xl font-bold text-green-400 tabular-nums">
+                  {formatUsd(data.totalWasteIdentified)}
+                </div>
+                <div className="text-xs text-[#555555] mt-0.5">in potential waste found</div>
+              </div>
+              <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
+                <div className="text-xs text-[#888888] mb-1">This month's exposure</div>
+                <div className="text-2xl font-bold text-yellow-400 tabular-nums">
+                  {formatUsd(data.thisMonthWaste)}
+                </div>
+                <div className="text-xs text-[#555555] mt-0.5">act now to reclaim this</div>
+              </div>
+            </div>
+
+            {/* Bar chart */}
+            {data.monthlyHistory.length > 1 && (
+              <div>
+                <div className="text-xs text-[#555555] mb-3 uppercase tracking-wider font-medium">Monthly waste identified</div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={data.monthlyHistory} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 11, fill: '#555555' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: '#555555' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={48}
+                      tickFormatter={(v: number) => `$${v}`}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null
+                        const row = payload[0]?.payload as { month: string; wasteUsd: number }
+                        return (
+                          <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
+                            <div className="font-medium text-white mb-1">{row.month}</div>
+                            <div className="text-[#888888]">
+                              Waste identified: <span className="text-red-400 font-semibold">{formatUsd(row.wasteUsd)}</span>
+                            </div>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Bar dataKey="wasteUsd" radius={[4, 4, 0, 0]}>
+                      {data.monthlyHistory.map((entry, index) => (
+                        <Cell
+                          key={index}
+                          fill={entry.wasteUsd > 0 ? '#ef4444' : '#1a1a1a'}
+                          fillOpacity={0.8}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* CTA */}
+            <div className="flex items-center gap-3 rounded-lg border border-[#222] bg-[#0a0a0a] px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-[#888888]">
+                  Remove inactive seats in{' '}
+                  <a
+                    href="https://github.com/organizations/settings/copilot/seat_management"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-white underline hover:text-[#ccc] transition-colors"
+                  >
+                    GitHub Copilot Settings
+                  </a>{' '}
+                  to stop paying for unused licenses.
+                </p>
+              </div>
+              <Link
+                to="/seat-waste"
+                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-[#e5e5e5] transition-colors"
+              >
+                View seats
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
         )}
       </CardContent>
