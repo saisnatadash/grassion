@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { repos, pullRequests, teams } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth, requireRole } from '../auth.js'
@@ -11,7 +11,19 @@ export const reposRouter = Router()
 
 reposRouter.get('/api/repos', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  const list = await db.select().from(repos).where(eq(repos.teamId, sess.teamId))
+  const list = await db
+    .select({
+      id: repos.id,
+      owner: repos.owner,
+      name: repos.name,
+      defaultBranch: repos.defaultBranch,
+      isActive: repos.isActive,
+      connectedAt: repos.connectedAt,
+      lastSyncedAt: repos.lastSyncedAt,
+      prCount: sql<number>`(SELECT COUNT(*)::int FROM pull_requests WHERE pull_requests.repo_id = repos.id)`,
+    })
+    .from(repos)
+    .where(eq(repos.teamId, sess.teamId))
   res.json(
     list.map((r) => ({
       id: r.id,
@@ -21,6 +33,7 @@ reposRouter.get('/api/repos', requireAuth, async (req: Request, res: Response) =
       isActive: r.isActive,
       connectedAt: r.connectedAt.toISOString(),
       lastSyncedAt: r.lastSyncedAt?.toISOString() ?? null,
+      prCount: r.prCount ?? 0,
     })),
   )
 })
@@ -470,5 +483,57 @@ reposRouter.post(
       .set({ isActive: parsed.data.isActive })
       .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
     res.json({ ok: true })
+  },
+)
+
+reposRouter.delete(
+  '/api/repos/:id',
+  requireAuth,
+  requireRole('owner', 'admin'),
+  async (req: Request, res: Response) => {
+    const sess = req.session!
+    const { id } = req.params
+    if (!id) {
+      res.status(400).json({ error: 'missing_id' })
+      return
+    }
+    const deleted = await db
+      .delete(repos)
+      .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
+      .returning({ id: repos.id })
+    if (!deleted.length) {
+      res.status(404).json({ error: 'not_found' })
+      return
+    }
+    logger.info({ teamId: sess.teamId, repoId: id }, 'repo disconnected')
+    res.json({ ok: true })
+  },
+)
+
+reposRouter.post(
+  '/api/repos/sync/:id',
+  requireAuth,
+  requireRole('owner', 'admin'),
+  async (req: Request, res: Response) => {
+    const sess = req.session!
+    const { id } = req.params
+    if (!id) {
+      res.status(400).json({ error: 'missing_id' })
+      return
+    }
+    const existing = await db
+      .select()
+      .from(repos)
+      .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
+      .limit(1)
+    const repo = existing[0]
+    if (!repo) {
+      res.status(404).json({ error: 'not_found' })
+      return
+    }
+    const prsSynced = await syncHistoricalPrs(sess.teamId, repo.id, repo.owner, repo.name)
+    await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
+    logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
+    res.json({ ok: true, prsSynced })
   },
 )

@@ -36,6 +36,8 @@ export const teams = pgTable('teams', {
   emailDigestDay: integer('email_digest_day').default(1),
   emailDigestHour: integer('email_digest_hour').default(9),
 
+  lastDigestSentAt: timestamp('last_digest_sent_at'),
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

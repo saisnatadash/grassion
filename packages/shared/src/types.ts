@@ -75,6 +75,8 @@ export interface RepoDto {
   defaultBranch: string | null
   isActive: boolean
   connectedAt: string
+  lastSyncedAt: string | null
+  prCount: number
 }
 
 export interface MemberDto {

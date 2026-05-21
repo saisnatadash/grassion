@@ -91,6 +91,15 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ repoUrl }),
       }),
+    disconnect: (id: string) =>
+      request<{ ok: true }>(`/api/repos/${id}`, { method: 'DELETE' }),
+    sync: (id: string) =>
+      request<{ ok: true; prsSynced: number }>(`/api/repos/sync/${id}`, { method: 'POST' }),
+  },
+
+  admin: {
+    triggerDigest: () =>
+      request<{ ok: true; sent: number; failed: number }>('/api/admin/trigger-digest', { method: 'POST' }),
   },
 
   metrics: {

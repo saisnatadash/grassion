@@ -1,0 +1,1 @@
+ALTER TABLE "teams" ADD COLUMN IF NOT EXISTS "last_digest_sent_at" timestamp;

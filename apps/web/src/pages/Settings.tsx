@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash } from 'lucide-react'
+import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { usePlan } from '../lib/plan.js'
@@ -386,24 +386,42 @@ function SlackNotificationsRow({ isPaid }: { isPaid: boolean }) {
   )
 }
 
+const REPO_LIMITS: Record<string, number> = {
+  trial: 1,
+  starter: 3,
+  team: 10,
+  business: Infinity,
+}
+
 /* ── REPOS SECTION ── */
 function ReposSection() {
   const qc = useQueryClient()
-  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
-  const toggle = useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      api.repos.toggle(id, isActive),
+  const { plan } = usePlan()
+  const reposQuery = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
+
+  const repoLimit = REPO_LIMITS[plan ?? 'trial'] ?? 1
+  const repoCount = reposQuery.data?.length ?? 0
+  const atLimit = repoCount >= repoLimit
+
+  const sync = useMutation({
+    mutationFn: (id: string) => api.repos.sync(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['repos'] }),
+  })
+  const remove = useMutation({
+    mutationFn: (id: string) => api.repos.disconnect(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['repos'] }),
   })
 
   return (
     <div className="space-y-4">
-      {/* Manual connect form */}
-      <ConnectRepoForm onConnected={() => qc.invalidateQueries({ queryKey: ['repos'] })} />
-
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Connected repositories</CardTitle>
+          <div>
+            <CardTitle>Connected repositories</CardTitle>
+            {repoLimit !== Infinity && (
+              <p className="text-xs text-[#555555] mt-1">{repoCount}/{repoLimit} repos on {plan ?? 'trial'} plan</p>
+            )}
+          </div>
           <a
             href="https://github.com/apps/grassion"
             target="_blank"
@@ -416,36 +434,54 @@ function ReposSection() {
           </a>
         </CardHeader>
         <CardContent>
-          {repos.isLoading ? (
+          {reposQuery.isLoading ? (
             <Spinner />
-          ) : repos.data && repos.data.length === 0 ? (
+          ) : reposQuery.data && reposQuery.data.length === 0 ? (
             <div className="text-sm text-[#555555] py-2">
-              No repos connected yet. Paste a GitHub URL above to connect one.
+              No repos connected yet. Paste a GitHub URL below to connect one.
             </div>
           ) : (
             <ul className="divide-y divide-[#1a1a1a]">
-              {repos.data?.map((r) => (
+              {reposQuery.data?.map((r) => (
                 <li key={r.id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Github className="h-3.5 w-3.5 text-[#555555] flex-shrink-0" />
                       <span className="text-sm font-medium text-white truncate">
                         {r.owner}/{r.name}
                       </span>
+                      <Badge tone={r.isActive ? 'green' : 'gray'} className="flex-shrink-0">
+                        {r.isActive ? 'Active' : 'Paused'}
+                      </Badge>
                     </div>
                     <div className="text-xs text-[#555555] mt-0.5 pl-5">
-                      {r.defaultBranch} · connected {new Date(r.connectedAt).toLocaleDateString()}
+                      {r.defaultBranch} · {r.prCount} PRs · connected {new Date(r.connectedAt).toLocaleDateString()}
+                      {r.lastSyncedAt && ` · synced ${new Date(r.lastSyncedAt).toLocaleDateString()}`}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <Badge tone={r.isActive ? 'green' : 'gray'}>{r.isActive ? 'Active' : 'Paused'}</Badge>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => toggle.mutate({ id: r.id, isActive: !r.isActive })}
-                      disabled={toggle.isPending}
+                      onClick={() => sync.mutate(r.id)}
+                      disabled={sync.isPending}
+                      title="Re-sync historical PRs"
                     >
-                      {r.isActive ? 'Pause' : 'Activate'}
+                      <RefreshCw className={cn('h-3.5 w-3.5', sync.isPending && 'animate-spin')} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`Remove ${r.owner}/${r.name}? This will delete all synced PR data.`)) {
+                          remove.mutate(r.id)
+                        }
+                      }}
+                      disabled={remove.isPending}
+                      className="text-red-500 hover:text-red-400"
+                      title="Remove repository"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </li>
@@ -454,12 +490,30 @@ function ReposSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* Manual connect form */}
+      <ConnectRepoForm
+        onConnected={() => qc.invalidateQueries({ queryKey: ['repos'] })}
+        disabled={atLimit}
+        limitReached={atLimit}
+        plan={plan ?? 'trial'}
+      />
     </div>
   )
 }
 
 /* ── CONNECT REPO FORM ── */
-function ConnectRepoForm({ onConnected }: { onConnected: () => void }) {
+function ConnectRepoForm({
+  onConnected,
+  disabled = false,
+  limitReached = false,
+  plan = 'trial',
+}: {
+  onConnected: () => void
+  disabled?: boolean
+  limitReached?: boolean
+  plan?: string
+}) {
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const connect = useMutation({
@@ -470,7 +524,7 @@ function ConnectRepoForm({ onConnected }: { onConnected: () => void }) {
         type: 'success',
         msg: data.alreadyConnected
           ? `${data.repoName} is already connected.`
-          : `✅ Connected! Synced ${data.prsSynced} PRs from ${data.repoName}`,
+          : `Connected! Synced ${data.prsSynced} PRs from ${data.repoName}`,
       })
       onConnected()
     },
@@ -482,39 +536,48 @@ function ConnectRepoForm({ onConnected }: { onConnected: () => void }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Connect a repository</CardTitle>
+        <CardTitle>Add a repository</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-xs text-[#555555] mb-4">
-          Paste a public GitHub repo URL to start tracking it — no GitHub App installation needed.
-        </p>
-        <div className="flex gap-2">
-          <Input
-            type="url"
-            placeholder="https://github.com/owner/repo"
-            value={url}
-            onChange={(e) => { setUrl(e.target.value); setStatus(null) }}
-            className="flex-1"
-          />
-          <Button
-            onClick={() => connect.mutate(url)}
-            disabled={connect.isPending || !url.trim()}
-          >
-            {connect.isPending ? <Spinner className="h-4 w-4" /> : 'Connect'}
-          </Button>
-        </div>
-        {status && (
-          <p className={cn('mt-2 text-xs', status.type === 'success' ? 'text-white' : 'text-red-400')}>
-            {status.msg}
-          </p>
+        {limitReached ? (
+          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-400">
+            You've reached the {plan} plan limit. <Link to="/billing" className="underline hover:text-yellow-300">Upgrade</Link> to connect more repos.
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-[#555555] mb-4">
+              Paste a public GitHub repo URL to start tracking it — no GitHub App installation needed.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                placeholder="https://github.com/owner/repo"
+                value={url}
+                onChange={(e) => { setUrl(e.target.value); setStatus(null) }}
+                className="flex-1"
+                disabled={disabled}
+              />
+              <Button
+                onClick={() => connect.mutate(url)}
+                disabled={connect.isPending || !url.trim() || disabled}
+              >
+                {connect.isPending ? <Spinner className="h-4 w-4" /> : 'Connect'}
+              </Button>
+            </div>
+            {status && (
+              <p className={cn('mt-2 text-xs', status.type === 'success' ? 'text-white' : 'text-red-400')}>
+                {status.msg}
+              </p>
+            )}
+            <p className="mt-3 text-xs text-[#444444]">
+              For private repos, install the{' '}
+              <a href="https://github.com/apps/grassion" target="_blank" rel="noreferrer" className="text-[#888888] hover:text-white underline transition-colors">
+                Grassion GitHub App
+              </a>{' '}
+              instead.
+            </p>
+          </>
         )}
-        <p className="mt-3 text-xs text-[#444444]">
-          For private repos, install the{' '}
-          <a href="https://github.com/apps/grassion" target="_blank" rel="noreferrer" className="text-[#888888] hover:text-white underline transition-colors">
-            Grassion GitHub App
-          </a>{' '}
-          instead.
-        </p>
       </CardContent>
     </Card>
   )

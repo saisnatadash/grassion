@@ -1,4 +1,4 @@
-import { eq, and, gte, isNotNull, desc } from 'drizzle-orm'
+import { eq, and, gte, isNotNull, desc, or } from 'drizzle-orm'
 import {
   teams,
   users,
@@ -78,12 +78,34 @@ export async function sendDigestForTeam(teamId: string, now: Date = new Date()) 
     return
   }
 
-  const memberRows = await db.select().from(users).where(eq(users.teamId, teamId))
-  const recipients = memberRows.map((m) => m.email).filter((e): e is string => !!e)
+  // Only send to owner or admin — not the whole team
+  const adminRows = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.teamId, teamId), or(eq(users.role, 'owner'), eq(users.role, 'admin'))))
+  const recipients = adminRows.map((m) => m.email).filter((e): e is string => !!e)
   if (recipients.length === 0) {
-    logger.info({ teamId }, 'no recipients with email, skipping digest')
+    logger.info({ teamId }, 'no owner/admin with email, skipping digest')
     return
   }
+
+  // Seat waste computation (last 28 days)
+  const allUsers = await db.select().from(users).where(eq(users.teamId, teamId))
+  const totalSeats = allUsers.length
+  const fourWeeksAgo = new Date(lastWeekStart.getTime() - 21 * 24 * 60 * 60 * 1000) // 21d before week start
+  const activeLoginSet = new Set<string>()
+  if (totalSeats > 0) {
+    const activePrs = await db
+      .select({ authorLogin: pullRequests.authorLogin })
+      .from(pullRequests)
+      .where(and(eq(pullRequests.teamId, teamId), gte(pullRequests.mergedAt, fourWeeksAgo), isNotNull(pullRequests.mergedAt)))
+    for (const p of activePrs) if (p.authorLogin) activeLoginSet.add(p.authorLogin)
+  }
+  const activeSeats = activeLoginSet.size
+  const inactiveUsers = allUsers.filter((u) => !activeLoginSet.has(u.githubLogin)).map((u) => u.githubLogin)
+  const monthlyWaste = totalSeats > 0
+    ? (inactiveUsers.length / totalSeats) * (team.monthlyAiSpendUsd ?? 0)
+    : 0
 
   const aiAvg = metric.aiAvgMergeHours ?? 0
   const humanAvg = metric.humanAvgMergeHours ?? 0
@@ -131,6 +153,10 @@ export async function sendDigestForTeam(teamId: string, now: Date = new Date()) 
         url: `https://github.com/${row.repo.owner}/${row.repo.name}/pull/${row.pr.githubPrNumber}`,
       })),
     dashboardUrl: `${env().APP_URL}/dashboard`,
+    totalSeats,
+    activeSeats,
+    monthlyWaste,
+    inactiveUsers,
   }
 
   const text = weeklyDigestText(data)
@@ -145,6 +171,7 @@ export async function sendDigestForTeam(teamId: string, now: Date = new Date()) 
     status: 'sent',
     errorMessage: null,
   })
+  await db.update(teams).set({ lastDigestSentAt: new Date() }).where(eq(teams.id, teamId))
   logger.info({ teamId, sentId: sent.id, recipients: recipients.length }, 'digest sent')
 }
 
