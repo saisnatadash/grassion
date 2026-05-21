@@ -19,6 +19,17 @@ import {
 } from '../components/ui.js'
 import { cn } from '../lib/utils.js'
 
+function timeAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime()
+  const minutes = Math.floor(ms / 60_000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
 const AI_TOOLS = [
   {
     id: 'copilot',
@@ -456,7 +467,9 @@ function ReposSection() {
                     </div>
                     <div className="text-xs text-[#555555] mt-0.5 pl-5">
                       {r.defaultBranch} · {r.prCount} PRs · connected {new Date(r.connectedAt).toLocaleDateString()}
-                      {r.lastSyncedAt && ` · synced ${new Date(r.lastSyncedAt).toLocaleDateString()}`}
+                      {r.lastSyncedAt
+                        ? ` · last synced ${timeAgo(r.lastSyncedAt)}`
+                        : ' · never synced'}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">

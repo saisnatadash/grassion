@@ -94,19 +94,18 @@ export function SeatWastePage() {
 
       {/* ── ANNUAL WASTE BANNER ── */}
       {hasInactive && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-red-500/10 p-2">
-              <TrendingDown className="h-5 w-5 text-red-500" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-white">Projected Annual Waste</div>
-              <div className="text-xs text-[#888888]">{data.inactiveUsers.length} inactive seat{data.inactiveUsers.length === 1 ? '' : 's'} × 12 months</div>
-            </div>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-6 py-8 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <TrendingDown className="h-5 w-5 text-red-500" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-[#888888]">Projected Annual Waste</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-2xl font-bold text-red-500 tabular-nums">{formatUsd(annualWaste)}</div>
-            <Badge tone="red">Action required</Badge>
+          <div className="text-5xl font-bold text-red-500 tabular-nums">{formatUsd(annualWaste)}</div>
+          <div className="text-sm text-[#888888] mt-2">at current inactive seat rate</div>
+          <div className="mt-3 text-xs text-[#555555]">
+            {data.inactiveUsers.length} inactive seat{data.inactiveUsers.length === 1 ? '' : 's'} × $19/seat × 12 months
+          </div>
+          <div className="mt-4">
+            <Badge tone="red">Action required — remove these seats now</Badge>
           </div>
         </div>
       )}

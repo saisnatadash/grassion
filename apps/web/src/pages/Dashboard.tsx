@@ -257,6 +257,9 @@ export function DashboardPage() {
         />
       </div>
 
+      {/* ── SAVINGS UNLOCKED ── */}
+      <SavingsUnlockedCard data={savingsHistory.data} loading={savingsHistory.isLoading} />
+
       {/* ── C: WEEKLY TREND CHART (AreaChart, AI PRs) ── */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -270,53 +273,57 @@ export function DashboardPage() {
             </div>
           ) : (
             <div>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="aiPrsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                  <XAxis
-                    dataKey="week"
-                    tick={{ fontSize: 11, fill: '#555555' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: '#555555' }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                    width={32}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null
-                      const row = payload[0]?.payload as { week: string; aiPrs: number }
-                      return (
-                        <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
-                          <div className="font-medium text-white mb-1">{row.week}</div>
-                          <div className="text-[#888888]">
-                            <span className="text-white font-semibold">{row.aiPrs}</span> AI PRs
-                          </div>
-                        </div>
-                      )
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="aiPrs"
-                    stroke="#22c55e"
-                    strokeWidth={2}
-                    fill="url(#aiPrsGradient)"
-                    dot={false}
-                    activeDot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+                <div style={{ minWidth: '380px' }}>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <AreaChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="aiPrsGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                      <XAxis
+                        dataKey="week"
+                        tick={{ fontSize: 11, fill: '#555555' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11, fill: '#555555' }}
+                        axisLine={false}
+                        tickLine={false}
+                        allowDecimals={false}
+                        width={32}
+                      />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null
+                          const row = payload[0]?.payload as { week: string; aiPrs: number }
+                          return (
+                            <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
+                              <div className="font-medium text-white mb-1">{row.week}</div>
+                              <div className="text-[#888888]">
+                                <span className="text-white font-semibold">{row.aiPrs}</span> AI PRs
+                              </div>
+                            </div>
+                          )
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="aiPrs"
+                        stroke="#22c55e"
+                        strokeWidth={2}
+                        fill="url(#aiPrsGradient)"
+                        dot={false}
+                        activeDot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
               {!hasChartData && (
                 <p className="text-center text-xs text-[#555555] mt-2">
                   Merge AI-assisted PRs to see your weekly trend
@@ -356,9 +363,6 @@ export function DashboardPage() {
           icon={<BarChart2 className="h-5 w-5 text-[#444]" />}
         />
       )}
-
-      {/* ── SAVINGS UNLOCKED ── */}
-      <SavingsUnlockedCard data={savingsHistory.data} loading={savingsHistory.isLoading} />
 
       <p className="text-xs text-[#444444] pb-4">
         Estimates use a 30% damper on speed savings and assume 3 hours of rework per problem PR.
@@ -436,9 +440,17 @@ function VerdictBanner({
   const cfg: CfgEntry = configs[verdict] ?? fallback
   const aiPct = totalPrs > 0 ? Math.round((aiPrs / totalPrs) * 100) : 0
   const isInsufficient = verdict === 'insufficient_data'
+  const isLive = verdict === 'net_positive' || verdict === 'net_negative'
 
   return (
-    <div className={cn('rounded-xl border px-6 py-5', cfg.border, cfg.bg)}>
+    <div className="relative">
+      {isLive && (
+        <div className={cn(
+          'absolute inset-0 rounded-xl ring-2 pointer-events-none animate-pulse',
+          verdict === 'net_positive' ? 'ring-green-500/40' : 'ring-red-500/40',
+        )} />
+      )}
+      <div className={cn('rounded-xl border px-6 py-5', cfg.border, cfg.bg)}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs text-[#888888] mb-2">
@@ -463,6 +475,7 @@ function VerdictBanner({
           </div>
           <Badge tone={cfg.badgeTone}>{isInsufficient ? 'No verdict yet' : verdictLabel(verdict)}</Badge>
         </div>
+      </div>
       </div>
     </div>
   )
@@ -745,47 +758,51 @@ function SavingsUnlockedCard({
             {data.monthlyHistory.length > 1 && (
               <div>
                 <div className="text-xs text-[#555555] mb-3 uppercase tracking-wider font-medium">Monthly waste identified</div>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={data.monthlyHistory} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                    <XAxis
-                      dataKey="month"
-                      tick={{ fontSize: 11, fill: '#555555' }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: '#555555' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={48}
-                      tickFormatter={(v: number) => `$${v}`}
-                    />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null
-                        const row = payload[0]?.payload as { month: string; wasteUsd: number }
-                        return (
-                          <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
-                            <div className="font-medium text-white mb-1">{row.month}</div>
-                            <div className="text-[#888888]">
-                              Waste identified: <span className="text-red-400 font-semibold">{formatUsd(row.wasteUsd)}</span>
-                            </div>
-                          </div>
-                        )
-                      }}
-                    />
-                    <Bar dataKey="wasteUsd" radius={[4, 4, 0, 0]}>
-                      {data.monthlyHistory.map((entry, index) => (
-                        <Cell
-                          key={index}
-                          fill={entry.wasteUsd > 0 ? '#ef4444' : '#1a1a1a'}
-                          fillOpacity={0.8}
+                <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+                  <div style={{ minWidth: '380px' }}>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={data.monthlyHistory} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                        <XAxis
+                          dataKey="month"
+                          tick={{ fontSize: 11, fill: '#555555' }}
+                          axisLine={false}
+                          tickLine={false}
                         />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                        <YAxis
+                          tick={{ fontSize: 11, fill: '#555555' }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={48}
+                          tickFormatter={(v: number) => `$${v}`}
+                        />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null
+                            const row = payload[0]?.payload as { month: string; wasteUsd: number }
+                            return (
+                              <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
+                                <div className="font-medium text-white mb-1">{row.month}</div>
+                                <div className="text-[#888888]">
+                                  Waste identified: <span className="text-red-400 font-semibold">{formatUsd(row.wasteUsd)}</span>
+                                </div>
+                              </div>
+                            )
+                          }}
+                        />
+                        <Bar dataKey="wasteUsd" radius={[4, 4, 0, 0]}>
+                          {data.monthlyHistory.map((entry, index) => (
+                            <Cell
+                              key={index}
+                              fill={entry.wasteUsd > 0 ? '#ef4444' : '#1a1a1a'}
+                              fillOpacity={0.8}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </div>
             )}
 

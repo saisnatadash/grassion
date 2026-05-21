@@ -9,6 +9,13 @@ export function AppLayout() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const me = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
+  const seatWaste = useQuery({
+    queryKey: ['analytics', 'seat-waste'],
+    queryFn: api.analytics.seatWaste,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
+  const inactiveCount = seatWaste.data?.inactiveUsers.length ?? 0
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
@@ -50,10 +57,10 @@ export function AppLayout() {
   }
 
   const navLinks = [
-    { to: '/dashboard', label: 'Dashboard', icon: BarChart2 },
-    { to: '/seat-waste', label: 'Seat Waste', icon: DollarSign },
-    { to: '/billing', label: 'Billing', icon: CreditCard },
-    { to: '/settings', label: 'Settings', icon: Settings },
+    { to: '/dashboard', label: 'Dashboard', icon: BarChart2, badge: null as number | null },
+    { to: '/seat-waste', label: 'Seat Waste', icon: DollarSign, badge: inactiveCount > 0 ? inactiveCount : null },
+    { to: '/billing', label: 'Billing', icon: CreditCard, badge: null as number | null },
+    { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
   ]
 
   const isTrial = team.plan === 'trial'
@@ -80,7 +87,7 @@ export function AppLayout() {
 
           {/* Center: Nav links (desktop) */}
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map(({ to, label }) => (
+            {navLinks.map(({ to, label, badge }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -93,7 +100,14 @@ export function AppLayout() {
                   )
                 }
               >
-                {label}
+                <span className="flex items-center gap-1.5">
+                  {label}
+                  {badge !== null && (
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </span>
               </NavLink>
             ))}
           </nav>
@@ -164,7 +178,7 @@ export function AppLayout() {
         {/* Mobile nav */}
         {mobileOpen && (
           <div className="md:hidden border-t border-[#222222] bg-[#111111] px-4 pb-4 pt-2">
-            {navLinks.map(({ to, label, icon: Icon }) => (
+            {navLinks.map(({ to, label, icon: Icon, badge }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -178,6 +192,11 @@ export function AppLayout() {
               >
                 <Icon className="h-4 w-4" />
                 {label}
+                {badge !== null && (
+                  <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                    {badge > 9 ? '9+' : badge}
+                  </span>
+                )}
               </NavLink>
             ))}
             <div className="mt-2 border-t border-[#222222] pt-2">
