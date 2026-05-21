@@ -422,7 +422,7 @@ function PlanComparison({ plan }: { plan: string }) {
   type Tier = { name: string; price: string; unit: string; best: string; features: string[]; inherited: string | null; cta: string; ctaHref?: string; isCurrent: boolean; isFeatured: boolean }
   const tiers: Tier[] = [
     {
-      name: 'Starter',
+      name: 'Pro',
       price: '$19',
       unit: '/seat/mo',
       best: 'Best for 1–10 devs',
@@ -438,7 +438,7 @@ function PlanComparison({ plan }: { plan: string }) {
       unit: '/seat/mo · min 10',
       best: 'Best for 10–30 devs',
       features: TEAM_EXTRAS,
-      inherited: 'Everything in Starter',
+      inherited: 'Everything in Pro',
       cta: isTeam ? 'Current plan' : 'Contact sales',
       ctaHref: isTeam ? undefined : 'mailto:info@grassion.com?subject=Team plan',
       isCurrent: isTeam,
@@ -598,7 +598,7 @@ function SubscriptionReceipt({
   const isFlat = plan === 'business'
   const monthly = isFlat ? pricePerSeat : seats * pricePerSeat
 
-  const planLabel = plan === 'business' ? 'Business' : plan === 'team' ? 'Team' : 'Starter'
+  const planLabel = plan === 'business' ? 'Business' : plan === 'team' ? 'Team' : 'Pro'
   const rows = [
     { label: 'Plan', value: planLabel },
     { label: isFlat ? 'Flat monthly rate' : `Seats (${seats} × $${pricePerSeat})`, value: `$${monthly}/mo` },
