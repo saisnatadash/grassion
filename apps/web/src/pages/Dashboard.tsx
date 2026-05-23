@@ -853,18 +853,26 @@ function ExecutiveReport({
   data,
   monthlyWaste,
 }: {
-  data: { netDollar: number; aiPrs: number; totalPrs: number; monthlySpend: number; speedDeltaPercent: number; reworkMultiplier: number }
+  data: { netDollar: number; aiPrs: number; totalPrs: number; monthlySpend: number; speedDeltaPercent: number; reworkMultiplier: number; verdict: string }
   monthlyWaste: number
 }) {
   const adoptionRate = data.totalPrs > 0 ? Math.round((data.aiPrs / data.totalPrs) * 100) : 0
   const annualProjection = data.netDollar * 52
-  const efficiency = data.monthlySpend > 0 ? Math.round((data.netDollar / data.monthlySpend) * 100) : null
+  const weeklySpend = data.monthlySpend / 4
+  const roiMultiple = weeklySpend > 0 ? data.netDollar / weeklySpend : null
 
   let recommendation = ''
-  if (adoptionRate < 30) recommendation = `Low AI adoption (${adoptionRate}%) — re-onboard developers on AI tools.`
-  else if (data.reworkMultiplier > 1.5) recommendation = `High rework rate (${data.reworkMultiplier}×) — tighten AI PR review process.`
-  else if (monthlyWaste > 200) recommendation = `$${monthlyWaste}/month in unused seats — reallocate or downgrade inactive members.`
-  else recommendation = 'AI coding tools are delivering measurable ROI. Maintain current adoption pace.'
+  if (data.verdict === 'net_positive') {
+    recommendation = 'AI tools are delivering strong ROI. Consider expanding to more developers.'
+  } else if (data.verdict === 'net_negative') {
+    recommendation = 'ROI is negative. Review inactive seats and consider reducing licenses.'
+  } else if (data.verdict === 'insufficient_data') {
+    recommendation = 'Connect more repos and wait for 2+ weeks of PR data for full analysis.'
+  } else {
+    recommendation = monthlyWaste > 200
+      ? `${formatUsd(monthlyWaste)}/month in unused seats — reallocate or downgrade inactive members.`
+      : 'AI coding tools are delivering measurable ROI. Maintain current adoption pace.'
+  }
 
   return (
     <Card>
@@ -877,7 +885,7 @@ function ExecutiveReport({
           {[
             { label: 'AI Adoption', value: `${adoptionRate}%`, sub: 'of all PRs are AI-assisted' },
             { label: 'Annual Projection', value: `${annualProjection >= 0 ? '+' : ''}${formatUsd(annualProjection)}`, sub: 'estimated annual net value' },
-            { label: 'ROI Efficiency', value: efficiency !== null ? `${efficiency}%` : '—', sub: 'net value ÷ AI spend' },
+            { label: 'ROI Multiple', value: roiMultiple !== null ? `${roiMultiple.toFixed(1)}×` : '—', sub: 'weekly net value ÷ weekly AI cost' },
           ].map((item) => (
             <div key={item.label} className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
               <div className="text-xs text-[#555555] uppercase tracking-widest mb-1">{item.label}</div>

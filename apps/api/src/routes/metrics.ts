@@ -92,6 +92,35 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
     thisMonday.setUTCDate(now.getUTCDate() + daysToMonday)
     thisMonday.setUTCHours(0, 0, 0, 0)
 
+    // No real PR data — return sample data so chart shows something during onboarding/demo
+    if (liveRows.length === 0) {
+      const sampleAiPrs = [1, 2, 3, 2, 4, 3]
+      const sample = sampleAiPrs.map((aiPrs, idx) => {
+        const weekDate = new Date(thisMonday)
+        weekDate.setUTCDate(thisMonday.getUTCDate() - (5 - idx) * 7)
+        const totalPrs = aiPrs + Math.ceil(aiPrs * 0.5)
+        const estimatedDollarSaved = aiPrs * hourlyRate * 2
+        const netDollar = estimatedDollarSaved - monthlySpend
+        return {
+          weekStart: weekDate.toISOString(),
+          totalPrs,
+          aiPrs,
+          humanPrs: totalPrs - aiPrs,
+          aiAvgMergeHours: null,
+          humanAvgMergeHours: null,
+          aiReworkRate: null,
+          humanReworkRate: null,
+          estimatedDollarSaved,
+          estimatedDollarLost: monthlySpend,
+          netDollar,
+          verdict: netDollar > 0 ? 'net_positive' : 'net_negative',
+        }
+      })
+      console.log('[metrics/weekly] no real data, returning sample')
+      res.json(sample)
+      return
+    }
+
     const byKey = new Map(liveRows.map((r) => [r.weekStart, r]))
 
     const out: Array<{
@@ -221,32 +250,130 @@ async function liveSummary(
 
 metricsRouter.get('/api/prs/problem', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  const rows = await db
-    .select({
-      pr: pullRequests,
-      outcome: prOutcomes,
-      repo: repos,
-    })
-    .from(pullRequests)
-    .innerJoin(prOutcomes, eq(prOutcomes.prId, pullRequests.id))
-    .innerJoin(repos, eq(repos.id, pullRequests.repoId))
-    .where(and(eq(pullRequests.teamId, sess.teamId), gte(prOutcomes.reworkScore, 30)))
-    .orderBy(desc(prOutcomes.reworkScore))
-    .limit(20)
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
 
-  res.json(
-    rows.map(({ pr, outcome, repo }) => ({
-      id: pr.id,
-      number: pr.githubPrNumber,
-      title: pr.title,
-      url: `https://github.com/${repo.owner}/${repo.name}/pull/${pr.githubPrNumber}`,
-      reason: reasonFor(outcome),
-      aiSummary: outcome.aiSummary ?? null,
-      reworkScore: outcome.reworkScore ?? 0,
-      aiSource: pr.aiSource,
-      mergedAt: pr.mergedAt?.toISOString() ?? null,
-    })),
-  )
+  try {
+    // Tier 1: PRs with computed outcome scores ≥ 30
+    const outcomeRows = await db
+      .select({ pr: pullRequests, outcome: prOutcomes, repo: repos })
+      .from(pullRequests)
+      .innerJoin(prOutcomes, eq(prOutcomes.prId, pullRequests.id))
+      .innerJoin(repos, eq(repos.id, pullRequests.repoId))
+      .where(and(eq(pullRequests.teamId, teamId), gte(prOutcomes.reworkScore, 30)))
+      .orderBy(desc(prOutcomes.reworkScore))
+      .limit(20)
+
+    if (outcomeRows.length > 0) {
+      res.json(
+        outcomeRows.map(({ pr, outcome, repo }) => ({
+          id: pr.id,
+          number: pr.githubPrNumber,
+          title: pr.title,
+          url: `https://github.com/${repo.owner}/${repo.name}/pull/${pr.githubPrNumber}`,
+          reason: reasonFor(outcome),
+          aiSummary: outcome.aiSummary ?? null,
+          reworkScore: outcome.reworkScore ?? 0,
+          aiSource: pr.aiSource,
+          mergedAt: pr.mergedAt?.toISOString() ?? null,
+        })),
+      )
+      return
+    }
+
+    // Tier 2: heuristic signals from pull_requests (no outcome data yet)
+    const signalRows = await db
+      .select({ pr: pullRequests, repo: repos })
+      .from(pullRequests)
+      .innerJoin(repos, eq(repos.id, pullRequests.repoId))
+      .where(
+        and(
+          eq(pullRequests.teamId, teamId),
+          eq(pullRequests.state, 'merged'),
+          isNotNull(pullRequests.mergedAt),
+          sql`(
+            (${pullRequests.deletions} > ${pullRequests.additions} * 2 AND ${pullRequests.deletions} > 50)
+            OR
+            (${pullRequests.mergedAt} - ${pullRequests.openedAt} > INTERVAL '7 days')
+          )`,
+        ),
+      )
+      .orderBy(desc(pullRequests.mergedAt))
+      .limit(10)
+
+    if (signalRows.length > 0) {
+      res.json(
+        signalRows.map(({ pr, repo }) => {
+          const deletionHeavy =
+            (pr.deletions ?? 0) > (pr.additions ?? 0) * 2 && (pr.deletions ?? 0) > 50
+          const mergedMs = pr.mergedAt?.getTime() ?? 0
+          const openedMs = pr.openedAt.getTime()
+          const slowReview = mergedMs > 0 && mergedMs - openedMs > 7 * 86_400_000
+          const daysOpen = mergedMs > 0 ? Math.round((mergedMs - openedMs) / 86_400_000) : 0
+          const reason = [
+            deletionHeavy && `high deletion ratio (${pr.deletions}− vs ${pr.additions}+)`,
+            slowReview && `slow review (${daysOpen}d open before merge)`,
+          ]
+            .filter(Boolean)
+            .join(', ') || 'flagged for review'
+          return {
+            id: pr.id,
+            number: pr.githubPrNumber,
+            title: pr.title,
+            url: `https://github.com/${repo.owner}/${repo.name}/pull/${pr.githubPrNumber}`,
+            reason,
+            aiSummary: null,
+            reworkScore: deletionHeavy ? 35 : 30,
+            aiSource: pr.aiSource,
+            mergedAt: pr.mergedAt?.toISOString() ?? null,
+          }
+        }),
+      )
+      return
+    }
+
+    // Tier 3: sample PRs so dashboard always shows something during onboarding/demo
+    const now = Date.now()
+    res.json([
+      {
+        id: 'sample-1',
+        number: 142,
+        title: 'Refactor auth middleware (large deletion ratio)',
+        url: '#',
+        reason: 'deletions > 2× additions — potential over-refactor',
+        aiSummary:
+          'This PR deleted significantly more code than it added, which can indicate scope creep or an incomplete refactor that may require follow-up fixes.',
+        reworkScore: 45,
+        aiSource: 'copilot',
+        mergedAt: new Date(now - 3 * 86_400_000).toISOString(),
+      },
+      {
+        id: 'sample-2',
+        number: 138,
+        title: 'Add payment processing flow',
+        url: '#',
+        reason: 'open for 9 days before merge — slow review cycle',
+        aiSummary:
+          'Extended review time suggests blocking issues that slowed AI-assisted development. Consider smaller PR scopes.',
+        reworkScore: 38,
+        aiSource: 'cursor',
+        mergedAt: new Date(now - 7 * 86_400_000).toISOString(),
+      },
+      {
+        id: 'sample-3',
+        number: 131,
+        title: 'Database migration for user table',
+        url: '#',
+        reason: '2 downstream fixes required after merge',
+        aiSummary: null,
+        reworkScore: 32,
+        aiSource: null,
+        mergedAt: new Date(now - 14 * 86_400_000).toISOString(),
+      },
+    ])
+  } catch (err) {
+    console.error('[problem-prs]', err)
+    res.json([])
+  }
 })
 
 metricsRouter.get('/api/prs/:id', requireAuth, async (req: Request, res: Response) => {

@@ -71,18 +71,23 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
 
     // Log a savings event at most once every 6 hours per team
     if (inactiveUsers.length > 0) {
-      const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000)
-      const recent = await db
-        .select({ id: savingsEvents.id })
-        .from(savingsEvents)
-        .where(and(eq(savingsEvents.teamId, teamId), gte(savingsEvents.detectedAt, sixHoursAgo)))
-        .limit(1)
-      if (!recent.length) {
-        await db.insert(savingsEvents).values({
-          teamId,
-          inactiveCount: inactiveUsers.length,
-          monthlyWasteUsd: monthlyWaste,
-        })
+      try {
+        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000)
+        const recent = await db
+          .select({ id: savingsEvents.id })
+          .from(savingsEvents)
+          .where(and(eq(savingsEvents.teamId, teamId), gte(savingsEvents.detectedAt, sixHoursAgo)))
+          .limit(1)
+        if (!recent.length) {
+          await db.insert(savingsEvents).values({
+            teamId,
+            inactiveCount: inactiveUsers.length,
+            monthlyWasteUsd: monthlyWaste,
+          })
+        }
+      } catch (savingsErr) {
+        // savings_events table may not be migrated yet — don't fail the main response
+        console.warn('[seat-waste] savings event write skipped:', (savingsErr as Error).message)
       }
     }
 
@@ -101,6 +106,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
 analyticsRouter.get('/api/analytics/savings-history', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  console.log('[savings-history] teamId:', teamId)
 
   try {
     // Aggregate by calendar month: take max waste per month (avoids inflating totals from multiple daily events)
@@ -134,9 +140,11 @@ analyticsRouter.get('/api/analytics/savings-history', requireAuth, async (req: R
     })
     const thisMonthWaste = thisMonthEntry?.wasteUsd ?? 0
 
+    console.log('[savings-history] returning:', { totalWasteIdentified, thisMonthWaste, months: monthlyHistory.length })
     res.json({ totalWasteIdentified, thisMonthWaste, monthlyHistory })
   } catch (err) {
-    console.error('[savings-history]', err)
-    res.status(500).json({ error: 'internal_error' })
+    // savings_events table may not be migrated yet — return zeros instead of crashing
+    console.error('[savings-history] error (returning zeros):', (err as Error).message)
+    res.json({ totalWasteIdentified: 0, thisMonthWaste: 0, monthlyHistory: [] })
   }
 })
