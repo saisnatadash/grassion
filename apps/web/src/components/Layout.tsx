@@ -100,10 +100,10 @@ export function AppLayout() {
                   )
                 }
               >
-                <span className="flex items-center gap-1.5">
+                <span className="relative">
                   {label}
                   {badge !== null && (
-                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                    <span className="absolute -top-2.5 -right-3.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
                       {badge > 9 ? '9+' : badge}
                     </span>
                   )}
@@ -191,12 +191,14 @@ export function AppLayout() {
                 }
               >
                 <Icon className="h-4 w-4" />
-                {label}
-                {badge !== null && (
-                  <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
-                    {badge > 9 ? '9+' : badge}
-                  </span>
-                )}
+                <span className="relative">
+                  {label}
+                  {badge !== null && (
+                    <span className="absolute -top-2.5 -right-3.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </span>
               </NavLink>
             ))}
             <div className="mt-2 border-t border-[#222222] pt-2">

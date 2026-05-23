@@ -448,8 +448,8 @@ function ReposSection() {
           {reposQuery.isLoading ? (
             <Spinner />
           ) : reposQuery.data && reposQuery.data.length === 0 ? (
-            <div className="text-sm text-[#555555] py-2">
-              No repos connected yet. Paste a GitHub URL below to connect one.
+            <div className="py-4 text-sm text-[#555555]">
+              No repositories connected yet.
             </div>
           ) : (
             <ul className="divide-y divide-[#1a1a1a]">
@@ -466,7 +466,7 @@ function ReposSection() {
                       </Badge>
                     </div>
                     <div className="text-xs text-[#555555] mt-0.5 pl-5">
-                      {r.defaultBranch} · {r.prCount} PRs · connected {new Date(r.connectedAt).toLocaleDateString()}
+                      {r.prCount} PRs synced · connected {timeAgo(r.connectedAt)}
                       {r.lastSyncedAt
                         ? ` · last synced ${timeAgo(r.lastSyncedAt)}`
                         : ' · never synced'}
@@ -479,8 +479,10 @@ function ReposSection() {
                       onClick={() => sync.mutate(r.id)}
                       disabled={sync.isPending}
                       title="Re-sync historical PRs"
+                      className="flex items-center gap-1.5"
                     >
                       <RefreshCw className={cn('h-3.5 w-3.5', sync.isPending && 'animate-spin')} />
+                      Sync Now
                     </Button>
                     <Button
                       variant="ghost"
@@ -491,10 +493,11 @@ function ReposSection() {
                         }
                       }}
                       disabled={remove.isPending}
-                      className="text-red-500 hover:text-red-400"
+                      className="flex items-center gap-1.5 text-red-500 hover:text-red-400"
                       title="Remove repository"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
+                      Remove
                     </Button>
                   </div>
                 </li>
@@ -537,7 +540,7 @@ function ConnectRepoForm({
         type: 'success',
         msg: data.alreadyConnected
           ? `${data.repoName} is already connected.`
-          : `Connected! Synced ${data.prsSynced} PRs from ${data.repoName}`,
+          : `✅ Synced ${data.prsSynced} PRs from ${data.repoName}`,
       })
       onConnected()
     },
@@ -554,7 +557,9 @@ function ConnectRepoForm({
       <CardContent>
         {limitReached ? (
           <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-400">
-            You've reached the {plan} plan limit. <Link to="/billing" className="underline hover:text-yellow-300">Upgrade</Link> to connect more repos.
+            You've reached the {plan} plan limit.{' '}
+            <Link to="/billing" className="underline hover:text-yellow-300">Upgrade</Link>{' '}
+            to connect more repositories.
           </div>
         ) : (
           <>
@@ -574,7 +579,7 @@ function ConnectRepoForm({
                 onClick={() => connect.mutate(url)}
                 disabled={connect.isPending || !url.trim() || disabled}
               >
-                {connect.isPending ? <Spinner className="h-4 w-4" /> : 'Connect'}
+                {connect.isPending ? <Spinner className="h-4 w-4" /> : 'Connect & Sync'}
               </Button>
             </div>
             {status && (

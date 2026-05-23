@@ -39,29 +39,13 @@ function daysAgo(iso: string | null): string {
 }
 
 function buildChartData(
-  weekly: Array<{ weekStart: string; aiPrs: number }>,
+  weekly: Array<{ weekStart: string; totalPrs: number; aiPrs: number }>,
 ) {
-  // Last 6 Mon-aligned weeks ending this week
-  const now = new Date()
-  const day = now.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  const thisMonday = new Date(now)
-  thisMonday.setDate(now.getDate() + diff)
-  thisMonday.setHours(0, 0, 0, 0)
-
-  const weeks: Array<{ label: string; iso: string }> = []
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(thisMonday)
-    d.setDate(d.getDate() - i * 7)
-    weeks.push({
-      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      iso: d.toISOString().slice(0, 10),
-    })
-  }
-
-  return weeks.map(({ label, iso }) => {
-    const match = weekly.find((w) => w.weekStart.slice(0, 10) === iso)
-    return { week: label, aiPrs: match?.aiPrs ?? 0 }
+  // Backend returns a 6-week UTC-aligned grid — just format labels
+  return weekly.slice(-6).map((w) => {
+    const date = new Date(w.weekStart)
+    const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+    return { week: label, aiPrs: w.aiPrs, totalPrs: w.totalPrs }
   })
 }
 
@@ -167,7 +151,7 @@ export function DashboardPage() {
   const sw = seatWaste.data
   const monthlyWaste = sw?.totalMonthlySavings ?? 0
   const chartData = buildChartData(weekly.data ?? [])
-  const hasChartData = chartData.some((w) => w.aiPrs > 0)
+  const hasChartData = chartData.some((w) => w.aiPrs > 0 || w.totalPrs > 0)
 
   const hasRepos = (repos.data?.length ?? 0) > 0
   const totalMergedAllTime = (weekly.data ?? []).reduce((s, w) => s + w.totalPrs, 0)
@@ -273,6 +257,15 @@ export function DashboardPage() {
             </div>
           ) : (
             <div>
+              {/* Legend */}
+              <div className="flex items-center gap-5 mb-3">
+                <span className="flex items-center gap-1.5 text-xs text-[#555555]">
+                  <span className="h-2 w-2 rounded-full bg-green-500" /> AI PRs
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-[#555555]">
+                  <span className="h-2 w-2 rounded-full bg-[#555555]" /> Total PRs
+                </span>
+              </div>
               <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
                 <div style={{ minWidth: '380px' }}>
                   <ResponsiveContainer width="100%" height={200}>
@@ -281,6 +274,10 @@ export function DashboardPage() {
                         <linearGradient id="aiPrsGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
                           <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="totalPrsGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#555555" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#555555" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
@@ -300,16 +297,30 @@ export function DashboardPage() {
                       <Tooltip
                         content={({ active, payload }) => {
                           if (!active || !payload?.length) return null
-                          const row = payload[0]?.payload as { week: string; aiPrs: number }
+                          const row = payload[0]?.payload as { week: string; aiPrs: number; totalPrs: number }
                           return (
                             <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
-                              <div className="font-medium text-white mb-1">{row.week}</div>
-                              <div className="text-[#888888]">
-                                <span className="text-white font-semibold">{row.aiPrs}</span> AI PRs
+                              <div className="font-medium text-white mb-1.5">{row.week}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
+                                <span className="text-[#888888]"><span className="text-white font-semibold">{row.aiPrs}</span> AI PRs</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="h-2 w-2 rounded-full bg-[#555555] flex-shrink-0" />
+                                <span className="text-[#888888]"><span className="text-white font-semibold">{row.totalPrs}</span> Total PRs</span>
                               </div>
                             </div>
                           )
                         }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="totalPrs"
+                        stroke="#555555"
+                        strokeWidth={1.5}
+                        fill="url(#totalPrsGradient)"
+                        dot={false}
+                        activeDot={{ r: 3, fill: '#555555', strokeWidth: 0 }}
                       />
                       <Area
                         type="monotone"

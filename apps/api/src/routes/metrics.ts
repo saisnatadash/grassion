@@ -51,7 +51,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
   console.log('[metrics/weekly] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
 
   try {
-    const twelveWeeksAgo = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000)
+    const eightWeeksAgo = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000)
 
     const teamRow = (
       await db
@@ -63,7 +63,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
     const hourlyRate = teamRow?.avgDevHourlyRateUsd ?? 75
     const monthlySpend = teamRow?.monthlyAiSpendUsd ?? 30
 
-    // Query directly from pull_requests using DATE_TRUNC for exact grouping
+    // Count merged PRs grouped by ISO week
     const liveRows = await db
       .select({
         weekStart: sql<string>`DATE_TRUNC('week', ${pullRequests.mergedAt})::date::text`,
@@ -74,7 +74,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
       .where(
         and(
           eq(pullRequests.teamId, teamId),
-          gte(pullRequests.mergedAt, twelveWeeksAgo),
+          gte(pullRequests.mergedAt, eightWeeksAgo),
           eq(pullRequests.state, 'merged'),
           isNotNull(pullRequests.mergedAt),
         ),
@@ -84,7 +84,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
 
     console.log('[metrics/weekly] DB rows:', liveRows.length, JSON.stringify(liveRows))
 
-    // Build 12-week Monday-aligned grid matching frontend expectations
+    // Build 6-week Monday-aligned grid; fills zeros for weeks with no merged PRs
     const now = new Date()
     const dayOfWeek = now.getUTCDay()
     const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
@@ -109,7 +109,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
       verdict: string
     }> = []
 
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 5; i >= 0; i--) {
       const weekDate = new Date(thisMonday)
       weekDate.setUTCDate(thisMonday.getUTCDate() - i * 7)
       const isoDate = weekDate.toISOString().slice(0, 10)
