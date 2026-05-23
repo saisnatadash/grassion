@@ -16,13 +16,44 @@ async function freshTeamId(githubLogin: string, fallback: string): Promise<strin
   return row[0]?.teamId ?? fallback
 }
 
+function getWeekStart(): Date {
+  const now = new Date()
+  const day = now.getUTCDay()
+  const diff = day === 0 ? -6 : 1 - day
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff))
+}
+
+async function checkAndRecordMilestones(
+  teamId: string,
+  data: { aiPrs: number; totalPrs: number; inactiveSeats: number; netRoi: number },
+) {
+  const { aiPrs, totalPrs, inactiveSeats, netRoi } = data
+  const adoption = totalPrs > 0 ? (aiPrs / totalPrs) * 100 : 0
+
+  const checks = [
+    { type: 'first_ai_pr',      condition: aiPrs >= 1 },
+    { type: 'adoption_50pct',   condition: adoption >= 50 },
+    { type: 'adoption_80pct',   condition: adoption >= 80 },
+    { type: 'roi_positive',     condition: netRoi > 0 },
+    { type: 'waste_eliminated', condition: inactiveSeats === 0 && totalPrs > 0 },
+  ]
+
+  const passing = checks.filter((c) => c.condition).map((c) => c.type)
+  if (!passing.length) return
+
+  await db
+    .insert(teamMilestones)
+    .values(passing.map((type) => ({ teamId, milestone: type })))
+    .onConflictDoNothing()
+}
+
 analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
   console.log('[seat-waste] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
 
   try {
-    // Single LEFT JOIN query: all team users with their AI PR count (merged last 7 days)
+    // All team users with their AI PR count (merged last 7 days)
     const rows = await db
       .select({
         githubLogin: users.githubLogin,
@@ -91,6 +122,67 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
       console.warn('[seat-waste] savings event write skipped:', (savingsErr as Error).message)
     }
 
+    // Upsert seat data into weekly_snapshots
+    const weekStart = getWeekStart()
+    db.insert(weeklySnapshots)
+      .values({
+        teamId,
+        weekStart,
+        totalSeats: rows.length,
+        activeSeats: activeUsers.length,
+        inactiveSeats: inactiveUsers.length,
+        monthlyWasteUsd: monthlyWaste,
+      })
+      .onConflictDoUpdate({
+        target: [weeklySnapshots.teamId, weeklySnapshots.weekStart],
+        set: {
+          totalSeats: rows.length,
+          activeSeats: activeUsers.length,
+          inactiveSeats: inactiveUsers.length,
+          monthlyWasteUsd: monthlyWaste,
+          computedAt: new Date(),
+        },
+      })
+      .catch((e: Error) => console.warn('[seat-waste] snapshot upsert skipped:', e.message))
+
+    // Weekly PR totals for milestone checking
+    const [weeklyTotals] = await db
+      .select({
+        total: sql<number>`COUNT(*)::int`,
+        ai: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)::int`,
+      })
+      .from(pullRequests)
+      .where(
+        and(
+          eq(pullRequests.teamId, teamId),
+          gte(pullRequests.mergedAt, weekStart),
+          eq(pullRequests.state, 'merged'),
+        ),
+      )
+
+    // PART 4: Auto-milestone detection
+    checkAndRecordMilestones(teamId, {
+      aiPrs: weeklyTotals?.ai ?? 0,
+      totalPrs: weeklyTotals?.total ?? 0,
+      inactiveSeats: inactiveUsers.length,
+      netRoi: 0, // ROI is set by the metrics endpoint
+    }).catch((e: Error) => console.warn('[seat-waste] milestone check skipped:', e.message))
+
+    // Insert developer_history for each team member this week
+    db.insert(developerHistory)
+      .values(
+        rows.map((r) => ({
+          teamId,
+          githubLogin: r.githubLogin,
+          weekStart,
+          aiPrCount: r.aiPrCount ?? 0,
+          totalPrCount: 0,
+          isActive: (r.aiPrCount ?? 0) > 0,
+        })),
+      )
+      .onConflictDoNothing()
+      .catch((e: Error) => console.warn('[seat-waste] dev history skipped:', e.message))
+
     res.json({
       totalSeats: rows.length,
       activeUsers,
@@ -103,20 +195,13 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
   }
 })
 
-function getWeekStart(): Date {
-  const now = new Date()
-  const day = now.getUTCDay()
-  const diff = day === 0 ? -6 : 1 - day
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff))
-}
-
 const MILESTONE_LABELS: Record<string, string> = {
-  first_ai_pr: 'First AI PR',
-  adoption_50pct: '50% AI Adoption',
-  adoption_80pct: '80% AI Adoption',
-  waste_eliminated: '$100 Waste Found',
-  roi_positive: 'Positive ROI Week',
-  one_month_streak: 'One Month Streak',
+  first_ai_pr:      'First AI PR',
+  adoption_50pct:   '50% Adoption',
+  adoption_80pct:   '80% Adoption',
+  waste_eliminated: 'Zero Waste',
+  roi_positive:     'ROI Positive',
+  one_month_streak: '1 Month Streak',
 }
 
 analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, res: Response) => {
@@ -129,7 +214,7 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
       .select({ createdAt: teams.createdAt })
       .from(teams)
       .where(eq(teams.id, teamId))
-    const daysSinceConnected = teamRow
+    const daysConnected = teamRow
       ? Math.floor((Date.now() - new Date(teamRow.createdAt).getTime()) / 86_400_000)
       : 0
 
@@ -141,92 +226,54 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
       .groupBy(sql`DATE_TRUNC('month', ${savingsEvents.detectedAt})`)
     const totalWasteIdentified = wasteByMonth.reduce((s, r) => s + (r.monthMax ?? 0), 0)
 
-    // Weekly metrics history (up to 12 weeks)
-    const metrics = await db
+    // Weekly snapshots for ROI + adoption history
+    const snapshots = await db
       .select()
-      .from(teamWeeklyMetrics)
-      .where(eq(teamWeeklyMetrics.teamId, teamId))
-      .orderBy(desc(teamWeeklyMetrics.weekStart))
+      .from(weeklySnapshots)
+      .where(eq(weeklySnapshots.teamId, teamId))
+      .orderBy(desc(weeklySnapshots.weekStart))
       .limit(12)
 
-    const currentWeek = metrics[0] ?? null
-    const firstWeek = metrics[metrics.length - 1] ?? null
-    const bestWeekRoiUsd = metrics.reduce((best, m) => {
-      const net = (m.estimatedDollarSaved ?? 0) - (m.estimatedDollarLost ?? 0)
-      return net > best ? net : best
-    }, 0)
-    const aiAdoptionNow = currentWeek && (currentWeek.totalPrs ?? 0) > 0
-      ? Math.round(((currentWeek.aiPrs ?? 0) / currentWeek.totalPrs!) * 100)
-      : 0
-    const aiAdoptionFirst = firstWeek && (firstWeek.totalPrs ?? 0) > 0
-      ? Math.round(((firstWeek.aiPrs ?? 0) / firstWeek.totalPrs!) * 100)
-      : 0
+    // Fall back to teamWeeklyMetrics if no snapshots yet
+    const metrics = snapshots.length === 0
+      ? await db
+          .select()
+          .from(teamWeeklyMetrics)
+          .where(eq(teamWeeklyMetrics.teamId, teamId))
+          .orderBy(desc(teamWeeklyMetrics.weekStart))
+          .limit(12)
+      : []
 
-    // PART 2: Insert weekly_snapshot for current week if not yet recorded
-    if (currentWeek) {
-      try {
-        const existingSnap = await db
-          .select({ id: weeklySnapshots.id })
-          .from(weeklySnapshots)
-          .where(and(eq(weeklySnapshots.teamId, teamId), eq(weeklySnapshots.weekStart, currentWeek.weekStart)))
-          .limit(1)
-        if (!existingSnap.length) {
-          const netEst = (currentWeek.estimatedDollarSaved ?? 0) - (currentWeek.estimatedDollarLost ?? 0)
-          const adoptionFrac = (currentWeek.totalPrs ?? 0) > 0
-            ? (currentWeek.aiPrs ?? 0) / currentWeek.totalPrs!
-            : 0
-          await db.insert(weeklySnapshots).values({
-            teamId,
-            weekStart: currentWeek.weekStart,
-            aiPrs: currentWeek.aiPrs ?? 0,
-            totalPrs: currentWeek.totalPrs ?? 0,
-            adoptionPct: adoptionFrac,
-            netDollarEstimate: netEst,
-            wastedUsd: totalWasteIdentified,
-          }).onConflictDoNothing()
-        }
-      } catch (snapErr) {
-        console.warn('[journey] weekly_snapshot write skipped:', (snapErr as Error).message)
-      }
-    }
+    const latestSnap = snapshots[0] ?? null
+    const firstSnap = snapshots[snapshots.length - 1] ?? null
 
-    // PART 3: Insert developer_history for each team member this week
-    try {
-      const weekStart = getWeekStart()
-      const devRows = await db
-        .select({
-          githubLogin: users.githubLogin,
-          aiPrCount: sql<number>`COUNT(${pullRequests.id}) FILTER (
-            WHERE ${pullRequests.aiSource} IS NOT NULL
-            AND ${pullRequests.mergedAt} >= ${weekStart}
-          )::int`,
-          totalPrCount: sql<number>`COUNT(${pullRequests.id}) FILTER (
-            WHERE ${pullRequests.mergedAt} >= ${weekStart}
-          )::int`,
-        })
-        .from(users)
-        .leftJoin(
-          pullRequests,
-          and(eq(pullRequests.authorLogin, users.githubLogin), eq(pullRequests.teamId, users.teamId)),
-        )
-        .where(eq(users.teamId, teamId))
-        .groupBy(users.githubLogin)
+    const bestWeekRoi = snapshots.length > 0
+      ? snapshots.reduce((best, s) => Math.max(best, s.netRoiUsd ?? 0), 0)
+      : metrics.reduce((best, m) => Math.max(best, (m.estimatedDollarSaved ?? 0) - (m.estimatedDollarLost ?? 0)), 0)
 
-      for (const dev of devRows) {
-        await db.insert(developerHistory).values({
-          teamId,
-          githubLogin: dev.githubLogin,
-          weekStart,
-          aiPrCount: dev.aiPrCount ?? 0,
-          totalPrCount: dev.totalPrCount ?? 0,
-          isActive: (dev.aiPrCount ?? 0) > 0,
-        }).onConflictDoNothing()
-      }
-    } catch (devErr) {
-      console.warn('[journey] developer_history write skipped:', (devErr as Error).message)
-    }
+    const latestAdoption = latestSnap
+      ? Math.round((latestSnap.aiAdoptionPct ?? 0) * 100)
+      : (metrics[0] && (metrics[0].totalPrs ?? 0) > 0)
+        ? Math.round(((metrics[0].aiPrs ?? 0) / metrics[0].totalPrs!) * 100)
+        : 0
 
-    // PART 4: Check and record team milestones
+    const firstAdoption = firstSnap
+      ? Math.round((firstSnap.aiAdoptionPct ?? 0) * 100)
+      : (metrics[metrics.length - 1] && (metrics[metrics.length - 1]?.totalPrs ?? 0) > 0)
+        ? Math.round(((metrics[metrics.length - 1]?.aiPrs ?? 0) / metrics[metrics.length - 1]!.totalPrs!) * 100)
+        : 0
+
+    // ROI positive milestone: check from snapshots or metrics
+    const currentNetRoi = latestSnap
+      ? (latestSnap.netRoiUsd ?? 0)
+      : metrics[0]
+        ? (metrics[0].estimatedDollarSaved ?? 0) - (metrics[0].estimatedDollarLost ?? 0)
+        : 0
+    const totalAiPrsEver = snapshots.reduce((s, snap) => s + (snap.aiPrs ?? 0), 0)
+      || metrics.reduce((s, m) => s + (m.aiPrs ?? 0), 0)
+    const streakWeeks = snapshots.length || metrics.length
+
+    // Read + update milestones
     const existingMilestones = await db
       .select({ milestone: teamMilestones.milestone, achievedAt: teamMilestones.achievedAt })
       .from(teamMilestones)
@@ -234,36 +281,37 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
 
     const achieved = new Map(existingMilestones.map((m) => [m.milestone, m.achievedAt]))
     const toRecord: string[] = []
-    const totalAiPrs = metrics.reduce((s, m) => s + (m.aiPrs ?? 0), 0)
-    const currentAdoption = currentWeek && (currentWeek.totalPrs ?? 0) > 0
-      ? (currentWeek.aiPrs ?? 0) / currentWeek.totalPrs!
-      : 0
 
-    if (totalAiPrs > 0 && !achieved.has('first_ai_pr')) toRecord.push('first_ai_pr')
-    if (currentAdoption >= 0.5 && !achieved.has('adoption_50pct')) toRecord.push('adoption_50pct')
-    if (currentAdoption >= 0.8 && !achieved.has('adoption_80pct')) toRecord.push('adoption_80pct')
-    if (bestWeekRoiUsd > 0 && !achieved.has('roi_positive')) toRecord.push('roi_positive')
+    if (totalAiPrsEver > 0 && !achieved.has('first_ai_pr')) toRecord.push('first_ai_pr')
+    if (latestAdoption >= 50 && !achieved.has('adoption_50pct')) toRecord.push('adoption_50pct')
+    if (latestAdoption >= 80 && !achieved.has('adoption_80pct')) toRecord.push('adoption_80pct')
+    if (currentNetRoi > 0 && !achieved.has('roi_positive')) toRecord.push('roi_positive')
     if (totalWasteIdentified >= 100 && !achieved.has('waste_eliminated')) toRecord.push('waste_eliminated')
-    if (metrics.length >= 4 && !achieved.has('one_month_streak')) toRecord.push('one_month_streak')
+    if (streakWeeks >= 4 && !achieved.has('one_month_streak')) toRecord.push('one_month_streak')
 
     if (toRecord.length) {
-      try {
-        await db.insert(teamMilestones).values(
-          toRecord.map((m) => ({ teamId, milestone: m }))
-        ).onConflictDoNothing()
-        for (const m of toRecord) achieved.set(m, new Date())
-      } catch (msErr) {
-        console.warn('[journey] milestones write skipped:', (msErr as Error).message)
-      }
+      await db
+        .insert(teamMilestones)
+        .values(toRecord.map((m) => ({ teamId, milestone: m })))
+        .onConflictDoNothing()
+        .catch((e: Error) => console.warn('[journey] milestones write skipped:', e.message))
+      for (const m of toRecord) achieved.set(m, new Date())
     }
 
-    const milestones = Array.from(achieved.entries()).map(([key, achievedAt]) => ({
-      key,
-      label: MILESTONE_LABELS[key] ?? key,
+    const milestones = Array.from(achieved.entries()).map(([type, achievedAt]) => ({
+      type,
+      label: MILESTONE_LABELS[type] ?? type,
       achievedAt: (achievedAt instanceof Date ? achievedAt : new Date(achievedAt)).toISOString(),
     }))
 
-    res.json({ daysSinceConnected, totalWasteIdentified, bestWeekRoiUsd, aiAdoptionNow, aiAdoptionFirst, milestones })
+    res.json({
+      daysConnected,
+      totalWasteIdentified,
+      bestWeekRoi,
+      firstAdoption,
+      latestAdoption,
+      milestones,
+    })
   } catch (err) {
     console.error('[journey]', err)
     res.status(500).json({ error: 'internal_error' })
@@ -295,7 +343,6 @@ analyticsRouter.get('/api/analytics/savings-history', requireAuth, async (req: R
       .limit(12)
 
     const monthlyHistory = history.map((r) => ({ month: r.label, wasteUsd: r.wasteUsd ?? 0 })).reverse()
-
     const totalWasteIdentified = monthlyHistory.reduce((s, m) => s + m.wasteUsd, 0)
 
     const thisMonth = new Date()
@@ -310,7 +357,6 @@ analyticsRouter.get('/api/analytics/savings-history', requireAuth, async (req: R
     console.log('[savings-history] returning:', { totalWasteIdentified, thisMonthWaste, months: monthlyHistory.length })
     res.json({ totalWasteIdentified, thisMonthWaste, monthlyHistory })
   } catch (err) {
-    // savings_events table may not be migrated yet — return zeros instead of crashing
     console.error('[savings-history] error (returning zeros):', (err as Error).message)
     res.json({ totalWasteIdentified: 0, thisMonthWaste: 0, monthlyHistory: [] })
   }

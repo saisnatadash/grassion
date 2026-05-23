@@ -288,11 +288,15 @@ export const weeklySnapshots = pgTable(
       .references(() => teams.id, { onDelete: 'cascade' })
       .notNull(),
     weekStart: timestamp('week_start').notNull(),
+    totalSeats: integer('total_seats').default(0),
+    activeSeats: integer('active_seats').default(0),
+    inactiveSeats: integer('inactive_seats').default(0),
     aiPrs: integer('ai_prs').default(0),
     totalPrs: integer('total_prs').default(0),
-    adoptionPct: real('adoption_pct').default(0),
-    netDollarEstimate: real('net_dollar_estimate').default(0),
-    wastedUsd: real('wasted_usd').default(0),
+    aiAdoptionPct: real('ai_adoption_pct').default(0),
+    monthlyWasteUsd: real('monthly_waste_usd').default(0),
+    netRoiUsd: real('net_roi_usd').default(0),
+    verdict: text('verdict'),
     computedAt: timestamp('computed_at').defaultNow().notNull(),
   },
   (t) => ({
@@ -398,6 +402,7 @@ export type SavingsEvent = typeof savingsEvents.$inferSelect
 export type NewSavingsEvent = typeof savingsEvents.$inferInsert
 export type WeeklySnapshot = typeof weeklySnapshots.$inferSelect
 export type NewWeeklySnapshot = typeof weeklySnapshots.$inferInsert
+
 export type DeveloperHistoryRow = typeof developerHistory.$inferSelect
 export type NewDeveloperHistoryRow = typeof developerHistory.$inferInsert
 export type TeamMilestone = typeof teamMilestones.$inferSelect

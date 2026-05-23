@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { api, type SavingsHistoryResponse, type JourneyResponse } from '../lib/api.js'
+import { api, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow } from '../lib/api.js'
 import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -109,6 +109,8 @@ export function DashboardPage() {
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
 
+  const history = useQuery({ queryKey: ['metrics', 'history'], queryFn: api.metrics.history })
+  const [tab, setTab] = useState<'overview' | 'history'>('overview')
   const [refreshing, setRefreshing] = useState(false)
   async function refresh() {
     setRefreshing(true)
@@ -120,6 +122,7 @@ export function DashboardPage() {
       qc.invalidateQueries({ queryKey: ['me'] }),
       qc.invalidateQueries({ queryKey: ['analytics', 'savings-history'] }),
       qc.invalidateQueries({ queryKey: ['analytics', 'journey'] }),
+      qc.invalidateQueries({ queryKey: ['metrics', 'history'] }),
     ])
     setTimeout(() => setRefreshing(false), 800)
   }
@@ -184,7 +187,6 @@ export function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Plan badge */}
           {plan && (
             <div className={cn(
               'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium',
@@ -196,7 +198,6 @@ export function DashboardPage() {
               {planDisplayLabel(plan)}
             </div>
           )}
-          {/* Refresh button */}
           <button
             onClick={refresh}
             disabled={refreshing}
@@ -208,6 +209,40 @@ export function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* ── TAB SWITCHER ── */}
+      <div className="flex items-center gap-1 rounded-lg border border-[#222] bg-[#111] p-1 w-fit">
+        <button
+          onClick={() => setTab('overview')}
+          className={cn(
+            'px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+            tab === 'overview' ? 'bg-white text-black' : 'text-[#666] hover:text-white',
+          )}
+        >
+          Overview
+        </button>
+        <button
+          onClick={() => setTab('history')}
+          className={cn(
+            'px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+            tab === 'history' ? 'bg-white text-black' : 'text-[#666] hover:text-white',
+          )}
+        >
+          History
+        </button>
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          HISTORY TAB
+      ══════════════════════════════════════════════ */}
+      {tab === 'history' && (
+        <HistoryTab rows={history.data ?? []} loading={history.isLoading} />
+      )}
+
+      {/* ══════════════════════════════════════════════
+          OVERVIEW TAB
+      ══════════════════════════════════════════════ */}
+      {tab === 'overview' && <>
 
       {/* ── A: COLLECTING BANNER (subtle, non-blocking) ── */}
       {data.verdict === 'insufficient_data' && (
@@ -225,7 +260,7 @@ export function DashboardPage() {
         totalPrs={data.totalPrs}
       />
 
-      {/* ── B: 4 STAT CARDS (always visible, 0 if no data) ── */}
+      {/* ── B: 4 STAT CARDS ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Seats" value={sw?.totalSeats ?? 0} sub="active PR authors · 30d" />
         <StatCard label="Active Seats" value={sw?.activeUsers.length ?? 0} sub="AI PR in last 7d" tone="green" />
@@ -242,6 +277,9 @@ export function DashboardPage() {
           tone={monthlyWaste > 0 ? 'red' : 'white'}
         />
       </div>
+
+      {/* ── YOUR GRASSION JOURNEY (below stat cards, before weekly chart) ── */}
+      <JourneyCard data={journey.data} loading={journey.isLoading} />
 
       {/* ── SAVINGS UNLOCKED ── */}
       <SavingsUnlockedCard data={savingsHistory.data} loading={savingsHistory.isLoading} isError={savingsHistory.isError} error={savingsHistory.error} />
@@ -377,9 +415,6 @@ export function DashboardPage() {
         />
       )}
 
-      {/* ── PART 5: YOUR GRASSION JOURNEY ── */}
-      <JourneyCard data={journey.data} loading={journey.isLoading} />
-
       <p className="text-xs text-[#444444] pb-4">
         Estimates use a 30% damper on speed savings and assume 3 hours of rework per problem PR.
         Set your AI spend and dev hourly rate in{' '}
@@ -388,6 +423,7 @@ export function DashboardPage() {
         </Link>{' '}
         for a more accurate verdict.
       </p>
+      </>}
     </div>
   )
 }
@@ -863,16 +899,35 @@ function SavingsUnlockedCard({
 }
 
 /* ── YOUR GRASSION JOURNEY ─────────────────────────── */
-const MILESTONE_CFG: Record<string, { icon: string; tone: 'green' | 'yellow' | 'blue' | 'gray' }> = {
-  first_ai_pr:      { icon: '🎯', tone: 'blue' },
-  adoption_50pct:   { icon: '🚀', tone: 'yellow' },
-  adoption_80pct:   { icon: '⚡', tone: 'yellow' },
-  waste_eliminated: { icon: '💰', tone: 'green' },
-  roi_positive:     { icon: '📈', tone: 'green' },
-  one_month_streak: { icon: '🏆', tone: 'yellow' },
-}
+const ALL_MILESTONES: Array<{ type: string; icon: string; label: string; color: 'green' | 'yellow' | 'blue' }> = [
+  { type: 'first_ai_pr',      icon: '🚀', label: 'First AI PR',      color: 'blue' },
+  { type: 'adoption_50pct',   icon: '📈', label: '50% Adoption',     color: 'yellow' },
+  { type: 'adoption_80pct',   icon: '🏆', label: '80% Adoption',     color: 'yellow' },
+  { type: 'roi_positive',     icon: '✅', label: 'ROI Positive',     color: 'green' },
+  { type: 'waste_eliminated', icon: '💰', label: 'Zero Waste',       color: 'green' },
+  { type: 'one_month_streak', icon: '🔥', label: '1 Month Streak',   color: 'yellow' },
+]
 
 function JourneyCard({ data, loading }: { data: JourneyResponse | undefined; loading: boolean }) {
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-5">
+          <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading journey…</div>
+        </CardContent>
+      </Card>
+    )
+  }
+  if (!data) return null
+
+  const achievedSet = new Set((data.milestones ?? []).map((m) => m.type))
+  const adoptionGrowth = (() => {
+    if (data.firstAdoption === 0 && data.latestAdoption === 0) return '—'
+    if (data.firstAdoption === data.latestAdoption) return `${data.latestAdoption}%`
+    const arrow = data.latestAdoption >= data.firstAdoption ? '↑' : '↓'
+    return `${data.firstAdoption}% → ${data.latestAdoption}% ${arrow}`
+  })()
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -883,71 +938,239 @@ function JourneyCard({ data, loading }: { data: JourneyResponse | undefined; loa
         <Calendar className="h-4 w-4 text-[#555555]" />
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading…</div>
-        ) : !data ? null : (
-          <div className="space-y-5">
-            {/* Stats row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="rounded-xl border border-[#222] bg-[#0a0a0a] px-4 py-3 text-center">
-                <div className="text-3xl font-bold text-white tabular-nums">{data.daysSinceConnected}</div>
-                <div className="text-xs text-[#555555] mt-1">days connected</div>
-              </div>
-              <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-center">
-                <div className="text-xl font-bold text-red-400 tabular-nums">{formatUsd(data.totalWasteIdentified)}</div>
-                <div className="text-xs text-[#555555] mt-1">waste identified</div>
-              </div>
-              <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-4 py-3 text-center">
-                <div className="text-xl font-bold text-green-400 tabular-nums">
-                  {data.bestWeekRoiUsd > 0 ? `+${formatUsd(data.bestWeekRoiUsd)}` : '—'}
-                </div>
-                <div className="text-xs text-[#555555] mt-1">best week ROI</div>
-              </div>
-              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-4 py-3 text-center">
-                <div className="text-xl font-bold text-blue-400 tabular-nums">
-                  {data.aiAdoptionFirst > 0 && data.aiAdoptionFirst !== data.aiAdoptionNow
-                    ? `${data.aiAdoptionFirst}%→${data.aiAdoptionNow}%`
-                    : `${data.aiAdoptionNow}%`}
-                </div>
-                <div className="text-xs text-[#555555] mt-1">AI adoption</div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* LEFT: Stats since joining */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-[#222] bg-[#0a0a0a] px-4 py-3">
+              <div className="text-2xl font-bold text-white tabular-nums">{data.daysConnected}</div>
+              <div className="text-xs text-[#555555] mt-1">Days with Grassion</div>
             </div>
-
-            {/* Milestones */}
-            {data.milestones.length > 0 ? (
-              <div>
-                <p className="text-xs text-[#555555] uppercase tracking-wider font-medium mb-3">Milestones earned</p>
-                <div className="flex flex-wrap gap-2">
-                  {data.milestones.map((m) => {
-                    const cfg = MILESTONE_CFG[m.key] ?? { icon: '✓', tone: 'gray' as const }
-                    return (
-                      <div
-                        key={m.key}
-                        title={new Date(m.achievedAt).toLocaleDateString()}
-                        className={cn(
-                          'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium',
-                          cfg.tone === 'green'  && 'border-green-500/30 bg-green-500/10 text-green-400',
-                          cfg.tone === 'yellow' && 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
-                          cfg.tone === 'blue'   && 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-                          cfg.tone === 'gray'   && 'border-[#333] bg-[#111] text-[#888]',
-                        )}
-                      >
-                        <span role="img">{cfg.icon}</span>
-                        {m.label}
-                      </div>
-                    )
-                  })}
-                </div>
+            <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+              <div className="text-xl font-bold text-red-400 tabular-nums">{formatUsd(data.totalWasteIdentified)}</div>
+              <div className="text-xs text-[#555555] mt-1">Total Waste Identified</div>
+            </div>
+            <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-4 py-3">
+              <div className="text-xl font-bold text-green-400 tabular-nums">
+                {data.bestWeekRoi > 0 ? `+${formatUsd(data.bestWeekRoi)}` : '—'}
               </div>
-            ) : (
-              <p className="text-xs text-[#555555] text-center py-2">
-                Merge your first AI-assisted PR to earn your first milestone.
-              </p>
-            )}
+              <div className="text-xs text-[#555555] mt-1">Best Week ROI</div>
+            </div>
+            <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-4 py-3">
+              <div className={cn(
+                'text-lg font-bold tabular-nums',
+                data.latestAdoption > data.firstAdoption ? 'text-green-400' : 'text-blue-400',
+              )}>
+                {adoptionGrowth}
+              </div>
+              <div className="text-xs text-[#555555] mt-1">AI Adoption Growth</div>
+            </div>
           </div>
-        )}
+
+          {/* RIGHT: Milestones — all 6, greyed if not achieved */}
+          <div>
+            <p className="text-xs text-[#555555] uppercase tracking-wider font-medium mb-3">Milestones</p>
+            <div className="grid grid-cols-2 gap-2">
+              {ALL_MILESTONES.map((m) => {
+                const achieved = achievedSet.has(m.type)
+                const achievedEntry = (data.milestones ?? []).find((x) => x.type === m.type)
+                return (
+                  <div
+                    key={m.type}
+                    title={achieved && achievedEntry ? new Date(achievedEntry.achievedAt).toLocaleDateString() : 'Not yet achieved'}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-opacity',
+                      achieved && m.color === 'green'  && 'border-green-500/30 bg-green-500/10 text-green-400',
+                      achieved && m.color === 'yellow' && 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
+                      achieved && m.color === 'blue'   && 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+                      !achieved && 'border-[#222] bg-[#0a0a0a] text-[#444] opacity-50',
+                    )}
+                  >
+                    <span role="img" aria-hidden>{m.icon}</span>
+                    <span>{m.label}</span>
+                    {achieved && <span className="ml-auto text-[10px] opacity-60">✓</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
+  )
+}
+
+/* ── HISTORY TAB ───────────────────────────────────── */
+function fmtWeek(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+}
+
+function verdictBadgeTone(v: string): 'green' | 'red' | 'yellow' | 'gray' {
+  if (v === 'net_positive') return 'green'
+  if (v === 'net_negative') return 'red'
+  if (v === 'unclear') return 'yellow'
+  return 'gray'
+}
+
+function HistoryTab({ rows, loading }: { rows: HistoryRow[]; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 py-16 text-sm text-[#888888]">
+        <Spinner /> Loading history…
+      </div>
+    )
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-xl border border-[#222] bg-[#111] px-6 py-12 text-center">
+        <Calendar className="mx-auto h-8 w-8 text-[#333] mb-3" />
+        <p className="text-sm text-[#555555]">No history yet — data accumulates automatically as you use the dashboard.</p>
+      </div>
+    )
+  }
+
+  const adoptionData = [...rows].reverse().map((r) => ({
+    week: fmtWeek(r.weekStart),
+    adoption: Math.round((r.aiAdoptionPct ?? 0) * 100),
+  }))
+
+  const roiData = [...rows].reverse().map((r) => ({
+    week: fmtWeek(r.weekStart),
+    roi: Math.round(r.netRoiUsd ?? 0),
+  }))
+
+  return (
+    <div className="space-y-5">
+      {/* AI Adoption Trend */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Adoption Over Time</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+            <div style={{ minWidth: '380px' }}>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={adoptionData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="adoptionGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                  <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#555' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#555' }} axisLine={false} tickLine={false} width={36} tickFormatter={(v: number) => `${v}%`} domain={[0, 100]} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null
+                      const row = payload[0]?.payload as { week: string; adoption: number }
+                      return (
+                        <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
+                          <div className="font-medium text-white mb-1">{row.week}</div>
+                          <div className="text-green-400 font-semibold">{row.adoption}% AI adoption</div>
+                        </div>
+                      )
+                    }}
+                  />
+                  <Area type="monotone" dataKey="adoption" stroke="#22c55e" strokeWidth={2} fill="url(#adoptionGrad)" dot={false} activeDot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ROI Trend */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly ROI Value</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+            <div style={{ minWidth: '380px' }}>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={roiData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="roiGradPos" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="roiGradNeg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                  <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#555' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#555' }} axisLine={false} tickLine={false} width={48} tickFormatter={(v: number) => `$${v}`} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null
+                      const row = payload[0]?.payload as { week: string; roi: number }
+                      return (
+                        <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-xs shadow-xl">
+                          <div className="font-medium text-white mb-1">{row.week}</div>
+                          <div className={row.roi >= 0 ? 'text-green-400 font-semibold' : 'text-red-400 font-semibold'}>
+                            {row.roi >= 0 ? '+' : ''}{formatUsd(row.roi)}
+                          </div>
+                        </div>
+                      )
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="roi"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    fill="url(#roiGradPos)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Weekly History Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#1a1a1a]">
+                  {['Week', 'Active Seats', 'AI PRs', 'Adoption %', 'ROI', 'Verdict'].map((h) => (
+                    <th key={h} className="py-2 pr-4 text-left text-xs font-medium uppercase tracking-widest text-[#555]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#111]">
+                {rows.map((r) => (
+                  <tr key={r.weekStart}>
+                    <td className="py-2.5 pr-4 text-[#888] tabular-nums">{fmtWeek(r.weekStart)}</td>
+                    <td className="py-2.5 pr-4 text-white tabular-nums">{r.activeSeats}/{r.totalSeats}</td>
+                    <td className="py-2.5 pr-4 text-white tabular-nums">{r.aiPrs}</td>
+                    <td className="py-2.5 pr-4 text-white tabular-nums">{Math.round((r.aiAdoptionPct ?? 0) * 100)}%</td>
+                    <td className={cn('py-2.5 pr-4 tabular-nums font-medium', (r.netRoiUsd ?? 0) >= 0 ? 'text-green-400' : 'text-red-400')}>
+                      {(r.netRoiUsd ?? 0) >= 0 ? '+' : ''}{formatUsd(r.netRoiUsd ?? 0)}
+                    </td>
+                    <td className="py-2.5">
+                      <Badge tone={verdictBadgeTone(r.verdict)}>
+                        {r.verdict === 'net_positive' ? 'Positive' : r.verdict === 'net_negative' ? 'Negative' : r.verdict === 'unclear' ? 'Unclear' : 'No data'}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 

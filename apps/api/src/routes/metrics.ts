@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express'
 import { eq, and, gte, lt, desc, isNotNull, sql } from 'drizzle-orm'
-import { teams, teamWeeklyMetrics, pullRequests, prOutcomes, repos, users } from '@grassion/db'
+import { teams, teamWeeklyMetrics, pullRequests, prOutcomes, repos, users, weeklySnapshots } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
 import { startOfWeekUtc, addDays } from '@grassion/shared'
@@ -11,6 +11,36 @@ async function freshTeamId(githubLogin: string, fallback: string): Promise<strin
 }
 
 export const metricsRouter = Router()
+
+async function snapshotWeek(
+  teamId: string,
+  weekStart: Date,
+  data: { aiPrs: number; totalPrs: number; netDollar: number; verdict: string },
+) {
+  const adoptionPct = data.totalPrs > 0 ? data.aiPrs / data.totalPrs : 0
+  await db
+    .insert(weeklySnapshots)
+    .values({
+      teamId,
+      weekStart,
+      aiPrs: data.aiPrs,
+      totalPrs: data.totalPrs,
+      aiAdoptionPct: adoptionPct,
+      netRoiUsd: data.netDollar,
+      verdict: data.verdict,
+    })
+    .onConflictDoUpdate({
+      target: [weeklySnapshots.teamId, weeklySnapshots.weekStart],
+      set: {
+        aiPrs: data.aiPrs,
+        totalPrs: data.totalPrs,
+        aiAdoptionPct: adoptionPct,
+        netRoiUsd: data.netDollar,
+        verdict: data.verdict,
+        computedAt: new Date(),
+      },
+    })
+}
 
 metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
@@ -31,7 +61,11 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
   )[0]
 
   if (cached && cached.totalPrs && cached.totalPrs > 0) {
-    res.json(toSummary(cached, team.monthlyAiSpendUsd ?? 0))
+    const summary = toSummary(cached, team.monthlyAiSpendUsd ?? 0)
+    snapshotWeek(teamId, weekStart, summary).catch((e: Error) =>
+      console.warn('[summary] snapshot skipped:', e.message),
+    )
+    res.json(summary)
     return
   }
 
@@ -42,7 +76,41 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
     team.avgDevHourlyRateUsd ?? 75,
     team.monthlyAiSpendUsd ?? 30,
   )
-  res.json({ ...live, monthlySpend: team.monthlyAiSpendUsd ?? 0 })
+  const liveResponse = { ...live, monthlySpend: team.monthlyAiSpendUsd ?? 0 }
+  snapshotWeek(teamId, weekStart, live).catch((e: Error) =>
+    console.warn('[summary] snapshot skipped:', e.message),
+  )
+  res.json(liveResponse)
+})
+
+metricsRouter.get('/api/metrics/history', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  try {
+    const rows = await db
+      .select()
+      .from(weeklySnapshots)
+      .where(eq(weeklySnapshots.teamId, teamId))
+      .orderBy(desc(weeklySnapshots.weekStart))
+      .limit(12)
+    res.json(
+      rows.map((r) => ({
+        weekStart: r.weekStart.toISOString(),
+        totalSeats: r.totalSeats ?? 0,
+        activeSeats: r.activeSeats ?? 0,
+        inactiveSeats: r.inactiveSeats ?? 0,
+        aiPrs: r.aiPrs ?? 0,
+        totalPrs: r.totalPrs ?? 0,
+        aiAdoptionPct: r.aiAdoptionPct ?? 0,
+        monthlyWasteUsd: r.monthlyWasteUsd ?? 0,
+        netRoiUsd: r.netRoiUsd ?? 0,
+        verdict: r.verdict ?? 'insufficient_data',
+      })),
+    )
+  } catch (err) {
+    console.error('[metrics/history]', err)
+    res.json([])
+  }
 })
 
 metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: Response) => {

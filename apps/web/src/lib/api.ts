@@ -70,12 +70,25 @@ export interface SavingsHistoryResponse {
 }
 
 export interface JourneyResponse {
-  daysSinceConnected: number
+  daysConnected: number
   totalWasteIdentified: number
-  bestWeekRoiUsd: number
-  aiAdoptionNow: number
-  aiAdoptionFirst: number
-  milestones: Array<{ key: string; label: string; achievedAt: string }>
+  bestWeekRoi: number
+  firstAdoption: number
+  latestAdoption: number
+  milestones: Array<{ type: string; label: string; achievedAt: string }>
+}
+
+export interface HistoryRow {
+  weekStart: string
+  totalSeats: number
+  activeSeats: number
+  inactiveSeats: number
+  aiPrs: number
+  totalPrs: number
+  aiAdoptionPct: number
+  monthlyWasteUsd: number
+  netRoiUsd: number
+  verdict: string
 }
 
 export const api = {
@@ -120,6 +133,7 @@ export const api = {
   metrics: {
     summary: () => request<DashboardSummary>('/api/metrics/summary'),
     weekly: () => request<WeeklyMetricDto[]>('/api/metrics/weekly'),
+    history: () => request<HistoryRow[]>('/api/metrics/history'),
   },
 
   analytics: {
