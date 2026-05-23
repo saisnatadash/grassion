@@ -278,6 +278,66 @@ export const contactSubmissions = pgTable('contact_submissions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+// ============ WEEKLY SNAPSHOTS ============
+// Permanent record of each calendar week's metrics — never deleted or overwritten.
+export const weeklySnapshots = pgTable(
+  'weekly_snapshots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    weekStart: timestamp('week_start').notNull(),
+    aiPrs: integer('ai_prs').default(0),
+    totalPrs: integer('total_prs').default(0),
+    adoptionPct: real('adoption_pct').default(0),
+    netDollarEstimate: real('net_dollar_estimate').default(0),
+    wastedUsd: real('wasted_usd').default(0),
+    computedAt: timestamp('computed_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    teamWeekIdx: uniqueIndex('weekly_snapshots_team_week_idx').on(t.teamId, t.weekStart),
+  }),
+)
+
+// ============ DEVELOPER HISTORY ============
+// Per-developer, per-week AI usage — permanent record, one row per login per week.
+export const developerHistory = pgTable(
+  'developer_history',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    githubLogin: text('github_login').notNull(),
+    weekStart: timestamp('week_start').notNull(),
+    aiPrCount: integer('ai_pr_count').default(0),
+    totalPrCount: integer('total_pr_count').default(0),
+    isActive: boolean('is_active').default(false),
+    computedAt: timestamp('computed_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    teamLoginWeekIdx: uniqueIndex('dev_history_team_login_week_idx').on(t.teamId, t.githubLogin, t.weekStart),
+  }),
+)
+
+// ============ TEAM MILESTONES ============
+// Milestone events — one row per milestone per team, recorded once and never deleted.
+export const teamMilestones = pgTable(
+  'team_milestones',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    milestone: text('milestone').notNull(),
+    achievedAt: timestamp('achieved_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    teamMilestoneIdx: uniqueIndex('team_milestones_team_milestone_idx').on(t.teamId, t.milestone),
+  }),
+)
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -336,3 +396,9 @@ export type ContactSubmission = typeof contactSubmissions.$inferSelect
 export type NewContactSubmission = typeof contactSubmissions.$inferInsert
 export type SavingsEvent = typeof savingsEvents.$inferSelect
 export type NewSavingsEvent = typeof savingsEvents.$inferInsert
+export type WeeklySnapshot = typeof weeklySnapshots.$inferSelect
+export type NewWeeklySnapshot = typeof weeklySnapshots.$inferInsert
+export type DeveloperHistoryRow = typeof developerHistory.$inferSelect
+export type NewDeveloperHistoryRow = typeof developerHistory.$inferInsert
+export type TeamMilestone = typeof teamMilestones.$inferSelect
+export type NewTeamMilestone = typeof teamMilestones.$inferInsert

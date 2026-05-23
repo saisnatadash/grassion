@@ -69,6 +69,15 @@ export interface SavingsHistoryResponse {
   monthlyHistory: Array<{ month: string; wasteUsd: number }>
 }
 
+export interface JourneyResponse {
+  daysSinceConnected: number
+  totalWasteIdentified: number
+  bestWeekRoiUsd: number
+  aiAdoptionNow: number
+  aiAdoptionFirst: number
+  milestones: Array<{ key: string; label: string; achievedAt: string }>
+}
+
 export const api = {
   me: () => request<MeResponse>('/auth/me'),
   logout: async () => {
@@ -116,6 +125,7 @@ export const api = {
   analytics: {
     seatWaste: () => request<SeatWasteResponse>('/api/analytics/seat-waste'),
     savingsHistory: () => request<SavingsHistoryResponse>('/api/analytics/savings-history'),
+    journey: () => request<JourneyResponse>('/api/analytics/journey'),
   },
 
   prs: {

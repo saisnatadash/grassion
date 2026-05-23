@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, BarChart2, CheckCircle2, Clock, RefreshCw, Crown, Lock } from 'lucide-react'
+import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, BarChart2, CheckCircle2, Clock, RefreshCw, Crown, Lock, Calendar } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { api, type SavingsHistoryResponse } from '../lib/api.js'
+import { api, type SavingsHistoryResponse, type JourneyResponse } from '../lib/api.js'
 import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -104,6 +104,7 @@ export function DashboardPage() {
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
   const savingsHistory = useQuery({ queryKey: ['analytics', 'savings-history'], queryFn: api.analytics.savingsHistory })
+  const journey = useQuery({ queryKey: ['analytics', 'journey'], queryFn: api.analytics.journey })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
@@ -118,6 +119,7 @@ export function DashboardPage() {
       qc.invalidateQueries({ queryKey: ['team'] }),
       qc.invalidateQueries({ queryKey: ['me'] }),
       qc.invalidateQueries({ queryKey: ['analytics', 'savings-history'] }),
+      qc.invalidateQueries({ queryKey: ['analytics', 'journey'] }),
     ])
     setTimeout(() => setRefreshing(false), 800)
   }
@@ -374,6 +376,9 @@ export function DashboardPage() {
           icon={<BarChart2 className="h-5 w-5 text-[#444]" />}
         />
       )}
+
+      {/* ── PART 5: YOUR GRASSION JOURNEY ── */}
+      <JourneyCard data={journey.data} loading={journey.isLoading} />
 
       <p className="text-xs text-[#444444] pb-4">
         Estimates use a 30% damper on speed savings and assume 3 hours of rework per problem PR.
@@ -850,6 +855,95 @@ function SavingsUnlockedCard({
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── YOUR GRASSION JOURNEY ─────────────────────────── */
+const MILESTONE_CFG: Record<string, { icon: string; tone: 'green' | 'yellow' | 'blue' | 'gray' }> = {
+  first_ai_pr:      { icon: '🎯', tone: 'blue' },
+  adoption_50pct:   { icon: '🚀', tone: 'yellow' },
+  adoption_80pct:   { icon: '⚡', tone: 'yellow' },
+  waste_eliminated: { icon: '💰', tone: 'green' },
+  roi_positive:     { icon: '📈', tone: 'green' },
+  one_month_streak: { icon: '🏆', tone: 'yellow' },
+}
+
+function JourneyCard({ data, loading }: { data: JourneyResponse | undefined; loading: boolean }) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Your Grassion Journey</CardTitle>
+          <p className="text-xs text-[#555555] mt-0.5">Permanent data accumulation since day 1</p>
+        </div>
+        <Calendar className="h-4 w-4 text-[#555555]" />
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading…</div>
+        ) : !data ? null : (
+          <div className="space-y-5">
+            {/* Stats row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-[#222] bg-[#0a0a0a] px-4 py-3 text-center">
+                <div className="text-3xl font-bold text-white tabular-nums">{data.daysSinceConnected}</div>
+                <div className="text-xs text-[#555555] mt-1">days connected</div>
+              </div>
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-center">
+                <div className="text-xl font-bold text-red-400 tabular-nums">{formatUsd(data.totalWasteIdentified)}</div>
+                <div className="text-xs text-[#555555] mt-1">waste identified</div>
+              </div>
+              <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-4 py-3 text-center">
+                <div className="text-xl font-bold text-green-400 tabular-nums">
+                  {data.bestWeekRoiUsd > 0 ? `+${formatUsd(data.bestWeekRoiUsd)}` : '—'}
+                </div>
+                <div className="text-xs text-[#555555] mt-1">best week ROI</div>
+              </div>
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-4 py-3 text-center">
+                <div className="text-xl font-bold text-blue-400 tabular-nums">
+                  {data.aiAdoptionFirst > 0 && data.aiAdoptionFirst !== data.aiAdoptionNow
+                    ? `${data.aiAdoptionFirst}%→${data.aiAdoptionNow}%`
+                    : `${data.aiAdoptionNow}%`}
+                </div>
+                <div className="text-xs text-[#555555] mt-1">AI adoption</div>
+              </div>
+            </div>
+
+            {/* Milestones */}
+            {data.milestones.length > 0 ? (
+              <div>
+                <p className="text-xs text-[#555555] uppercase tracking-wider font-medium mb-3">Milestones earned</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.milestones.map((m) => {
+                    const cfg = MILESTONE_CFG[m.key] ?? { icon: '✓', tone: 'gray' as const }
+                    return (
+                      <div
+                        key={m.key}
+                        title={new Date(m.achievedAt).toLocaleDateString()}
+                        className={cn(
+                          'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium',
+                          cfg.tone === 'green'  && 'border-green-500/30 bg-green-500/10 text-green-400',
+                          cfg.tone === 'yellow' && 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
+                          cfg.tone === 'blue'   && 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+                          cfg.tone === 'gray'   && 'border-[#333] bg-[#111] text-[#888]',
+                        )}
+                      >
+                        <span role="img">{cfg.icon}</span>
+                        {m.label}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-[#555555] text-center py-2">
+                Merge your first AI-assisted PR to earn your first milestone.
+              </p>
+            )}
           </div>
         )}
       </CardContent>
