@@ -20,7 +20,7 @@ export function LoginPage() {
     }
 
     // No token, no error — send straight to GitHub OAuth. User never sees this page.
-    window.location.href = 'https://grassion-api.fly.dev/auth/github'
+    window.location.href = 'https://grassion-api.fly.dev/auth/github?force_login=true'
   }, [navigate])
 
   // Only shown when OAuth returns ?error=
@@ -60,7 +60,7 @@ export function LoginPage() {
             Sign-in failed. Please try again.
           </p>
           <a
-            href="https://grassion-api.fly.dev/auth/github"
+            href="https://grassion-api.fly.dev/auth/github?force_login=true"
             style={{
               display: 'inline-block',
               padding: '12px 28px',
