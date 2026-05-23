@@ -21,14 +21,7 @@ authRouter.get('/auth/github', (_req: Request, res: Response) => {
     scope: 'read:user user:email',
     state: generateState(),
   })
-  // Route through GitHub's login page so users can choose / switch accounts.
-  // GitHub shows its account picker before the OAuth authorization screen.
-  const loginUrl = new URL('https://github.com/login')
-  loginUrl.searchParams.set(
-    'return_to',
-    `/login/oauth/authorize?${params.toString()}`,
-  )
-  res.redirect(loginUrl.toString())
+  res.redirect(`https://github.com/login/oauth/authorize?${params.toString()}`)
 })
 
 authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
