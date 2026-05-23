@@ -399,9 +399,13 @@ function SlackNotificationsRow({ isPaid }: { isPaid: boolean }) {
 
 const REPO_LIMITS: Record<string, number> = {
   trial: 1,
+  free: 1,
   starter: 3,
+  growth: 10,
+  pro: 10,
   team: 10,
-  business: Infinity,
+  business: 9999,
+  admin: 9999,
 }
 
 /* ── REPOS SECTION ── */
@@ -412,7 +416,7 @@ function ReposSection() {
 
   const repoLimit = REPO_LIMITS[plan ?? 'trial'] ?? 1
   const repoCount = reposQuery.data?.length ?? 0
-  const atLimit = repoCount >= repoLimit
+  const atLimit = plan !== 'admin' && repoCount >= repoLimit
 
   const sync = useMutation({
     mutationFn: (id: string) => api.repos.sync(id),
@@ -429,7 +433,7 @@ function ReposSection() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Connected repositories</CardTitle>
-            {repoLimit !== Infinity && (
+            {plan !== 'admin' && repoLimit < 9999 && (
               <p className="text-xs text-[#555555] mt-1">{repoCount}/{repoLimit} repos on {plan ?? 'trial'} plan</p>
             )}
           </div>
