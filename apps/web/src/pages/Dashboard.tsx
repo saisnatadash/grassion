@@ -242,7 +242,7 @@ export function DashboardPage() {
       </div>
 
       {/* ── SAVINGS UNLOCKED ── */}
-      <SavingsUnlockedCard data={savingsHistory.data} loading={savingsHistory.isLoading} />
+      <SavingsUnlockedCard data={savingsHistory.data} loading={savingsHistory.isLoading} isError={savingsHistory.isError} error={savingsHistory.error} />
 
       {/* ── C: WEEKLY TREND CHART (AreaChart, AI PRs) ── */}
       <Card>
@@ -717,10 +717,15 @@ function DeveloperBreakdown({
 function SavingsUnlockedCard({
   data,
   loading,
+  isError,
+  error,
 }: {
   data: SavingsHistoryResponse | undefined
   loading: boolean
+  isError?: boolean
+  error?: unknown
 }) {
+  console.log('savings data:', data, 'loading:', loading, 'isError:', isError, 'error:', error)
   const hasSavings = data && data.totalWasteIdentified > 0
 
   return (
@@ -740,6 +745,10 @@ function SavingsUnlockedCard({
       <CardContent>
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Loading…</div>
+        ) : isError ? (
+          <div className="py-6 text-center">
+            <p className="text-sm text-[#ef4444]">Failed to load savings data — check console for details.</p>
+          </div>
         ) : !hasSavings ? (
           <div className="py-6 text-center">
             <Sparkles className="mx-auto h-7 w-7 text-[#333] mb-2" />
