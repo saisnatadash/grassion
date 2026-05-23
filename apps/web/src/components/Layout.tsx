@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard } from 'lucide-react'
 import { api } from '../lib/api.js'
@@ -41,8 +41,7 @@ export function AppLayout() {
     )
   }
   if (me.isError || !me.data) {
-    window.location.href = 'https://grassion.com'
-    return null
+    return <Navigate to="/login" replace />
   }
 
   const user = me.data.user

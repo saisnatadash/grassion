@@ -25,31 +25,29 @@ authRouter.get('/auth/github', (_req: Request, res: Response) => {
 })
 
 authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
+  const e = env()
+  const loginUrl = `${e.APP_URL}/login`
+  const errorRedirect = `${e.APP_URL}/login?error=auth_failed`
+
+  console.log('1. Starting OAuth callback', { query: req.query })
+
   const code = req.query.code
-  const state = req.query.state
   const errorParam = req.query.error
 
-  console.log('[auth/github/callback] HIT', {
-    code: typeof code === 'string' ? `${code.slice(0, 8)}…` : code,
-    state,
-    error: errorParam,
-    query: req.query,
-    redirect_uri_we_will_use: GITHUB_CALLBACK_URL,
-  })
+  console.log('2. Got code:', typeof code === 'string' ? 'yes' : 'no')
 
   if (errorParam) {
-    console.log('[auth/github/callback] GitHub returned error param:', errorParam, req.query.error_description)
-    res.status(400).json({ error: String(errorParam), description: req.query.error_description })
+    console.log('[auth/github/callback] GitHub returned error:', errorParam, req.query.error_description)
+    res.redirect(errorRedirect)
     return
   }
 
   if (typeof code !== 'string') {
     console.log('[auth/github/callback] Missing code param, query was:', req.query)
-    res.status(400).json({ error: 'missing code' })
+    res.redirect(errorRedirect)
     return
   }
 
-  const e = env()
   console.log('[auth/github/callback] env check — client_id present:', !!e.GITHUB_APP_CLIENT_ID, 'secret present:', !!e.GITHUB_APP_CLIENT_SECRET)
 
   try {
@@ -71,19 +69,20 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
     try {
       tokenJson = JSON.parse(tokenRaw)
     } catch {
-      console.log('[auth/github/callback] Failed to parse token response as JSON')
-      res.status(500).json({ error: 'oauth_failed', detail: 'non-json token response', raw: tokenRaw })
+      console.log('[auth/github/callback] Failed to parse token response as JSON, raw:', tokenRaw)
+      res.redirect(errorRedirect)
       return
     }
+
+    console.log('3. Got access token:', tokenJson.access_token ? 'yes' : 'no')
 
     if (!tokenJson.access_token) {
       console.log('[auth/github/callback] No access_token in response:', tokenJson)
       logger.warn({ tokenJson }, 'github oauth token exchange failed')
-      res.status(400).json({ error: 'github oauth failed', detail: tokenJson.error, description: tokenJson.error_description })
+      res.redirect(errorRedirect)
       return
     }
 
-    console.log('[auth/github/callback] Got access_token, fetching profile')
     const profileRes = await fetch('https://api.github.com/user', {
       headers: { authorization: `Bearer ${tokenJson.access_token}`, 'user-agent': 'grassion' },
     })
@@ -93,7 +92,8 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       avatar_url?: string
       email?: string | null
     }
-    console.log('[auth/github/callback] profile:', { id: profile.id, login: profile.login, hasEmail: !!profile.email })
+
+    console.log('4. Got GitHub user:', profile.login)
 
     let email = profile.email ?? null
     if (!email) {
@@ -106,7 +106,6 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       console.log('[auth/github/callback] fetched emails, primary:', email)
     }
 
-    // Find an existing user record (created by webhook membership flows) or attach to a team.
     console.log('[auth/github/callback] looking up user by githubUserId:', profile.id)
     const existingUser = await db
       .select()
@@ -115,7 +114,6 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       .limit(1)
 
     let userRow = existingUser[0]
-    console.log('[auth/github/callback] existingUser found:', !!userRow)
 
     if (!userRow) {
       console.log('[auth/github/callback] no user row — looking up team by login:', profile.login)
@@ -124,11 +122,9 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         .from(teams)
         .where(eq(teams.githubAccountLogin, profile.login))
         .limit(1)
-      console.log('[auth/github/callback] teamMatch found:', !!teamMatch[0])
 
       let teamId: string
       if (!teamMatch[0]) {
-        // No team exists — auto-create one so the user lands on the dashboard immediately.
         console.log('[auth/github/callback] no team — auto-creating for:', profile.login)
         const slug = await ensureUniqueSlug(slugify(profile.login))
         const insert: NewTeam = {
@@ -144,6 +140,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         console.log('[auth/github/callback] auto-created teamId:', teamId)
       } else {
         teamId = teamMatch[0].id
+        console.log('[auth/github/callback] found existing teamId:', teamId)
       }
 
       userRow = await upsertUser({
@@ -155,7 +152,6 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         role: 'owner',
       })
 
-      // Fire-and-forget: email failure must never block login
       if (email) {
         sendWelcomeEmail(email, profile.login).catch((err) => {
           logger.warn({ err, email }, 'welcome email failed')
@@ -171,10 +167,13 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       })
     }
 
-    console.log('[auth/github/callback] upsertUser done, userId:', userRow.id, 'teamId:', userRow.teamId)
+    console.log('5. Team ID:', userRow.teamId)
+
     const token = await createSession(userRow.id)
     setSessionCookie(res, token)
+
     const redirectTo = `${e.APP_URL}/auth/callback?token=${encodeURIComponent(token)}`
+    console.log('6. Redirecting to app with token')
     console.log('[auth/github/callback] SUCCESS — redirecting to:', redirectTo.split('?')[0] + '?token=…')
     res.redirect(redirectTo)
   } catch (err) {
@@ -186,7 +185,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       responseData: error.response?.data,
     })
     logger.error({ err }, 'github oauth callback failed')
-    res.status(500).json({ error: 'oauth_failed', message: error.message })
+    res.redirect(errorRedirect)
   }
 })
 
@@ -195,9 +194,6 @@ authRouter.post('/auth/logout', (_req: Request, res: Response) => {
   res.json({ ok: true })
 })
 
-// plan is read directly from the teams table on every request — never from the JWT.
-// The JWT only authenticates the request; plan may have been updated in the DB
-// since the JWT was issued, so the DB value is always authoritative.
 authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const userRow = await db.select().from(users).where(eq(users.id, sess.userId)).limit(1)

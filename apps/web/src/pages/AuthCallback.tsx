@@ -1,23 +1,42 @@
 import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 export function AuthCallbackPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
 
   useEffect(() => {
-    const token = searchParams.get('token')
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+    const error = params.get('error')
+
+    if (error) {
+      navigate('/login?error=' + error, { replace: true })
+      return
+    }
+
     if (token) {
       localStorage.setItem('grassion_token', token)
       navigate('/dashboard', { replace: true })
-    } else {
-      window.location.href = 'https://grassion.com'
+      return
     }
-  }, [navigate, searchParams])
+
+    navigate('/login', { replace: true })
+  }, [navigate])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] text-[#888888] text-sm">
-      Signing you in…
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#0a0a0a',
+        color: 'white',
+        fontSize: '18px',
+        fontFamily: 'Inter, sans-serif',
+      }}
+    >
+      Signing you in...
     </div>
   )
 }
