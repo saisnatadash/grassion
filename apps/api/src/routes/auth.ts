@@ -13,19 +13,13 @@ export const authRouter = Router()
 
 const GITHUB_CALLBACK_URL = 'https://grassion-api.fly.dev/auth/github/callback'
 
-authRouter.get('/auth/github', (req: Request, res: Response) => {
+authRouter.get('/auth/github', (_req: Request, res: Response) => {
   const e = env()
-  const forceLogin = req.query.force_login === 'true'
-
   const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
   githubAuthUrl.searchParams.set('client_id', e.GITHUB_APP_CLIENT_ID)
   githubAuthUrl.searchParams.set('redirect_uri', GITHUB_CALLBACK_URL)
-  githubAuthUrl.searchParams.set('scope', 'read:user,repo,read:org')
+  githubAuthUrl.searchParams.set('scope', 'read:user user:email')
   githubAuthUrl.searchParams.set('state', generateState())
-  if (forceLogin) {
-    githubAuthUrl.searchParams.set('login', '')
-  }
-
   res.redirect(githubAuthUrl.toString())
 })
 
