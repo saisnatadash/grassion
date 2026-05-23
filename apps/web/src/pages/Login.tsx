@@ -1,4 +1,18 @@
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+
 export function LoginPage() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    // Already have a token — skip login and go straight to the dashboard.
+    // The auth guard in Layout.tsx will verify it and bounce back here only
+    // if the session is actually expired (401), at which point it clears the token.
+    if (localStorage.getItem('grassion_token')) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [navigate])
+
   return (
     <div
       style={{

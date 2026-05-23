@@ -41,6 +41,11 @@ export function AppLayout() {
     )
   }
   if (me.isError || !me.data) {
+    // Only hard-redirect on 401 (invalid/expired session). Clear stale token so
+    // the login page shows the GitHub button instead of auto-redirecting back here.
+    if ((me.error as { status?: number } | null)?.status === 401 || !me.data) {
+      localStorage.removeItem('grassion_token')
+    }
     return <Navigate to="/login" replace />
   }
 
