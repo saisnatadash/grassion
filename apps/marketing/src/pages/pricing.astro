@@ -16,11 +16,11 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --black: #000000;
+      --black: #0a0a0a;
       --white: #ffffff;
-      --dim: rgba(255,255,255,0.38);
-      --dimmer: rgba(255,255,255,0.18);
-      --line: rgba(255,255,255,0.09);
+      --dim: rgba(255,255,255,0.62);
+      --dimmer: rgba(255,255,255,0.35);
+      --line: rgba(255,255,255,0.14);
     }
 
     html, body {
@@ -115,7 +115,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     }
 
     .plan-card {
-      background: var(--black);
+      background: #141414;
       padding: 40px 28px;
       display: flex;
       flex-direction: column;
@@ -123,7 +123,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     }
 
     .plan-card.featured {
-      background: rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.07);
     }
 
     .plan-popular {
@@ -145,7 +145,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       font-size: 10px;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.62);
       margin-bottom: 20px;
     }
 
@@ -160,14 +160,14 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     .plan-price-usd {
       font-family: 'DM Mono', monospace;
       font-size: 11px;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.50);
       margin-bottom: 8px;
     }
 
     .plan-unit {
       font-size: 12px;
       font-weight: 300;
-      color: rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.58);
       margin-bottom: 4px;
     }
 
@@ -175,7 +175,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       font-family: 'DM Mono', monospace;
       font-size: 9px;
       letter-spacing: 0.12em;
-      color: rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.44);
       margin-bottom: 28px;
       text-transform: uppercase;
     }
@@ -206,13 +206,13 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
     .plan-features li::before {
       content: '·';
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.50);
       flex-shrink: 0;
       margin-top: 1px;
     }
 
     .plan-features li.inherit {
-      color: rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.44);
       font-size: 12px;
     }
     .plan-features li.inherit::before { content: '↳'; font-size: 10px; }
@@ -249,7 +249,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       text-align: center;
       font-family: 'DM Mono', monospace;
       font-size: 9px;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.42);
       letter-spacing: 0.1em;
       margin-top: 10px;
     }
@@ -262,12 +262,12 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       border: 1px solid var(--line);
       padding: 18px 24px;
       margin-bottom: 60px;
-      background: rgba(255,255,255,0.02);
+      background: rgba(255,255,255,0.05);
     }
 
     .payment-note-icon {
       width: 36px; height: 36px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.20);
       border-radius: 4px;
       display: flex;
       align-items: center;
@@ -275,7 +275,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       flex-shrink: 0;
       font-family: 'DM Mono', monospace;
       font-size: 9px;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.52);
       letter-spacing: 0.06em;
     }
 
@@ -300,7 +300,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       font-weight: 500;
       letter-spacing: 0.24em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.55);
       margin-bottom: 28px;
     }
 
@@ -328,7 +328,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       font-family: 'DM Mono', monospace;
       font-size: 18px;
       font-weight: 300;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.52);
       transition: transform 0.2s;
     }
 
