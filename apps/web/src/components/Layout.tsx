@@ -1,9 +1,98 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard, Shield, Activity } from 'lucide-react'
-import { api } from '../lib/api.js'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import {
+  ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard,
+  Shield, Activity, GitPullRequest, Bell, CheckCheck,
+} from 'lucide-react'
+import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
+
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+
+function timeAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime()
+  const s = Math.floor(ms / 1000)
+  if (s < 60) return 'just now'
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
+function NotifTypeIcon({ type }: { type: string }) {
+  if (type === 'revert_detected') return <span className="text-red-400">↩</span>
+  if (type === 'hotfix_surge') return <span className="text-orange-400">⚡</span>
+  return <span className="text-yellow-400">⚠</span>
+}
+
+function NotificationPanel({
+  notifications,
+  onMarkAllRead,
+  onMarkRead,
+}: {
+  notifications: NotificationItem[]
+  onMarkAllRead: () => void
+  onMarkRead: (id: string) => void
+}) {
+  const unread = notifications.filter((n) => !n.readAt)
+
+  return (
+    <div className="absolute right-0 top-full mt-1.5 w-80 rounded-xl border border-[#222222] bg-[#111111] shadow-xl shadow-black/50 overflow-hidden z-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#222222]">
+        <span className="text-xs font-semibold text-white">Notifications</span>
+        {unread.length > 0 && (
+          <button
+            onClick={onMarkAllRead}
+            className="flex items-center gap-1 text-[10px] text-[#555] hover:text-white transition-colors"
+          >
+            <CheckCheck className="h-3 w-3" />
+            Mark all read
+          </button>
+        )}
+      </div>
+
+      {notifications.length === 0 ? (
+        <div className="py-10 text-center">
+          <Bell className="mx-auto h-6 w-6 text-[#333] mb-2" />
+          <p className="text-xs text-[#555]">No notifications yet</p>
+        </div>
+      ) : (
+        <ul className="max-h-80 overflow-y-auto">
+          {notifications.map((n) => (
+            <li
+              key={n.id}
+              className={cn(
+                'px-4 py-3 border-b border-[#1a1a1a] last:border-0 cursor-pointer hover:bg-white/3 transition-colors',
+                !n.readAt && 'bg-white/2',
+              )}
+              onClick={() => !n.readAt && onMarkRead(n.id)}
+            >
+              <div className="flex items-start gap-2.5">
+                <span className="text-base mt-0.5 flex-shrink-0">
+                  <NotifTypeIcon type={n.type} />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className={cn('text-xs font-medium leading-tight', n.readAt ? 'text-[#666]' : 'text-white')}>
+                      {n.title}
+                    </p>
+                    {!n.readAt && (
+                      <div className="h-1.5 w-1.5 rounded-full bg-blue-400 flex-shrink-0 mt-1" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#555] mt-0.5 leading-relaxed">{n.body}</p>
+                  <p className="text-[10px] text-[#444] mt-1">{timeAgo(n.createdAt)}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 export function AppLayout() {
   const navigate = useNavigate()
@@ -21,21 +110,53 @@ export function AppLayout() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
+  const notifQuery = useQuery({
+    queryKey: ['notifications'],
+    queryFn: api.notifications.list,
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const markRead = useMutation({
+    mutationFn: api.notifications.markRead,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+  const markAllRead = useMutation({
+    mutationFn: api.notifications.markAllRead,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+
   const inactiveCount = seatWaste.data?.inactiveUsers.length ?? 0
   const isHighRisk = health.data?.riskLevel === 'high'
+  const notifications = notifQuery.data ?? []
+  const unreadCount = notifications.filter((n) => !n.readAt).length
+
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
 
+  // Close dropdowns on outside click
   useEffect(() => {
     function onOutsideClick(e: MouseEvent) {
-      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setDropdownOpen(false)
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false)
     }
     document.addEventListener('mousedown', onOutsideClick)
     return () => document.removeEventListener('mousedown', onOutsideClick)
   }, [])
+
+  // SSE for live notifications
+  useEffect(() => {
+    if (!me.data) return
+    const es = new EventSource(`${API_URL}/api/notifications/stream`, { withCredentials: true })
+    es.addEventListener('notification', () => {
+      void qc.invalidateQueries({ queryKey: ['notifications'] })
+    })
+    es.onerror = () => es.close()
+    return () => es.close()
+  }, [me.data, qc])
 
   if (me.isLoading) {
     return (
@@ -48,8 +169,6 @@ export function AppLayout() {
     )
   }
   if (me.isError || !me.data) {
-    // Only hard-redirect on 401 (invalid/expired session). Clear stale token so
-    // the login page shows the GitHub button instead of auto-redirecting back here.
     if ((me.error as { status?: number } | null)?.status === 401 || !me.data) {
       localStorage.removeItem('grassion_token')
     }
@@ -71,6 +190,7 @@ export function AppLayout() {
     { to: '/dashboard', label: 'Dashboard', icon: BarChart2, badge: null as number | null },
     { to: '/spend-intelligence', label: 'AI Spend', icon: DollarSign, badge: inactiveCount > 0 ? inactiveCount : null },
     { to: '/health', label: 'Health', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
+    { to: '/outcomes', label: 'Outcomes', icon: GitPullRequest, badge: null as number | null },
     { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
   ]
 
@@ -83,11 +203,8 @@ export function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-[#222222] bg-[#111111]">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
 
-          {/* Left: Logo — always visible wordmark */}
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-2.5 select-none flex-shrink-0"
-          >
+          {/* Left: Logo */}
+          <Link to="/dashboard" className="flex items-center gap-2.5 select-none flex-shrink-0">
             <img
               src="/W+L.png"
               alt="Grassion"
@@ -105,9 +222,7 @@ export function AppLayout() {
                 className={({ isActive }) =>
                   cn(
                     'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-white/8 text-white'
-                      : 'text-[#888888] hover:bg-white/5 hover:text-white',
+                    isActive ? 'bg-white/8 text-white' : 'text-[#888888] hover:bg-white/5 hover:text-white',
                   )
                 }
               >
@@ -123,8 +238,31 @@ export function AppLayout() {
             ))}
           </nav>
 
-          {/* Right: Plan badge + Profile */}
+          {/* Right: Notification bell + Plan badge + Profile */}
           <div className="flex items-center gap-2">
+            {/* Notification bell */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen((o) => !o)}
+                className="relative flex h-8 w-8 items-center justify-center rounded-lg text-[#888] hover:bg-white/5 hover:text-white transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-500 px-1 text-[9px] font-bold text-white leading-none">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <NotificationPanel
+                  notifications={notifications}
+                  onMarkAllRead={() => markAllRead.mutate()}
+                  onMarkRead={(id) => markRead.mutate(id)}
+                />
+              )}
+            </div>
+
             {/* Plan badge */}
             <span
               className={cn(
@@ -170,7 +308,7 @@ export function AppLayout() {
                   </div>
                   <DropItem icon={Settings} label="Settings" onClick={() => { navigate('/settings'); setDropdownOpen(false) }} />
                   <DropItem icon={CreditCard} label="Billing" onClick={() => { navigate('/billing'); setDropdownOpen(false) }} />
-                  <DropItemExternal icon={Shield} label="Security" href="https://grassion.com/security/" />
+                  <DropItem icon={Shield} label="Security" onClick={() => { navigate('/security'); setDropdownOpen(false) }} />
                   <DropItem icon={LogOut} label="Sign out" onClick={signOut} danger />
                 </div>
               )}
@@ -258,19 +396,5 @@ function DropItem({
       <Icon className="h-3.5 w-3.5" />
       {label}
     </button>
-  )
-}
-
-function DropItemExternal({ icon: Icon, label, href }: { icon: React.ElementType; label: string; href: string }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#888888] hover:bg-white/5 hover:text-white transition-colors"
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {label}
-    </a>
   )
 }

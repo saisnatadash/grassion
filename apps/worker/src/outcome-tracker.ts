@@ -4,6 +4,7 @@ import {
   prOutcomes,
   repos,
   outcomeCheckQueue,
+  notifications,
   type PullRequest,
   type Repo,
 } from '@grassion/db'
@@ -140,6 +141,26 @@ export async function computeAndStoreOutcome(pr: PullRequest, repo: Repo) {
         computedAt: new Date(),
       },
     })
+
+  if (outcome.reworkScore >= 50) {
+    const type = outcome.wasReverted ? 'revert_detected' : 'problem_pr'
+    const shortTitle = pr.title.length > 70 ? `${pr.title.slice(0, 70)}…` : pr.title
+    await db
+      .insert(notifications)
+      .values({
+        teamId: outcome.teamId,
+        type,
+        title: outcome.wasReverted
+          ? `PR #${pr.githubPrNumber} was reverted`
+          : `High-risk PR detected: #${pr.githubPrNumber}`,
+        body: outcome.wasReverted
+          ? `"${shortTitle}" was reverted. Rework score: ${Math.round(outcome.reworkScore)}/100.`
+          : `"${shortTitle}" scored ${Math.round(outcome.reworkScore)}/100 on rework risk.`,
+        link: '/outcomes',
+        sourceId: pr.id,
+      })
+      .onConflictDoNothing()
+  }
 }
 
 async function computeOutcome(pr: PullRequest, _repo: Repo) {

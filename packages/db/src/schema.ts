@@ -347,6 +347,31 @@ export const teamMilestones = pgTable(
   }),
 )
 
+// ============ NOTIFICATIONS ============
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    type: text('type').notNull(), // 'revert_detected' | 'problem_pr' | 'hotfix_surge'
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    link: text('link'),
+    sourceId: text('source_id'), // prId that triggered this — used for dedup
+    readAt: timestamp('read_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    teamIdx: index('notifications_team_idx').on(t.teamId),
+    sourceUniqueIdx: uniqueIndex('notifications_team_type_source_idx').on(t.teamId, t.type, t.sourceId),
+  }),
+)
+
+export type Notification = typeof notifications.$inferSelect
+export type NewNotification = typeof notifications.$inferInsert
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),

@@ -8,6 +8,8 @@ import { contactRouter } from './contact.js'
 import { analyticsRouter } from './analytics.js'
 import { debugRouter } from './debug.js'
 import { adminRouter } from './admin.js'
+import { notificationsRouter } from './notifications.js'
+import { securityRouter } from './security.js'
 
 export const router = Router()
 
@@ -24,3 +26,5 @@ router.use(contactRouter)
 router.use(analyticsRouter)
 router.use(debugRouter)
 router.use(adminRouter)
+router.use(notificationsRouter)
+router.use(securityRouter)

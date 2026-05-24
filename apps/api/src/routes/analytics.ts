@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express'
-import { eq, and, sql, gte, desc } from 'drizzle-orm'
+import { eq, and, sql, gte, desc, gt } from 'drizzle-orm'
 import {
-  pullRequests, users, savingsEvents, teams, teamWeeklyMetrics,
+  pullRequests, prOutcomes, users, savingsEvents, teams, teamWeeklyMetrics,
   weeklySnapshots, developerHistory, teamMilestones,
 } from '@grassion/db'
 import { db } from '../db.js'
@@ -579,6 +579,56 @@ analyticsRouter.get('/api/analytics/outcomes', requireAuth, async (req: Request,
     })
   } catch (err) {
     console.error('[outcomes]', err)
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  const filter = (req.query['filter'] as string | undefined) ?? 'all'
+
+  try {
+    const conditions: ReturnType<typeof eq>[] = [eq(prOutcomes.teamId, teamId)]
+    if (filter === 'reverted') conditions.push(eq(prOutcomes.wasReverted, true))
+    else if (filter === 'hotfix') conditions.push(eq(prOutcomes.hadHotfixWithin7d, true))
+    else if (filter === 'problem') conditions.push(gt(prOutcomes.reworkScore, 30))
+
+    const rows = await db
+      .select({
+        prId: prOutcomes.prId,
+        wasReverted: prOutcomes.wasReverted,
+        revertedAt: prOutcomes.revertedAt,
+        revertPrNumber: prOutcomes.revertPrNumber,
+        ciFailureCount: prOutcomes.ciFailureCount,
+        downstreamFixCount: prOutcomes.downstreamFixCount,
+        hadHotfixWithin7d: prOutcomes.hadHotfixWithin7d,
+        reworkScore: prOutcomes.reworkScore,
+        aiSummary: prOutcomes.aiSummary,
+        computedAt: prOutcomes.computedAt,
+        prNumber: pullRequests.githubPrNumber,
+        prTitle: pullRequests.title,
+        authorLogin: pullRequests.authorLogin,
+        mergedAt: pullRequests.mergedAt,
+        aiSource: pullRequests.aiSource,
+      })
+      .from(prOutcomes)
+      .innerJoin(pullRequests, eq(pullRequests.id, prOutcomes.prId))
+      .where(and(...conditions))
+      .orderBy(desc(prOutcomes.reworkScore))
+      .limit(50)
+
+    res.json(rows.map((r) => ({
+      ...r,
+      reworkScore: r.reworkScore ?? 0,
+      ciFailureCount: r.ciFailureCount ?? 0,
+      downstreamFixCount: r.downstreamFixCount ?? 0,
+      computedAt: r.computedAt.toISOString(),
+      mergedAt: r.mergedAt?.toISOString() ?? null,
+      revertedAt: r.revertedAt?.toISOString() ?? null,
+    })))
+  } catch (err) {
+    console.error('[pr-outcomes]', err)
     res.status(500).json({ error: 'internal_error' })
   }
 })

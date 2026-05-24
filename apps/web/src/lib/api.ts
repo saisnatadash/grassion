@@ -126,6 +126,46 @@ export interface JourneyResponse {
   milestones: Array<{ type: string; label: string; achievedAt: string }>
 }
 
+export interface PrOutcomeItem {
+  prId: string
+  prNumber: number
+  prTitle: string
+  authorLogin: string | null
+  mergedAt: string | null
+  aiSource: string | null
+  wasReverted: boolean | null
+  revertedAt: string | null
+  revertPrNumber: number | null
+  ciFailureCount: number
+  downstreamFixCount: number
+  hadHotfixWithin7d: boolean | null
+  reworkScore: number
+  aiSummary: string | null
+  computedAt: string
+}
+
+export interface NotificationItem {
+  id: string
+  teamId: string
+  type: string
+  title: string
+  body: string
+  link: string | null
+  sourceId: string | null
+  readAt: string | null
+  createdAt: string
+}
+
+export interface SecurityOverview {
+  userId: string
+  role: string
+  activeSessionCount: number
+  connectedRepos: Array<{ name: string; connectedAt: string }>
+  milestones: Array<{ type: string; achievedAt: string }>
+  githubPermissions: Array<{ scope: string; description: string }>
+  dataAccess: { reads: string[]; neverReads: string[] }
+}
+
 export interface HistoryRow {
   weekStart: string
   totalSeats: number
@@ -190,6 +230,18 @@ export const api = {
     journey: () => request<JourneyResponse>('/api/analytics/journey'),
     outcomes: () => request<OutcomesResponse>('/api/analytics/outcomes'),
     health: () => request<HealthResponse>('/api/analytics/health'),
+    prOutcomes: (filter?: string) =>
+      request<PrOutcomeItem[]>(`/api/analytics/pr-outcomes${filter && filter !== 'all' ? `?filter=${filter}` : ''}`),
+  },
+
+  notifications: {
+    list: () => request<NotificationItem[]>('/api/notifications'),
+    markRead: (id: string) => request<{ ok: true }>(`/api/notifications/${id}/read`, { method: 'POST' }),
+    markAllRead: () => request<{ ok: true }>('/api/notifications/read-all', { method: 'POST' }),
+  },
+
+  security: {
+    overview: () => request<SecurityOverview>('/api/security/overview'),
   },
 
   prs: {

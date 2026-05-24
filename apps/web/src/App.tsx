@@ -10,6 +10,8 @@ import { BillingPage } from './pages/Billing.js'
 import { OnboardingPage } from './pages/Onboarding.js'
 import { SpendIntelligencePage } from './pages/SpendIntelligence.js'
 import { HealthPage } from './pages/Health.js'
+import { OutcomesPage } from './pages/Outcomes.js'
+import { SecurityPage } from './pages/Security.js'
 import { AuthCallbackPage } from './pages/AuthCallback.js'
 import { NotFoundPage } from './pages/NotFound.js'
 
@@ -52,6 +54,8 @@ export function App() {
             <Route path="/spend-intelligence" element={<SpendIntelligencePage />} />
             <Route path="/seat-waste" element={<Navigate to="/spend-intelligence" replace />} />
             <Route path="/health" element={<HealthPage />} />
+            <Route path="/outcomes" element={<OutcomesPage />} />
+            <Route path="/security" element={<SecurityPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
