@@ -166,6 +166,46 @@ export interface SecurityOverview {
   dataAccess: { reads: string[]; neverReads: string[] }
 }
 
+export interface DeveloperMetricsRow {
+  githubLogin: string
+  weeklyData: Array<{
+    weekStart: string
+    totalPrs: number | null
+    aiPrs: number | null
+    revertedPrs: number | null
+    hotfixPrs: number | null
+    qualityScore: number | null
+    isActive: boolean | null
+    primaryAiTool: string | null
+  }>
+  trend: 'improving' | 'stable' | 'declining'
+  qualityScore: number
+  isPowerUser: boolean
+  primaryTool: string | null
+  isActive: boolean | null
+}
+
+export interface ToolComparisonRow {
+  toolName: string
+  totalPrs: number
+  qualityScore: number
+  estimatedSpend: number
+  revertRate: number
+  activeUsers: number
+  verdict: 'strong_roi' | 'medium_roi' | 'low_roi'
+}
+
+export interface CodebaseHealthResponse {
+  current: {
+    healthScore: number
+    riskLevel: string
+    trend: 'improving' | 'stable' | 'declining'
+    aiAdoptionPct: number
+    revertRatePct: number
+  } | null
+  history: Array<{ date: string; healthScore: number; riskLevel: string }>
+}
+
 export interface HistoryRow {
   weekStart: string
   totalSeats: number
@@ -232,6 +272,9 @@ export const api = {
     health: () => request<HealthResponse>('/api/analytics/health'),
     prOutcomes: (filter?: string) =>
       request<PrOutcomeItem[]>(`/api/analytics/pr-outcomes${filter && filter !== 'all' ? `?filter=${filter}` : ''}`),
+    developerMetrics: () => request<{ developers: DeveloperMetricsRow[] }>('/api/analytics/developer-metrics'),
+    toolComparison: () => request<{ tools: ToolComparisonRow[] }>('/api/analytics/tool-comparison'),
+    codbaseHealth: () => request<CodebaseHealthResponse>('/api/analytics/codebase-health'),
   },
 
   notifications: {

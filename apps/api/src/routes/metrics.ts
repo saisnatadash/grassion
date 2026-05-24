@@ -1,6 +1,128 @@
 import { Router, type Request, type Response } from 'express'
 import { eq, and, gte, lt, desc, isNotNull, sql } from 'drizzle-orm'
 import { teams, teamWeeklyMetrics, pullRequests, prOutcomes, repos, users, weeklySnapshots } from '@grassion/db'
+
+async function populateWeeklyMetrics(teamId: string, weekStart: Date): Promise<void> {
+  const weekStartStr = weekStart.toISOString().split('T')[0]!
+
+  await db.execute(sql`
+    INSERT INTO developer_weekly_metrics (
+      team_id, github_login, week_start, total_prs, ai_prs,
+      reverted_prs, hotfix_prs, quality_score, is_active, primary_ai_tool
+    )
+    SELECT
+      ${teamId}::uuid,
+      author_login,
+      ${weekStartStr}::date,
+      COUNT(*)::int,
+      COUNT(*) FILTER (WHERE ai_source IS NOT NULL)::int,
+      COUNT(*) FILTER (WHERE was_reverted = true)::int,
+      COUNT(*) FILTER (WHERE triggered_hotfix = true)::int,
+      GREATEST(0, 100
+        - (AVG(CASE WHEN was_reverted THEN 1.0 ELSE 0 END) * 40)
+        - (AVG(CASE WHEN triggered_hotfix THEN 1.0 ELSE 0 END) * 30)
+      ),
+      (COUNT(*) FILTER (WHERE ai_source IS NOT NULL)) > 0,
+      MODE() WITHIN GROUP (ORDER BY ai_source) FILTER (WHERE ai_source IS NOT NULL)
+    FROM pull_requests
+    WHERE team_id = ${teamId}::uuid
+      AND merged_at >= ${weekStart}
+      AND state = 'merged'
+      AND author_login IS NOT NULL
+    GROUP BY author_login
+    ON CONFLICT (team_id, github_login, week_start)
+    DO UPDATE SET
+      total_prs = EXCLUDED.total_prs,
+      ai_prs = EXCLUDED.ai_prs,
+      reverted_prs = EXCLUDED.reverted_prs,
+      hotfix_prs = EXCLUDED.hotfix_prs,
+      quality_score = EXCLUDED.quality_score,
+      is_active = EXCLUDED.is_active,
+      primary_ai_tool = EXCLUDED.primary_ai_tool,
+      recorded_at = now()
+  `)
+
+  await db.execute(sql`
+    INSERT INTO tool_weekly_metrics (
+      team_id, tool_name, week_start, pr_count, revert_count,
+      quality_score, active_users
+    )
+    SELECT
+      ${teamId}::uuid,
+      ai_source,
+      ${weekStartStr}::date,
+      COUNT(*)::int,
+      COUNT(*) FILTER (WHERE was_reverted = true)::int,
+      GREATEST(0, 100 - (
+        COUNT(*) FILTER (WHERE was_reverted = true)::float / NULLIF(COUNT(*), 0) * 40
+      )),
+      COUNT(DISTINCT author_login)::int
+    FROM pull_requests
+    WHERE team_id = ${teamId}::uuid
+      AND ai_source IS NOT NULL
+      AND merged_at >= ${weekStart}
+      AND state = 'merged'
+    GROUP BY ai_source
+    ON CONFLICT (team_id, tool_name, week_start)
+    DO UPDATE SET
+      pr_count = EXCLUDED.pr_count,
+      revert_count = EXCLUDED.revert_count,
+      quality_score = EXCLUDED.quality_score,
+      active_users = EXCLUDED.active_users,
+      recorded_at = now()
+  `)
+
+  await db.execute(sql`
+    INSERT INTO codebase_health_snapshots (
+      team_id, snapshot_date, overall_health_score,
+      ai_adoption_pct, revert_rate_pct, hotfix_rate_pct,
+      active_developers, total_developers, risk_level
+    )
+    WITH stats AS (
+      SELECT
+        COUNT(*) FILTER (WHERE ai_source IS NOT NULL)::float AS ai_prs,
+        COUNT(*)::float AS total_prs,
+        COUNT(*) FILTER (WHERE was_reverted = true AND ai_source IS NOT NULL)::float AS reverted,
+        COUNT(*) FILTER (WHERE triggered_hotfix = true AND ai_source IS NOT NULL)::float AS hotfix,
+        COUNT(DISTINCT author_login) FILTER (WHERE merged_at >= ${weekStart})::int AS active_devs,
+        COUNT(DISTINCT author_login)::int AS total_devs
+      FROM pull_requests
+      WHERE team_id = ${teamId}::uuid AND state = 'merged'
+    ),
+    rates AS (
+      SELECT
+        CASE WHEN ai_prs > 0 THEN reverted / ai_prs * 100 ELSE 0 END AS revert_rate,
+        CASE WHEN ai_prs > 0 THEN hotfix / ai_prs * 100 ELSE 0 END AS hotfix_rate,
+        CASE WHEN total_prs > 0 THEN ai_prs / total_prs * 100 ELSE 0 END AS adoption_pct,
+        active_devs, total_devs
+      FROM stats
+    )
+    SELECT
+      ${teamId}::uuid,
+      ${weekStartStr}::date,
+      GREATEST(0, 100 - revert_rate * 0.4 - hotfix_rate * 0.3),
+      adoption_pct,
+      revert_rate,
+      hotfix_rate,
+      active_devs,
+      total_devs,
+      CASE
+        WHEN revert_rate > 15 OR hotfix_rate > 20 THEN 'high'
+        WHEN revert_rate > 8 OR hotfix_rate > 10 THEN 'medium'
+        ELSE 'low'
+      END
+    FROM rates
+    ON CONFLICT (team_id, snapshot_date)
+    DO UPDATE SET
+      overall_health_score = EXCLUDED.overall_health_score,
+      ai_adoption_pct = EXCLUDED.ai_adoption_pct,
+      revert_rate_pct = EXCLUDED.revert_rate_pct,
+      hotfix_rate_pct = EXCLUDED.hotfix_rate_pct,
+      active_developers = EXCLUDED.active_developers,
+      total_developers = EXCLUDED.total_developers,
+      risk_level = EXCLUDED.risk_level
+  `)
+}
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
 import { startOfWeekUtc, addDays } from '@grassion/shared'
@@ -65,6 +187,9 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
     snapshotWeek(teamId, weekStart, summary).catch((e: Error) =>
       console.warn('[summary] snapshot skipped:', e.message),
     )
+    populateWeeklyMetrics(teamId, weekStart).catch((e: Error) =>
+      console.warn('[summary] metrics populate skipped:', e.message),
+    )
     res.json(summary)
     return
   }
@@ -79,6 +204,9 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
   const liveResponse = { ...live, monthlySpend: team.monthlyAiSpendUsd ?? 0 }
   snapshotWeek(teamId, weekStart, live).catch((e: Error) =>
     console.warn('[summary] snapshot skipped:', e.message),
+  )
+  populateWeeklyMetrics(teamId, weekStart).catch((e: Error) =>
+    console.warn('[summary] metrics populate skipped:', e.message),
   )
   res.json(liveResponse)
 })

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, BarChart2, CheckCircle2, Clock, RefreshCw, Crown, Lock, Calendar } from 'lucide-react'
+import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, BarChart2, CheckCircle2, Clock, RefreshCw, Crown, Lock, Calendar, Shield, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { api, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow, type OutcomesResponse, type HealthResponse } from '../lib/api.js'
+import { api, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow, type OutcomesResponse, type HealthResponse, type ToolComparisonRow } from '../lib/api.js'
 import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -107,6 +107,7 @@ export function DashboardPage() {
   const journey = useQuery({ queryKey: ['analytics', 'journey'], queryFn: api.analytics.journey })
   const outcomes = useQuery({ queryKey: ['analytics', 'outcomes'], queryFn: api.analytics.outcomes, retry: false })
   const health = useQuery({ queryKey: ['analytics', 'health'], queryFn: api.analytics.health, staleTime: 5 * 60 * 1000, retry: false })
+  const toolComparison = useQuery({ queryKey: ['analytics', 'tool-comparison'], queryFn: api.analytics.toolComparison, staleTime: 5 * 60 * 1000, retry: false })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
@@ -126,6 +127,7 @@ export function DashboardPage() {
       qc.invalidateQueries({ queryKey: ['analytics', 'journey'] }),
       qc.invalidateQueries({ queryKey: ['analytics', 'outcomes'] }),
       qc.invalidateQueries({ queryKey: ['analytics', 'health'] }),
+      qc.invalidateQueries({ queryKey: ['analytics', 'tool-comparison'] }),
       qc.invalidateQueries({ queryKey: ['metrics', 'history'] }),
     ])
     setTimeout(() => setRefreshing(false), 800)
@@ -256,13 +258,16 @@ export function DashboardPage() {
       {/* ── TRIAL UPGRADE PROMPT ── */}
       {isTrial && !isPaid && <TrialBanner />}
 
-      {/* ── A: ROI VERDICT CARD ── */}
-      <VerdictBanner
-        verdict={data.verdict}
-        netDollar={data.netDollar}
-        aiPrs={data.aiPrs}
-        totalPrs={data.totalPrs}
-      />
+      {/* ── A: ROI VERDICT + HEALTH SCORE SIDE BY SIDE ── */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+        <VerdictBanner
+          verdict={data.verdict}
+          netDollar={data.netDollar}
+          aiPrs={data.aiPrs}
+          totalPrs={data.totalPrs}
+        />
+        <CodebaseHealthCard data={health.data} loading={health.isLoading} />
+      </div>
 
       {/* ── AI CODE QUALITY CARD ── */}
       <AiCodeQualityCard data={outcomes.data} loading={outcomes.isLoading} />
@@ -295,8 +300,11 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* ── TOP PERFORMER ── */}
-      <TopPerformerCard data={health.data} loading={health.isLoading} />
+      {/* ── TOP PERFORMERS ── */}
+      <TopPerformersCard data={health.data} loading={health.isLoading} />
+
+      {/* ── TOOL COMPARISON ── */}
+      <ToolComparisonCard data={toolComparison.data?.tools} loading={toolComparison.isLoading} />
 
       {/* ── YOUR GRASSION JOURNEY (below stat cards, before weekly chart) ── */}
       <JourneyCard data={journey.data} loading={journey.isLoading} />
@@ -1257,43 +1265,177 @@ function AiCodeQualityCard({ data, loading }: { data: OutcomesResponse | undefin
   )
 }
 
-/* ── TOP PERFORMER THIS WEEK ───────────────────────── */
-function TopPerformerCard({ data, loading }: { data: HealthResponse | undefined; loading: boolean }) {
+/* ── CODEBASE HEALTH SCORE CARD ────────────────────── */
+function CodebaseHealthCard({ data, loading }: { data: HealthResponse | undefined; loading: boolean }) {
+  const score = data?.healthScore ?? null
+  const riskLevel = data?.riskLevel ?? 'low'
+  const color = score === null ? '#444' : score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : '#ef4444'
+  const label = score === null ? '—' : score >= 80 ? 'Healthy' : score >= 60 ? 'Watch' : 'At Risk'
+  const borderColor = score === null ? 'border-[#222]' : score >= 80 ? 'border-green-500/30' : score >= 60 ? 'border-yellow-500/30' : 'border-red-500/30'
+  const bgColor = score === null ? 'bg-[#111]' : score >= 80 ? 'bg-green-500/5' : score >= 60 ? 'bg-yellow-500/5' : 'bg-red-500/5'
+  return (
+    <div className={cn('rounded-xl border px-5 py-5 flex flex-col justify-between', borderColor, bgColor)}>
+      <div className="flex items-center gap-2 mb-3">
+        <Shield className="h-4 w-4 text-[#555]" />
+        <span className="text-xs font-semibold uppercase tracking-widest text-[#888]">Codebase Health</span>
+      </div>
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-[#888]"><Spinner /> Loading…</div>
+      ) : (
+        <>
+          <div className="flex items-end gap-3 mb-2">
+            <span className="text-5xl font-bold tabular-nums" style={{ color }}>
+              {score ?? '—'}
+            </span>
+            {score !== null && <span className="text-lg font-semibold mb-1" style={{ color }}>{label}</span>}
+          </div>
+          <div className="h-1.5 rounded-full bg-[#222] overflow-hidden mb-3">
+            <div className="h-full rounded-full transition-all" style={{ width: `${score ?? 0}%`, backgroundColor: color }} />
+          </div>
+          <p className="text-[11px] text-[#555]">
+            Based on revert rate, hotfix rate, and AI adoption quality
+          </p>
+          <div className="mt-2">
+            <span className={cn(
+              'text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5',
+              riskLevel === 'high' ? 'bg-red-500/15 text-red-400' :
+              riskLevel === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
+              'bg-green-500/15 text-green-400',
+            )}>
+              {riskLevel} risk
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/* ── TOP PERFORMERS THIS WEEK ──────────────────────── */
+function TopPerformersCard({ data, loading }: { data: HealthResponse | undefined; loading: boolean }) {
   if (loading || !data || data.developers.length === 0) return null
   const sorted = [...data.developers].sort((a, b) => b.qualityScore - a.qualityScore)
-  const top = sorted[0]
-  if (!top) return null
-  const scoreColor = top.qualityScore >= 75 ? 'text-green-400' : top.qualityScore >= 50 ? 'text-yellow-400' : 'text-red-400'
-  return (
-    <div className="rounded-xl border border-[#222] bg-[#111] px-5 py-4 flex items-center gap-4">
-      <div className="flex-shrink-0">
-        {top.avatarUrl ? (
-          <img src={top.avatarUrl} alt="" className="h-10 w-10 rounded-full border border-[#333]" />
-        ) : (
-          <div className="h-10 w-10 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-sm font-semibold text-white">
-            {top.githubLogin[0]?.toUpperCase()}
+  const top3 = sorted.slice(0, 3)
+  const bottom = sorted[sorted.length - 1]
+  const showBottom = sorted.length >= 2 && bottom && bottom !== top3[top3.length - 1]
+
+  function DevRow({ dev, badge }: { dev: HealthResponse['developers'][0]; badge?: React.ReactNode }) {
+    const scoreColor = dev.qualityScore >= 75 ? 'text-green-400' : dev.qualityScore >= 50 ? 'text-yellow-400' : 'text-red-400'
+    return (
+      <div className="flex items-center gap-3 py-2.5 border-b border-[#1a1a1a] last:border-0">
+        <div className="flex-shrink-0">
+          {dev.avatarUrl ? (
+            <img src={dev.avatarUrl} alt="" className="h-8 w-8 rounded-full border border-[#333]" />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-xs font-semibold text-white">
+              {dev.githubLogin[0]?.toUpperCase()}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-white truncate">@{dev.githubLogin}</span>
+            {badge}
           </div>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-sm font-semibold text-white">@{top.githubLogin}</span>
-          <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
-            🏆 Top this week
-          </span>
-        </div>
-        <div className="text-xs text-[#555555]">
-          {top.weeklyAiPrs} AI PR{top.weeklyAiPrs === 1 ? '' : 's'} · Quality{' '}
-          <span className={scoreColor}>{top.qualityScore}/100</span>
+          <div className="text-xs text-[#555]">
+            {dev.weeklyAiPrs} AI PRs · Quality <span className={scoreColor}>{dev.qualityScore}/100</span>
+            {dev.primaryTool && <span className="ml-1 text-[#444]">· {dev.primaryTool}</span>}
+          </div>
         </div>
       </div>
-      <Link
-        to="/health"
-        className="flex-shrink-0 text-xs text-[#555555] hover:text-white transition-colors flex items-center gap-1"
-      >
-        Full team <ArrowRight className="h-3 w-3" />
-      </Link>
-    </div>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Top Performers This Week</CardTitle>
+        <Link to="/health" className="text-xs text-[#555] hover:text-white flex items-center gap-1">
+          Full team <ArrowRight className="h-3 w-3" />
+        </Link>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-0">
+          {top3.map((dev, i) => (
+            <DevRow key={dev.githubLogin} dev={dev} badge={
+              i === 0 ? (
+                <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
+                  🏆 Top
+                </span>
+              ) : dev.status === 'power_user' ? (
+                <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+                  Power User
+                </span>
+              ) : undefined
+            } />
+          ))}
+          {showBottom && (
+            <>
+              <div className="py-1 text-[10px] text-[#444] uppercase tracking-wider">Needs support</div>
+              <DevRow dev={bottom} badge={
+                <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-bold text-orange-400 uppercase tracking-wider">
+                  ↓ Support
+                </span>
+              } />
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── TOOL COMPARISON MINI-TABLE ────────────────────── */
+function ToolComparisonCard({ data, loading }: { data: ToolComparisonRow[] | undefined; loading: boolean }) {
+  if (loading) return null
+  if (!data || data.length < 2) return null
+
+  const verdictColor = (v: string) =>
+    v === 'strong_roi' ? 'text-green-400' :
+    v === 'medium_roi' ? 'text-yellow-400' : 'text-red-400'
+  const verdictLabel = (v: string) =>
+    v === 'strong_roi' ? 'Strong ROI' : v === 'medium_roi' ? 'Medium ROI' : 'Low ROI'
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Wrench className="h-4 w-4 text-[#555]" />
+          <CardTitle>AI Tool Comparison</CardTitle>
+        </div>
+        <Link to="/health" className="text-xs text-[#555] hover:text-white flex items-center gap-1">
+          Full breakdown <ArrowRight className="h-3 w-3" />
+        </Link>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#1a1a1a]">
+                {['Tool', 'PRs', 'Quality', 'Revert %', 'Verdict'].map((h) => (
+                  <th key={h} className="py-2 pr-4 text-left text-xs font-medium uppercase tracking-widest text-[#555]">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#111]">
+              {data.slice(0, 3).map((t) => (
+                <tr key={t.toolName}>
+                  <td className="py-2.5 pr-4 font-medium text-white">{t.toolName}</td>
+                  <td className="py-2.5 pr-4 tabular-nums text-[#aaa]">{t.totalPrs}</td>
+                  <td className="py-2.5 pr-4 tabular-nums text-white font-semibold">{t.qualityScore}/100</td>
+                  <td className={cn('py-2.5 pr-4 tabular-nums', t.revertRate > 8 ? 'text-red-400' : 'text-[#aaa]')}>
+                    {t.revertRate}%
+                  </td>
+                  <td className={cn('py-2.5 text-xs font-semibold', verdictColor(t.verdict))}>
+                    {verdictLabel(t.verdict)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

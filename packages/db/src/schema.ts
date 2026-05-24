@@ -9,6 +9,7 @@ import {
   uuid,
   uniqueIndex,
   index,
+  date,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -372,6 +373,113 @@ export const notifications = pgTable(
 export type Notification = typeof notifications.$inferSelect
 export type NewNotification = typeof notifications.$inferInsert
 
+// ============ DEVELOPER WEEKLY METRICS ============
+export const developerWeeklyMetrics = pgTable(
+  'developer_weekly_metrics',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+    githubLogin: text('github_login').notNull(),
+    weekStart: date('week_start').notNull(),
+    totalPrs: integer('total_prs').default(0),
+    aiPrs: integer('ai_prs').default(0),
+    revertedPrs: integer('reverted_prs').default(0),
+    hotfixPrs: integer('hotfix_prs').default(0),
+    avgReviewCycles: real('avg_review_cycles').default(0),
+    avgPrSize: integer('avg_pr_size').default(0),
+    aiConfidenceAvg: real('ai_confidence_avg').default(0),
+    qualityScore: real('quality_score').default(0),
+    isActive: boolean('is_active').default(false),
+    primaryAiTool: text('primary_ai_tool'),
+    recordedAt: timestamp('recorded_at').defaultNow(),
+  },
+  (t) => ({
+    teamWeekIdx: index('idx_dev_metrics_team_week').on(t.teamId, t.weekStart),
+    uniqueIdx: uniqueIndex('dev_metrics_team_login_week_idx').on(t.teamId, t.githubLogin, t.weekStart),
+  }),
+)
+
+// ============ TOOL WEEKLY METRICS ============
+export const toolWeeklyMetrics = pgTable(
+  'tool_weekly_metrics',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+    toolName: text('tool_name').notNull(),
+    weekStart: date('week_start').notNull(),
+    prCount: integer('pr_count').default(0),
+    revertCount: integer('revert_count').default(0),
+    hotfixCount: integer('hotfix_count').default(0),
+    avgChangesRequested: real('avg_changes_requested').default(0),
+    qualityScore: real('quality_score').default(0),
+    estimatedSpendUsd: real('estimated_spend_usd').default(0),
+    activeUsers: integer('active_users').default(0),
+    recordedAt: timestamp('recorded_at').defaultNow(),
+  },
+  (t) => ({
+    teamWeekIdx: index('idx_tool_metrics_team_week').on(t.teamId, t.weekStart),
+    uniqueIdx: uniqueIndex('tool_metrics_team_tool_week_idx').on(t.teamId, t.toolName, t.weekStart),
+  }),
+)
+
+// ============ CODEBASE HEALTH SNAPSHOTS ============
+export const codbaseHealthSnapshots = pgTable(
+  'codebase_health_snapshots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+    snapshotDate: date('snapshot_date').notNull(),
+    overallHealthScore: real('overall_health_score').default(0),
+    aiAdoptionPct: real('ai_adoption_pct').default(0),
+    revertRatePct: real('revert_rate_pct').default(0),
+    hotfixRatePct: real('hotfix_rate_pct').default(0),
+    avgPrQuality: real('avg_pr_quality').default(0),
+    activeDevelopers: integer('active_developers').default(0),
+    totalDevelopers: integer('total_developers').default(0),
+    riskLevel: text('risk_level').default('low'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (t) => ({
+    teamDateIdx: index('idx_health_team_date').on(t.teamId, t.snapshotDate),
+    uniqueIdx: uniqueIndex('health_snapshots_team_date_idx').on(t.teamId, t.snapshotDate),
+  }),
+)
+
+// ============ PR RISK SIGNALS ============
+export const prRiskSignals = pgTable(
+  'pr_risk_signals',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+    pullRequestId: uuid('pull_request_id').references(() => pullRequests.id, { onDelete: 'cascade' }),
+    signalType: text('signal_type').notNull(),
+    signalValue: real('signal_value').default(0),
+    confidence: real('confidence').default(0),
+    description: text('description'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (t) => ({
+    prIdx: index('idx_risk_signals_pr').on(t.pullRequestId),
+    teamIdx: index('idx_risk_signals_team').on(t.teamId),
+  }),
+)
+
+// ============ ENGINEERING EVENTS ============
+export const engineeringEvents = pgTable(
+  'engineering_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull(),
+    githubLogin: text('github_login'),
+    metadata: jsonb('metadata').default({}),
+    occurredAt: timestamp('occurred_at').defaultNow(),
+  },
+  (t) => ({
+    teamDateIdx: index('idx_eng_events_team').on(t.teamId, t.occurredAt),
+  }),
+)
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -437,3 +545,14 @@ export type DeveloperHistoryRow = typeof developerHistory.$inferSelect
 export type NewDeveloperHistoryRow = typeof developerHistory.$inferInsert
 export type TeamMilestone = typeof teamMilestones.$inferSelect
 export type NewTeamMilestone = typeof teamMilestones.$inferInsert
+
+export type DeveloperWeeklyMetric = typeof developerWeeklyMetrics.$inferSelect
+export type NewDeveloperWeeklyMetric = typeof developerWeeklyMetrics.$inferInsert
+export type ToolWeeklyMetric = typeof toolWeeklyMetrics.$inferSelect
+export type NewToolWeeklyMetric = typeof toolWeeklyMetrics.$inferInsert
+export type CodebaseHealthSnapshot = typeof codbaseHealthSnapshots.$inferSelect
+export type NewCodebaseHealthSnapshot = typeof codbaseHealthSnapshots.$inferInsert
+export type PrRiskSignal = typeof prRiskSignals.$inferSelect
+export type NewPrRiskSignal = typeof prRiskSignals.$inferInsert
+export type EngineeringEvent = typeof engineeringEvents.$inferSelect
+export type NewEngineeringEvent = typeof engineeringEvents.$inferInsert

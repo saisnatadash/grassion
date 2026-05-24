@@ -3,6 +3,7 @@ import { eq, and, sql, gte, desc, gt } from 'drizzle-orm'
 import {
   pullRequests, prOutcomes, users, savingsEvents, teams, teamWeeklyMetrics,
   weeklySnapshots, developerHistory, teamMilestones,
+  developerWeeklyMetrics, toolWeeklyMetrics, codbaseHealthSnapshots,
 } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
@@ -629,6 +630,131 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
     })))
   } catch (err) {
     console.error('[pr-outcomes]', err)
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+analyticsRouter.get('/api/analytics/developer-metrics', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  try {
+    const fourWeeksAgo = new Date()
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28)
+    const fourWeeksAgoStr = fourWeeksAgo.toISOString().split('T')[0]!
+
+    const rows = await db
+      .select()
+      .from(developerWeeklyMetrics)
+      .where(and(eq(developerWeeklyMetrics.teamId, teamId), gte(developerWeeklyMetrics.weekStart, fourWeeksAgoStr)))
+      .orderBy(desc(developerWeeklyMetrics.weekStart))
+
+    // Group by developer
+    const byDev = new Map<string, typeof rows>()
+    for (const r of rows) {
+      const key = r.githubLogin
+      if (!byDev.has(key)) byDev.set(key, [])
+      byDev.get(key)!.push(r)
+    }
+
+    const developers = Array.from(byDev.entries()).map(([githubLogin, weeks]) => {
+      const sorted = [...weeks].sort((a, b) => a.weekStart.localeCompare(b.weekStart))
+      const latest = sorted[sorted.length - 1]!
+      const prev = sorted[sorted.length - 2]
+      const trend: 'improving' | 'stable' | 'declining' =
+        !prev ? 'stable' :
+        latest.qualityScore! > (prev.qualityScore ?? 0) + 5 ? 'improving' :
+        latest.qualityScore! < (prev.qualityScore ?? 0) - 5 ? 'declining' : 'stable'
+      return {
+        githubLogin,
+        weeklyData: sorted,
+        trend,
+        qualityScore: latest.qualityScore ?? 0,
+        isPowerUser: (latest.qualityScore ?? 0) >= 75 && (latest.aiPrs ?? 0) >= 3,
+        primaryTool: latest.primaryAiTool,
+        isActive: latest.isActive,
+      }
+    }).sort((a, b) => b.qualityScore - a.qualityScore)
+
+    res.json({ developers })
+  } catch (err) {
+    console.error('[developer-metrics]', err)
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+analyticsRouter.get('/api/analytics/tool-comparison', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  try {
+    const weekStart = getWeekStart()
+    const weekStartStr = weekStart.toISOString().split('T')[0]!
+
+    const rows = await db
+      .select()
+      .from(toolWeeklyMetrics)
+      .where(and(eq(toolWeeklyMetrics.teamId, teamId), gte(toolWeeklyMetrics.weekStart, weekStartStr)))
+      .orderBy(desc(toolWeeklyMetrics.prCount))
+
+    const tools = rows.map((r) => {
+      const revertRate = (r.prCount ?? 0) > 0 ? ((r.revertCount ?? 0) / r.prCount!) * 100 : 0
+      const verdict: 'strong_roi' | 'medium_roi' | 'low_roi' =
+        (r.qualityScore ?? 0) >= 75 ? 'strong_roi' :
+        (r.qualityScore ?? 0) >= 50 ? 'medium_roi' : 'low_roi'
+      return {
+        toolName: r.toolName,
+        totalPrs: r.prCount ?? 0,
+        qualityScore: r.qualityScore ?? 0,
+        estimatedSpend: r.estimatedSpendUsd ?? 0,
+        revertRate: Math.round(revertRate),
+        activeUsers: r.activeUsers ?? 0,
+        verdict,
+      }
+    })
+
+    res.json({ tools })
+  } catch (err) {
+    console.error('[tool-comparison]', err)
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+analyticsRouter.get('/api/analytics/codebase-health', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  try {
+    const rows = await db
+      .select()
+      .from(codbaseHealthSnapshots)
+      .where(eq(codbaseHealthSnapshots.teamId, teamId))
+      .orderBy(desc(codbaseHealthSnapshots.snapshotDate))
+      .limit(12)
+
+    const current = rows[0] ?? null
+    const trend: 'improving' | 'stable' | 'declining' = (() => {
+      if (rows.length < 2 || !current) return 'stable'
+      const prev = rows[1]!
+      const delta = (current.overallHealthScore ?? 0) - (prev.overallHealthScore ?? 0)
+      if (delta > 5) return 'improving'
+      if (delta < -5) return 'declining'
+      return 'stable'
+    })()
+
+    res.json({
+      current: current ? {
+        healthScore: Math.round(current.overallHealthScore ?? 0),
+        riskLevel: current.riskLevel ?? 'low',
+        trend,
+        aiAdoptionPct: Math.round(current.aiAdoptionPct ?? 0),
+        revertRatePct: Math.round(current.revertRatePct ?? 0),
+      } : null,
+      history: rows.map((r) => ({
+        date: r.snapshotDate,
+        healthScore: Math.round(r.overallHealthScore ?? 0),
+        riskLevel: r.riskLevel ?? 'low',
+      })).reverse(),
+    })
+  } catch (err) {
+    console.error('[codebase-health]', err)
     res.status(500).json({ error: 'internal_error' })
   }
 })
