@@ -7,18 +7,18 @@ const links = [
 ]
 ---
 
-<header class="border-b border-neutral-100">
+<header class="border-b border-[#1a1a1a]">
   <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
     <a href="/" class="flex items-center gap-2">
       <img src="/W+L.png" alt="Grassion" style="height:28px;" onerror="this.style.display='none'" />
     </a>
     <nav class="flex items-center gap-6 text-sm">
       {links.map((l) => (
-        <a href={l.href} class="text-neutral-600 hover:text-neutral-900">{l.label}</a>
+        <a href={l.href} class="text-[#aaa] hover:text-white">{l.label}</a>
       ))}
       <a
         href={APP_URL}
-        class="rounded-md bg-ink px-3 py-1.5 text-white hover:bg-neutral-800"
+        class="rounded-md bg-white px-3 py-1.5 text-[#0a0a0a] hover:bg-neutral-100"
       >
         Sign in
       </a>
