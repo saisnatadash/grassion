@@ -1,523 +1,535 @@
 ---
-const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 const year = new Date().getFullYear()
+const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 ---
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Security at Grassion</title>
-  <meta name="description" content="Read-only GitHub access. No source code ever stored. SOC2-certified infrastructure. Built for enterprise trust." />
-  <link rel="canonical" href="https://grassion.com/security/" />
+  <meta name="description" content="Grassion analyzes engineering workflow metadata. We never read or store your source code. Read about our security practices." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
-  <meta name="theme-color" content="#0a0a0a" />
-  <meta property="og:title" content="Security at Grassion" />
-  <meta property="og:description" content="Read-only GitHub access. No source code stored. SOC2-certified infrastructure." />
-  <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:     #0a0a0a;
-      --white:  #ffffff;
-      --dim:    rgba(255,255,255,0.40);
-      --dimmer: rgba(255,255,255,0.20);
-      --line:   rgba(255,255,255,0.08);
-      --green:  #34d399;
-      --green-dim: rgba(52,211,153,0.15);
-      --green-line: rgba(52,211,153,0.30);
-      --red:    #f87171;
+      --black: #0a0a0a;
+      --white: #ffffff;
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.12);
+      --green-border: rgba(34, 197, 94, 0.25);
+      --red-dim: rgba(239, 68, 68, 0.10);
+      --red-border: rgba(239, 68, 68, 0.20);
+      --dim: rgba(255,255,255,0.62);
+      --dimmer: rgba(255,255,255,0.40);
+      --line: rgba(255,255,255,0.10);
+      --card-bg: rgba(255,255,255,0.03);
+      --card-border: rgba(255,255,255,0.08);
     }
 
     html, body {
-      background: var(--bg);
+      background: var(--black);
       color: var(--white);
       font-family: 'DM Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ── HEADER ────────────────────────────────── */
+    /* ── HEADER ─────────────────────────────── */
     header {
-      position: sticky; top: 0;
-      display: flex; align-items: center; justify-content: space-between;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       padding: 18px 52px;
       z-index: 100;
       border-bottom: 1px solid var(--line);
-      background: rgba(10,10,10,0.82);
+      background: rgba(0,0,0,0.85);
       backdrop-filter: blur(16px);
     }
 
-    .nav-links { display: flex; gap: 36px; align-items: center; }
-
-    .nav-links a {
-      font-size: 11px; font-weight: 300; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--dim); text-decoration: none;
+    nav { display: flex; gap: 40px; align-items: center; }
+    nav a {
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
       transition: color 0.2s;
     }
-    .nav-links a:hover    { color: var(--white); }
-    .nav-links a.active   { color: var(--white); }
+    nav a:hover { color: var(--white); }
 
-    .btn-signin {
-      display: inline-flex; align-items: center;
-      background: var(--white); color: #0a0a0a;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
-      text-transform: uppercase; text-decoration: none;
-      padding: 10px 22px; border-radius: 3px;
+    .cta-btn {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: var(--white);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      text-decoration: none;
       transition: opacity 0.2s;
     }
-    .btn-signin:hover { opacity: 0.85; }
+    .cta-btn:hover { opacity: 0.85; }
 
-    /* ── PAGE WRAPPER ──────────────────────────── */
-    .page { max-width: 900px; margin: 0 auto; padding: 0 48px; }
+    /* ── MAIN ───────────────────────────────── */
+    main {
+      padding: 120px 52px 80px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
 
-    /* ── HERO ──────────────────────────────────── */
+    /* ── HERO ───────────────────────────────── */
     .hero {
-      padding: 88px 0 72px;
-      border-bottom: 1px solid var(--line);
+      text-align: center;
+      margin-bottom: 80px;
     }
 
     .eyebrow {
       font-family: 'DM Mono', monospace;
-      font-size: 10px; font-weight: 400;
-      letter-spacing: 0.28em; text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
       color: var(--green);
-      display: flex; align-items: center; gap: 12px;
       margin-bottom: 24px;
-    }
-    .eyebrow::before {
-      content: ''; display: block;
-      width: 32px; height: 1px;
-      background: var(--green);
     }
 
     .hero h1 {
-      font-size: clamp(30px, 4.5vw, 56px);
-      font-weight: 200; line-height: 1.08;
-      letter-spacing: -0.03em;
-      margin-bottom: 18px;
+      font-size: clamp(32px, 5vw, 54px);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 20px;
     }
 
     .hero-sub {
-      font-size: 17px; font-weight: 300;
-      color: var(--dim); line-height: 1.7;
-      max-width: 520px;
-      margin-bottom: 40px;
-    }
-
-    /* green promise box */
-    .promise-box {
-      border: 1px solid var(--green-line);
-      background: var(--green-dim);
-      border-radius: 4px;
-      padding: 24px 32px;
+      font-size: 17px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.6;
       max-width: 560px;
-    }
-    .promise-box p {
-      font-size: 14px; font-weight: 300;
-      color: rgba(255,255,255,0.85); line-height: 1.7;
-    }
-    .promise-box strong {
-      color: var(--green); font-weight: 400;
+      margin: 0 auto 40px;
     }
 
-    /* ── SECTIONS ──────────────────────────────── */
+    /* ── PROMISE BOX ────────────────────────── */
+    .promise-box {
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      border-radius: 12px;
+      padding: 28px 36px;
+      max-width: 540px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .promise-box .promise-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 12px;
+    }
+
+    .promise-box p {
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.7;
+      color: var(--white);
+    }
+
+    .promise-box strong {
+      font-weight: 500;
+      color: var(--white);
+    }
+
+    /* ── SECTIONS ───────────────────────────── */
     .section {
-      padding: 72px 0;
-      border-bottom: 1px solid var(--line);
+      margin-bottom: 72px;
     }
 
     .section-label {
       font-family: 'DM Mono', monospace;
-      font-size: 9px; font-weight: 500;
-      letter-spacing: 0.28em; text-transform: uppercase;
-      color: var(--dimmer);
-      margin-bottom: 24px;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 12px;
     }
 
     .section h2 {
-      font-size: 22px; font-weight: 300;
-      letter-spacing: -0.015em;
+      font-size: 26px;
+      font-weight: 300;
+      letter-spacing: -0.02em;
       margin-bottom: 32px;
     }
 
-    /* ── ACCESS GRID ───────────────────────────── */
-    .access-cols {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 56px;
-    }
-
-    .col-heading {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px; font-weight: 500;
-      letter-spacing: 0.18em; text-transform: uppercase;
-      margin-bottom: 20px;
-    }
-    .col-heading-green { color: var(--green); }
-    .col-heading-red   { color: var(--red); }
-
+    /* ── CHECK LIST ─────────────────────────── */
     .check-list {
       list-style: none;
-      display: flex; flex-direction: column; gap: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
-    .check-item {
-      display: flex; align-items: flex-start; gap: 11px;
-      font-size: 14px; font-weight: 300;
-      color: rgba(255,255,255,0.72); line-height: 1.55;
-    }
-    .ico-check { color: var(--green); flex-shrink: 0; margin-top: 1px; }
-    .ico-cross  { color: var(--red);   flex-shrink: 0; margin-top: 1px; }
 
-    /* ── PERMISSION CARDS ──────────────────────── */
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+
+    .ico-check {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--green);
+      margin-top: 1px;
+    }
+
+    .ico-cross {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #ef4444;
+      margin-top: 1px;
+    }
+
+    /* ── PERMISSION CARDS ───────────────────── */
     .perm-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 28px;
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .perm-card {
-      background: var(--bg);
-      padding: 28px 26px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 20px;
     }
 
     .perm-scope {
       font-family: 'DM Mono', monospace;
-      font-size: 13px; font-weight: 400;
+      font-size: 12px;
+      font-weight: 500;
       color: var(--green);
       margin-bottom: 10px;
+      letter-spacing: 0.04em;
     }
 
     .perm-card p {
-      font-size: 13px; font-weight: 300;
-      color: var(--dim); line-height: 1.65;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dimmer);
+      line-height: 1.6;
     }
 
     .perm-note {
-      font-size: 13px; font-weight: 300;
-      color: var(--dimmer); line-height: 1.75;
+      background: rgba(255,255,255,0.03);
       border: 1px solid var(--line);
-      border-radius: 3px;
-      padding: 20px 24px;
-    }
-    .perm-note em {
-      font-style: normal;
-      color: rgba(255,255,255,0.6);
+      border-radius: 8px;
+      padding: 18px 22px;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dimmer);
+      line-height: 1.7;
     }
 
-    /* ── INFRA CARDS ───────────────────────────── */
+    /* ── INFRA GRID ─────────────────────────── */
     .infra-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      overflow: hidden;
+      gap: 16px;
     }
 
     .infra-card {
-      background: var(--bg);
-      padding: 28px 28px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 22px;
     }
 
     .infra-label {
       font-family: 'DM Mono', monospace;
-      font-size: 9px; font-weight: 500;
-      letter-spacing: 0.22em; text-transform: uppercase;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
       color: var(--dimmer);
       margin-bottom: 8px;
     }
 
     .infra-title {
-      font-size: 15px; font-weight: 400;
+      font-size: 15px;
+      font-weight: 400;
       color: var(--white);
       margin-bottom: 8px;
     }
 
     .infra-desc {
-      font-size: 12px; font-weight: 300;
-      color: var(--dim); line-height: 1.6;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dimmer);
+      line-height: 1.6;
     }
 
-    /* ── INFO BOX ──────────────────────────────── */
-    .info-box {
-      border: 1px solid var(--line);
-      border-radius: 3px;
+    /* ── DATA DELETION ──────────────────────── */
+    .deletion-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
       padding: 28px 32px;
     }
-    .info-box p {
-      font-size: 14px; font-weight: 300;
-      color: rgba(255,255,255,0.65); line-height: 1.8;
-    }
-    .info-box p + p { margin-top: 12px; }
-    .info-box strong { color: var(--white); font-weight: 400; }
-    .info-box a {
-      color: var(--green); text-decoration: none;
-    }
-    .info-box a:hover { text-decoration: underline; }
 
-    /* ── FOOTER ────────────────────────────────── */
+    .deletion-box p {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.7;
+    }
+
+    /* ── CONTACT ────────────────────────────── */
+    .contact-box {
+      text-align: center;
+    }
+
+    .contact-box p {
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.7;
+    }
+
+    .contact-box a {
+      color: var(--green);
+      text-decoration: none;
+    }
+
+    .contact-box a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── FOOTER ─────────────────────────────── */
     footer {
       border-top: 1px solid var(--line);
-      padding: 48px 0;
-    }
-
-    .footer-inner {
-      max-width: 900px; margin: 0 auto;
-      padding: 0 48px;
-      display: flex; flex-wrap: wrap; gap: 40px;
+      padding: 22px 52px;
+      display: flex;
+      align-items: center;
       justify-content: space-between;
     }
 
-    .footer-brand p {
-      font-size: 13px; font-weight: 300; color: var(--dim);
-      margin-top: 6px; max-width: 240px; line-height: 1.5;
+    footer span {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--dimmer);
+      letter-spacing: 0.06em;
     }
 
-    .footer-brand-name {
-      font-size: 14px; font-weight: 400; color: var(--white);
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
     }
 
-    .footer-col-title {
-      font-size: 12px; font-weight: 500; color: var(--white);
-      margin-bottom: 12px;
-    }
-
-    .footer-col ul {
-      list-style: none; display: flex; flex-direction: column; gap: 9px;
-    }
-
-    .footer-col ul a {
-      font-size: 13px; font-weight: 300;
-      color: var(--dim); text-decoration: none;
+    footer a {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--dimmer);
+      letter-spacing: 0.06em;
+      text-decoration: none;
       transition: color 0.2s;
     }
-    .footer-col ul a:hover { color: var(--white); }
+    footer a:hover { color: var(--white); }
 
-    .footer-bottom {
-      max-width: 900px; margin: 28px auto 0;
-      padding: 20px 48px 0;
-      border-top: 1px solid var(--line);
-      font-family: 'DM Mono', monospace;
-      font-size: 10px; color: var(--dimmer);
-    }
-
-    /* ── RESPONSIVE ────────────────────────────── */
-    @media (max-width: 680px) {
-      header { padding: 16px 20px; }
-      .nav-links { gap: 18px; }
-      .page { padding: 0 20px; }
-      .hero { padding: 60px 0 52px; }
-      .section { padding: 52px 0; }
-      .access-cols { grid-template-columns: 1fr; gap: 40px; }
-      .perm-cards  { grid-template-columns: 1fr; }
-      .infra-grid  { grid-template-columns: 1fr; }
-      .footer-inner { padding: 0 20px; gap: 32px; }
-      .footer-bottom { padding: 20px 20px 0; }
-      .promise-box { padding: 20px 20px; }
+    /* ── RESPONSIVE ─────────────────────────── */
+    @media (max-width: 768px) {
+      header { padding: 14px 20px; }
+      nav { gap: 20px; }
+      main { padding: 100px 20px 60px; }
+      .perm-cards { grid-template-columns: 1fr; }
+      .infra-grid { grid-template-columns: 1fr; }
+      footer { padding: 16px 20px; flex-direction: column; gap: 12px; text-align: center; }
+      .promise-box { padding: 20px 22px; }
     }
   </style>
 </head>
-
 <body>
 
   <!-- ── HEADER ── -->
   <header>
     <a href="/">
-      <img src="/W+L.png" alt="Grassion" style="height:26px;" onerror="this.style.display='none'" />
+      <img src="/W+L.png" alt="Grassion" style="height:28px;" onerror="this.style.display='none'" />
     </a>
-    <nav class="nav-links">
+    <nav>
       <a href="/about/">About</a>
       <a href="/pricing/">Pricing</a>
-      <a href="/security/" class="active">Security</a>
       <a href="/contact/">Contact</a>
-      <a href={APP_URL} class="btn-signin">Sign in</a>
+      <a href={APP_URL} class="cta-btn">Sign in</a>
     </nav>
   </header>
 
-  <!-- ── HERO ── -->
-  <div class="hero">
-    <div class="page">
-      <div class="eyebrow">Security</div>
-      <h1>Built for enterprise trust.</h1>
+  <main>
+
+    <!-- ── SECTION 1: HERO ── -->
+    <div class="hero">
+      <div class="eyebrow">Security at Grassion</div>
+      <h1>Built for<br />enterprise trust.</h1>
       <p class="hero-sub">
         Grassion analyzes engineering workflow metadata.
         We never read or store your source code.
       </p>
+
       <div class="promise-box">
+        <div class="promise-label">Our commitment</div>
         <p>
           <strong>Grassion never reads your source code.</strong>
-          We only read PR metadata visible in GitHub: titles, commit messages, and timestamps.
+          We only read PR metadata visible in GitHub — titles, commit messages, and timestamps.
           No code is stored. Ever.
         </p>
       </div>
     </div>
-  </div>
 
-  <main>
-
-    <!-- ── SECTION 2: WHAT WE READ ── -->
+    <!-- ── SECTION 2: WHAT WE ACCESS ── -->
     <div class="section">
-      <div class="page">
-        <div class="section-label">Data access</div>
-        <h2>What Grassion reads</h2>
-        <ul class="check-list">
-          <li class="check-item"><span class="ico-check">✓</span><span>PR titles and descriptions</span></li>
-          <li class="check-item"><span class="ico-check">✓</span><span>Commit message text (not diff or code)</span></li>
-          <li class="check-item"><span class="ico-check">✓</span><span>Merge timestamps and dates</span></li>
-          <li class="check-item"><span class="ico-check">✓</span><span>Author GitHub usernames (public data)</span></li>
-          <li class="check-item"><span class="ico-check">✓</span><span>Review counts and approval status</span></li>
-          <li class="check-item"><span class="ico-check">✓</span><span>PR open / close / merge events</span></li>
-        </ul>
-      </div>
+      <div class="section-label">Data access</div>
+      <h2>What Grassion reads</h2>
+      <ul class="check-list">
+        <li class="check-item"><span class="ico-check">✓</span><span>PR titles and descriptions</span></li>
+        <li class="check-item"><span class="ico-check">✓</span><span>Commit message text (not diff or code)</span></li>
+        <li class="check-item"><span class="ico-check">✓</span><span>Merge timestamps and dates</span></li>
+        <li class="check-item"><span class="ico-check">✓</span><span>Author GitHub usernames (public data)</span></li>
+        <li class="check-item"><span class="ico-check">✓</span><span>Review counts and approval status</span></li>
+        <li class="check-item"><span class="ico-check">✓</span><span>PR open / close / merge events</span></li>
+      </ul>
     </div>
 
     <!-- ── SECTION 3: WHAT WE NEVER TOUCH ── -->
     <div class="section">
-      <div class="page">
-        <div class="section-label">Off limits</div>
-        <h2>What Grassion never touches</h2>
-        <ul class="check-list">
-          <li class="check-item"><span class="ico-cross">✗</span><span>Your source code or file contents</span></li>
-          <li class="check-item"><span class="ico-cross">✗</span><span>Secrets, API keys, or environment variables</span></li>
-          <li class="check-item"><span class="ico-cross">✗</span><span>Private keys or credentials of any kind</span></li>
-          <li class="check-item"><span class="ico-cross">✗</span><span>Internal Slack or email communications</span></li>
-          <li class="check-item"><span class="ico-cross">✗</span><span>Developer personal data beyond GitHub profile</span></li>
-          <li class="check-item"><span class="ico-cross">✗</span><span>Code diffs or actual implementation details</span></li>
-        </ul>
-      </div>
+      <div class="section-label">Off limits</div>
+      <h2>What Grassion never touches</h2>
+      <ul class="check-list">
+        <li class="check-item"><span class="ico-cross">✗</span><span>Your source code or file contents</span></li>
+        <li class="check-item"><span class="ico-cross">✗</span><span>Secrets, API keys, or environment variables</span></li>
+        <li class="check-item"><span class="ico-cross">✗</span><span>Private keys or credentials of any kind</span></li>
+        <li class="check-item"><span class="ico-cross">✗</span><span>Internal Slack or email communications</span></li>
+        <li class="check-item"><span class="ico-cross">✗</span><span>Developer personal data beyond GitHub profile</span></li>
+        <li class="check-item"><span class="ico-cross">✗</span><span>Code diffs or actual implementation details</span></li>
+      </ul>
     </div>
 
     <!-- ── SECTION 4: GITHUB PERMISSIONS ── -->
     <div class="section">
-      <div class="page">
-        <div class="section-label">Permissions</div>
-        <h2>Exact GitHub permissions we request</h2>
-        <div class="perm-cards">
-          <div class="perm-card">
-            <div class="perm-scope">read:user</div>
-            <p>Your GitHub username and public profile. Same as any GitHub OAuth app.</p>
-          </div>
-          <div class="perm-card">
-            <div class="perm-scope">repo</div>
-            <p>Read PR metadata, commit messages, and review outcomes. Cannot write, merge, or modify anything.</p>
-          </div>
-          <div class="perm-card">
-            <div class="perm-scope">read:org</div>
-            <p>Verify organisation membership. Cannot modify org settings or member permissions.</p>
-          </div>
+      <div class="section-label">Permissions</div>
+      <h2>Exact GitHub permissions we request</h2>
+      <div class="perm-cards">
+        <div class="perm-card">
+          <div class="perm-scope">read:user</div>
+          <p>Your GitHub username and public profile. Same as any GitHub OAuth app.</p>
         </div>
-        <div class="perm-note">
-          These are read-only scopes enforced by GitHub, not just our policy.
-          Grassion is <em>technically incapable</em> of modifying your repositories.
-          The same scopes are used by Vercel, Netlify, Linear, and thousands of developer tools.
+        <div class="perm-card">
+          <div class="perm-scope">repo</div>
+          <p>Read PR metadata, commit messages, and review outcomes. Cannot write, merge, or modify anything.</p>
         </div>
+        <div class="perm-card">
+          <div class="perm-scope">read:org</div>
+          <p>Verify organisation membership. Cannot modify org settings or member permissions.</p>
+        </div>
+      </div>
+      <div class="perm-note">
+        These are read-only scopes enforced by GitHub, not just our policy.
+        Grassion is <em>technically incapable</em> of modifying your repositories.
+        The same scopes are used by Vercel, Netlify, Linear, and thousands of developer tools.
       </div>
     </div>
 
     <!-- ── SECTION 5: INFRASTRUCTURE ── -->
     <div class="section">
-      <div class="page">
-        <div class="section-label">Infrastructure</div>
-        <h2>Where your data lives</h2>
-        <div class="infra-grid">
-          <div class="infra-card">
-            <div class="infra-label">Database</div>
-            <div class="infra-title">Supabase PostgreSQL</div>
-            <div class="infra-desc">SOC2 Type II certified. Encrypted at rest with AES-256. Mumbai region.</div>
-          </div>
-          <div class="infra-card">
-            <div class="infra-label">Hosting</div>
-            <div class="infra-title">Fly.io</div>
-            <div class="infra-desc">SOC2 compliant infrastructure. TLS encryption in transit. Zero-downtime deploys.</div>
-          </div>
-          <div class="infra-card">
-            <div class="infra-label">Authentication</div>
-            <div class="infra-title">GitHub OAuth only</div>
-            <div class="infra-desc">No passwords stored anywhere. JWT tokens expire in 7 days. Sessions revocable from Settings.</div>
-          </div>
-          <div class="infra-card">
-            <div class="infra-label">Payments</div>
-            <div class="infra-title">Razorpay</div>
-            <div class="infra-desc">PCI DSS compliant. We never see or store card details; payment data goes directly to Razorpay.</div>
-          </div>
+      <div class="section-label">Infrastructure</div>
+      <h2>Where your data lives</h2>
+      <div class="infra-grid">
+        <div class="infra-card">
+          <div class="infra-label">Database</div>
+          <div class="infra-title">Supabase PostgreSQL</div>
+          <div class="infra-desc">SOC2 Type II certified. Encrypted at rest with AES-256. Mumbai region.</div>
+        </div>
+        <div class="infra-card">
+          <div class="infra-label">Hosting</div>
+          <div class="infra-title">Fly.io</div>
+          <div class="infra-desc">SOC2 compliant infrastructure. TLS encryption in transit. Zero-downtime deploys.</div>
+        </div>
+        <div class="infra-card">
+          <div class="infra-label">Authentication</div>
+          <div class="infra-title">GitHub OAuth only</div>
+          <div class="infra-desc">No passwords stored anywhere. JWT tokens expire in 7 days. Sessions revocable from Settings.</div>
+        </div>
+        <div class="infra-card">
+          <div class="infra-label">Payments</div>
+          <div class="infra-title">Razorpay</div>
+          <div class="infra-desc">PCI DSS compliant. We never see or store card details; payment data goes directly to Razorpay.</div>
         </div>
       </div>
     </div>
 
     <!-- ── SECTION 6: DATA DELETION ── -->
     <div class="section">
-      <div class="page">
-        <div class="section-label">Data retention</div>
-        <h2>Your data, your control</h2>
-        <div class="info-box">
-          <p>
-            <strong>Delete all your data at any time from Settings → Danger Zone.</strong>
-            We permanently remove all records within 24 hours. No backups retained after deletion.
-            Disconnecting a repository removes its PR data immediately.
-          </p>
-        </div>
+      <div class="section-label">Data retention</div>
+      <h2>Your data, your control</h2>
+      <div class="deletion-box">
+        <p>
+          Delete all your data at any time from <strong>Settings → Danger Zone</strong>.
+          We permanently remove all records within 24 hours. No backups retained.
+          You can also uninstall the GitHub App at any time to stop all data collection immediately.
+        </p>
       </div>
     </div>
 
     <!-- ── SECTION 7: CONTACT ── -->
-    <div class="section" style="border-bottom:none;">
-      <div class="page">
-        <div class="section-label">Contact</div>
-        <h2>Security questions?</h2>
-        <div class="info-box">
-          <p>
-            Email us at <a href="mailto:info@grassion.com">info@grassion.com</a>
-          </p>
-          <p>We respond within 24 hours.</p>
-        </div>
-      </div>
+    <div class="section contact-box">
+      <div class="section-label">Get in touch</div>
+      <h2>Security questions?</h2>
+      <p>
+        Email us at <a href="mailto:info@grassion.com">info@grassion.com</a><br />
+        We respond within 24 hours.
+      </p>
     </div>
 
   </main>
 
   <!-- ── FOOTER ── -->
   <footer>
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <div class="footer-brand-name">Grassion</div>
-        <p>Measure whether your AI coding tool spend is paying off.</p>
-      </div>
-      <div class="footer-col">
-        <div class="footer-col-title">Product</div>
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/pricing/">Pricing</a></li>
-          <li><a href="/about/">About</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <div class="footer-col-title">Company</div>
-        <ul>
-          <li><a href="/contact/">Contact</a></li>
-          <li><a href="/security/">Security</a></li>
-          <li><a href="/privacy/">Privacy</a></li>
-          <li><a href="/terms/">Terms</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      © {year} Grassion Intelligence
-    </div>
+    <span>© {year} Grassion Intelligence</span>
+    <nav class="footer-links">
+      <a href="/security/">Security</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+    </nav>
   </footer>
 
 </body>
