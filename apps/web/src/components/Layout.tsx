@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard } from 'lucide-react'
+import { ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard, Shield, Activity } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
 
@@ -15,7 +15,14 @@ export function AppLayout() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
+  const health = useQuery({
+    queryKey: ['analytics', 'health'],
+    queryFn: api.analytics.health,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
   const inactiveCount = seatWaste.data?.inactiveUsers.length ?? 0
+  const isHighRisk = health.data?.riskLevel === 'high'
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
@@ -62,8 +69,8 @@ export function AppLayout() {
 
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: BarChart2, badge: null as number | null },
-    { to: '/seat-waste', label: 'Seat Waste', icon: DollarSign, badge: inactiveCount > 0 ? inactiveCount : null },
-    { to: '/billing', label: 'Billing', icon: CreditCard, badge: null as number | null },
+    { to: '/spend-intelligence', label: 'AI Spend', icon: DollarSign, badge: inactiveCount > 0 ? inactiveCount : null },
+    { to: '/health', label: 'Health', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
     { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
   ]
 
@@ -163,6 +170,7 @@ export function AppLayout() {
                   </div>
                   <DropItem icon={Settings} label="Settings" onClick={() => { navigate('/settings'); setDropdownOpen(false) }} />
                   <DropItem icon={CreditCard} label="Billing" onClick={() => { navigate('/billing'); setDropdownOpen(false) }} />
+                  <DropItemExternal icon={Shield} label="Security" href="https://grassion.com/security/" />
                   <DropItem icon={LogOut} label="Sign out" onClick={signOut} danger />
                 </div>
               )}
@@ -250,5 +258,19 @@ function DropItem({
       <Icon className="h-3.5 w-3.5" />
       {label}
     </button>
+  )
+}
+
+function DropItemExternal({ icon: Icon, label, href }: { icon: React.ElementType; label: string; href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="flex w-full items-center gap-3 px-3 py-2 text-sm text-[#888888] hover:bg-white/5 hover:text-white transition-colors"
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </a>
   )
 }

@@ -111,6 +111,11 @@ export const pullRequests = pgTable(
     aiDetectionMethod: text('ai_detection_method'),
     aiConfidence: real('ai_confidence').default(0),
 
+    reviewCount: integer('review_count').default(0),
+    changesRequestedCount: integer('changes_requested_count').default(0),
+    wasReverted: boolean('was_reverted').default(false),
+    triggeredHotfix: boolean('triggered_hotfix').default(false),
+
     rawMetadata: jsonb('raw_metadata'),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),

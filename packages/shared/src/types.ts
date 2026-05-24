@@ -1,6 +1,6 @@
 export type AiSource = 'copilot' | 'cursor' | 'claude' | 'windsurf' | 'unknown_ai'
 export type AiDetectionMethod = 'trailer' | 'body_regex' | 'label' | 'manual'
-export type Plan = 'trial' | 'starter' | 'team' | 'business'
+export type Plan = 'trial' | 'starter' | 'team' | 'business' | 'admin'
 export type Role = 'owner' | 'admin' | 'member'
 export type Verdict = 'net_positive' | 'net_negative' | 'unclear' | 'insufficient_data'
 export type PrState = 'open' | 'merged' | 'closed'

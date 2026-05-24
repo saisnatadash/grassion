@@ -405,12 +405,17 @@
       backdrop-filter: blur(12px);
     }
 
-    footer span {
+    footer span, footer a {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
       color: var(--dimmer);
       letter-spacing: 0.08em;
+      text-decoration: none;
     }
+
+    footer a:hover { color: rgba(255,255,255,0.5); }
+
+    .footer-links { display: flex; gap: 20px; align-items: center; }
 
     /* ── ASK WIDGET ─────────────────────────── */
     .ask-btn {
@@ -677,7 +682,11 @@
 
   <footer>
     <span>© 2026 Grassion Intelligence</span>
-    <span>Where AI Code Meets Accountability</span>
+    <nav class="footer-links">
+      <a href="/security/">Security</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+    </nav>
   </footer>
 
   <!-- ASK WIDGET -->

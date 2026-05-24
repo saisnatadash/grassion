@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { api, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow } from '../lib/api.js'
+import { api, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow, type OutcomesResponse, type HealthResponse } from '../lib/api.js'
 import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -105,6 +105,8 @@ export function DashboardPage() {
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
   const savingsHistory = useQuery({ queryKey: ['analytics', 'savings-history'], queryFn: api.analytics.savingsHistory })
   const journey = useQuery({ queryKey: ['analytics', 'journey'], queryFn: api.analytics.journey })
+  const outcomes = useQuery({ queryKey: ['analytics', 'outcomes'], queryFn: api.analytics.outcomes, retry: false })
+  const health = useQuery({ queryKey: ['analytics', 'health'], queryFn: api.analytics.health, staleTime: 5 * 60 * 1000, retry: false })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
@@ -122,6 +124,8 @@ export function DashboardPage() {
       qc.invalidateQueries({ queryKey: ['me'] }),
       qc.invalidateQueries({ queryKey: ['analytics', 'savings-history'] }),
       qc.invalidateQueries({ queryKey: ['analytics', 'journey'] }),
+      qc.invalidateQueries({ queryKey: ['analytics', 'outcomes'] }),
+      qc.invalidateQueries({ queryKey: ['analytics', 'health'] }),
       qc.invalidateQueries({ queryKey: ['metrics', 'history'] }),
     ])
     setTimeout(() => setRefreshing(false), 800)
@@ -260,8 +264,11 @@ export function DashboardPage() {
         totalPrs={data.totalPrs}
       />
 
-      {/* ── B: 4 STAT CARDS ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── AI CODE QUALITY CARD ── */}
+      <AiCodeQualityCard data={outcomes.data} loading={outcomes.isLoading} />
+
+      {/* ── B: 5 STAT CARDS ── */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard label="Total Seats" value={sw?.totalSeats ?? 0} sub="active PR authors · 30d" />
         <StatCard label="Active Seats" value={sw?.activeUsers.length ?? 0} sub="AI PR in last 7d" tone="green" />
         <StatCard
@@ -276,7 +283,20 @@ export function DashboardPage() {
           sub="from unused AI seats"
           tone={monthlyWaste > 0 ? 'red' : 'white'}
         />
+        <StatCard
+          label="Health Score"
+          value={health.data ? `${health.data.healthScore}/100` : '—'}
+          sub={
+            health.data?.riskLevel === 'high' ? 'high risk · check Health' :
+            health.data?.riskLevel === 'medium' ? 'medium risk detected' :
+            'code quality healthy'
+          }
+          tone={health.data ? (health.data.healthScore >= 75 ? 'green' : health.data.healthScore < 50 ? 'red' : 'white') : 'white'}
+        />
       </div>
+
+      {/* ── TOP PERFORMER ── */}
+      <TopPerformerCard data={health.data} loading={health.isLoading} />
 
       {/* ── YOUR GRASSION JOURNEY (below stat cards, before weekly chart) ── */}
       <JourneyCard data={journey.data} loading={journey.isLoading} />
@@ -545,7 +565,7 @@ function SeatWasteSummary({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Seat Usage</CardTitle>
-        <Link to="/seat-waste" className="text-xs text-[#555555] hover:text-white transition-colors flex items-center gap-1">
+        <Link to="/spend-intelligence" className="text-xs text-[#555555] hover:text-white transition-colors flex items-center gap-1">
           Full report <ArrowRight className="h-3 w-3" />
         </Link>
       </CardHeader>
@@ -777,7 +797,7 @@ function SavingsUnlockedCard({
           <p className="text-xs text-[#555555] mt-0.5">Running total of waste identified since you connected</p>
         </div>
         <Link
-          to="/seat-waste"
+          to="/spend-intelligence"
           className="text-xs text-[#555555] hover:text-white transition-colors flex items-center gap-1"
         >
           Seat details <ArrowRight className="h-3 w-3" />
@@ -884,7 +904,7 @@ function SavingsUnlockedCard({
                 </p>
               </div>
               <Link
-                to="/seat-waste"
+                to="/spend-intelligence"
                 className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-[#e5e5e5] transition-colors"
               >
                 View seats
@@ -1170,6 +1190,109 @@ function HistoryTab({ rows, loading }: { rows: HistoryRow[]; loading: boolean })
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+/* ── AI CODE QUALITY CARD ─────────────────────────── */
+function AiCodeQualityCard({ data, loading }: { data: OutcomesResponse | undefined; loading: boolean }) {
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center gap-2 text-sm text-[#888888]"><Spinner /> Analysing code quality…</div>
+        </CardContent>
+      </Card>
+    )
+  }
+  if (!data || data.totalAiPrs === 0) return null
+
+  const score = data.aiPrQualityScore
+  const verdict = data.verdict
+  const tone = verdict === 'high_quality' ? 'green' : verdict === 'average' ? 'yellow' : 'red'
+  const borderColor = tone === 'green' ? 'border-green-500/30' : tone === 'yellow' ? 'border-yellow-500/30' : 'border-red-500/30'
+  const bgColor = tone === 'green' ? 'bg-green-500/5' : tone === 'yellow' ? 'bg-yellow-500/5' : 'bg-red-500/5'
+  const scoreColor = score >= 75 ? 'text-green-400' : score >= 50 ? 'text-yellow-400' : 'text-red-400'
+  const barColor = tone === 'green' ? 'bg-green-500' : tone === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
+  const verdictText = verdict === 'high_quality' ? 'Strong ROI' : verdict === 'average' ? 'Medium ROI' : 'Low ROI'
+
+  return (
+    <div className={cn('rounded-xl border px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4', borderColor, bgColor)}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xs font-semibold uppercase tracking-widest text-[#888888]">AI Code Quality</span>
+          <Badge tone={tone}>{verdictText}</Badge>
+        </div>
+        <div className="space-y-1.5 max-w-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-[#888]">Quality Score</span>
+            <span className={cn('text-sm font-bold tabular-nums', scoreColor)}>{score}/100</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-[#222] overflow-hidden">
+            <div className={cn('h-full rounded-full', barColor)} style={{ width: `${score}%` }} />
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-6 flex-shrink-0">
+        <div className="text-center">
+          <div className={cn('text-xl font-bold tabular-nums', data.revertRate > 0 ? 'text-red-400' : 'text-white')}>{data.revertRate}%</div>
+          <div className="text-xs text-[#555] mt-0.5">Revert Rate</div>
+        </div>
+        <div className="text-center">
+          <div className={cn('text-xl font-bold tabular-nums', data.hotfixRate > 0 ? 'text-yellow-400' : 'text-white')}>{data.hotfixRate}%</div>
+          <div className="text-xs text-[#555] mt-0.5">Hotfix Rate</div>
+        </div>
+        <div className="text-center">
+          <div className="text-xl font-bold tabular-nums text-white">{data.totalAiPrs}</div>
+          <div className="text-xs text-[#555] mt-0.5">AI PRs</div>
+        </div>
+      </div>
+      <Link
+        to="/health"
+        className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-[#333] px-3 py-1.5 text-xs font-medium text-[#888] hover:text-white hover:border-[#555] transition-colors self-start sm:self-auto"
+      >
+        View Health Report <ArrowRight className="h-3 w-3" />
+      </Link>
+    </div>
+  )
+}
+
+/* ── TOP PERFORMER THIS WEEK ───────────────────────── */
+function TopPerformerCard({ data, loading }: { data: HealthResponse | undefined; loading: boolean }) {
+  if (loading || !data || data.developers.length === 0) return null
+  const sorted = [...data.developers].sort((a, b) => b.qualityScore - a.qualityScore)
+  const top = sorted[0]
+  if (!top) return null
+  const scoreColor = top.qualityScore >= 75 ? 'text-green-400' : top.qualityScore >= 50 ? 'text-yellow-400' : 'text-red-400'
+  return (
+    <div className="rounded-xl border border-[#222] bg-[#111] px-5 py-4 flex items-center gap-4">
+      <div className="flex-shrink-0">
+        {top.avatarUrl ? (
+          <img src={top.avatarUrl} alt="" className="h-10 w-10 rounded-full border border-[#333]" />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-sm font-semibold text-white">
+            {top.githubLogin[0]?.toUpperCase()}
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-sm font-semibold text-white">@{top.githubLogin}</span>
+          <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
+            🏆 Top this week
+          </span>
+        </div>
+        <div className="text-xs text-[#555555]">
+          {top.weeklyAiPrs} AI PR{top.weeklyAiPrs === 1 ? '' : 's'} · Quality{' '}
+          <span className={scoreColor}>{top.qualityScore}/100</span>
+        </div>
+      </div>
+      <Link
+        to="/health"
+        className="flex-shrink-0 text-xs text-[#555555] hover:text-white transition-colors flex items-center gap-1"
+      >
+        Full team <ArrowRight className="h-3 w-3" />
+      </Link>
     </div>
   )
 }

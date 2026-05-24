@@ -361,3 +361,224 @@ analyticsRouter.get('/api/analytics/savings-history', requireAuth, async (req: R
     res.json({ totalWasteIdentified: 0, thisMonthWaste: 0, monthlyHistory: [] })
   }
 })
+
+analyticsRouter.get('/api/analytics/health', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+
+  try {
+    const [[overall], trendRows, devRows] = await Promise.all([
+      db
+        .select({
+          totalAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)::int`,
+          reverted: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.wasReverted} = true)::int`,
+          hotfix: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.triggeredHotfix} = true)::int`,
+          avgChanges: sql<number>`COALESCE(AVG(${pullRequests.changesRequestedCount}) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL), 0)::real`,
+        })
+        .from(pullRequests)
+        .where(and(eq(pullRequests.teamId, teamId), eq(pullRequests.state, 'merged'))),
+
+      db
+        .select({
+          weekStart: sql<string>`DATE_TRUNC('week', ${pullRequests.mergedAt})::text`,
+          totalAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)::int`,
+          reverted: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.wasReverted} = true)::int`,
+          hotfix: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.triggeredHotfix} = true)::int`,
+          avgChanges: sql<number>`COALESCE(AVG(${pullRequests.changesRequestedCount}) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL), 0)::real`,
+        })
+        .from(pullRequests)
+        .where(
+          and(
+            eq(pullRequests.teamId, teamId),
+            eq(pullRequests.state, 'merged'),
+            sql`${pullRequests.mergedAt} IS NOT NULL AND ${pullRequests.mergedAt} >= NOW() - INTERVAL '12 weeks'`,
+          ),
+        )
+        .groupBy(sql`DATE_TRUNC('week', ${pullRequests.mergedAt})`)
+        .orderBy(sql`DATE_TRUNC('week', ${pullRequests.mergedAt})`),
+
+      db
+        .select({
+          authorLogin: pullRequests.authorLogin,
+          avatarUrl: users.avatarUrl,
+          weeklyAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.mergedAt} > NOW() - INTERVAL '7 days')::int`,
+          prevWeekAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.mergedAt} BETWEEN NOW() - INTERVAL '14 days' AND NOW() - INTERVAL '7 days')::int`,
+          totalAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)::int`,
+          reverted: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.wasReverted} = true)::int`,
+          hotfix: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.triggeredHotfix} = true)::int`,
+          avgChanges: sql<number>`COALESCE(AVG(${pullRequests.changesRequestedCount}) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL), 0)::real`,
+          primaryTool: sql<string | null>`MODE() WITHIN GROUP (ORDER BY ${pullRequests.aiSource}) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)`,
+        })
+        .from(pullRequests)
+        .leftJoin(
+          users,
+          and(
+            sql`${users.githubLogin} = ${pullRequests.authorLogin}`,
+            eq(users.teamId, pullRequests.teamId),
+          ),
+        )
+        .where(
+          and(
+            eq(pullRequests.teamId, teamId),
+            eq(pullRequests.state, 'merged'),
+            sql`${pullRequests.authorLogin} IS NOT NULL`,
+          ),
+        )
+        .groupBy(pullRequests.authorLogin, users.avatarUrl),
+    ])
+
+    const totalAiPrs = overall?.totalAiPrs ?? 0
+    const revertFraction = totalAiPrs > 0 ? (overall?.reverted ?? 0) / totalAiPrs : 0
+    const hotfixFraction = totalAiPrs > 0 ? (overall?.hotfix ?? 0) / totalAiPrs : 0
+    const avgChanges = overall?.avgChanges ?? 0
+    const healthScore = calcQualityScore(revertFraction, hotfixFraction, avgChanges)
+    const revertRate = Math.round(revertFraction * 100)
+    const hotfixRate = Math.round(hotfixFraction * 100)
+    const avgReviewCycles = Math.round(avgChanges * 10) / 10
+
+    const riskLevel: 'low' | 'medium' | 'high' =
+      revertRate > 15 || hotfixRate > 15 ? 'high' :
+      revertRate > 8 || hotfixRate > 10 ? 'medium' : 'low'
+
+    const trend = trendRows
+      .filter((r) => (r.totalAiPrs ?? 0) > 0)
+      .map((r) => {
+        const rf = r.totalAiPrs > 0 ? r.reverted / r.totalAiPrs : 0
+        const hf = r.totalAiPrs > 0 ? r.hotfix / r.totalAiPrs : 0
+        return { weekStart: r.weekStart, score: calcQualityScore(rf, hf, r.avgChanges), totalAiPrs: r.totalAiPrs }
+      })
+
+    const developers = devRows
+      .filter((r) => r.authorLogin !== null && (r.totalAiPrs ?? 0) > 0)
+      .map((r) => {
+        const rf = r.totalAiPrs > 0 ? r.reverted / r.totalAiPrs : 0
+        const hf = r.totalAiPrs > 0 ? r.hotfix / r.totalAiPrs : 0
+        const qualityScore = calcQualityScore(rf, hf, r.avgChanges)
+        const devTrend: 'up' | 'stable' | 'down' =
+          r.weeklyAiPrs > r.prevWeekAiPrs ? 'up' :
+          r.weeklyAiPrs < r.prevWeekAiPrs ? 'down' : 'stable'
+        const status: 'power_user' | 'active' | 'needs_support' =
+          qualityScore >= 75 && r.weeklyAiPrs >= 3 ? 'power_user' :
+          qualityScore < 50 ? 'needs_support' : 'active'
+        return {
+          githubLogin: r.authorLogin as string,
+          avatarUrl: r.avatarUrl,
+          weeklyAiPrs: r.weeklyAiPrs,
+          totalAiPrs: r.totalAiPrs,
+          qualityScore,
+          primaryTool: r.primaryTool,
+          trend: devTrend,
+          status,
+        }
+      })
+      .sort((a, b) => b.qualityScore - a.qualityScore)
+
+    const riskSignals: Array<{ type: string; description: string }> = []
+    if (revertRate > 8)
+      riskSignals.push({ type: 'high_revert_rate', description: `${revertRate}% of AI PRs were reverted — above the healthy threshold of 8%` })
+    if (hotfixRate > 10)
+      riskSignals.push({ type: 'high_hotfix_rate', description: `${hotfixRate}% of AI PRs triggered a hotfix — above the healthy threshold of 10%` })
+    if (avgChanges > 2)
+      riskSignals.push({ type: 'high_review_cycles', description: `AI PRs average ${avgReviewCycles.toFixed(1)} review cycles — indicates recurring code quality issues` })
+
+    res.json({ healthScore, riskLevel, weekCount: trend.length, revertRate, hotfixRate, avgReviewCycles, totalAiPrs, trend, developers, riskSignals })
+  } catch (err) {
+    console.error('[health]', err)
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+function calcQualityScore(revertFraction: number, hotfixFraction: number, avgChanges: number): number {
+  return Math.max(0, Math.min(100, Math.round(100 - revertFraction * 40 - hotfixFraction * 30 - avgChanges * 10)))
+}
+
+function qualityVerdict(score: number): 'high_quality' | 'average' | 'low_quality' {
+  return score >= 75 ? 'high_quality' : score >= 50 ? 'average' : 'low_quality'
+}
+
+analyticsRouter.get('/api/analytics/outcomes', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+
+  try {
+    // Global aggregate + per-tool aggregate in parallel
+    const [[stats], [teamRow], toolRows] = await Promise.all([
+      db
+        .select({
+          totalAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)::int`,
+          revertedAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.wasReverted} = true)::int`,
+          hotfixAiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL AND ${pullRequests.triggeredHotfix} = true)::int`,
+          avgChangesRequested: sql<number>`COALESCE(AVG(${pullRequests.changesRequestedCount}) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL), 0)::real`,
+        })
+        .from(pullRequests)
+        .where(and(eq(pullRequests.teamId, teamId), eq(pullRequests.state, 'merged'))),
+      db
+        .select({ monthlyAiSpendUsd: teams.monthlyAiSpendUsd })
+        .from(teams)
+        .where(eq(teams.id, teamId))
+        .limit(1),
+      db
+        .select({
+          tool: pullRequests.aiSource,
+          prCount: sql<number>`COUNT(*)::int`,
+          revertedCount: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.wasReverted} = true)::int`,
+          hotfixCount: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.triggeredHotfix} = true)::int`,
+          avgChanges: sql<number>`COALESCE(AVG(${pullRequests.changesRequestedCount}), 0)::real`,
+        })
+        .from(pullRequests)
+        .where(
+          and(
+            eq(pullRequests.teamId, teamId),
+            eq(pullRequests.state, 'merged'),
+            sql`${pullRequests.aiSource} IS NOT NULL`,
+          ),
+        )
+        .groupBy(pullRequests.aiSource)
+        .orderBy(desc(sql`COUNT(*)`)),
+    ])
+
+    const totalAiPrs = stats?.totalAiPrs ?? 0
+    const revertedAiPrs = stats?.revertedAiPrs ?? 0
+    const hotfixAiPrs = stats?.hotfixAiPrs ?? 0
+    const avgChangesRequested = stats?.avgChangesRequested ?? 0
+    const monthlyAiSpendUsd = teamRow?.monthlyAiSpendUsd ?? 0
+
+    const revertFraction = totalAiPrs > 0 ? revertedAiPrs / totalAiPrs : 0
+    const hotfixFraction = totalAiPrs > 0 ? hotfixAiPrs / totalAiPrs : 0
+    const aiPrQualityScore = calcQualityScore(revertFraction, hotfixFraction, avgChangesRequested)
+
+    const toolBreakdown = toolRows
+      .filter((r): r is typeof r & { tool: string } => r.tool !== null)
+      .map((r) => {
+        const rf = r.prCount > 0 ? r.revertedCount / r.prCount : 0
+        const hf = r.prCount > 0 ? r.hotfixCount / r.prCount : 0
+        const score = calcQualityScore(rf, hf, r.avgChanges)
+        return {
+          tool: r.tool,
+          prCount: r.prCount,
+          revertedCount: r.revertedCount,
+          revertRate: Math.round(rf * 100),
+          hotfixCount: r.hotfixCount,
+          hotfixRate: Math.round(hf * 100),
+          avgChangesRequested: Math.round(r.avgChanges * 10) / 10,
+          qualityScore: score,
+          estimatedMonthlySpend: totalAiPrs > 0 ? Math.round((r.prCount / totalAiPrs) * monthlyAiSpendUsd) : 0,
+          verdict: qualityVerdict(score),
+        }
+      })
+
+    res.json({
+      totalAiPrs,
+      revertedAiPrs,
+      revertRate: Math.round(revertFraction * 100),
+      hotfixRate: Math.round(hotfixFraction * 100),
+      avgReviewChangesRequested: Math.round(avgChangesRequested * 10) / 10,
+      aiPrQualityScore,
+      verdict: qualityVerdict(aiPrQualityScore),
+      toolBreakdown,
+    })
+  } catch (err) {
+    console.error('[outcomes]', err)
+    res.status(500).json({ error: 'internal_error' })
+  }
+})

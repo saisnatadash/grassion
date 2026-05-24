@@ -65,7 +65,8 @@ reposRouter.post(
     const [, owner, repoName] = match as [string, string, string]
 
     // Fetch repo metadata from GitHub public API
-    let ghData: { id: number; name: string; full_name: string; default_branch: string; private: boolean } | null = null
+    type GhRepoData = { id: number; name: string; full_name: string; default_branch: string; private: boolean }
+    let ghData: GhRepoData | null = null
     try {
       const ghRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
         headers: {
@@ -83,7 +84,7 @@ reposRouter.post(
         res.status(502).json({ error: 'github_api_error', status })
         return
       }
-      ghData = (await ghRes.json()) as typeof ghData
+      ghData = (await ghRes.json()) as GhRepoData
     } catch (err) {
       logger.error({ err }, 'github api fetch failed in connect')
       res.status(502).json({ error: 'github_api_unreachable' })
@@ -187,7 +188,7 @@ async function syncHistoricalPrs(
   const merged = ghPrs.filter((p) => !!p.merged_at)
   if (merged.length === 0) return 0
 
-  // Deep detection for each PR (commits + files in parallel per PR)
+  // Deep detection for each PR (commits + files + reviews in parallel per PR)
   const rows: Array<{
     teamId: string
     repoId: string
@@ -206,10 +207,17 @@ async function syncHistoricalPrs(
     aiSource: string | null
     aiDetectionMethod: string | null
     aiConfidence: number
+    reviewCount: number
+    changesRequestedCount: number
+    wasReverted: boolean
+    triggeredHotfix: boolean
   }> = []
 
   for (const pr of merged) {
-    const d = await detectAiSourceDeep(owner, repoName, pr, ghHeaders)
+    const [d, rv] = await Promise.all([
+      detectAiSourceDeep(owner, repoName, pr, ghHeaders),
+      fetchReviewStats(owner, repoName, pr.number, ghHeaders),
+    ])
     rows.push({
       teamId,
       repoId,
@@ -228,11 +236,29 @@ async function syncHistoricalPrs(
       aiSource: d.aiSource,
       aiDetectionMethod: d.aiDetectionMethod,
       aiConfidence: d.aiConfidence,
+      reviewCount: rv.reviewCount,
+      changesRequestedCount: rv.changesRequestedCount,
+      wasReverted: false,
+      triggeredHotfix: false,
     })
   }
 
+  detectReverts(rows)
+  detectHotfixes(rows)
+
   try {
-    await db.insert(pullRequests).values(rows).onConflictDoNothing()
+    await db
+      .insert(pullRequests)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: pullRequests.githubPrId,
+        set: {
+          reviewCount: sql`excluded.review_count`,
+          changesRequestedCount: sql`excluded.changes_requested_count`,
+          wasReverted: sql`excluded.was_reverted`,
+          triggeredHotfix: sql`excluded.triggered_hotfix`,
+        },
+      })
   } catch (err) {
     logger.error({ err }, 'pr bulk insert failed during sync')
     return 0
@@ -272,6 +298,10 @@ interface GhFile {
   changes: number
 }
 
+interface GhReview {
+  state: 'APPROVED' | 'CHANGES_REQUESTED' | 'DISMISSED' | 'COMMENTED' | 'PENDING'
+}
+
 interface DetectionResult {
   aiSource: string | null
   aiDetectionMethod: string | null
@@ -290,6 +320,62 @@ async function fetchGhJson<T>(url: string, headers: Record<string, string>): Pro
     return (await res.json()) as T
   } catch {
     return null
+  }
+}
+
+/* ── Review stats ────────────────────────────────────── */
+
+async function fetchReviewStats(
+  owner: string,
+  repoName: string,
+  prNumber: number,
+  headers: Record<string, string>,
+): Promise<{ reviewCount: number; changesRequestedCount: number }> {
+  const reviews = await fetchGhJson<GhReview[]>(
+    `https://api.github.com/repos/${owner}/${repoName}/pulls/${prNumber}/reviews?per_page=100`,
+    headers,
+  )
+  if (!reviews) return { reviewCount: 0, changesRequestedCount: 0 }
+  return {
+    reviewCount: reviews.length,
+    changesRequestedCount: reviews.filter((r) => r.state === 'CHANGES_REQUESTED').length,
+  }
+}
+
+/* ── Cross-batch outcome signals ─────────────────────── */
+
+type OutcomeRow = { githubPrNumber: number; title: string; mergedAt: Date; wasReverted: boolean; triggeredHotfix: boolean }
+
+function detectReverts(rows: OutcomeRow[]): void {
+  for (const revertPr of rows) {
+    if (!revertPr.title.toLowerCase().startsWith('revert')) continue
+    // Match: Revert #123  or  Revert "Some title"
+    const numMatch = revertPr.title.match(/revert\s+#(\d+)/i)
+    const titleMatch = revertPr.title.match(/revert\s+["'](.+)["']/i)
+    for (const original of rows) {
+      if (original === revertPr) continue
+      if (numMatch && original.githubPrNumber === Number(numMatch[1] ?? NaN)) {
+        original.wasReverted = true
+      }
+      if (titleMatch && original.title.toLowerCase() === (titleMatch[1] ?? '').toLowerCase()) {
+        original.wasReverted = true
+      }
+    }
+  }
+}
+
+function detectHotfixes(rows: OutcomeRow[]): void {
+  const keywords = ['hotfix', 'bugfix', 'fix', 'patch']
+  const fortyEightHours = 48 * 60 * 60 * 1000
+  for (const hotfixPr of rows) {
+    if (!keywords.some((k) => hotfixPr.title.toLowerCase().includes(k))) continue
+    for (const earlier of rows) {
+      if (earlier === hotfixPr) continue
+      const diff = hotfixPr.mergedAt.getTime() - earlier.mergedAt.getTime()
+      if (diff > 0 && diff <= fortyEightHours) {
+        earlier.triggeredHotfix = true
+      }
+    }
   }
 }
 

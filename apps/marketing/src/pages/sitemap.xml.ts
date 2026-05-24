@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 
-const PATHS = ['/', '/about/', '/pricing/', '/contact/', '/privacy/', '/terms/']
+const PATHS = ['/', '/about/', '/pricing/', '/contact/', '/security/', '/privacy/', '/terms/']
 
 export const GET: APIRoute = ({ site }) => {
   const origin = (site ?? new URL('https://grassion.com')).origin

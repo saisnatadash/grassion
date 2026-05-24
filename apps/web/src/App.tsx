@@ -8,7 +8,8 @@ import { DashboardPage } from './pages/Dashboard.js'
 import { SettingsPage } from './pages/Settings.js'
 import { BillingPage } from './pages/Billing.js'
 import { OnboardingPage } from './pages/Onboarding.js'
-import { SeatWastePage } from './pages/SeatWaste.js'
+import { SpendIntelligencePage } from './pages/SpendIntelligence.js'
+import { HealthPage } from './pages/Health.js'
 import { AuthCallbackPage } from './pages/AuthCallback.js'
 import { NotFoundPage } from './pages/NotFound.js'
 
@@ -48,7 +49,9 @@ export function App() {
           <Route path="/install" element={<InstallPage />} />
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/seat-waste" element={<SeatWastePage />} />
+            <Route path="/spend-intelligence" element={<SpendIntelligencePage />} />
+            <Route path="/seat-waste" element={<Navigate to="/spend-intelligence" replace />} />
+            <Route path="/health" element={<HealthPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />

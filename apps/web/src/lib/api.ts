@@ -69,6 +69,54 @@ export interface SavingsHistoryResponse {
   monthlyHistory: Array<{ month: string; wasteUsd: number }>
 }
 
+export interface OutcomesToolRow {
+  tool: string
+  prCount: number
+  revertedCount: number
+  revertRate: number
+  hotfixCount: number
+  hotfixRate: number
+  avgChangesRequested: number
+  qualityScore: number
+  estimatedMonthlySpend: number
+  verdict: 'high_quality' | 'average' | 'low_quality'
+}
+
+export interface OutcomesResponse {
+  totalAiPrs: number
+  revertedAiPrs: number
+  revertRate: number
+  hotfixRate: number
+  avgReviewChangesRequested: number
+  aiPrQualityScore: number
+  verdict: 'high_quality' | 'average' | 'low_quality'
+  toolBreakdown: OutcomesToolRow[]
+}
+
+export interface HealthDevRow {
+  githubLogin: string
+  avatarUrl: string | null
+  weeklyAiPrs: number
+  totalAiPrs: number
+  qualityScore: number
+  primaryTool: string | null
+  trend: 'up' | 'stable' | 'down'
+  status: 'power_user' | 'active' | 'needs_support'
+}
+
+export interface HealthResponse {
+  healthScore: number
+  riskLevel: 'low' | 'medium' | 'high'
+  weekCount: number
+  revertRate: number
+  hotfixRate: number
+  avgReviewCycles: number
+  totalAiPrs: number
+  trend: Array<{ weekStart: string; score: number; totalAiPrs: number }>
+  developers: HealthDevRow[]
+  riskSignals: Array<{ type: string; description: string }>
+}
+
 export interface JourneyResponse {
   daysConnected: number
   totalWasteIdentified: number
@@ -140,6 +188,8 @@ export const api = {
     seatWaste: () => request<SeatWasteResponse>('/api/analytics/seat-waste'),
     savingsHistory: () => request<SavingsHistoryResponse>('/api/analytics/savings-history'),
     journey: () => request<JourneyResponse>('/api/analytics/journey'),
+    outcomes: () => request<OutcomesResponse>('/api/analytics/outcomes'),
+    health: () => request<HealthResponse>('/api/analytics/health'),
   },
 
   prs: {
