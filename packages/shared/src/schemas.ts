@@ -8,6 +8,7 @@ export const updateTeamSchema = z.object({
   emailDigestEnabled: z.boolean().optional(),
   emailDigestDay: z.number().int().min(0).max(6).optional(),
   emailDigestHour: z.number().int().min(0).max(23).optional(),
+  slackWebhookUrl: z.string().url().nullable().optional(),
 })
 
 export const checkoutSchema = z.object({

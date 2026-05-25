@@ -65,6 +65,7 @@ export interface MeResponse {
     avgDevHourlyRateUsd: number
     timezone: string
     emailDigestEnabled: boolean
+    slackWebhookUrl: string | null
   }
 }
 

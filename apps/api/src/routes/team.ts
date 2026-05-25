@@ -28,6 +28,7 @@ teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => 
     emailDigestEnabled: t.emailDigestEnabled ?? true,
     emailDigestDay: t.emailDigestDay ?? 1,
     emailDigestHour: t.emailDigestHour ?? 9,
+    slackWebhookUrl: t.slackWebhookUrl ?? null,
   })
 })
 

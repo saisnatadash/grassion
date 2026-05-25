@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2 } from 'lucide-react'
+import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2, Bell } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { usePlan } from '../lib/plan.js'
@@ -72,6 +72,7 @@ export function SettingsPage() {
       </div>
       <GitHubSection />
       <TeamSettings />
+      <SlackSection />
       <ReposSection />
       <MembersSection />
       <DangerZone />
@@ -141,7 +142,6 @@ function GitHubSection() {
 function TeamSettings() {
   const qc = useQueryClient()
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
-  const { isPaid } = usePlan()
   const update = useMutation({
     mutationFn: api.team.update,
     onSuccess: () => {
@@ -323,10 +323,6 @@ function TeamSettings() {
               </div>
             </div>
           )}
-          {/* Slack — Pro only */}
-          <div className="mt-0 pt-0 border-t border-[#1a1a1a]">
-            <SlackNotificationsRow isPaid={isPaid} />
-          </div>
         </CardContent>
       </Card>
 
@@ -361,39 +357,121 @@ function TeamSettings() {
   )
 }
 
-/* ── SLACK NOTIFICATIONS ROW ── */
-function SlackNotificationsRow({ isPaid }: { isPaid: boolean }) {
+/* ── SLACK SECTION ── */
+function SlackSection() {
+  const qc = useQueryClient()
+  const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+
+  useEffect(() => {
+    if (team.data) {
+      setWebhookUrl((team.data as { slackWebhookUrl?: string | null }).slackWebhookUrl ?? '')
+    }
+  }, [team.data])
+
+  function showToast(type: 'success' | 'error', msg: string) {
+    setToast({ type, msg })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  const save = useMutation({
+    mutationFn: () =>
+      api.team.update({ slackWebhookUrl: webhookUrl.trim() || null } as never),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['team'] })
+      showToast('success', '✅ Webhook URL saved!')
+    },
+    onError: () => showToast('error', '❌ Save failed. Try again.'),
+  })
+
+  const test = useMutation({
+    mutationFn: api.slack.test,
+    onSuccess: () => showToast('success', '✅ Test message sent to Slack!'),
+    onError: () => showToast('error', '❌ Failed — check your webhook URL'),
+  })
+
+  const isConfigured = !!((team.data as { slackWebhookUrl?: string | null } | undefined)?.slackWebhookUrl)
+
   return (
-    <div className="flex items-start justify-between gap-4 py-3">
-      <div>
-        <div className={cn('text-sm font-medium flex items-center gap-2', isPaid ? 'text-white' : 'text-[#555555]')}>
-          Slack notifications
-          {!isPaid && <Lock className="h-3.5 w-3.5 text-[#555555]" />}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4 text-[#888]" />
+          <CardTitle>Slack notifications</CardTitle>
+          <span
+            title={isConfigured ? 'Slack connected' : 'Not configured'}
+            className={cn(
+              'h-2 w-2 rounded-full flex-shrink-0',
+              isConfigured ? 'bg-green-500 animate-pulse' : 'bg-[#444]',
+            )}
+          />
         </div>
-        <div className="text-xs text-[#555555] mt-0.5">
-          {isPaid
-            ? 'Send weekly ROI digest to a Slack channel'
-            : 'Available on Pro — get alerts in Slack when your AI ROI changes'}
+      </CardHeader>
+      <CardContent className="space-y-4">
+
+        {/* Input */}
+        <div>
+          <label className="block text-xs text-[#888888] mb-1.5">Webhook URL</label>
+          <Input
+            type="text"
+            value={webhookUrl}
+            onChange={(e) => setWebhookUrl(e.target.value)}
+            placeholder="https://hooks.slack.com/services/..."
+          />
+          <p className="mt-1.5 text-xs text-[#555555]">
+            Get your webhook URL from{' '}
+            <a
+              href="https://api.slack.com/apps"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#888] underline underline-offset-2 hover:text-white transition-colors"
+            >
+              api.slack.com/apps
+            </a>
+            {' '}→ Incoming Webhooks
+          </p>
         </div>
-      </div>
-      {isPaid ? (
-        <button
-          type="button"
-          disabled
-          className="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent bg-[#333333]"
-        >
-          <span className="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm translate-x-0" />
-        </button>
-      ) : (
-        <Link
-          to="/billing"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-2.5 py-1 text-xs font-medium text-yellow-400 hover:bg-yellow-500/10 transition-colors flex-shrink-0"
-        >
-          <Lock className="h-3 w-3" />
-          Upgrade to Pro
-        </Link>
-      )}
-    </div>
+
+        {/* Preview */}
+        <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
+          <p className="text-xs text-[#555555] font-mono leading-relaxed">
+            📊 Weekly digest · Every Monday 9am IST<br />
+            Includes: ROI verdict, savings, health score, top performer<br />
+            ⚠️ Instant alert when a PR is reverted<br />
+            🔴 Alert when health score drops below 75<br />
+            💸 Alert when a seat goes idle for 7+ days
+          </p>
+        </div>
+
+        {/* Toast */}
+        {toast && (
+          <p className={cn('text-sm font-medium', toast.type === 'success' ? 'text-green-400' : 'text-red-400')}>
+            {toast.msg}
+          </p>
+        )}
+
+        {/* Buttons */}
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            onClick={() => save.mutate()}
+            disabled={save.isPending}
+          >
+            {save.isPending ? 'Saving…' : 'Save'}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => test.mutate()}
+            disabled={test.isPending || !isConfigured}
+            title={!isConfigured ? 'Save a webhook URL first' : undefined}
+          >
+            {test.isPending ? 'Sending…' : 'Send test message'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

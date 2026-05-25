@@ -39,6 +39,8 @@ export const teams = pgTable('teams', {
 
   lastDigestSentAt: timestamp('last_digest_sent_at'),
 
+  slackWebhookUrl: text('slack_webhook_url'),
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

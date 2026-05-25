@@ -258,6 +258,10 @@ export const api = {
       request<{ ok: true; sent: number; failed: number }>('/api/admin/trigger-digest', { method: 'POST' }),
   },
 
+  slack: {
+    test: () => request<{ ok: true }>('/api/slack/test', { method: 'POST' }),
+  },
+
   metrics: {
     summary: () => request<DashboardSummary>('/api/metrics/summary'),
     weekly: () => request<WeeklyMetricDto[]>('/api/metrics/weekly'),

@@ -13,8 +13,9 @@ import {
 } from '../services/prs.js'
 import { backfillTeamRepos } from '../services/backfill.js'
 import { db } from '../db.js'
-import { teams } from '@grassion/db'
+import { teams, repos } from '@grassion/db'
 import { eq } from 'drizzle-orm'
+import { sendRevertAlert } from '../lib/slack.js'
 
 let _webhooks: Webhooks | undefined
 
@@ -78,6 +79,24 @@ function getWebhooks(): Webhooks {
           payload.pull_request.merged_at
         ) {
           await scheduleOutcomeCheck(pr.id, addDays(new Date(), 7))
+
+          // Instant Slack alert for reverted PRs (GitHub names them "Revert '...'")
+          if (payload.pull_request.title.startsWith('Revert ')) {
+            const [team] = await db
+              .select({ slackWebhookUrl: teams.slackWebhookUrl })
+              .from(teams)
+              .where(eq(teams.id, pr.teamId))
+              .limit(1)
+            if (team?.slackWebhookUrl) {
+              const prUrl = payload.pull_request.html_url
+              sendRevertAlert(
+                team.slackWebhookUrl,
+                payload.pull_request.title,
+                payload.pull_request.user.login,
+                prUrl,
+              ).catch((err: unknown) => logger.error({ err }, 'slack revert alert failed'))
+            }
+          }
         }
       },
     )

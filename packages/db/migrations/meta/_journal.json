@@ -36,6 +36,13 @@
       "when": 1748217600000,
       "tag": "0005_metrics",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1748390400000,
+      "tag": "0006_slack",
+      "breakpoints": true
     }
   ]
 }
