@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { teams, users } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth, requireRole } from '../auth.js'
@@ -14,6 +14,7 @@ import {
 } from '../billing/razorpay.js'
 import { env } from '../env.js'
 import { checkoutSchema, verifyPaymentSchema, verifyOrderPaymentSchema } from '@grassion/shared'
+import { sendPlanUpgradeEmail } from '../lib/email.js'
 
 export const billingRouter = Router()
 
@@ -87,6 +88,21 @@ billingRouter.post(
           updatedAt: new Date(),
         })
         .where(eq(teams.id, sess.teamId))
+      // fire-and-forget upgrade confirmation email
+      db.select({ email: users.email, githubLogin: users.githubLogin })
+        .from(users)
+        .where(and(eq(users.teamId, sess.teamId), eq(users.role, 'owner')))
+        .limit(1)
+        .then(([owner]) => {
+          if (owner?.email) {
+            return sendPlanUpgradeEmail(owner.email, {
+              username: owner.githubLogin,
+              plan: 'starter',
+              seatCount: parsed.data.seatCount,
+            })
+          }
+        })
+        .catch(() => {})
       res.json({ ok: true, status: 'active', plan: 'starter' })
       return
     }
@@ -107,15 +123,29 @@ billingRouter.post(
       return
     }
     const sub = await fetchSubscription(parsed.data.razorpay_subscription_id)
+    const newPlan = planFromStatus(sub.status)
     await db
       .update(teams)
       .set({
         razorpaySubscriptionId: sub.id,
         subscriptionStatus: sub.status,
-        plan: planFromStatus(sub.status),
+        plan: newPlan,
         updatedAt: new Date(),
       })
       .where(eq(teams.id, sess.teamId))
+    // fire-and-forget upgrade confirmation email for paid plans
+    if (newPlan !== 'trial') {
+      db.select({ email: users.email, githubLogin: users.githubLogin })
+        .from(users)
+        .where(and(eq(users.teamId, sess.teamId), eq(users.role, 'owner')))
+        .limit(1)
+        .then(([owner]) => {
+          if (owner?.email) {
+            return sendPlanUpgradeEmail(owner.email, { username: owner.githubLogin, plan: newPlan })
+          }
+        })
+        .catch(() => {})
+    }
     res.json({ ok: true, status: sub.status })
   },
 )

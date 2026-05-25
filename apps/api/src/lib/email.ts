@@ -2,7 +2,11 @@ import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
 import { env } from '../env.js'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | undefined
+function resendClient(): Resend {
+  if (!_resend) _resend = new Resend(env().RESEND_API_KEY ?? process.env['RESEND_API_KEY'])
+  return _resend
+}
 
 export interface DigestEmailData {
   teamName: string
@@ -174,7 +178,7 @@ function buildDigestHtml(data: DigestEmailData): string {
 const FROM = 'Grassion <info@grassion.com>'
 
 export async function sendWelcomeEmail(to: string, username: string): Promise<void> {
-  await resend.emails.send({
+  await resendClient().emails.send({
     from: FROM,
     to,
     subject: 'Welcome to Grassion 🎉',
@@ -263,6 +267,112 @@ export async function sendWelcomeEmail(to: string, username: string): Promise<vo
         </table>
       </td>
     </tr>
+  </table>
+</body>
+</html>`,
+  })
+}
+
+export async function sendPlanUpgradeEmail(
+  to: string,
+  params: { username: string; plan: string; seatCount?: number },
+): Promise<void> {
+  const { username, plan, seatCount } = params
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1)
+  const seatLine = seatCount != null
+    ? `<p style="margin:0 0 16px;font-size:15px;color:#888888;line-height:1.6;">Your plan covers <strong style="color:#ffffff;">${seatCount} seat${seatCount === 1 ? '' : 's'}</strong>. Head to Settings to manage your team.</p>`
+    : ''
+
+  await resendClient().emails.send({
+    from: FROM,
+    to,
+    subject: `Your Grassion ${planLabel} plan is now active ✅`,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#111111;border:1px solid #222222;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #1a1a1a;">
+              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Grassion</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;">
+              <p style="margin:0 0 16px;font-size:24px;font-weight:600;color:#ffffff;line-height:1.3;">
+                Payment confirmed, @${username}!
+              </p>
+              <p style="margin:0 0 16px;font-size:15px;color:#888888;line-height:1.6;">
+                Your <strong style="color:#22c55e;">${planLabel}</strong> plan is now active. You have full access to AI ROI analytics, seat waste intelligence, and weekly digest emails.
+              </p>
+              ${seatLine}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                <tr>
+                  <td>
+                    <a href="https://app.grassion.com/dashboard"
+                       style="display:inline-block;background:#22c55e;color:#000000;font-size:14px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:8px;">
+                      Go to Dashboard →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px;border-top:1px solid #1a1a1a;">
+              <p style="margin:0;font-size:12px;color:#555555;line-height:1.5;">
+                Questions about your plan? Reply to this email or contact
+                <a href="mailto:info@grassion.com" style="color:#888888;text-decoration:none;">info@grassion.com</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+  })
+}
+
+export async function sendTestEmail(to: string, username: string): Promise<void> {
+  await resendClient().emails.send({
+    from: FROM,
+    to,
+    subject: 'Grassion — test email ✅',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#111111;border:1px solid #222222;border-radius:12px;overflow:hidden;">
+        <tr>
+          <td style="padding:32px 40px 24px;border-bottom:1px solid #1a1a1a;">
+            <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Grassion</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 40px;">
+            <p style="margin:0 0 12px;font-size:20px;font-weight:600;color:#ffffff;">Test email confirmed ✅</p>
+            <p style="margin:0;font-size:15px;color:#888888;line-height:1.6;">
+              Hi @${username}, this is a test email from your Grassion instance. Resend is correctly configured and delivering to this address.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid #1a1a1a;">
+            <p style="margin:0;font-size:12px;color:#555555;">Sent from the Grassion admin panel.</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
   </table>
 </body>
 </html>`,

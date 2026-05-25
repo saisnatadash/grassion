@@ -33,6 +33,7 @@ const schema = z.object({
   API_URL: z.string().url(),
   MARKETING_URL: z.string().url().optional(),
 
+  RESEND_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
 })
 
