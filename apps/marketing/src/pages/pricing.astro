@@ -8,7 +8,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing · Grassion</title>
-  <meta name="description" content="Simple per-developer pricing. 14-day free trial. No credit card required." />
+  <meta name="description" content="Simple team-based pricing. Includes seats, not per-seat overhead. 14-day free trial. No credit card required." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
@@ -159,18 +159,18 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       line-height: 1;
     }
 
-    .plan-price-usd {
+    .plan-seats {
       font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      color: rgba(255,255,255,0.50);
-      margin-bottom: 8px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 4px;
     }
 
-    .plan-unit {
-      font-size: 12px;
-      font-weight: 300;
-      color: rgba(255,255,255,0.58);
-      margin-bottom: 4px;
+    .plan-extra {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.38);
+      margin-bottom: 8px;
     }
 
     .plan-best {
@@ -256,7 +256,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       margin-top: 10px;
     }
 
-    /* ── RAZORPAY NOTE ──────────────────────── */
+    /* ── PAYMENT NOTE ──────────────────────── */
     .payment-note {
       display: flex;
       align-items: center;
@@ -444,30 +444,33 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
   <main>
     <div class="eyebrow">Pricing</div>
-    <h1>Simple, honest pricing.</h1>
+    <h1>Flat monthly price.<br />Seats included.</h1>
     <p class="hero-sub">
-      Charged per active developer. 14-day free trial. No credit card to start. Cancel anytime.
-      Features unlock instantly after payment · managed in your dashboard.
+      Each plan includes a seat bundle. Add extras at a low per-seat rate.<br />
+      14-day free trial · no credit card required · cancel anytime.
     </p>
 
     <!-- PLAN CARDS -->
     <div class="plans-grid">
 
-      <!-- Pro -->
+      <!-- Starter -->
       <div class="plan-card">
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">$19</div>
-        <div class="plan-price-usd">&nbsp;</div>
-        <div class="plan-unit">per developer / month</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">$49</div>
+        <div class="plan-seats">Includes 10 seats</div>
+        <div class="plan-extra">Extra seats $5/dev/mo</div>
         <div class="plan-best">Best for 1–10 devs</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
           <li>All repos monitored, no limit</li>
-          <li>AI PR detection via label, git trailer &amp; body pattern</li>
+          <li>AI PR detection via label, git trailer &amp; body</li>
           <li>Weekly ROI verdict: Net Positive / Neutral / Negative</li>
-          <li>Problem PR alerts with AI-generated summaries</li>
-          <li>Seat waste analysis: spot unused AI seats</li>
+          <li>Problem PR alerts with AI root-cause summaries</li>
+          <li>Seat waste analysis: spot unused AI licences</li>
+          <li>Codebase health score &amp; trend</li>
+          <li>Outcomes tracking: reverts, hotfixes, review cycles</li>
           <li>Weekly email digest</li>
+          <li>Slack weekly digest + instant alerts</li>
           <li>GitHub App · 5-minute setup</li>
           <li>Email support</li>
         </ul>
@@ -475,19 +478,22 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         <p class="plan-hint">14-day trial · no card required</p>
       </div>
 
-      <!-- Team (featured) -->
+      <!-- Growth (featured) -->
       <div class="plan-card featured">
         <div class="plan-popular">Most Popular</div>
-        <div class="plan-name">Team</div>
-        <div class="plan-price">$15</div>
-        <div class="plan-price-usd">&nbsp;</div>
-        <div class="plan-unit">per developer / month</div>
-        <div class="plan-best">Min 10 seats · Best for 10–30 devs</div>
+        <div class="plan-name">Growth</div>
+        <div class="plan-price">$149</div>
+        <div class="plan-seats">Includes 30 seats</div>
+        <div class="plan-extra">Extra seats $4/dev/mo</div>
+        <div class="plan-best">Best for 11–30 devs</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li class="inherit">Everything in Pro</li>
+          <li class="inherit">Everything in Starter</li>
           <li>Per-developer seat waste breakdown</li>
           <li>AI adoption rate by team member</li>
+          <li>Tool comparison: Copilot vs Cursor vs Claude Code</li>
+          <li>Developer metrics &amp; trend analysis</li>
+          <li>Journey milestones tracker</li>
           <li>Priority email support</li>
         </ul>
         <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
@@ -497,16 +503,17 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <!-- Business -->
       <div class="plan-card">
         <div class="plan-name">Business</div>
-        <div class="plan-price">$499</div>
-        <div class="plan-price-usd">&nbsp;</div>
-        <div class="plan-unit">flat / month · unlimited devs</div>
-        <div class="plan-best">Best for 30–50 devs</div>
+        <div class="plan-price">$399</div>
+        <div class="plan-seats">Includes 75 seats</div>
+        <div class="plan-extra">Extra seats $3/dev/mo</div>
+        <div class="plan-best">Best for 31–75 devs</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li class="inherit">Everything in Team</li>
+          <li class="inherit">Everything in Growth</li>
+          <li>Security overview &amp; audit log</li>
+          <li>Custom data retention policy</li>
           <li>Dedicated onboarding session</li>
           <li>24h support SLA</li>
-          <li>Custom data retention policy</li>
         </ul>
         <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
         <p class="plan-hint">14-day trial · no card required</p>
@@ -516,9 +523,9 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="plan-card">
         <div class="plan-name">Enterprise</div>
         <div class="plan-price" style="font-size: 20px; padding-top: 8px;">Contact us</div>
-        <div class="plan-price-usd">&nbsp;</div>
-        <div class="plan-unit">tailored to your usage</div>
-        <div class="plan-best">50+ devs</div>
+        <div class="plan-seats">Unlimited seats</div>
+        <div class="plan-extra">Tailored to your usage</div>
+        <div class="plan-best">75+ devs</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
           <li class="inherit">Everything in Business</li>
@@ -537,7 +544,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="payment-note-icon">PAY</div>
       <p class="payment-note-text">
         <strong>All prices in USD.</strong> Charged via Razorpay. Supports credit/debit cards and UPI.
-        Clicking "Start Free Trial" takes you to the dashboard. Choose your plan there to go directly to checkout.
+        Clicking "Start Free Trial" takes you to the dashboard — choose your plan there to go directly to checkout.
         Features activate instantly after payment.
       </p>
     </div>
@@ -547,18 +554,23 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="faq-label">Billing FAQ</div>
 
       <details>
+        <summary>What's included in each plan's seat count?</summary>
+        <p>Starter includes 10 seats, Growth includes 30, Business includes 75. A "seat" is one GitHub user whose PRs Grassion monitors. Add extra seats at the plan's per-seat rate — no plan change needed.</p>
+      </details>
+
+      <details>
         <summary>Do you charge per repo or per developer?</summary>
-        <p>Per active developer. Repos are unlimited across all plans.</p>
+        <p>Per developer (seat). Repos are unlimited across all plans.</p>
       </details>
 
       <details>
         <summary>Which payment methods are supported?</summary>
-        <p>UPI, debit/credit cards (domestic and international), and netbanking via Razorpay. Annual invoicing available on Business and Enterprise plans.</p>
+        <p>Credit/debit cards (domestic and international), UPI, and netbanking via Razorpay. Annual invoicing available on Business and Enterprise plans.</p>
       </details>
 
       <details>
         <summary>What happens after the free trial?</summary>
-        <p>You'll be prompted to add a payment method. No charge is made until you confirm. If you don't subscribe, data is retained for 30 days.</p>
+        <p>You'll be prompted to choose a plan and add a payment method. No charge is made until you confirm. If you don't subscribe, your data is retained for 30 days.</p>
       </details>
 
       <details>
@@ -569,6 +581,11 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <details>
         <summary>Can I upgrade or downgrade anytime?</summary>
         <p>Yes. Plan changes take effect at the next billing cycle. Upgrades can be applied immediately on request.</p>
+      </details>
+
+      <details>
+        <summary>Can I add seats mid-cycle?</summary>
+        <p>Yes — just update your seat count in the dashboard. Extra seats above your plan's included amount are billed at the plan's per-seat rate, pro-rated to the billing cycle.</p>
       </details>
     </div>
 

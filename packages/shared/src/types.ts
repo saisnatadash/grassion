@@ -122,4 +122,5 @@ export interface CheckoutOrderResponse {
   amount: number
   currency: string
   seatCount: number
+  plan: string
 }

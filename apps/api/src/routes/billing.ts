@@ -18,10 +18,16 @@ import { sendPlanUpgradeEmail } from '../lib/email.js'
 
 export const billingRouter = Router()
 
+const PLAN_PRICING = {
+  starter:  { baseCents: 4900,  includedSeats: 10, extraCentsPerSeat: 500  },
+  team:     { baseCents: 14900, includedSeats: 30, extraCentsPerSeat: 400  },
+  business: { baseCents: 39900, includedSeats: 75, extraCentsPerSeat: 300  },
+} as const
+
 /**
  * POST /api/billing/checkout
- * Creates a Razorpay Order for a one-time payment (₹2400 per seat).
- * The frontend opens the Razorpay modal with the returned order_id and key_id.
+ * Creates a Razorpay Order. Price = plan base + extra seats beyond included.
+ * Charged in USD cents.
  */
 billingRouter.post(
   '/api/billing/checkout',
@@ -35,12 +41,13 @@ billingRouter.post(
       return
     }
     const e = env()
-    const seatCount = parsed.data.seatCount
-    // ₹2400 per seat per month, amount in paise (1 INR = 100 paise)
-    const amount = seatCount * 2400 * 100
+    const { plan, seatCount } = parsed.data
+    const config = PLAN_PRICING[plan]
+    const extraSeats = Math.max(0, seatCount - config.includedSeats)
+    const totalCents = config.baseCents + extraSeats * config.extraCentsPerSeat
     const order = await createOrder({
-      amount,
-      currency: 'INR',
+      amount: totalCents,
+      currency: 'USD',
       receipt: `team_${sess.teamId.slice(0, 12)}`,
     })
     res.json({
@@ -49,6 +56,7 @@ billingRouter.post(
       amount: order.amount,
       currency: order.currency,
       seatCount,
+      plan,
     })
   },
 )
@@ -80,10 +88,11 @@ billingRouter.post(
         res.status(400).json({ error: 'invalid_signature' })
         return
       }
+      const chosenPlan = parsed.data.plan
       await db
         .update(teams)
         .set({
-          plan: 'starter',
+          plan: chosenPlan,
           subscriptionStatus: 'active',
           updatedAt: new Date(),
         })
@@ -97,13 +106,13 @@ billingRouter.post(
           if (owner?.email) {
             return sendPlanUpgradeEmail(owner.email, {
               username: owner.githubLogin,
-              plan: 'starter',
+              plan: chosenPlan,
               seatCount: parsed.data.seatCount,
             })
           }
         })
         .catch(() => {})
-      res.json({ ok: true, status: 'active', plan: 'starter' })
+      res.json({ ok: true, status: 'active', plan: chosenPlan })
       return
     }
 

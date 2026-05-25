@@ -65,34 +65,72 @@ function loadRazorpayScript(): Promise<void> {
   })
 }
 
-const STARTER_FEATURES = [
-  'All repos monitored, no limit',
-  'AI PR detection (label, git trailer & body)',
-  'Weekly ROI verdict: Net Positive / Neutral / Negative',
-  'Problem PR alerts with AI-generated summaries',
-  'Seat waste analysis: spot unused AI seats',
-  'Weekly email digest',
-  'GitHub App · 5-minute setup',
-  'Email support',
+type PlanId = 'starter' | 'team' | 'business'
+
+const PLAN_OPTIONS = [
+  {
+    id: 'starter' as PlanId,
+    name: 'Starter',
+    priceUsd: 49,
+    includedSeats: 10,
+    extraPerSeat: 5,
+    best: 'Best for 1–10 devs',
+    popular: false,
+    features: [
+      'All repos monitored',
+      'AI PR detection (label, git trailer & body)',
+      'Weekly ROI verdict: Net Positive / Neutral / Negative',
+      'Problem PR alerts with AI root-cause summaries',
+      'Seat waste analysis',
+      'Codebase health score & trend',
+      'Outcomes tracking (reverts, hotfixes)',
+      'Weekly email digest',
+      'Slack weekly digest + instant alerts',
+      'GitHub App · 5-minute setup',
+      'Email support',
+    ],
+  },
+  {
+    id: 'team' as PlanId,
+    name: 'Growth',
+    priceUsd: 149,
+    includedSeats: 30,
+    extraPerSeat: 4,
+    best: 'Best for 11–30 devs',
+    popular: true,
+    features: [
+      'Everything in Starter',
+      'Per-developer seat waste breakdown',
+      'AI adoption rate by team member',
+      'Tool comparison (Copilot vs Cursor vs Claude Code)',
+      'Developer metrics & trend analysis',
+      'Journey milestones tracker',
+      'Priority email support',
+    ],
+  },
+  {
+    id: 'business' as PlanId,
+    name: 'Business',
+    priceUsd: 399,
+    includedSeats: 75,
+    extraPerSeat: 3,
+    best: 'Best for 31–75 devs',
+    popular: false,
+    features: [
+      'Everything in Growth',
+      'Security overview & audit log',
+      'Custom data retention policy',
+      'Dedicated onboarding session',
+      '24h support SLA',
+    ],
+  },
 ]
 
-const TEAM_EXTRAS = [
-  'Per-developer seat waste breakdown',
-  'AI adoption rate by team member',
-  'Priority email support',
-]
-
-const BUSINESS_EXTRAS = [
-  'Dedicated onboarding session',
-  '24h support SLA',
-  'Custom data retention policy',
-]
-
-const ENTERPRISE_EXTRAS = [
-  'Custom contract & SLA',
-  'Dedicated account manager',
-  'On-premise deployment option',
-]
+function suggestPlan(memberCount: number): PlanId {
+  if (memberCount <= 10) return 'starter'
+  if (memberCount <= 30) return 'team'
+  return 'business'
+}
 
 export function BillingPage() {
   const [searchParams] = useSearchParams()
@@ -107,7 +145,8 @@ export function BillingPage() {
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const qc = useQueryClient()
   const memberCount = members.data?.length ?? 1
-  const [seatCount, setSeatCount] = useState<number>(Math.max(1, memberCount))
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>(() => suggestPlan(memberCount))
+  const [extraSeats, setExtraSeats] = useState(0)
   const [busy, setBusy] = useState(false)
 
   const isLive =
@@ -115,9 +154,11 @@ export function BillingPage() {
     sub.data?.status === 'authenticated' ||
     sub.data?.status === 'pending'
 
-  // usePlan reads the plan from the JWT immediately (no loading flash) and stays
-  // in sync with the /api/team response after any plan changes.
   const { plan, isPaid: isPro, isTrial } = usePlan()
+
+  const planConfig = PLAN_OPTIONS.find((p) => p.id === selectedPlan)!
+  const totalSeats = planConfig.includedSeats + extraSeats
+  const totalUsd = planConfig.priceUsd + extraSeats * planConfig.extraPerSeat
 
   async function startCheckout() {
     setError(null)
@@ -135,17 +176,14 @@ export function BillingPage() {
       return
     }
     try {
-      // Step 1: create order on server (₹2400 × seats)
-      const order = await api.billing.checkout(seatCount)
-
-      // Step 2: open Razorpay modal
+      const order = await api.billing.checkout(selectedPlan, totalSeats)
       const options: RazorpayOrderOptions = {
         key: order.keyId,
         order_id: order.orderId,
         amount: order.amount,
         currency: order.currency,
         name: 'Grassion',
-        description: `Grassion Pro · ${seatCount} developer seat${seatCount === 1 ? '' : 's'}`,
+        description: `Grassion ${planConfig.name} · ${totalSeats} developer seat${totalSeats === 1 ? '' : 's'}`,
         image: '/W+L.png',
         prefill: {
           email: me.data?.user.email ?? undefined,
@@ -155,14 +193,13 @@ export function BillingPage() {
         modal: { ondismiss: () => setBusy(false) },
         handler: async (resp: RazorpayOrderResponse) => {
           try {
-            // Step 3: verify on server, which upgrades the plan to 'starter'
             await api.billing.verify({
               razorpay_payment_id: resp.razorpay_payment_id,
               razorpay_order_id: resp.razorpay_order_id,
               razorpay_signature: resp.razorpay_signature,
-              seatCount,
+              seatCount: totalSeats,
+              plan: selectedPlan,
             })
-            // Step 4: refresh plan and subscription data
             await Promise.all([
               qc.invalidateQueries({ queryKey: ['subscription'] }),
               qc.invalidateQueries({ queryKey: ['team'] }),
@@ -204,7 +241,6 @@ export function BillingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Pro status banner — shown whenever user is on a paid plan */}
       {isPro && !success && (
         <div className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-6 py-4">
           <Check className="h-5 w-5 text-white flex-shrink-0" />
@@ -213,7 +249,7 @@ export function BillingPage() {
               Your plan: {planDisplayLabel(plan)}
             </div>
             <div className="text-xs text-[#888888] mt-0.5">
-              All Pro features are active. Manage your subscription below.
+              All features are active. Manage your subscription below.
             </div>
           </div>
         </div>
@@ -221,12 +257,11 @@ export function BillingPage() {
 
       {success && (
         <Alert tone="green">
-          Payment successful! You're now on Pro. Your plan has been upgraded.
+          Payment successful! Your plan has been upgraded.
         </Alert>
       )}
       {error && <Alert tone="red">{error}</Alert>}
 
-      {/* ── CURRENT PLAN BANNER ── */}
       <CurrentPlanCard
         plan={plan ?? 'trial'}
         subData={sub.data}
@@ -238,11 +273,17 @@ export function BillingPage() {
         onCancel={cancelSubscription}
       />
 
-      {/* ── UPGRADE CARD (only when not pro) ── */}
       {!isPro && (
         <UpgradeCard
-          seatCount={seatCount}
-          setSeatCount={setSeatCount}
+          selectedPlan={selectedPlan}
+          setSelectedPlan={(p) => {
+            setSelectedPlan(p)
+            setExtraSeats(0)
+          }}
+          extraSeats={extraSeats}
+          setExtraSeats={setExtraSeats}
+          totalSeats={totalSeats}
+          totalUsd={totalUsd}
           memberCount={memberCount}
           busy={busy}
           onCheckout={startCheckout}
@@ -250,19 +291,16 @@ export function BillingPage() {
         />
       )}
 
-      {/* ── ROI SAVINGS ── */}
       <RoiSavings
         summaryData={summary.data}
         seatWasteData={seatWaste.data}
         monthlySpend={team.data?.monthlyAiSpendUsd ?? 0}
       />
 
-      {/* ── SUBSCRIPTION RECEIPT ── */}
       {(isPro || isLive) && sub.data && (
         <SubscriptionReceipt subData={sub.data} plan={plan ?? 'starter'} />
       )}
 
-      {/* ── PLAN COMPARISON ── */}
       <PlanComparison plan={plan ?? 'trial'} />
     </div>
   )
@@ -289,13 +327,13 @@ function CurrentPlanCard({
   onCancel: () => void
 }) {
   const planConfig = {
-    starter: { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
-    team:    { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Team' },
-    business:{ border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Business' },
-    pro:     { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
-    admin:   { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
-    trial:   { border: 'border-yellow-500/40', bg: 'bg-yellow-500/5', icon: <Zap className="h-5 w-5 text-yellow-400" />, badgeTone: 'yellow' as const, label: '14-day Trial' },
-    free:    { border: 'border-[#333]', bg: 'bg-white/2', icon: <Shield className="h-5 w-5 text-[#888888]" />, badgeTone: 'gray' as const, label: 'Free' },
+    starter:  { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Starter' },
+    team:     { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Growth' },
+    business: { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Business' },
+    pro:      { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
+    admin:    { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
+    trial:    { border: 'border-yellow-500/40', bg: 'bg-yellow-500/5', icon: <Zap className="h-5 w-5 text-yellow-400" />, badgeTone: 'yellow' as const, label: '14-day Trial' },
+    free:     { border: 'border-[#333]', bg: 'bg-white/2', icon: <Shield className="h-5 w-5 text-[#888888]" />, badgeTone: 'gray' as const, label: 'Free' },
   }
   const cfg = planConfig[plan as keyof typeof planConfig] ?? planConfig.free
 
@@ -339,73 +377,126 @@ function CurrentPlanCard({
 
 /* ── UPGRADE CARD ── */
 function UpgradeCard({
-  seatCount,
-  setSeatCount,
+  selectedPlan,
+  setSelectedPlan,
+  extraSeats,
+  setExtraSeats,
+  totalSeats,
+  totalUsd,
   memberCount,
   busy,
   onCheckout,
   isTrial,
 }: {
-  seatCount: number
-  setSeatCount: (n: number) => void
+  selectedPlan: PlanId
+  setSelectedPlan: (p: PlanId) => void
+  extraSeats: number
+  setExtraSeats: (n: number) => void
+  totalSeats: number
+  totalUsd: number
   memberCount: number
   busy: boolean
   onCheckout: () => void
   isTrial: boolean
 }) {
-  const monthlyUsd = seatCount * 19
+  const plan = PLAN_OPTIONS.find((p) => p.id === selectedPlan)!
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upgrade to Pro</CardTitle>
+        <CardTitle>Choose a plan</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Seat selector */}
+      <CardContent className="space-y-6">
+        {/* Plan cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {PLAN_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setSelectedPlan(opt.id)}
+              className={cn(
+                'relative text-left rounded-lg border p-4 transition-colors focus:outline-none',
+                selectedPlan === opt.id
+                  ? 'border-green-500/50 bg-green-500/5'
+                  : 'border-[#222] hover:border-[#444]',
+              )}
+            >
+              {opt.popular && (
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-black">
+                  Popular
+                </span>
+              )}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#888888]">{opt.name}</span>
+                {selectedPlan === opt.id && <Check className="h-3.5 w-3.5 text-green-500" />}
+              </div>
+              <div className="text-2xl font-bold text-white">${opt.priceUsd}</div>
+              <div className="text-xs text-[#555] mt-0.5">/mo · {opt.includedSeats} seats incl.</div>
+              <div className="text-xs text-[#444] mt-1">${opt.extraPerSeat}/seat extra</div>
+              <div className="text-xs text-[#444] mt-2">{opt.best}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Extra seats */}
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div>
-            <div className="text-sm font-medium text-white mb-3">Configure your plan</div>
-            <label className="block mb-1 text-xs text-[#888888]">Number of developer seats</label>
+            <label className="block text-xs text-[#888888] mb-1.5">
+              Extra seats beyond {plan.includedSeats} included
+            </label>
             <Input
               type="number"
-              min={1}
+              min={0}
               max={500}
-              value={seatCount}
-              onChange={(e) => setSeatCount(Math.max(1, Number(e.target.value)))}
-              className="w-32"
+              value={extraSeats}
+              onChange={(e) => setExtraSeats(Math.max(0, Number(e.target.value)))}
+              className="w-28"
             />
-            <div className="mt-3 rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3 space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-[#888888]">{seatCount} seat{seatCount === 1 ? '' : 's'} × $19/seat</span>
-                <span className="text-white font-medium tabular-nums">${monthlyUsd}/mo</span>
-              </div>
-              {memberCount > 0 && seatCount < memberCount && (
-                <div className="text-xs text-yellow-400 pt-1">
-                  You have {memberCount} team members — consider adding more seats.
-                </div>
-              )}
-            </div>
-            <div className="mt-4">
-              <Button disabled={busy} onClick={onCheckout} size="lg" className="w-full sm:w-auto">
-                {busy ? 'Opening checkout…' : isTrial ? 'Upgrade from trial' : 'Start subscription'}
-              </Button>
-              <div className="mt-2 text-xs text-[#555555]">
-                Billed in USD via Razorpay · Cancel anytime
-              </div>
-            </div>
           </div>
+          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3 flex-1">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-[#888888]">{plan.name} base ({plan.includedSeats} seats)</span>
+              <span className="text-white font-medium tabular-nums">${plan.priceUsd}/mo</span>
+            </div>
+            {extraSeats > 0 && (
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-[#888888]">{extraSeats} extra seat{extraSeats === 1 ? '' : 's'} × ${plan.extraPerSeat}</span>
+                <span className="text-white font-medium tabular-nums">+${extraSeats * plan.extraPerSeat}/mo</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm border-t border-[#1a1a1a] pt-2 mt-1">
+              <span className="text-white font-semibold">Total · {totalSeats} seats</span>
+              <span className="text-green-400 font-bold tabular-nums">${totalUsd}/mo</span>
+            </div>
+            {memberCount > totalSeats && (
+              <div className="text-xs text-yellow-400 pt-2">
+                You have {memberCount} members — consider adding {memberCount - totalSeats} more seat{memberCount - totalSeats === 1 ? '' : 's'}.
+              </div>
+            )}
+          </div>
+        </div>
 
-          {/* Starter features */}
-          <div>
-            <div className="text-sm font-medium text-white mb-3">What's included</div>
-            <ul className="space-y-2">
-              {STARTER_FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-2.5 text-sm text-[#888888]">
-                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
+        {/* Features */}
+        <div>
+          <div className="text-xs font-medium text-[#888888] uppercase tracking-wider mb-3">
+            What's included in {plan.name}
+          </div>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+            {plan.features.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm text-[#888888]">
+                <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <Button disabled={busy} onClick={onCheckout} size="lg" className="w-full sm:w-auto">
+            {busy ? 'Opening checkout…' : isTrial ? `Upgrade to ${plan.name} — $${totalUsd}/mo` : `Subscribe to ${plan.name} — $${totalUsd}/mo`}
+          </Button>
+          <div className="mt-2 text-xs text-[#555555]">
+            Billed in USD via Razorpay · Cancel anytime
           </div>
         </div>
       </CardContent>
@@ -416,41 +507,77 @@ function UpgradeCard({
 /* ── PLAN COMPARISON ── */
 function PlanComparison({ plan }: { plan: string }) {
   const isStarter = ['starter', 'pro', 'admin'].includes(plan)
-  const isTeam = plan === 'team'
+  const isGrowth = plan === 'team'
   const isBusiness = plan === 'business'
 
-  type Tier = { name: string; price: string; unit: string; best: string; features: string[]; inherited: string | null; cta: string; ctaHref?: string; isCurrent: boolean; isFeatured: boolean }
+  type Tier = {
+    name: string
+    price: string
+    seats: string
+    extra: string
+    best: string
+    features: string[]
+    inherited: string | null
+    cta: string
+    ctaHref?: string
+    isCurrent: boolean
+    isFeatured: boolean
+  }
+
   const tiers: Tier[] = [
     {
-      name: 'Pro',
-      price: '$19',
-      unit: '/seat/mo',
+      name: 'Starter',
+      price: '$49',
+      seats: '10 seats incl.',
+      extra: '$5/seat extra',
       best: 'Best for 1–10 devs',
-      features: STARTER_FEATURES,
+      features: [
+        'All repos monitored',
+        'AI PR detection',
+        'Weekly ROI verdict',
+        'Problem PR alerts + AI summaries',
+        'Seat waste analysis',
+        'Health score & codebase trends',
+        'Weekly email + Slack digest',
+      ],
       inherited: null,
       cta: isStarter ? 'Current plan' : 'Upgrade',
       isCurrent: isStarter,
       isFeatured: false,
     },
     {
-      name: 'Team',
-      price: '$15',
-      unit: '/seat/mo · min 10',
-      best: 'Best for 10–30 devs',
-      features: TEAM_EXTRAS,
-      inherited: 'Everything in Pro',
-      cta: isTeam ? 'Current plan' : 'Contact sales',
-      ctaHref: isTeam ? undefined : 'mailto:info@grassion.com?subject=Team plan',
-      isCurrent: isTeam,
+      name: 'Growth',
+      price: '$149',
+      seats: '30 seats incl.',
+      extra: '$4/seat extra',
+      best: 'Best for 11–30 devs',
+      features: [
+        'Per-developer seat breakdown',
+        'AI adoption by team member',
+        'Tool comparison dashboard',
+        'Developer metrics & trends',
+        'Journey milestones tracker',
+        'Priority support',
+      ],
+      inherited: 'Everything in Starter',
+      cta: isGrowth ? 'Current plan' : 'Contact sales',
+      ctaHref: isGrowth ? undefined : 'mailto:info@grassion.com?subject=Growth plan',
+      isCurrent: isGrowth,
       isFeatured: true,
     },
     {
       name: 'Business',
-      price: '$499',
-      unit: '/mo flat · unlimited',
-      best: 'Best for 30–50 devs',
-      features: BUSINESS_EXTRAS,
-      inherited: 'Everything in Team',
+      price: '$399',
+      seats: '75 seats incl.',
+      extra: '$3/seat extra',
+      best: 'Best for 31–75 devs',
+      features: [
+        'Security overview & audit log',
+        'Custom data retention',
+        'Dedicated onboarding session',
+        '24h support SLA',
+      ],
+      inherited: 'Everything in Growth',
       cta: isBusiness ? 'Current plan' : 'Contact sales',
       ctaHref: isBusiness ? undefined : 'mailto:info@grassion.com?subject=Business plan',
       isCurrent: isBusiness,
@@ -459,9 +586,14 @@ function PlanComparison({ plan }: { plan: string }) {
     {
       name: 'Enterprise',
       price: 'Contact us',
-      unit: 'tailored pricing',
-      best: '50+ devs',
-      features: ENTERPRISE_EXTRAS,
+      seats: 'Unlimited seats',
+      extra: 'Tailored pricing',
+      best: '75+ devs',
+      features: [
+        'Custom contract & SLA',
+        'Dedicated account manager',
+        'On-premise deployment option',
+      ],
       inherited: 'Everything in Business',
       cta: 'Contact sales',
       ctaHref: 'mailto:info@grassion.com?subject=Enterprise plan',
@@ -492,8 +624,10 @@ function PlanComparison({ plan }: { plan: string }) {
               </div>
               <div className="mb-1">
                 <span className="text-2xl font-bold text-white">{tier.price}</span>
-                <span className="text-xs text-[#555555] ml-1">{tier.unit}</span>
+                <span className="text-xs text-[#555555] ml-1">/mo</span>
               </div>
+              <div className="text-xs text-[#666] mb-0.5">{tier.seats}</div>
+              <div className="text-xs text-[#444] mb-3">{tier.extra}</div>
               <div className="text-xs text-[#555555] mb-4">{tier.best}</div>
               <ul className="space-y-1.5 flex-1 mb-4">
                 {tier.inherited && (
@@ -592,23 +726,29 @@ function SubscriptionReceipt({
   subData: import('@grassion/shared').SubscriptionDto
   plan: string
 }) {
-  const PLAN_PRICE: Record<string, number> = { starter: 19, pro: 19, admin: 19, team: 15, business: 499 }
-  const pricePerSeat = PLAN_PRICE[plan] ?? 19
-  const seats = subData.seatCount > 0 ? subData.seatCount : 1
-  const isFlat = plan === 'business'
-  const monthly = isFlat ? pricePerSeat : seats * pricePerSeat
+  const PLAN_CONFIG: Record<string, { base: number; included: number; extra: number; name: string }> = {
+    starter:  { base: 49,  included: 10, extra: 5, name: 'Starter' },
+    team:     { base: 149, included: 30, extra: 4, name: 'Growth' },
+    business: { base: 399, included: 75, extra: 3, name: 'Business' },
+    pro:      { base: 49,  included: 10, extra: 5, name: 'Pro' },
+    admin:    { base: 49,  included: 10, extra: 5, name: 'Pro' },
+  }
+  const config = PLAN_CONFIG[plan]
+  const seats = subData.seatCount > 0 ? subData.seatCount : (config?.included ?? 1)
+  const extraSeats = config ? Math.max(0, seats - config.included) : 0
+  const monthly = config ? config.base + extraSeats * config.extra : seats * 19
 
-  const planLabel = plan === 'business' ? 'Business' : plan === 'team' ? 'Team' : 'Pro'
   const rows = [
-    { label: 'Plan', value: planLabel },
-    { label: isFlat ? 'Flat monthly rate' : `Seats (${seats} × $${pricePerSeat})`, value: `$${monthly}/mo` },
+    { label: 'Plan', value: config?.name ?? plan },
+    { label: `${config?.included ?? seats} included seats`, value: `$${config?.base ?? monthly}/mo` },
+    ...(extraSeats > 0 ? [{ label: `${extraSeats} extra seat${extraSeats === 1 ? '' : 's'} × $${config?.extra ?? 0}`, value: `+$${extraSeats * (config?.extra ?? 0)}/mo` }] : []),
     {
       label: 'Next billing date',
       value: subData.currentPeriodEnd
         ? new Date(subData.currentPeriodEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
         : '—',
     },
-    { label: 'Payment method', value: 'Razorpay · UPI / Card' },
+    { label: 'Payment method', value: 'Razorpay · Card / UPI' },
     { label: 'Billing currency', value: 'USD' },
   ]
 
@@ -627,11 +767,11 @@ function SubscriptionReceipt({
           ))}
         </div>
         <div className="mt-4 flex items-center justify-between rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3">
-          <span className="text-sm font-semibold text-white">Total charged per month</span>
+          <span className="text-sm font-semibold text-white">Total per month</span>
           <span className="text-lg font-bold text-white tabular-nums">${monthly}</span>
         </div>
         <p className="mt-3 text-xs text-[#555555]">
-          To update seat count, contact{' '}
+          To update seat count or plan, contact{' '}
           <a href="mailto:info@grassion.com" className="underline hover:text-white transition-colors">info@grassion.com</a>{' '}
           or use the Cancel button above.
         </p>
