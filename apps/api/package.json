@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "@grassion/db": "workspace:*",
     "@grassion/shared": "workspace:*",
     "@octokit/app": "^15.1.0",

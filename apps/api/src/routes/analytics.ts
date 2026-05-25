@@ -7,6 +7,7 @@ import {
 } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
+import { generatePrSummary } from '../lib/ai-summary.js'
 
 export const analyticsRouter = Router()
 
@@ -647,17 +648,16 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
       )`))
       .limit(50)
 
-    res.json(rows.map((r) => {
-      // Compute a basic rework score from PR flags when the worker hasn't run yet
+    // Build mapped items with fallback rework scores
+    const mapped = rows.map((r) => {
       const fallbackScore =
         (r.wasReverted ? 60 : 0) +
         (r.triggeredHotfix ? 25 : 0) +
         Math.min((r.changesRequestedCount ?? 0) * 5, 20)
-
       return {
         prId: r.prId,
         prNumber: r.prNumber,
-        prTitle: r.prTitle,
+        prTitle: r.prTitle ?? '',
         authorLogin: r.authorLogin,
         mergedAt: r.mergedAt?.toISOString() ?? null,
         aiSource: r.aiSource,
@@ -670,8 +670,48 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
         reworkScore: r.reworkScore ?? fallbackScore,
         aiSummary: r.aiSummary ?? null,
         computedAt: r.computedAt?.toISOString() ?? r.mergedAt?.toISOString() ?? new Date().toISOString(),
+        _rawReworkScore: r.reworkScore,
+        _rawCiFailureCount: r.ciFailureCount,
+        _rawChangesRequested: r.changesRequestedCount,
       }
-    }))
+    })
+
+    // Generate Anthropic summaries on-the-fly for up to 3 rows missing them
+    const needingSummary = mapped.filter((m) => !m.aiSummary).slice(0, 3)
+    if (needingSummary.length > 0) {
+      const generated = await Promise.all(
+        needingSummary.map((m) =>
+          generatePrSummary({
+            prTitle: m.prTitle,
+            wasReverted: m.wasReverted,
+            triggeredHotfix: m.hadHotfixWithin7d,
+            changesRequestedCount: m._rawChangesRequested ?? 0,
+            ciFailureCount: m._rawCiFailureCount ?? 0,
+            reworkScore: m.reworkScore,
+            aiSource: m.aiSource,
+          }).then((summary) => ({ prId: m.prId, summary }))
+        )
+      )
+
+      // Apply generated summaries and cache them when a pr_outcomes row exists
+      const summaryMap = new Map(generated.map((g) => [g.prId, g.summary]))
+      for (const m of mapped) {
+        const gen = summaryMap.get(m.prId)
+        if (gen) {
+          m.aiSummary = gen
+          // Cache asynchronously — don't block the response
+          const hasOutcomeRow = rows.find((r) => r.prId === m.prId && r.computedAt != null)
+          if (hasOutcomeRow) {
+            db.update(prOutcomes)
+              .set({ aiSummary: gen })
+              .where(eq(prOutcomes.prId, m.prId))
+              .catch((e: unknown) => console.error('[pr-outcomes] cache summary error', e))
+          }
+        }
+      }
+    }
+
+    res.json(mapped.map(({ _rawReworkScore: _r, _rawCiFailureCount: _c, _rawChangesRequested: _ch, ...item }) => item))
   } catch (err) {
     console.error('[pr-outcomes]', err)
     res.status(500).json({ error: 'internal_error' })

@@ -372,7 +372,7 @@ function DevRow({ user, active }: { user: ActiveUser | InactiveUser; active: boo
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={cn('h-2 w-2 rounded-full flex-shrink-0', active ? 'bg-green-500' : 'bg-red-500')} />
+          <span className={cn('h-2 w-2 rounded-full flex-shrink-0', active ? 'bg-green-500 animate-pulse' : 'bg-red-500')} />
           <span className="text-sm font-medium text-white truncate">@{user.githubLogin}</span>
         </div>
         <div className="text-xs text-[#888888] mt-0.5 pl-4">

@@ -32,6 +32,8 @@ const schema = z.object({
   APP_URL: z.string().url(),
   API_URL: z.string().url(),
   MARKETING_URL: z.string().url().optional(),
+
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
 })
 
 export type Env = z.infer<typeof schema>
