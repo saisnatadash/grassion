@@ -590,15 +590,39 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
   const filter = (req.query['filter'] as string | undefined) ?? 'all'
 
   try {
-    const conditions: ReturnType<typeof eq>[] = [eq(prOutcomes.teamId, teamId)]
-    if (filter === 'reverted') conditions.push(eq(prOutcomes.wasReverted, true))
-    else if (filter === 'hotfix') conditions.push(eq(prOutcomes.hadHotfixWithin7d, true))
-    else if (filter === 'problem') conditions.push(gt(prOutcomes.reworkScore, 30))
+    // Query pull_requests as the base — left join pr_outcomes so we show PRs with
+    // outcome signals even before the worker has computed a full outcome row.
+    // The worker only sweeps PRs merged 7-30 days ago, so older data never gets a
+    // pr_outcomes row; the flags on pull_requests are the ground truth.
+    const baseConditions = [
+      eq(pullRequests.teamId, teamId),
+      eq(pullRequests.state, 'merged'),
+    ]
+
+    // Per-filter visibility: which PRs to surface
+    const filterCondition =
+      filter === 'reverted' ? eq(pullRequests.wasReverted, true) :
+      filter === 'hotfix'   ? eq(pullRequests.triggeredHotfix, true) :
+      filter === 'problem'  ? sql`(
+        COALESCE(${prOutcomes.reworkScore}, 0) > 30
+        OR ${pullRequests.wasReverted} = true
+        OR ${pullRequests.triggeredHotfix} = true
+        OR ${pullRequests.changesRequestedCount} >= 3
+      )` :
+      // 'all' — only show PRs that have at least one outcome signal
+      sql`(
+        ${pullRequests.wasReverted} = true
+        OR ${pullRequests.triggeredHotfix} = true
+        OR COALESCE(${prOutcomes.reworkScore}, 0) > 0
+        OR ${pullRequests.changesRequestedCount} >= 2
+      )`
 
     const rows = await db
       .select({
-        prId: prOutcomes.prId,
-        wasReverted: prOutcomes.wasReverted,
+        prId: pullRequests.id,
+        wasReverted: pullRequests.wasReverted,
+        triggeredHotfix: pullRequests.triggeredHotfix,
+        changesRequestedCount: pullRequests.changesRequestedCount,
         revertedAt: prOutcomes.revertedAt,
         revertPrNumber: prOutcomes.revertPrNumber,
         ciFailureCount: prOutcomes.ciFailureCount,
@@ -613,21 +637,41 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
         mergedAt: pullRequests.mergedAt,
         aiSource: pullRequests.aiSource,
       })
-      .from(prOutcomes)
-      .innerJoin(pullRequests, eq(pullRequests.id, prOutcomes.prId))
-      .where(and(...conditions))
-      .orderBy(desc(prOutcomes.reworkScore))
+      .from(pullRequests)
+      .leftJoin(prOutcomes, eq(prOutcomes.prId, pullRequests.id))
+      .where(and(...baseConditions, filterCondition))
+      .orderBy(desc(sql`COALESCE(${prOutcomes.reworkScore},
+        CASE WHEN ${pullRequests.wasReverted} THEN 60 ELSE 0 END +
+        CASE WHEN ${pullRequests.triggeredHotfix} THEN 25 ELSE 0 END +
+        LEAST(COALESCE(${pullRequests.changesRequestedCount}, 0) * 5, 20)
+      )`))
       .limit(50)
 
-    res.json(rows.map((r) => ({
-      ...r,
-      reworkScore: r.reworkScore ?? 0,
-      ciFailureCount: r.ciFailureCount ?? 0,
-      downstreamFixCount: r.downstreamFixCount ?? 0,
-      computedAt: r.computedAt.toISOString(),
-      mergedAt: r.mergedAt?.toISOString() ?? null,
-      revertedAt: r.revertedAt?.toISOString() ?? null,
-    })))
+    res.json(rows.map((r) => {
+      // Compute a basic rework score from PR flags when the worker hasn't run yet
+      const fallbackScore =
+        (r.wasReverted ? 60 : 0) +
+        (r.triggeredHotfix ? 25 : 0) +
+        Math.min((r.changesRequestedCount ?? 0) * 5, 20)
+
+      return {
+        prId: r.prId,
+        prNumber: r.prNumber,
+        prTitle: r.prTitle,
+        authorLogin: r.authorLogin,
+        mergedAt: r.mergedAt?.toISOString() ?? null,
+        aiSource: r.aiSource,
+        wasReverted: r.wasReverted,
+        revertedAt: r.revertedAt?.toISOString() ?? null,
+        revertPrNumber: r.revertPrNumber ?? null,
+        ciFailureCount: r.ciFailureCount ?? 0,
+        downstreamFixCount: r.downstreamFixCount ?? 0,
+        hadHotfixWithin7d: r.hadHotfixWithin7d ?? r.triggeredHotfix,
+        reworkScore: r.reworkScore ?? fallbackScore,
+        aiSummary: r.aiSummary ?? null,
+        computedAt: r.computedAt?.toISOString() ?? r.mergedAt?.toISOString() ?? new Date().toISOString(),
+      }
+    }))
   } catch (err) {
     console.error('[pr-outcomes]', err)
     res.status(500).json({ error: 'internal_error' })
