@@ -9,6 +9,48 @@ import { getInstallationOctokit } from '../github.js'
 
 export const reposRouter = Router()
 
+/** List GitHub repos accessible via this team's App installation (for the picker UI). */
+reposRouter.get('/api/repos/available', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const [teamRow] = await db
+    .select({ githubInstallationId: teams.githubInstallationId })
+    .from(teams)
+    .where(eq(teams.id, sess.teamId))
+    .limit(1)
+
+  const installationId = teamRow?.githubInstallationId ?? null
+  if (!installationId) {
+    res.json([])
+    return
+  }
+
+  try {
+    const octokit = await getInstallationOctokit(installationId)
+    const { data } = await (octokit as unknown as {
+      request: (path: string, opts: { per_page: number }) => Promise<{ data: { repositories: Array<{ full_name: string; name: string; owner: { login: string } | null; private: boolean }> } }>
+    }).request('GET /installation/repositories', { per_page: 100 })
+
+    const connected = await db
+      .select({ owner: repos.owner, name: repos.name })
+      .from(repos)
+      .where(eq(repos.teamId, sess.teamId))
+    const connectedSet = new Set(connected.map((r) => `${r.owner}/${r.name}`))
+
+    res.json(
+      data.repositories.map((r) => ({
+        fullName: r.full_name,
+        name: r.name,
+        owner: r.owner?.login ?? '',
+        private: r.private,
+        alreadyConnected: connectedSet.has(r.full_name),
+      })),
+    )
+  } catch (err) {
+    logger.error({ err }, '[repos/available] failed')
+    res.json([])
+  }
+})
+
 reposRouter.get('/api/repos', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const list = await db

@@ -156,7 +156,7 @@ export function OutcomesPage() {
         <h1 className="text-xl font-semibold text-white">Post-Merge Outcomes</h1>
         <p className="mt-1 text-sm text-[#555]">
           Track what happened after merge: reverts, hotfixes, CI failures, and rework signals.
-          Outcomes are computed 7 days after merge.
+          Updated automatically every 6 hours.
         </p>
       </div>
 

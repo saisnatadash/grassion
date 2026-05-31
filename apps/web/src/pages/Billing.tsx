@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { Check, Zap, Shield, Star } from 'lucide-react'
@@ -156,6 +156,13 @@ export function BillingPage() {
 
   const { plan, isPaid: isPro, isTrial } = usePlan()
 
+  // For paid users, keep selectedPlan in sync with their actual DB plan
+  useEffect(() => {
+    if (isPro && plan && ['starter', 'team', 'business'].includes(plan)) {
+      setSelectedPlan(plan as PlanId)
+    }
+  }, [isPro, plan])
+
   const planConfig = PLAN_OPTIONS.find((p) => p.id === selectedPlan)!
   const totalSeats = planConfig.includedSeats + extraSeats
   const totalUsd = planConfig.priceUsd + extraSeats * planConfig.extraPerSeat
@@ -273,7 +280,8 @@ export function BillingPage() {
         onCancel={cancelSubscription}
       />
 
-      {!isPro && (
+      {/* Show full upgrade card for trial/free users; show extra-seats-only card for paid users */}
+      {!isPro ? (
         <UpgradeCard
           selectedPlan={selectedPlan}
           setSelectedPlan={(p) => {
@@ -288,6 +296,15 @@ export function BillingPage() {
           busy={busy}
           onCheckout={startCheckout}
           isTrial={isTrial}
+        />
+      ) : (
+        <ExtraSeatsCard
+          currentPlan={(plan ?? 'starter') as PlanId}
+          extraSeats={extraSeats}
+          setExtraSeats={setExtraSeats}
+          memberCount={memberCount}
+          busy={busy}
+          onCheckout={startCheckout}
         />
       )}
 
@@ -499,6 +516,83 @@ function UpgradeCard({
             Billed in USD via Razorpay · Cancel anytime
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── EXTRA SEATS CARD (for paid subscribers) ── */
+function ExtraSeatsCard({
+  currentPlan,
+  extraSeats,
+  setExtraSeats,
+  memberCount,
+  busy,
+  onCheckout,
+}: {
+  currentPlan: PlanId
+  extraSeats: number
+  setExtraSeats: (n: number) => void
+  memberCount: number
+  busy: boolean
+  onCheckout: () => void
+}) {
+  const cfg = PLAN_OPTIONS.find((p) => p.id === currentPlan)!
+  const totalUsd = cfg.priceUsd + extraSeats * cfg.extraPerSeat
+  const totalSeats = cfg.includedSeats + extraSeats
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Add extra seats</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-[#888888]">
+          Your {cfg.name} plan includes <strong className="text-white">{cfg.includedSeats} seats</strong>.
+          Add extra seats at <strong className="text-white">${cfg.extraPerSeat}/seat/mo</strong>.
+        </p>
+
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+          <div>
+            <label className="block text-xs text-[#888888] mb-1.5">Extra seats to add</label>
+            <Input
+              type="number"
+              min={0}
+              max={500}
+              value={extraSeats}
+              onChange={(e) => setExtraSeats(Math.max(0, Number(e.target.value)))}
+              className="w-28"
+            />
+          </div>
+          <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3 flex-1">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-[#888888]">{cfg.name} base ({cfg.includedSeats} seats)</span>
+              <span className="text-white font-medium tabular-nums">${cfg.priceUsd}/mo</span>
+            </div>
+            {extraSeats > 0 && (
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-[#888888]">{extraSeats} extra × ${cfg.extraPerSeat}</span>
+                <span className="text-white font-medium tabular-nums">+${extraSeats * cfg.extraPerSeat}/mo</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm border-t border-[#1a1a1a] pt-2 mt-1">
+              <span className="text-white font-semibold">Total · {totalSeats} seats</span>
+              <span className="text-green-400 font-bold tabular-nums">${totalUsd}/mo</span>
+            </div>
+            {memberCount > totalSeats && (
+              <div className="text-xs text-yellow-400 pt-2">
+                You have {memberCount} members — need {memberCount - totalSeats} more seat{memberCount - totalSeats === 1 ? '' : 's'}.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {extraSeats > 0 && (
+          <Button disabled={busy} onClick={onCheckout} size="lg">
+            {busy ? 'Opening checkout…' : `Add ${extraSeats} seat${extraSeats === 1 ? '' : 's'} — $${totalUsd}/mo`}
+          </Button>
+        )}
+        <p className="text-xs text-[#555555]">Billed in USD via Razorpay · Prorated to your current billing cycle</p>
       </CardContent>
     </Card>
   )

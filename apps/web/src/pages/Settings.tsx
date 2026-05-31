@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2, Bell } from 'lucide-react'
+import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2, Bell, Search, GitBranch } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { usePlan } from '../lib/plan.js'
@@ -142,11 +142,18 @@ function GitHubSection() {
 function TeamSettings() {
   const qc = useQueryClient()
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const [saveToast, setSaveToast] = useState<'saved' | 'error' | null>(null)
   const update = useMutation({
     mutationFn: api.team.update,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['team'] })
       qc.invalidateQueries({ queryKey: ['me'] })
+      setSaveToast('saved')
+      setTimeout(() => setSaveToast(null), 3000)
+    },
+    onError: () => {
+      setSaveToast('error')
+      setTimeout(() => setSaveToast(null), 3000)
     },
   })
 
@@ -350,8 +357,8 @@ function TeamSettings() {
         <Button type="submit" disabled={update.isPending}>
           {update.isPending ? 'Saving…' : 'Save changes'}
         </Button>
-        {update.isSuccess && <span className="text-sm text-white">Changes saved.</span>}
-        {update.isError && <span className="text-sm text-red-500">Save failed. Try again.</span>}
+        {saveToast === 'saved' && <span className="text-sm text-green-400">Changes saved.</span>}
+        {saveToast === 'error' && <span className="text-sm text-red-500">Save failed. Try again.</span>}
       </div>
     </form>
   )
@@ -388,10 +395,23 @@ function SlackSection() {
   const test = useMutation({
     mutationFn: api.slack.test,
     onSuccess: () => showToast('success', '✅ Test message sent to Slack!'),
-    onError: () => showToast('error', '❌ Failed — check your webhook URL'),
+    onError: () => showToast('error', '❌ Slack delivery failed — check your webhook URL is correct'),
   })
 
+  async function saveAndTest() {
+    // Save the current URL first (so the server-side test uses the new value), then test
+    try {
+      await api.team.update({ slackWebhookUrl: webhookUrl.trim() || null } as never)
+      qc.invalidateQueries({ queryKey: ['team'] })
+      await api.slack.test()
+      showToast('success', '✅ Test message sent to Slack!')
+    } catch {
+      showToast('error', '❌ Slack delivery failed — check your webhook URL is correct')
+    }
+  }
+
   const isConfigured = !!((team.data as { slackWebhookUrl?: string | null } | undefined)?.slackWebhookUrl)
+  const hasLocalUrl = webhookUrl.trim().length > 0
 
   return (
     <Card>
@@ -463,11 +483,11 @@ function SlackSection() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => test.mutate()}
-            disabled={test.isPending || !isConfigured}
-            title={!isConfigured ? 'Save a webhook URL first' : undefined}
+            onClick={saveAndTest}
+            disabled={test.isPending || save.isPending || !hasLocalUrl}
+            title={!hasLocalUrl ? 'Enter a webhook URL first' : undefined}
           >
-            {test.isPending ? 'Sending…' : 'Send test message'}
+            {test.isPending || save.isPending ? 'Sending…' : 'Send test message'}
           </Button>
         </div>
       </CardContent>
@@ -496,9 +516,19 @@ function ReposSection() {
   const repoCount = reposQuery.data?.length ?? 0
   const atLimit = plan !== 'admin' && repoCount >= repoLimit
 
+  const [syncToast, setSyncToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+
   const sync = useMutation({
     mutationFn: (id: string) => api.repos.sync(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['repos'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['repos'] })
+      setSyncToast({ type: 'success', msg: 'Sync started — PRs will appear shortly.' })
+      setTimeout(() => setSyncToast(null), 4000)
+    },
+    onError: () => {
+      setSyncToast({ type: 'error', msg: 'Sync failed. Check your GitHub App installation.' })
+      setTimeout(() => setSyncToast(null), 4000)
+    },
   })
   const remove = useMutation({
     mutationFn: (id: string) => api.repos.disconnect(id),
@@ -589,6 +619,17 @@ function ReposSection() {
         </CardContent>
       </Card>
 
+      {syncToast && (
+        <div className={cn(
+          'rounded-lg border px-4 py-3 text-sm',
+          syncToast.type === 'success'
+            ? 'bg-green-500/10 border-green-500/20 text-green-400'
+            : 'bg-red-500/10 border-red-500/20 text-red-400',
+        )}>
+          {syncToast.msg}
+        </div>
+      )}
+
       {/* Manual connect form */}
       <ConnectRepoForm
         onConnected={() => qc.invalidateQueries({ queryKey: ['repos'] })}
@@ -614,6 +655,10 @@ function ConnectRepoForm({
 }) {
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
+  const [pendingUrl, setPendingUrl] = useState('')
+
   const connect = useMutation({
     mutationFn: (repoUrl: string) => api.repos.connect(repoUrl),
     onSuccess: (data) => {
@@ -622,7 +667,7 @@ function ConnectRepoForm({
         type: 'success',
         msg: data.alreadyConnected
           ? `${data.repoName} is already connected.`
-          : `✅ Synced ${data.prsSynced} PRs from ${data.repoName}`,
+          : `Connected ${data.repoName} — synced ${data.prsSynced} PRs`,
       })
       onConnected()
     },
@@ -631,55 +676,222 @@ function ConnectRepoForm({
     },
   })
 
+  function handleConnectClick() {
+    if (!url.trim()) return
+    setPendingUrl(url.trim())
+    setShowConfirm(true)
+  }
+
+  function handlePickerSelect(fullName: string) {
+    setShowPicker(false)
+    setPendingUrl(`https://github.com/${fullName}`)
+    setShowConfirm(true)
+  }
+
+  function confirmConnect() {
+    setShowConfirm(false)
+    connect.mutate(pendingUrl)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Add a repository</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {limitReached ? (
-          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-400">
-            You've reached the {plan} plan limit.{' '}
-            <Link to="/billing" className="underline hover:text-yellow-300">Upgrade</Link>{' '}
-            to connect more repositories.
-          </div>
-        ) : (
-          <>
-            <p className="text-xs text-[#555555] mb-4">
-              Paste a public GitHub repo URL to start tracking it — no GitHub App installation needed.
-            </p>
-            <div className="flex gap-2">
-              <Input
-                type="url"
-                placeholder="https://github.com/owner/repo"
-                value={url}
-                onChange={(e) => { setUrl(e.target.value); setStatus(null) }}
-                className="flex-1"
-                disabled={disabled}
-              />
-              <Button
-                onClick={() => connect.mutate(url)}
-                disabled={connect.isPending || !url.trim() || disabled}
-              >
-                {connect.isPending ? <Spinner className="h-4 w-4" /> : 'Connect & Sync'}
+    <>
+      {/* Security confirmation popup */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-[#333] bg-[#111] p-6 shadow-2xl">
+            <div className="flex items-start gap-3 mb-3">
+              <Lock className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-1">Read-only access</h3>
+                <p className="text-xs text-[#888] leading-relaxed">
+                  Grassion reads <strong className="text-[#bbb]">PR metadata only</strong> — titles, labels, merge dates, and author logins. We never read your source code, write access is not requested, and no data is shared with third parties.
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-[#555] font-mono mb-4 truncate">{pendingUrl}</p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => setShowConfirm(false)}>Cancel</Button>
+              <Button size="sm" onClick={confirmConnect} disabled={connect.isPending}>
+                {connect.isPending ? 'Connecting…' : 'Connect'}
               </Button>
             </div>
-            {status && (
-              <p className={cn('mt-2 text-xs', status.type === 'success' ? 'text-white' : 'text-red-400')}>
-                {status.msg}
+          </div>
+        </div>
+      )}
+
+      {/* GitHub repo picker */}
+      {showPicker && (
+        <RepoPicker
+          onSelect={handlePickerSelect}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Add a repository</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {limitReached ? (
+            <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-400">
+              You've reached the {plan} plan limit.{' '}
+              <Link to="/billing" className="underline hover:text-yellow-300">Upgrade</Link>{' '}
+              to connect more repositories.
+            </div>
+          ) : (
+            <>
+              {/* Picker CTA */}
+              <button
+                type="button"
+                onClick={() => setShowPicker(true)}
+                disabled={disabled}
+                className="mb-4 flex w-full items-center gap-3 rounded-lg border border-[#333] bg-[#0a0a0a] px-4 py-3 text-left text-sm hover:border-[#555] transition-colors disabled:opacity-40"
+              >
+                <Github className="h-4 w-4 text-[#888]" />
+                <span className="text-[#bbb]">Browse repos from your GitHub App…</span>
+                <Search className="h-3.5 w-3.5 text-[#555] ml-auto" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px flex-1 bg-[#1a1a1a]" />
+                <span className="text-xs text-[#444]">or paste URL</span>
+                <div className="h-px flex-1 bg-[#1a1a1a]" />
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  placeholder="https://github.com/owner/repo"
+                  value={url}
+                  onChange={(e) => { setUrl(e.target.value); setStatus(null) }}
+                  className="flex-1"
+                  disabled={disabled}
+                />
+                <Button
+                  onClick={handleConnectClick}
+                  disabled={connect.isPending || !url.trim() || disabled}
+                >
+                  {connect.isPending ? <Spinner className="h-4 w-4" /> : 'Connect'}
+                </Button>
+              </div>
+              {status && (
+                <p className={cn('mt-2 text-xs', status.type === 'success' ? 'text-green-400' : 'text-red-400')}>
+                  {status.msg}
+                </p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </>
+  )
+}
+
+/* ── GITHUB REPO PICKER MODAL ── */
+function RepoPicker({ onSelect, onClose }: { onSelect: (fullName: string) => void; onClose: () => void }) {
+  const [search, setSearch] = useState('')
+  const available = useQuery({
+    queryKey: ['repos', 'available'],
+    queryFn: api.repos.available,
+    staleTime: 60_000,
+  })
+
+  const filtered = (available.data ?? []).filter((r) =>
+    r.fullName.toLowerCase().includes(search.toLowerCase()),
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md rounded-xl border border-[#333] bg-[#111] shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#222]">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Github className="h-4 w-4" />
+            Select a repository
+          </h3>
+          <button onClick={onClose} className="text-[#555] hover:text-white transition-colors">
+            <XCircle className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="px-4 py-3 border-b border-[#1a1a1a]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555]" />
+            <Input
+              type="text"
+              placeholder="Search repositories…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="max-h-72 overflow-y-auto">
+          {available.isLoading ? (
+            <div className="flex justify-center py-8"><Spinner /></div>
+          ) : filtered.length === 0 ? (
+            <div className="py-10 text-center">
+              <GitBranch className="mx-auto h-6 w-6 text-[#333] mb-2" />
+              <p className="text-xs text-[#555]">
+                {available.data?.length === 0
+                  ? 'No repos found. Make sure the Grassion GitHub App is installed.'
+                  : 'No repos match your search.'}
               </p>
-            )}
-            <p className="mt-3 text-xs text-[#444444]">
-              For private repos, install the{' '}
-              <a href="https://github.com/apps/grassion" target="_blank" rel="noreferrer" className="text-[#888888] hover:text-white underline transition-colors">
-                Grassion GitHub App
-              </a>{' '}
-              instead.
-            </p>
-          </>
-        )}
-      </CardContent>
-    </Card>
+              {available.data?.length === 0 && (
+                <a
+                  href="https://github.com/apps/grassion/installations/new"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 underline"
+                >
+                  Install GitHub App
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          ) : (
+            <ul>
+              {filtered.map((r) => (
+                <li key={r.fullName}>
+                  <button
+                    type="button"
+                    onClick={() => !r.alreadyConnected && onSelect(r.fullName)}
+                    disabled={r.alreadyConnected}
+                    className={cn(
+                      'flex w-full items-center gap-3 px-4 py-3 border-b border-[#1a1a1a] last:border-0 text-left text-sm transition-colors',
+                      r.alreadyConnected
+                        ? 'opacity-40 cursor-default'
+                        : 'hover:bg-white/5 cursor-pointer',
+                    )}
+                  >
+                    <Github className="h-4 w-4 text-[#555] flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-white font-medium truncate block">{r.fullName}</span>
+                      <span className="text-[10px] text-[#555]">{r.private ? 'Private' : 'Public'}</span>
+                    </div>
+                    {r.alreadyConnected ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    ) : (
+                      <span className="text-xs text-green-400 flex-shrink-0">Connect</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Privacy note */}
+        <div className="px-4 py-2.5 border-t border-[#1a1a1a] flex items-center gap-1.5">
+          <Lock className="h-3 w-3 text-[#444]" />
+          <span className="text-[10px] text-[#444]">Read-only access to PR metadata — no source code is ever read</span>
+        </div>
+      </div>
+    </div>
   )
 }
 

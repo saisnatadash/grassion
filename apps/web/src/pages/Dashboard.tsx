@@ -62,7 +62,7 @@ function OnboardingProgressBar({
   const steps = [
     { label: 'Sign in', done: true },
     { label: 'Connect a repo', done: hasRepos },
-    { label: 'Merge 5 PRs', done: totalMergedPrs >= 5 },
+    { label: totalMergedPrs > 0 && totalMergedPrs < 5 ? `Merge 5 PRs (${totalMergedPrs}/5)` : 'Merge 5 PRs', done: totalMergedPrs >= 5 },
     { label: 'Get ROI verdict', done: hasVerdict },
   ]
   const allDone = steps.every((s) => s.done)
@@ -158,7 +158,6 @@ export function DashboardPage() {
   }
 
   const data = summary.data!
-  console.log('dashboard data:', summary.data, seatWaste.data, weekly.data)
   const sw = seatWaste.data
   const monthlyWaste = sw?.totalMonthlySavings ?? 0
   const chartData = buildChartData(weekly.data ?? [])
@@ -168,6 +167,32 @@ export function DashboardPage() {
   const totalMergedAllTime = (weekly.data ?? []).reduce((s, w) => s + w.totalPrs, 0)
   const hasVerdict = data.verdict !== 'insufficient_data'
   const showProgressBar = !localStorage.getItem('onboarding_complete')
+
+  // Empty state: no repos connected yet
+  if (!repos.isLoading && !hasRepos) {
+    return (
+      <div className="space-y-5">
+        {showOnboarding && <OnboardingModal onClose={() => setOnboardingDismissed(true)} />}
+        <OnboardingProgressBar hasRepos={false} totalMergedPrs={0} hasVerdict={false} />
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#222] bg-[#111]">
+            <GitPullRequest className="h-8 w-8 text-[#444]" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Welcome to Grassion</h2>
+          <p className="text-sm text-[#666] max-w-sm mb-6">
+            Connect your first GitHub repository to start tracking your team's AI coding ROI.
+          </p>
+          <Link
+            to="/settings"
+            className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-green-400 transition-colors"
+          >
+            Connect a Repo
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">

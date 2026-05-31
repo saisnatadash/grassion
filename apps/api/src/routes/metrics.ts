@@ -288,35 +288,6 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
     thisMonday.setUTCDate(now.getUTCDate() + daysToMonday)
     thisMonday.setUTCHours(0, 0, 0, 0)
 
-    // No real PR data — return sample data so chart shows something during onboarding/demo
-    if (liveRows.length === 0) {
-      const sampleAiPrs = [1, 2, 3, 2, 4, 3]
-      const sample = sampleAiPrs.map((aiPrs, idx) => {
-        const weekDate = new Date(thisMonday)
-        weekDate.setUTCDate(thisMonday.getUTCDate() - (5 - idx) * 7)
-        const totalPrs = aiPrs + Math.ceil(aiPrs * 0.5)
-        const estimatedDollarSaved = aiPrs * hourlyRate * 2
-        const netDollar = estimatedDollarSaved - monthlySpend
-        return {
-          weekStart: weekDate.toISOString(),
-          totalPrs,
-          aiPrs,
-          humanPrs: totalPrs - aiPrs,
-          aiAvgMergeHours: null,
-          humanAvgMergeHours: null,
-          aiReworkRate: null,
-          humanReworkRate: null,
-          estimatedDollarSaved,
-          estimatedDollarLost: monthlySpend,
-          netDollar,
-          verdict: netDollar > 0 ? 'net_positive' : 'net_negative',
-        }
-      })
-      console.log('[metrics/weekly] no real data, returning sample')
-      res.json(sample)
-      return
-    }
-
     const byKey = new Map(liveRows.map((r) => [r.weekStart, r]))
 
     const out: Array<{
@@ -527,45 +498,7 @@ metricsRouter.get('/api/prs/problem', requireAuth, async (req: Request, res: Res
       return
     }
 
-    // Tier 3: sample PRs so dashboard always shows something during onboarding/demo
-    const now = Date.now()
-    res.json([
-      {
-        id: 'sample-1',
-        number: 142,
-        title: 'Refactor auth middleware (large deletion ratio)',
-        url: '#',
-        reason: 'deletions > 2× additions — potential over-refactor',
-        aiSummary:
-          'This PR deleted significantly more code than it added, which can indicate scope creep or an incomplete refactor that may require follow-up fixes.',
-        reworkScore: 45,
-        aiSource: 'copilot',
-        mergedAt: new Date(now - 3 * 86_400_000).toISOString(),
-      },
-      {
-        id: 'sample-2',
-        number: 138,
-        title: 'Add payment processing flow',
-        url: '#',
-        reason: 'open for 9 days before merge — slow review cycle',
-        aiSummary:
-          'Extended review time suggests blocking issues that slowed AI-assisted development. Consider smaller PR scopes.',
-        reworkScore: 38,
-        aiSource: 'cursor',
-        mergedAt: new Date(now - 7 * 86_400_000).toISOString(),
-      },
-      {
-        id: 'sample-3',
-        number: 131,
-        title: 'Database migration for user table',
-        url: '#',
-        reason: '2 downstream fixes required after merge',
-        aiSummary: null,
-        reworkScore: 32,
-        aiSource: null,
-        mergedAt: new Date(now - 14 * 86_400_000).toISOString(),
-      },
-    ])
+    res.json([])
   } catch (err) {
     console.error('[problem-prs]', err)
     res.json([])

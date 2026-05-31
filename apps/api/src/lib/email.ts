@@ -178,11 +178,24 @@ function buildDigestHtml(data: DigestEmailData): string {
 const FROM = 'Grassion <info@grassion.com>'
 
 export async function sendWelcomeEmail(to: string, username: string): Promise<void> {
-  await resendClient().emails.send({
-    from: FROM,
-    to,
-    subject: 'Welcome to Grassion 🎉',
-    html: `<!DOCTYPE html>
+  const subject = 'Welcome to Grassion'
+  const html = buildWelcomeHtml(username)
+  try {
+    await resendClient().emails.send({ from: FROM, to, subject, html })
+  } catch (resendErr) {
+    // Resend fails when grassion.com domain is not verified — fall back to Zoho SMTP
+    const transport = createZohoTransport()
+    await transport.sendMail({
+      from: `Grassion <${env().ZOHO_FROM_ADDRESS}>`,
+      to,
+      subject,
+      html,
+    })
+  }
+}
+
+function buildWelcomeHtml(username: string): string {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -206,7 +219,7 @@ export async function sendWelcomeEmail(to: string, username: string): Promise<vo
           <tr>
             <td style="padding:32px 40px;">
               <p style="margin:0 0 16px;font-size:24px;font-weight:600;color:#ffffff;line-height:1.3;">
-                Welcome, @${username}! 🎉
+                Welcome, @${username}!
               </p>
               <p style="margin:0 0 16px;font-size:15px;color:#888888;line-height:1.6;">
                 You're now connected to Grassion — the tool that tells you whether your team's AI coding spend is actually paying off.
@@ -245,7 +258,7 @@ export async function sendWelcomeEmail(to: string, username: string): Promise<vo
                   <td>
                     <a href="https://app.grassion.com/dashboard"
                        style="display:inline-block;background:#22c55e;color:#000000;font-size:14px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:8px;">
-                      Open Dashboard →
+                      Open Dashboard
                     </a>
                   </td>
                 </tr>
@@ -269,8 +282,7 @@ export async function sendWelcomeEmail(to: string, username: string): Promise<vo
     </tr>
   </table>
 </body>
-</html>`,
-  })
+</html>`
 }
 
 export async function sendPlanUpgradeEmail(

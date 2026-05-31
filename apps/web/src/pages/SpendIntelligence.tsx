@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   UserX, Users, TrendingDown, AlertCircle, Download, Lock,
-  ExternalLink, Copy, Check, Zap, BarChart2,
+  ExternalLink, Copy, Check, Zap, BarChart2, ArrowRight,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api, type SeatWasteResponse, type OutcomesToolRow } from '../lib/api.js'
@@ -56,6 +56,7 @@ export function SpendIntelligencePage() {
     queryKey: ['analytics', 'outcomes'],
     queryFn: api.analytics.outcomes,
   })
+  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const { isPaid } = usePlan()
 
   if (seatWaste.isLoading) {
@@ -72,6 +73,33 @@ export function SpendIntelligencePage() {
       <div className="space-y-4">
         <Alert tone="red">Failed to load spend data. Check your connection and try again.</Alert>
         <Button variant="secondary" onClick={() => seatWaste.refetch()}>Retry</Button>
+      </div>
+    )
+  }
+
+  // Empty state: no repos connected yet
+  if (!repos.isLoading && (repos.data?.length ?? 0) === 0) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-semibold text-white">AI Spend Intelligence</h1>
+          <p className="mt-1 text-sm text-[#888888]">Track which AI tool spend is producing real engineering value.</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#222] bg-[#111]">
+            <BarChart2 className="h-8 w-8 text-[#444]" />
+          </div>
+          <h2 className="text-lg font-semibold text-white mb-2">No data yet</h2>
+          <p className="text-sm text-[#666] max-w-sm mb-6">
+            Connect a GitHub repository to start tracking seat waste and AI spend ROI.
+          </p>
+          <Link
+            to="/settings"
+            className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-green-400 transition-colors"
+          >
+            Connect a Repo
+          </Link>
+        </div>
       </div>
     )
   }

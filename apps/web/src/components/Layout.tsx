@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
   ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard,
-  Shield, Activity, GitPullRequest, Bell, CheckCheck,
+  Shield, Activity, GitPullRequest, Bell, CheckCheck, XCircle, Zap,
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
@@ -36,7 +36,15 @@ function NotificationPanel({
   onMarkAllRead: () => void
   onMarkRead: (id: string) => void
 }) {
-  const unread = notifications.filter((n) => !n.readAt)
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  const unread = notifications.filter((n) => !n.readAt && !dismissed.has(n.id))
+  const visible = notifications.filter((n) => !dismissed.has(n.id))
+
+  function dismiss(id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    onMarkRead(id)
+    setDismissed((prev) => new Set([...prev, id]))
+  }
 
   return (
     <div className="absolute right-0 top-full mt-1.5 w-80 rounded-xl border border-[#222222] bg-[#111111] shadow-xl shadow-black/50 overflow-hidden z-50">
@@ -53,14 +61,14 @@ function NotificationPanel({
         )}
       </div>
 
-      {notifications.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="py-10 text-center">
           <Bell className="mx-auto h-6 w-6 text-[#333] mb-2" />
           <p className="text-xs text-[#555]">No notifications yet</p>
         </div>
       ) : (
         <ul className="max-h-80 overflow-y-auto">
-          {notifications.map((n) => (
+          {visible.map((n) => (
             <li
               key={n.id}
               className={cn(
@@ -78,9 +86,13 @@ function NotificationPanel({
                     <p className={cn('text-xs font-medium leading-tight', n.readAt ? 'text-[#666]' : 'text-white')}>
                       {n.title}
                     </p>
-                    {!n.readAt && (
-                      <div className="h-1.5 w-1.5 rounded-full bg-blue-400 flex-shrink-0 mt-1" />
-                    )}
+                    <button
+                      onClick={(e) => dismiss(n.id, e)}
+                      className="flex-shrink-0 text-[#444] hover:text-[#aaa] transition-colors mt-0.5"
+                      title="Dismiss"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                   <p className="text-[11px] text-[#555] mt-0.5 leading-relaxed">{n.body}</p>
                   <p className="text-[10px] text-[#444] mt-1">{timeAgo(n.createdAt)}</p>
@@ -96,6 +108,7 @@ function NotificationPanel({
 
 export function AppLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const qc = useQueryClient()
   const me = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
   const seatWaste = useQuery({
@@ -130,6 +143,17 @@ export function AppLayout() {
   const isHighRisk = health.data?.riskLevel === 'high'
   const notifications = notifQuery.data ?? []
   const unreadCount = notifications.filter((n) => !n.readAt).length
+
+  const [spendBadgeSeen, setSpendBadgeSeen] = useState(() =>
+    Number(localStorage.getItem('spend_badge_seen') ?? 0),
+  )
+  useEffect(() => {
+    if (location.pathname === '/spend-intelligence') {
+      localStorage.setItem('spend_badge_seen', String(inactiveCount))
+      setSpendBadgeSeen(inactiveCount)
+    }
+  }, [location.pathname, inactiveCount])
+  const spendBadge = inactiveCount > spendBadgeSeen ? inactiveCount : null
 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -188,7 +212,7 @@ export function AppLayout() {
 
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: BarChart2, badge: null as number | null },
-    { to: '/spend-intelligence', label: 'AI Spend', icon: DollarSign, badge: inactiveCount > 0 ? inactiveCount : null },
+    { to: '/spend-intelligence', label: 'AI Spend', icon: DollarSign, badge: spendBadge },
     { to: '/health', label: 'Health', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
     { to: '/outcomes', label: 'Outcomes', icon: GitPullRequest, badge: null as number | null },
     { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
@@ -306,6 +330,16 @@ export function AppLayout() {
                       {planLabel}
                     </div>
                   </div>
+                  {/* Upgrade nudge: show for non-Business plans */}
+                  {team.plan !== 'business' && team.plan !== 'admin' && (
+                    <button
+                      onClick={() => { navigate('/billing'); setDropdownOpen(false) }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-green-400 hover:bg-green-500/10 transition-colors"
+                    >
+                      <Zap className="h-3.5 w-3.5" />
+                      {team.plan === 'starter' ? 'Upgrade to Growth' : team.plan === 'team' ? 'Upgrade to Business' : 'Upgrade plan'}
+                    </button>
+                  )}
                   <DropItem icon={Settings} label="Settings" onClick={() => { navigate('/settings'); setDropdownOpen(false) }} />
                   <DropItem icon={CreditCard} label="Billing" onClick={() => { navigate('/billing'); setDropdownOpen(false) }} />
                   <DropItem icon={Shield} label="Security" onClick={() => { navigate('/security'); setDropdownOpen(false) }} />
