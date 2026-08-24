@@ -237,7 +237,7 @@ export const api = {
 
   repos: {
     list: () => request<RepoDto[]>('/api/repos'),
-    available: () => request<Array<{ fullName: string; name: string; owner: string; private: boolean; alreadyConnected: boolean }>>('/api/repos/available'),
+    available: () => request<Array<{ fullName: string; name: string; owner: string; private: boolean; description: string | null; alreadyConnected: boolean }>>('/api/repos/available'),
     toggle: (id: string, isActive: boolean) =>
       request<{ ok: true }>(`/api/repos/${id}/toggle`, {
         method: 'POST',

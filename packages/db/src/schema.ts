@@ -21,6 +21,9 @@ export const teams = pgTable('teams', {
   githubInstallationId: integer('github_installation_id').unique(),
   githubAccountLogin: text('github_account_login'),
   githubAccountType: text('github_account_type'),
+  // Owner's GitHub OAuth access token — fallback auth for repo listing/connect
+  // when the App installation webhook hasn't arrived (or the App isn't installed).
+  githubOauthToken: text('github_oauth_token'),
 
   razorpayCustomerId: text('razorpay_customer_id').unique(),
   razorpaySubscriptionId: text('razorpay_subscription_id'),
