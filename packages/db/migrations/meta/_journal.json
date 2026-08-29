@@ -43,6 +43,13 @@
       "when": 1748390400000,
       "tag": "0006_slack",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787011200000,
+      "tag": "0007_github_oauth_token",
+      "breakpoints": true
     }
   ]
 }

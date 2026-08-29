@@ -9,46 +9,85 @@ import { getInstallationOctokit } from '../github.js'
 
 export const reposRouter = Router()
 
-/** List GitHub repos accessible via this team's App installation (for the picker UI). */
+type AvailableGhRepo = {
+  full_name: string
+  name: string
+  owner: { login: string } | null
+  private: boolean
+  description?: string | null
+}
+
+/**
+ * List GitHub repos for the picker UI. Prefers the team's App installation;
+ * falls back to the owner's OAuth token when the installation webhook hasn't
+ * arrived yet (or the App isn't installed), so the picker is never empty for
+ * a freshly signed-in user.
+ */
 reposRouter.get('/api/repos/available', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const [teamRow] = await db
-    .select({ githubInstallationId: teams.githubInstallationId })
+    .select({
+      githubInstallationId: teams.githubInstallationId,
+      githubOauthToken: teams.githubOauthToken,
+    })
     .from(teams)
     .where(eq(teams.id, sess.teamId))
     .limit(1)
 
+  let repositories: AvailableGhRepo[] = []
+
   const installationId = teamRow?.githubInstallationId ?? null
-  if (!installationId) {
-    res.json([])
-    return
+  if (installationId) {
+    try {
+      const octokit = await getInstallationOctokit(installationId)
+      const { data } = await (octokit as unknown as {
+        request: (path: string, opts: { per_page: number }) => Promise<{ data: { repositories: AvailableGhRepo[] } }>
+      }).request('GET /installation/repositories', { per_page: 100 })
+      repositories = data.repositories
+    } catch (err) {
+      logger.error({ err, installationId }, '[repos/available] installation API failed, trying OAuth fallback')
+    }
   }
 
-  try {
-    const octokit = await getInstallationOctokit(installationId)
-    const { data } = await (octokit as unknown as {
-      request: (path: string, opts: { per_page: number }) => Promise<{ data: { repositories: Array<{ full_name: string; name: string; owner: { login: string } | null; private: boolean }> } }>
-    }).request('GET /installation/repositories', { per_page: 100 })
-
-    const connected = await db
-      .select({ owner: repos.owner, name: repos.name })
-      .from(repos)
-      .where(eq(repos.teamId, sess.teamId))
-    const connectedSet = new Set(connected.map((r) => `${r.owner}/${r.name}`))
-
-    res.json(
-      data.repositories.map((r) => ({
-        fullName: r.full_name,
-        name: r.name,
-        owner: r.owner?.login ?? '',
-        private: r.private,
-        alreadyConnected: connectedSet.has(r.full_name),
-      })),
-    )
-  } catch (err) {
-    logger.error({ err }, '[repos/available] failed')
-    res.json([])
+  if (repositories.length === 0 && teamRow?.githubOauthToken) {
+    try {
+      const ghRes = await fetch(
+        'https://api.github.com/user/repos?type=all&per_page=100&sort=updated',
+        {
+          headers: {
+            Authorization: `Bearer ${teamRow.githubOauthToken}`,
+            Accept: 'application/vnd.github+json',
+            'User-Agent': 'grassion-app',
+            'X-GitHub-Api-Version': '2022-11-28',
+          },
+        },
+      )
+      if (ghRes.ok) {
+        repositories = (await ghRes.json()) as AvailableGhRepo[]
+      } else {
+        logger.warn({ status: ghRes.status }, '[repos/available] oauth-token repo listing failed')
+      }
+    } catch (err) {
+      logger.error({ err }, '[repos/available] oauth-token repo listing threw')
+    }
   }
+
+  const connected = await db
+    .select({ owner: repos.owner, name: repos.name })
+    .from(repos)
+    .where(eq(repos.teamId, sess.teamId))
+  const connectedSet = new Set(connected.map((r) => `${r.owner}/${r.name}`))
+
+  res.json(
+    repositories.map((r) => ({
+      fullName: r.full_name,
+      name: r.name,
+      owner: r.owner?.login ?? '',
+      private: r.private,
+      description: r.description ?? null,
+      alreadyConnected: connectedSet.has(r.full_name),
+    })),
+  )
 })
 
 reposRouter.get('/api/repos', requireAuth, async (req: Request, res: Response) => {
@@ -106,21 +145,19 @@ reposRouter.post(
     }
     const [, owner, repoName] = match as [string, string, string]
 
-    // Fetch repo metadata from GitHub public API
+    // Fetch repo metadata with the team's best available auth so private
+    // repos the user's token can read are connectable too.
     type GhRepoData = { id: number; name: string; full_name: string; default_branch: string; private: boolean }
     let ghData: GhRepoData | null = null
     try {
+      const ghHeaders = await teamGhHeaders(sess.teamId)
       const ghRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
-        headers: {
-          Accept: 'application/vnd.github+json',
-          'User-Agent': 'grassion-app',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
+        headers: ghHeaders,
       })
       if (!ghRes.ok) {
         const status = ghRes.status
         if (status === 404) {
-          res.status(404).json({ error: 'repo_not_found', hint: 'Check the URL — private repos require the GitHub App to be installed.' })
+          res.status(404).json({ error: 'repo_not_found', hint: 'Check the URL — for private repos, install the GitHub App or sign in again so Grassion can use your GitHub access.' })
           return
         }
         res.status(502).json({ error: 'github_api_error', status })
@@ -176,39 +213,55 @@ reposRouter.post(
   },
 )
 
+/**
+ * Best-available GitHub auth headers for a team: App installation token first,
+ * then the owner's stored OAuth token, else unauthenticated (60 req/hr).
+ */
+async function teamGhHeaders(teamId: string): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'grassion-app',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+
+  const teamRow = (
+    await db
+      .select({
+        githubInstallationId: teams.githubInstallationId,
+        githubOauthToken: teams.githubOauthToken,
+      })
+      .from(teams)
+      .where(eq(teams.id, teamId))
+      .limit(1)
+  )[0]
+
+  if (teamRow?.githubInstallationId) {
+    try {
+      const octokit = await getInstallationOctokit(teamRow.githubInstallationId)
+      const auth = await (octokit as unknown as { auth: (o: { type: string }) => Promise<{ token: string }> })
+        .auth({ type: 'installation' })
+      headers['Authorization'] = `Bearer ${auth.token}`
+      return headers
+    } catch (err) {
+      logger.warn({ err }, 'installation token unavailable, falling back to oauth token')
+    }
+  }
+
+  if (teamRow?.githubOauthToken) {
+    headers['Authorization'] = `Bearer ${teamRow.githubOauthToken}`
+  }
+  return headers
+}
+
 async function syncHistoricalPrs(
   teamId: string,
   repoId: string,
   owner: string,
   repoName: string,
 ): Promise<number> {
-  // Build authenticated headers when a GitHub App installation is available.
-  // Without auth: 60 req/hr limit; 100 PRs × 2 calls = 200 requests → needs auth.
-  const teamRow = (
-    await db
-      .select({ githubInstallationId: teams.githubInstallationId })
-      .from(teams)
-      .where(eq(teams.id, teamId))
-      .limit(1)
-  )[0]
-
-  const ghHeaders: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'grassion-app',
-    'X-GitHub-Api-Version': '2022-11-28',
-  }
-
-  const installationId = teamRow?.githubInstallationId ?? null
-  if (installationId) {
-    try {
-      const octokit = await getInstallationOctokit(installationId)
-      const auth = await (octokit as unknown as { auth: (o: { type: string }) => Promise<{ token: string }> })
-        .auth({ type: 'installation' })
-      ghHeaders['Authorization'] = `Bearer ${auth.token}`
-    } catch (err) {
-      logger.warn({ err }, 'installation token unavailable, falling back to unauthenticated sync')
-    }
-  }
+  // Authenticated where possible: 100 PRs × 2 calls = 200 requests, which
+  // blows the 60 req/hr unauthenticated limit.
+  const ghHeaders = await teamGhHeaders(teamId)
 
   // Fetch last 100 closed PRs
   let ghPrs: GhPr[] = []

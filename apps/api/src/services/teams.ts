@@ -49,6 +49,32 @@ export async function createTeamFromInstallation(installation: InstallationLite)
     return existing[0]
   }
 
+  // A team may already exist from OAuth sign-in (created before the App was
+  // installed). Attach the installation to it — creating a second team here
+  // would leave the user's session team without an installation_id, so the
+  // repo picker would show nothing.
+  const byLogin = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.githubAccountLogin, accountLogin))
+    .limit(1)
+  if (byLogin[0] && !byLogin[0].githubInstallationId) {
+    const [updated] = await db
+      .update(teams)
+      .set({
+        githubInstallationId: installation.id,
+        githubAccountType: account.type ?? byLogin[0].githubAccountType,
+        updatedAt: new Date(),
+      })
+      .where(eq(teams.id, byLogin[0].id))
+      .returning()
+    logger.info(
+      { teamId: updated!.id, installationId: installation.id },
+      'installation attached to existing team',
+    )
+    return updated!
+  }
+
   const baseSlug = slugify(accountLogin)
   const slug = await ensureUniqueSlug(baseSlug)
   const trialEndsAt = addDays(new Date(), 14)
@@ -83,6 +109,14 @@ export async function deactivateTeam(installationId: number) {
     .set({ githubInstallationId: null, updatedAt: new Date() })
     .where(eq(teams.id, team.id))
   logger.info({ teamId: team.id }, 'team deactivated')
+}
+
+/** Persist the signing-in user's GitHub OAuth token — fallback auth for repo listing/connect. */
+export async function storeTeamOAuthToken(teamId: string, accessToken: string) {
+  await db
+    .update(teams)
+    .set({ githubOauthToken: accessToken, updatedAt: new Date() })
+    .where(eq(teams.id, teamId))
 }
 
 export async function upsertUser(params: {
