@@ -13,6 +13,8 @@ FROM deps AS build
 COPY tsconfig.base.json ./
 COPY packages packages
 COPY apps/worker apps/worker
+RUN pnpm --filter @grassion/shared build
+RUN pnpm --filter @grassion/db build
 RUN pnpm --filter @grassion/worker build
 
 FROM base AS runtime
