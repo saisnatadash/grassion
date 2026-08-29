@@ -4,9 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": false,
-    "skipLibCheck": true,
-    "noImplicitAny": false,
-    "strict": false
+    "skipLibCheck": true
   },
   "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }

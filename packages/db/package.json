@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-"main": "dist/index.js",
-"types": "dist/index.d.ts",
-"exports": {
-  ".": "./dist/index.js",
-  "./schema": "./dist/schema.js"
-},
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./src/schema.ts",
+      "default": "./dist/schema.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json --skipLibCheck",
     "generate": "node --env-file=../../.env node_modules/drizzle-kit/bin.cjs generate",
