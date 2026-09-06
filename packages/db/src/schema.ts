@@ -485,6 +485,25 @@ export const engineeringEvents = pgTable(
   }),
 )
 
+// ============ WEBHOOK EVENTS (idempotency) ============
+// One row per X-Github-Delivery ID. INSERT ... ON CONFLICT DO NOTHING prevents
+// duplicate processing when GitHub retries a delivery.
+export const webhookEvents = pgTable(
+  'webhook_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    githubDeliveryId: text('github_delivery_id').notNull().unique(),
+    receivedAt: timestamp('received_at').defaultNow().notNull(),
+    processed: boolean('processed').default(false).notNull(),
+  },
+  (t) => ({
+    deliveryIdx: uniqueIndex('webhook_events_delivery_idx').on(t.githubDeliveryId),
+  }),
+)
+
+export type WebhookEvent = typeof webhookEvents.$inferSelect
+export type NewWebhookEvent = typeof webhookEvents.$inferInsert
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),

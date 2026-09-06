@@ -27,38 +27,23 @@ authRouter.get('/auth/github', (_req: Request, res: Response) => {
 
 authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
   const e = env()
-  const loginUrl = `${e.APP_URL}/login`
   const errorRedirect = `${e.APP_URL}/login?error=auth_failed`
-
-  console.log('1. Starting OAuth callback', { query: req.query })
 
   const code = req.query.code
   const errorParam = req.query.error
 
-  console.log('2. Got code:', typeof code === 'string' ? 'yes' : 'no')
-
   if (errorParam) {
-    console.log('[auth/github/callback] GitHub returned error:', errorParam, req.query.error_description)
+    logger.warn({ error: errorParam }, 'github oauth returned error')
     res.redirect(`${errorRedirect}&reason=github_error`)
     return
   }
 
   if (typeof code !== 'string') {
-    console.log('[auth/github/callback] Missing code param, query was:', req.query)
     res.redirect(`${errorRedirect}&reason=missing_code`)
     return
   }
 
-  console.log('[auth/github/callback] env check — client_id present:', !!e.GITHUB_APP_CLIENT_ID, 'secret present:', !!e.GITHUB_APP_CLIENT_SECRET)
-  // GitHub App client IDs start with "Iv" (e.g. Iv1.…); OAuth App client IDs are hex.
-  // A mismatch between credential type and app registration breaks the token exchange.
-  console.log(
-    '[auth/github/callback] credential type:',
-    e.GITHUB_APP_CLIENT_ID.startsWith('Iv') ? 'GitHub App' : 'OAuth App',
-  )
-
   try {
-    console.log('[auth/github/callback] exchanging code for token, redirect_uri =', GITHUB_CALLBACK_URL)
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
@@ -70,21 +55,17 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       }),
     })
     const tokenRaw = await tokenRes.text()
-    console.log('[auth/github/callback] GitHub token exchange status:', tokenRes.status, 'body:', tokenRaw)
 
     let tokenJson: { access_token?: string; error?: string; error_description?: string }
     try {
       tokenJson = JSON.parse(tokenRaw)
     } catch {
-      console.log('[auth/github/callback] Failed to parse token response as JSON, raw:', tokenRaw)
+      logger.error({ status: tokenRes.status }, 'github token response not json')
       res.redirect(`${errorRedirect}&reason=token_parse`)
       return
     }
 
-    console.log('3. Got access token:', tokenJson.access_token ? 'yes' : 'no')
-
     if (!tokenJson.access_token) {
-      console.log('[auth/github/callback] No access_token in response:', tokenJson)
       logger.warn({ tokenJson }, 'github oauth token exchange failed')
       res.redirect(`${errorRedirect}&reason=token_exchange`)
       return
@@ -94,7 +75,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       headers: { authorization: `Bearer ${tokenJson.access_token}`, 'user-agent': 'grassion' },
     })
     if (!profileRes.ok) {
-      console.log('[auth/github/callback] profile fetch failed:', profileRes.status, await profileRes.text())
+      logger.error({ status: profileRes.status }, 'github profile fetch failed')
       res.redirect(`${errorRedirect}&reason=profile_fetch`)
       return
     }
@@ -105,12 +86,10 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       email?: string | null
     }
     if (typeof profile.id !== 'number' || !profile.login) {
-      console.log('[auth/github/callback] profile response missing id/login:', profile)
+      logger.error({ profile }, 'github profile missing id/login')
       res.redirect(`${errorRedirect}&reason=profile_fetch`)
       return
     }
-
-    console.log('4. Got GitHub user:', profile.login)
 
     let email = profile.email ?? null
     if (!email) {
@@ -120,10 +99,8 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       const emails = (await emailsRes.json()) as Array<{ email: string; primary: boolean; verified: boolean }>
       const primary = Array.isArray(emails) ? emails.find((x) => x.primary && x.verified) : undefined
       email = primary?.email ?? null
-      console.log('[auth/github/callback] fetched emails, primary:', email)
     }
 
-    console.log('[auth/github/callback] looking up user by githubUserId:', profile.id)
     const existingUser = await db
       .select()
       .from(users)
@@ -133,7 +110,6 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
     let userRow = existingUser[0]
 
     if (!userRow) {
-      console.log('[auth/github/callback] no user row — looking up team by login:', profile.login)
       try {
         // Prefer a team that already owns an App installation (created by the
         // installation webhook) over a bare sign-in team with the same login.
@@ -146,7 +122,6 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
 
         let teamId: string
         if (!teamMatch[0]) {
-          console.log('[auth/github/callback] no team — auto-creating for:', profile.login)
           const slug = await ensureUniqueSlug(slugify(profile.login))
           const insert: NewTeam = {
             name: `${profile.login}'s Team`,
@@ -158,10 +133,8 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
           }
           const [newTeam] = await db.insert(teams).values(insert).returning()
           teamId = newTeam!.id
-          console.log('[auth/github/callback] auto-created teamId:', teamId)
         } else {
           teamId = teamMatch[0].id
-          console.log('[auth/github/callback] found existing teamId:', teamId)
         }
 
         userRow = await upsertUser({
@@ -173,14 +146,6 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
           role: 'owner',
         })
       } catch (err) {
-        const pgErr = err as Error & { code?: string; detail?: string; constraint?: string }
-        console.log('[auth/github/callback] TEAM/USER CREATE FAILED:', {
-          message: pgErr.message,
-          code: pgErr.code,
-          detail: pgErr.detail,
-          constraint: pgErr.constraint,
-          stack: pgErr.stack,
-        })
         logger.error({ err, login: profile.login }, 'team auto-creation failed during oauth callback')
         res.redirect(`${errorRedirect}&reason=team_create`)
         return
@@ -201,12 +166,9 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
       })
     }
 
-    console.log('5. Team ID:', userRow.teamId)
-
     // Non-fatal: if the column migration hasn't run yet, login must still succeed.
     try {
       await storeTeamOAuthToken(userRow.teamId, tokenJson.access_token)
-      console.log('[auth/github/callback] stored oauth token for team:', userRow.teamId)
     } catch (err) {
       logger.warn({ err, teamId: userRow.teamId }, 'failed to store github oauth token')
     }
@@ -214,18 +176,9 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
     const token = await createSession(userRow.id)
     setSessionCookie(res, token)
 
-    const redirectTo = `${e.APP_URL}/auth/callback?token=${encodeURIComponent(token)}`
-    console.log('6. Redirecting to app with token')
-    console.log('[auth/github/callback] SUCCESS — redirecting to:', redirectTo.split('?')[0] + '?token=…')
-    res.redirect(redirectTo)
+    logger.info({ login: profile.login }, 'github oauth success')
+    res.redirect(`${e.APP_URL}/auth/callback?token=${encodeURIComponent(token)}`)
   } catch (err) {
-    const error = err as Error & { response?: { data?: unknown; status?: number } }
-    console.log('[auth/github/callback] CAUGHT ERROR:', {
-      message: error.message,
-      stack: error.stack,
-      responseStatus: error.response?.status,
-      responseData: error.response?.data,
-    })
     logger.error({ err }, 'github oauth callback failed')
     res.redirect(`${errorRedirect}&reason=exception`)
   }

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { Webhooks } from '@octokit/webhooks'
 import type { Request, Response } from 'express'
 import { env } from '../env.js'
@@ -13,7 +14,7 @@ import {
 } from '../services/prs.js'
 import { backfillTeamRepos } from '../services/backfill.js'
 import { db } from '../db.js'
-import { teams, repos } from '@grassion/db'
+import { teams, repos, webhookEvents } from '@grassion/db'
 import { eq } from 'drizzle-orm'
 import { sendRevertAlert } from '../lib/slack.js'
 
@@ -120,24 +121,61 @@ function getWebhooks(): Webhooks {
   return _webhooks
 }
 
+function verifySignature(rawBody: Buffer, signature: string): boolean {
+  const secret = env().GITHUB_APP_WEBHOOK_SECRET
+  const expected = `sha256=${crypto.createHmac('sha256', secret).update(rawBody).digest('hex')}`
+  try {
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+  } catch {
+    return false
+  }
+}
+
 export async function handleGithubWebhook(req: Request, res: Response) {
-  const id = req.header('x-github-delivery')
+  const deliveryId = req.header('x-github-delivery')
   const name = req.header('x-github-event')
   const signature = req.header('x-hub-signature-256')
 
-  if (!id || !name || !signature) {
-    res.status(400).json({ error: 'missing required github webhook headers' })
+  if (!deliveryId || !name || !signature) {
+    res.status(400).json({ error: 'missing_github_headers' })
     return
   }
 
-  // The body is a Buffer because we registered express.raw on this route.
-  const payload = (req.body as Buffer).toString('utf8')
+  // Raw body buffer — express.raw middleware is registered for this route.
+  const rawBody = req.body as Buffer
+
+  // Manual HMAC-SHA256 verification with timing-safe comparison.
+  if (!verifySignature(rawBody, signature)) {
+    logger.warn({ deliveryId }, 'github webhook invalid signature')
+    res.status(401).json({ error: 'invalid_signature' })
+    return
+  }
+
+  // Idempotency: try to claim this delivery ID. If another request already
+  // processed it (GitHub retry), return 200 immediately without re-processing.
+  const inserted = await db
+    .insert(webhookEvents)
+    .values({ githubDeliveryId: deliveryId })
+    .onConflictDoNothing()
+    .returning({ id: webhookEvents.id })
+
+  if (inserted.length === 0) {
+    // Duplicate delivery — already processed.
+    res.status(200).json({ ok: true, duplicate: true })
+    return
+  }
+
+  const payload = rawBody.toString('utf8')
 
   try {
-    await getWebhooks().verifyAndReceive({ id, name: name as any, signature, payload })
+    await getWebhooks().verifyAndReceive({ id: deliveryId, name: name as never, signature, payload })
+    await db
+      .update(webhookEvents)
+      .set({ processed: true })
+      .where(eq(webhookEvents.githubDeliveryId, deliveryId))
     res.status(202).json({ ok: true })
   } catch (err) {
-    logger.error({ err }, 'github webhook verification failed')
-    res.status(400).json({ error: 'invalid webhook' })
+    logger.error({ err, deliveryId }, 'github webhook processing failed')
+    res.status(400).json({ error: 'webhook_processing_failed' })
   }
 }

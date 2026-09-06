@@ -1,4 +1,6 @@
 import { Router, type Request, type Response } from 'express'
+import { sql } from 'drizzle-orm'
+import { db } from '../db.js'
 import { authRouter } from './auth.js'
 import { teamRouter } from './team.js'
 import { reposRouter } from './repos.js'
@@ -14,8 +16,13 @@ import { slackRouter } from './slack.js'
 
 export const router = Router()
 
-router.get('/health', (_req: Request, res: Response) => {
-  res.json({ ok: true, ts: new Date().toISOString() })
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    await db.execute(sql`SELECT 1`)
+    res.json({ ok: true, db: 'up', ts: new Date().toISOString() })
+  } catch (err) {
+    res.status(503).json({ ok: false, db: 'down', error: (err as Error).message, ts: new Date().toISOString() })
+  }
 })
 
 router.use(authRouter)
