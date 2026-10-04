@@ -72,6 +72,7 @@ export function SettingsPage() {
       </div>
       <GitHubSection />
       <TeamSettings />
+      <AiToolCostsSection />
       <SlackSection />
       <ReposSection />
       <MembersSection />
@@ -361,6 +362,119 @@ function TeamSettings() {
         {saveToast === 'error' && <span className="text-sm text-red-500">Save failed. Try again.</span>}
       </div>
     </form>
+  )
+}
+
+/* ── AI TOOL COSTS ── */
+const TOOL_COST_FIELDS = [
+  { id: 'copilot',     label: 'GitHub Copilot',  placeholder: '19' },
+  { id: 'cursor',      label: 'Cursor',           placeholder: '20' },
+  { id: 'claude-code', label: 'Claude Code',      placeholder: '100' },
+  { id: 'windsurf',    label: 'Windsurf',         placeholder: '15' },
+] as const
+
+function AiToolCostsSection() {
+  const qc = useQueryClient()
+  const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const [perSeat, setPerSeat] = useState(19)
+  const [toolCosts, setToolCosts] = useState<Record<string, string>>({})
+  const [toast, setToast] = useState<'saved' | 'error' | null>(null)
+
+  useEffect(() => {
+    const t = team.data as (typeof team.data & { perSeatCostUsd?: number; toolSeatCosts?: Record<string, number> }) | undefined
+    if (t) {
+      setPerSeat(t.perSeatCostUsd ?? 19)
+      const costs = t.toolSeatCosts ?? {}
+      setToolCosts(
+        Object.fromEntries(
+          TOOL_COST_FIELDS.map(({ id }) => [id, costs[id] !== undefined ? String(costs[id]) : '']),
+        ),
+      )
+    }
+  }, [team.data])
+
+  const save = useMutation({
+    mutationFn: () => {
+      const resolved: Record<string, number> = {}
+      for (const { id } of TOOL_COST_FIELDS) {
+        const v = parseFloat(toolCosts[id] ?? '')
+        if (!isNaN(v) && v >= 0) resolved[id] = v
+      }
+      return api.team.updateSettings({ perSeatCostUsd: perSeat, toolSeatCosts: resolved })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['team'] })
+      setToast('saved')
+      setTimeout(() => setToast(null), 3000)
+    },
+    onError: () => {
+      setToast('error')
+      setTimeout(() => setToast(null), 3000)
+    },
+  })
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>AI Tool Costs</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-5">
+          <p className="text-xs text-[#888888]">
+            Used to calculate monthly waste from inactive seats. Set per-tool overrides when your
+            team pays different prices per product.
+          </p>
+
+          {/* Default cost */}
+          <div className="max-w-xs">
+            <label className="block text-xs text-[#888888] mb-1.5">Default cost per seat ($/month)</label>
+            <Input
+              type="number"
+              min={0}
+              max={1000}
+              step={0.01}
+              value={perSeat}
+              onChange={(e) => setPerSeat(parseFloat(e.target.value) || 0)}
+              placeholder="19"
+            />
+            <p className="mt-1 text-xs text-[#555555]">Applied when a tool-specific price is not set</p>
+          </div>
+
+          {/* Per-tool overrides */}
+          <div>
+            <p className="text-xs text-[#888888] mb-2.5">Per-tool seat costs (leave blank to use default)</p>
+            <div className="grid grid-cols-2 gap-3">
+              {TOOL_COST_FIELDS.map(({ id, label, placeholder }) => (
+                <div key={id}>
+                  <label className="block text-xs text-[#888888] mb-1">{label}</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#555555]">$</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={1000}
+                      step={0.01}
+                      value={toolCosts[id] ?? ''}
+                      onChange={(e) => setToolCosts((prev) => ({ ...prev, [id]: e.target.value }))}
+                      placeholder={placeholder}
+                      className="pl-6"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+              {save.isPending ? 'Saving…' : 'Save costs'}
+            </Button>
+            {toast === 'saved' && <span className="text-sm text-green-400">Saved.</span>}
+            {toast === 'error' && <span className="text-sm text-red-500">Save failed. Try again.</span>}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

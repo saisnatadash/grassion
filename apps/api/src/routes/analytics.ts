@@ -11,8 +11,6 @@ import { generatePrSummary } from '../lib/ai-summary.js'
 
 export const analyticsRouter = Router()
 
-const SEAT_COST_USD = 19
-
 async function freshTeamId(githubLogin: string, fallback: string): Promise<string> {
   const row = await db.select({ teamId: users.teamId }).from(users).where(eq(users.githubLogin, githubLogin)).limit(1)
   return row[0]?.teamId ?? fallback
@@ -52,10 +50,18 @@ async function checkAndRecordMilestones(
 analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
-  console.log('[seat-waste] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
 
   try {
-    // All team users with their AI PR count (merged last 7 days)
+    // Fetch team's seat cost configuration
+    const [teamCosts] = await db
+      .select({ perSeatCostUsd: teams.perSeatCostUsd, toolSeatCosts: teams.toolSeatCosts })
+      .from(teams)
+      .where(eq(teams.id, teamId))
+      .limit(1)
+    const defaultCost = teamCosts?.perSeatCostUsd ?? 19
+    const toolCosts = (teamCosts?.toolSeatCosts ?? {}) as Record<string, number>
+
+    // All team users with their AI PR count (merged last 7 days) and primary tool
     const rows = await db
       .select({
         githubLogin: users.githubLogin,
@@ -65,6 +71,16 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
           AND ${pullRequests.mergedAt} > NOW() - INTERVAL '7 days'
         )::int`,
         lastActivity: sql<string | null>`MAX(${pullRequests.openedAt})::text`,
+        primaryTool: sql<string | null>`(
+          SELECT ${pullRequests.aiSource}
+          FROM ${pullRequests}
+          WHERE ${pullRequests.authorLogin} = ${users.githubLogin}
+            AND ${pullRequests.teamId} = ${users.teamId}
+            AND ${pullRequests.aiSource} IS NOT NULL
+          GROUP BY ${pullRequests.aiSource}
+          ORDER BY COUNT(*) DESC
+          LIMIT 1
+        )`,
       })
       .from(users)
       .leftJoin(
@@ -76,8 +92,6 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
       )
       .where(eq(users.teamId, teamId))
       .groupBy(users.githubLogin, users.avatarUrl)
-
-    console.log('[seat-waste] users returned:', rows.length)
 
     const activeUsers = rows
       .filter((r) => r.aiPrCount > 0)
@@ -91,19 +105,23 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
 
     const inactiveUsers = rows
       .filter((r) => r.aiPrCount === 0)
-      .map((r) => ({
-        githubLogin: r.githubLogin,
-        avatarUrl: r.avatarUrl,
-        lastActivity: r.lastActivity,
-        monthlyCost: SEAT_COST_USD,
-      }))
+      .map((r) => {
+        const tool = r.primaryTool ?? null
+        const monthlyCost = tool && toolCosts[tool] !== undefined ? toolCosts[tool]! : defaultCost
+        return {
+          githubLogin: r.githubLogin,
+          avatarUrl: r.avatarUrl,
+          lastActivity: r.lastActivity,
+          monthlyCost,
+        }
+      })
       .sort((a, b) => {
         const ta = a.lastActivity ? new Date(a.lastActivity).getTime() : 0
         const tb = b.lastActivity ? new Date(b.lastActivity).getTime() : 0
         return ta - tb
       })
 
-    const monthlyWaste = inactiveUsers.length * SEAT_COST_USD
+    const monthlyWaste = inactiveUsers.reduce((s, u) => s + u.monthlyCost, 0)
 
     // Log a savings event at most once per day per team (always, even when inactiveCount=0)
     try {

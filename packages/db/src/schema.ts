@@ -34,6 +34,8 @@ export const teams = pgTable('teams', {
 
   monthlyAiSpendUsd: real('monthly_ai_spend_usd').default(0),
   avgDevHourlyRateUsd: real('avg_dev_hourly_rate_usd').default(75),
+  perSeatCostUsd: real('per_seat_cost_usd').default(19),
+  toolSeatCosts: jsonb('tool_seat_costs').default({}).$type<Record<string, number>>(),
 
   timezone: text('timezone').default('UTC'),
   emailDigestEnabled: boolean('email_digest_enabled').default(true),

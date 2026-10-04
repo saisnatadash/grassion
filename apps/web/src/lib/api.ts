@@ -233,6 +233,11 @@ export const api = {
     members: () => request<MemberDto[]>('/api/team/members'),
     removeMember: (id: string) =>
       request<{ ok: true }>(`/api/team/members/${id}`, { method: 'DELETE' }),
+    updateSettings: (body: { perSeatCostUsd: number; toolSeatCosts: Record<string, number> }) =>
+      request<{ ok: true; perSeatCostUsd: number; toolSeatCosts: Record<string, number> }>(
+        '/api/team/settings',
+        { method: 'PATCH', body: JSON.stringify(body) },
+      ),
   },
 
   repos: {

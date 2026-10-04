@@ -57,6 +57,13 @@
       "when": 1748476800000,
       "tag": "0008_webhook_events",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1759708800000,
+      "tag": "0009_tool_seat_costs",
+      "breakpoints": true
     }
   ]
 }

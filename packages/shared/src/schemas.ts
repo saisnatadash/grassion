@@ -31,6 +31,13 @@ export const verifyOrderPaymentSchema = z.object({
   plan: z.enum(['starter', 'team', 'business']).optional().default('starter'),
 })
 
+export const updateTeamSettingsSchema = z.object({
+  perSeatCostUsd: z.number().min(0).max(1000),
+  toolSeatCosts: z.record(z.string(), z.number().min(0).max(1000)),
+})
+
+export type UpdateTeamSettingsInput = z.infer<typeof updateTeamSettingsSchema>
+
 export const repoToggleSchema = z.object({
   isActive: z.boolean(),
 })

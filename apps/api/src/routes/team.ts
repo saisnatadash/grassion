@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm'
 import { teams, users } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth, requireRole } from '../auth.js'
-import { updateTeamSchema } from '@grassion/shared'
+import { updateTeamSchema, updateTeamSettingsSchema } from '@grassion/shared'
 
 export const teamRouter = Router()
 
@@ -29,6 +29,8 @@ teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => 
     emailDigestDay: t.emailDigestDay ?? 1,
     emailDigestHour: t.emailDigestHour ?? 9,
     slackWebhookUrl: t.slackWebhookUrl ?? null,
+    perSeatCostUsd: t.perSeatCostUsd ?? 19,
+    toolSeatCosts: (t.toolSeatCosts ?? {}) as Record<string, number>,
   })
 })
 
@@ -65,6 +67,33 @@ teamRouter.get('/api/team/members', requireAuth, async (req: Request, res: Respo
     })),
   )
 })
+
+teamRouter.patch(
+  '/api/team/settings',
+  requireAuth,
+  requireRole('owner', 'admin'),
+  async (req: Request, res: Response) => {
+    const parsed = updateTeamSettingsSchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_input', details: parsed.error.flatten() })
+      return
+    }
+    const sess = req.session!
+    const [updated] = await db
+      .update(teams)
+      .set({
+        perSeatCostUsd: parsed.data.perSeatCostUsd,
+        toolSeatCosts: parsed.data.toolSeatCosts,
+        updatedAt: new Date(),
+      })
+      .where(eq(teams.id, sess.teamId))
+      .returning({
+        perSeatCostUsd: teams.perSeatCostUsd,
+        toolSeatCosts: teams.toolSeatCosts,
+      })
+    res.json({ ok: true, ...updated })
+  },
+)
 
 teamRouter.delete(
   '/api/team/members/:id',
