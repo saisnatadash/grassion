@@ -1,5 +1,6 @@
 {
-  "framework": "astro",
+  "buildCommand": "",
+  "installCommand": "",
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": true

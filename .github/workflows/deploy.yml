@@ -59,14 +59,13 @@ jobs:
       - run: pnpm install --frozen-lockfile=false
       - run: pnpm --filter @grassion/web build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-      - uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: apps/web
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://grassion-api.fly.dev' }}
+      - name: Deploy web to Vercel
+        working-directory: apps/web
+        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
   deploy-marketing:
     needs: test
@@ -82,10 +81,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile=false
       - run: pnpm --filter @grassion/marketing build
-      - uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_MARKETING_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: apps/marketing
+      - name: Deploy marketing to Vercel
+        working-directory: apps/marketing
+        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_MARKETING_PROJECT_ID }}
