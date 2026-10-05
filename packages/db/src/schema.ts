@@ -13,6 +13,17 @@ import {
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
+// ============ REFERRAL CODES ============
+export const referralCodes = pgTable('referral_codes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  code: text('code').notNull().unique(),
+  partnerName: text('partner_name').notNull(),
+  partnerEmail: text('partner_email').notNull(),
+  commissionPct: real('commission_pct').default(20.0),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 // ============ TEAMS ============
 export const teams = pgTable('teams', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -37,6 +48,9 @@ export const teams = pgTable('teams', {
   perSeatCostUsd: real('per_seat_cost_usd').default(19),
   toolSeatCosts: jsonb('tool_seat_costs').default({}).$type<Record<string, number>>(),
 
+  referralCode: text('referral_code'),
+  referralCodeId: uuid('referral_code_id').references(() => referralCodes.id),
+
   timezone: text('timezone').default('UTC'),
   emailDigestEnabled: boolean('email_digest_enabled').default(true),
   emailDigestDay: integer('email_digest_day').default(1),
@@ -45,6 +59,10 @@ export const teams = pgTable('teams', {
   lastDigestSentAt: timestamp('last_digest_sent_at'),
 
   slackWebhookUrl: text('slack_webhook_url'),
+
+  benchmarkingOptIn: boolean('benchmarking_opt_in').default(false),
+  teamSizeRange: text('team_size_range'),
+  industry: text('industry'),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -132,6 +150,7 @@ export const pullRequests = pgTable(
   (t) => ({
     teamMergedIdx: index('pr_team_merged_idx').on(t.teamId, t.mergedAt),
     teamAiIdx: index('pr_team_ai_idx').on(t.teamId, t.aiSource),
+    repoStateMergedIdx: index('pr_repo_state_merged_idx').on(t.repoId, t.state, t.mergedAt),
   }),
 )
 
@@ -154,6 +173,7 @@ export const prOutcomes = pgTable(
     downstreamFixCount: integer('downstream_fix_count').default(0),
     downstreamFixPrNumbers: jsonb('downstream_fix_pr_numbers'),
     hadHotfixWithin7d: boolean('had_hotfix_within_7d').default(false),
+    hotfixSignals: jsonb('hotfix_signals').default([]).$type<string[]>(),
 
     reworkScore: real('rework_score').default(0),
 
@@ -164,6 +184,7 @@ export const prOutcomes = pgTable(
   },
   (t) => ({
     teamIdx: index('outcomes_team_idx').on(t.teamId),
+    teamComputedIdx: index('outcomes_team_computed_idx').on(t.teamId, t.computedAt),
   }),
 )
 
@@ -243,6 +264,7 @@ export const emailDigests = pgTable('email_digests', {
 
 // ============ OUTCOME CHECK QUEUE ============
 // Schedules a deferred outcome computation for a merged PR.
+// Three rows per PR — one per checkpoint (7, 14, 30 days after merge).
 export const outcomeCheckQueue = pgTable(
   'outcome_check_queue',
   {
@@ -250,6 +272,7 @@ export const outcomeCheckQueue = pgTable(
     prId: uuid('pr_id')
       .references(() => pullRequests.id, { onDelete: 'cascade' })
       .notNull(),
+    checkpointDays: integer('checkpoint_days').default(7),
     runAfter: timestamp('run_after').notNull(),
     completedAt: timestamp('completed_at'),
     attempts: integer('attempts').default(0),
@@ -258,7 +281,99 @@ export const outcomeCheckQueue = pgTable(
   },
   (t) => ({
     runAfterIdx: index('outcome_queue_run_after_idx').on(t.runAfter, t.completedAt),
-    prIdx: uniqueIndex('outcome_queue_pr_idx').on(t.prId),
+    prCheckpointIdx: uniqueIndex('outcome_queue_pr_checkpoint_idx').on(t.prId, t.checkpointDays),
+  }),
+)
+
+// ============ PR OUTCOME TIMELINE ============
+// Permanent record of outcome signals at each checkpoint (7, 14, 30 days post-merge).
+export const prOutcomeTimeline = pgTable(
+  'pr_outcome_timeline',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    prId: uuid('pr_id')
+      .references(() => pullRequests.id, { onDelete: 'cascade' })
+      .notNull(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    checkpointDays: integer('checkpoint_days').notNull(),
+    reworkScore: real('rework_score').default(0),
+    wasReverted: boolean('was_reverted').default(false),
+    ciFailureCount: integer('ci_failure_count').default(0),
+    downstreamFixCount: integer('downstream_fix_count').default(0),
+    hadHotfix: boolean('had_hotfix').default(false),
+    hotfixSignals: jsonb('hotfix_signals').default([]).$type<string[]>(),
+    dollarImpact: real('dollar_impact').default(0),
+    computedAt: timestamp('computed_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    prCheckpointIdx: uniqueIndex('pr_outcome_timeline_pr_checkpoint_idx').on(t.prId, t.checkpointDays),
+    teamIdx: index('pr_outcome_timeline_team_idx').on(t.teamId),
+  }),
+)
+
+// ============ INDUSTRY BENCHMARKS ============
+// Aggregate p25/p50/p75 values computed from opt-in teams. Rows expire after 30 days.
+export const industryBenchmarks = pgTable(
+  'industry_benchmarks',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    toolName: text('tool_name').notNull(),
+    teamSizeRange: text('team_size_range').notNull(),
+    industry: text('industry').default('all').notNull(),
+    metricName: text('metric_name').notNull(),
+    p25Value: real('p25_value'),
+    p50Value: real('p50_value'),
+    p75Value: real('p75_value'),
+    sampleSize: integer('sample_size'),
+    computedAt: timestamp('computed_at').defaultNow().notNull(),
+    validUntil: timestamp('valid_until').notNull(),
+  },
+  (t) => ({
+    toolMetricIdx: index('benchmarks_tool_metric_idx').on(t.toolName, t.metricName),
+    sizeIndustryIdx: index('benchmarks_size_industry_idx').on(t.teamSizeRange, t.industry),
+  }),
+)
+
+// ============ TEAM BENCHMARK CONTRIBUTIONS ============
+// Records which teams contributed data to each benchmark computation.
+export const teamBenchmarkContributions = pgTable(
+  'team_benchmark_contributions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    benchmarkId: uuid('benchmark_id')
+      .references(() => industryBenchmarks.id, { onDelete: 'cascade' })
+      .notNull(),
+    contributedAt: timestamp('contributed_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    teamBenchmarkIdx: uniqueIndex('team_benchmark_contributions_team_benchmark_idx').on(t.teamId, t.benchmarkId),
+  }),
+)
+
+// ============ AUDIT LOGS ============
+// Immutable SOC2-aligned record of security-relevant user actions.
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'set null' }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    action: text('action').notNull(),
+    resourceType: text('resource_type'),
+    resourceId: text('resource_id'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    metadata: jsonb('metadata').default({}).$type<Record<string, unknown>>(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    teamCreatedIdx: index('audit_logs_team_created_idx').on(t.teamId, t.createdAt),
+    actionCreatedIdx: index('audit_logs_action_created_idx').on(t.action, t.createdAt),
   }),
 )
 
@@ -506,6 +621,34 @@ export const webhookEvents = pgTable(
 export type WebhookEvent = typeof webhookEvents.$inferSelect
 export type NewWebhookEvent = typeof webhookEvents.$inferInsert
 
+// ============ REFERRAL CONVERSIONS ============
+// One row per team-per-code. ON CONFLICT DO NOTHING prevents double-counting
+// when both the checkout verify endpoint and the Razorpay webhook fire.
+export const referralConversions = pgTable(
+  'referral_conversions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    referralCodeId: uuid('referral_code_id')
+      .references(() => referralCodes.id)
+      .notNull(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    convertedAt: timestamp('converted_at').defaultNow().notNull(),
+    planAtConversion: text('plan_at_conversion').notNull(),
+    mrrUsd: real('mrr_usd').notNull(),
+    commissionUsd: real('commission_usd').notNull(),
+  },
+  (t) => ({
+    uniqueIdx: uniqueIndex('referral_conversions_code_team_idx').on(t.referralCodeId, t.teamId),
+  }),
+)
+
+export type ReferralCode = typeof referralCodes.$inferSelect
+export type NewReferralCode = typeof referralCodes.$inferInsert
+export type ReferralConversion = typeof referralConversions.$inferSelect
+export type NewReferralConversion = typeof referralConversions.$inferInsert
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -582,3 +725,11 @@ export type PrRiskSignal = typeof prRiskSignals.$inferSelect
 export type NewPrRiskSignal = typeof prRiskSignals.$inferInsert
 export type EngineeringEvent = typeof engineeringEvents.$inferSelect
 export type NewEngineeringEvent = typeof engineeringEvents.$inferInsert
+export type PrOutcomeTimelineRow = typeof prOutcomeTimeline.$inferSelect
+export type NewPrOutcomeTimelineRow = typeof prOutcomeTimeline.$inferInsert
+export type AuditLog = typeof auditLogs.$inferSelect
+export type NewAuditLog = typeof auditLogs.$inferInsert
+export type IndustryBenchmark = typeof industryBenchmarks.$inferSelect
+export type NewIndustryBenchmark = typeof industryBenchmarks.$inferInsert
+export type TeamBenchmarkContribution = typeof teamBenchmarkContributions.$inferSelect
+export type NewTeamBenchmarkContribution = typeof teamBenchmarkContributions.$inferInsert

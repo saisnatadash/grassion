@@ -2,7 +2,9 @@ import { eq, and, gte, lte, gt, lt, isNull, isNotNull } from 'drizzle-orm'
 import {
   pullRequests,
   prOutcomes,
+  prOutcomeTimeline,
   repos,
+  teams,
   outcomeCheckQueue,
   notifications,
   type PullRequest,
@@ -34,7 +36,8 @@ export async function trackAllPendingOutcomes() {
   let failed = 0
   for (const item of due) {
     try {
-      await computeAndStoreOutcome(item.pr, item.repo)
+      const checkpointDays = (item.row.checkpointDays ?? 7) as 7 | 14 | 30
+      await computeAndStoreOutcome(item.pr, item.repo, checkpointDays)
       await db
         .update(outcomeCheckQueue)
         .set({ completedAt: new Date() })
@@ -61,31 +64,31 @@ export async function trackAllPendingOutcomes() {
 }
 
 async function enqueueMissedOutcomes() {
-  const upper = daysAgo(7)
-  const lower = daysAgo(30)
+  // Look back 37 days to catch PRs that missed any of the three checkpoints.
+  const lower = daysAgo(37)
   const merged = await db
-    .select({ id: pullRequests.id })
+    .select({ id: pullRequests.id, mergedAt: pullRequests.mergedAt })
     .from(pullRequests)
-    .leftJoin(outcomeCheckQueue, eq(outcomeCheckQueue.prId, pullRequests.id))
     .where(
       and(
         eq(pullRequests.state, 'merged'),
         isNotNull(pullRequests.mergedAt),
         gte(pullRequests.mergedAt, lower),
-        lte(pullRequests.mergedAt, upper),
-        isNull(outcomeCheckQueue.id),
       ),
     )
     .limit(1000)
   for (const m of merged) {
-    await db
-      .insert(outcomeCheckQueue)
-      .values({ prId: m.id, runAfter: new Date() })
-      .onConflictDoNothing()
+    if (!m.mergedAt) continue
+    for (const days of [7, 14, 30] as const) {
+      await db
+        .insert(outcomeCheckQueue)
+        .values({ prId: m.id, checkpointDays: days, runAfter: addDays(m.mergedAt, days) })
+        .onConflictDoNothing()
+    }
   }
 }
 
-export async function computeAndStoreOutcome(pr: PullRequest, repo: Repo) {
+export async function computeAndStoreOutcome(pr: PullRequest, repo: Repo, checkpointDays: 7 | 14 | 30 = 7) {
   if (!pr.mergedAt) return
   const outcome = await computeOutcome(pr, repo)
 
@@ -134,10 +137,56 @@ export async function computeAndStoreOutcome(pr: PullRequest, repo: Repo) {
         downstreamFixCount: outcome.downstreamFixCount,
         downstreamFixPrNumbers: outcome.downstreamFixPrNumbers,
         hadHotfixWithin7d: outcome.hadHotfixWithin7d,
+        hotfixSignals: outcome.hotfixSignals,
         reworkScore: outcome.reworkScore,
         ...(aiSummary
           ? { aiSummary, aiSummaryGeneratedAt: aiSummaryGeneratedAt ?? new Date() }
           : {}),
+        computedAt: new Date(),
+      },
+    })
+
+  // Compute dollar impact and persist a timeline checkpoint row.
+  const [teamRow] = await db
+    .select({ avgDevHourlyRateUsd: teams.avgDevHourlyRateUsd })
+    .from(teams)
+    .where(eq(teams.id, pr.teamId))
+    .limit(1)
+  const hourlyRate = teamRow?.avgDevHourlyRateUsd ?? 75
+  // AI time-saving is only counted at the 7-day checkpoint (first observation).
+  const timesSaved = checkpointDays === 7 && pr.aiSource ? 2.0 : 0
+  const timeLostRevert = outcome.wasReverted ? 4.0 : 0
+  const timeLostDownstreamFix = outcome.downstreamFixCount * 2.0
+  const timeLostCIFailure = outcome.ciFailureCount * 0.5
+  const timeLostHotfix = outcome.hadHotfixWithin7d ? 3.0 : 0
+  const dollarImpact =
+    (timesSaved - timeLostRevert - timeLostDownstreamFix - timeLostCIFailure - timeLostHotfix) * hourlyRate
+
+  await db
+    .insert(prOutcomeTimeline)
+    .values({
+      prId: pr.id,
+      teamId: pr.teamId,
+      checkpointDays,
+      reworkScore: outcome.reworkScore,
+      wasReverted: outcome.wasReverted,
+      ciFailureCount: outcome.ciFailureCount,
+      downstreamFixCount: outcome.downstreamFixCount,
+      hadHotfix: outcome.hadHotfixWithin7d,
+      hotfixSignals: outcome.hotfixSignals,
+      dollarImpact,
+      computedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [prOutcomeTimeline.prId, prOutcomeTimeline.checkpointDays],
+      set: {
+        reworkScore: outcome.reworkScore,
+        wasReverted: outcome.wasReverted,
+        ciFailureCount: outcome.ciFailureCount,
+        downstreamFixCount: outcome.downstreamFixCount,
+        hadHotfix: outcome.hadHotfixWithin7d,
+        hotfixSignals: outcome.hotfixSignals,
+        dollarImpact,
         computedAt: new Date(),
       },
     })
@@ -167,13 +216,13 @@ async function computeOutcome(pr: PullRequest, _repo: Repo) {
   const revertPr = await findRevertPR(pr)
   const downstreamFixes = await findDownstreamFixPRs(pr)
   const ciFailures = countCIFailures(pr)
-  const hadHotfix = await checkHotfixWithin7d(pr)
+  const { hadHotfix, hotfixSignals } = await checkHotfixWithin7d(pr)
 
   const reworkScore = computeReworkScore({
     wasReverted: !!revertPr,
     downstreamFixCount: downstreamFixes.length,
     ciFailureCount: ciFailures,
-    hadHotfix,
+    hotfixSignals,
   })
 
   return {
@@ -186,6 +235,7 @@ async function computeOutcome(pr: PullRequest, _repo: Repo) {
     downstreamFixCount: downstreamFixes.length,
     downstreamFixPrNumbers: downstreamFixes.map((p) => p.githubPrNumber),
     hadHotfixWithin7d: hadHotfix,
+    hotfixSignals,
     reworkScore,
     computedAt: new Date(),
   }
@@ -239,21 +289,47 @@ function countCIFailures(pr: PullRequest): number {
   return meta.check_runs.filter((c) => c.conclusion === 'failure').length
 }
 
-async function checkHotfixWithin7d(pr: PullRequest) {
-  if (!pr.mergedAt) return false
-  const hotfixes = await db
-    .select()
-    .from(pullRequests)
-    .where(
-      and(
-        eq(pullRequests.repoId, pr.repoId),
-        eq(pullRequests.state, 'merged'),
-        gt(pullRequests.mergedAt, pr.mergedAt),
-        lt(pullRequests.mergedAt, addDays(pr.mergedAt, 7)),
-      ),
-    )
-  return hotfixes.some((h) => {
-    const meta = (h.rawMetadata ?? {}) as { labels?: Array<{ name: string }> }
-    return (meta.labels ?? []).some((l) => /hotfix|urgent|critical/i.test(l.name))
-  })
+async function checkHotfixWithin7d(pr: PullRequest): Promise<{ hadHotfix: boolean; hotfixSignals: string[] }> {
+  if (!pr.mergedAt) return { hadHotfix: false, hotfixSignals: [] }
+  const signals: string[] = []
+
+  // Signal 1 — Labels on the PR itself
+  const meta = (pr.rawMetadata ?? {}) as {
+    labels?: Array<{ name: string }>
+    reviews?: Array<{ state: string }>
+  }
+  const hasHotfixLabel = (meta.labels ?? []).some((l) =>
+    /hotfix|urgent|critical|emergency/i.test(l.name),
+  )
+  if (hasHotfixLabel) signals.push('label')
+
+  // Signal 2 — Title keywords
+  if (/hotfix|hot.fix|urgent|critical|emergency|patch|revert/i.test(pr.title)) {
+    signals.push('title_keyword')
+  }
+
+  // Signal 3 — Fast merge: opened and merged within 30 minutes
+  if (pr.openedAt) {
+    const openToMergeMs = pr.mergedAt.getTime() - pr.openedAt.getTime()
+    if (openToMergeMs <= 30 * 60 * 1000) signals.push('fast_merge')
+  }
+
+  // Signal 4 — Off-hours merge: outside 9am-6pm UTC on weekdays, or any weekend day
+  const mergedHour = pr.mergedAt.getUTCHours()
+  const mergedDay = pr.mergedAt.getUTCDay() // 0=Sun, 6=Sat
+  const isWeekend = mergedDay === 0 || mergedDay === 6
+  const isOffHours = mergedHour < 9 || mergedHour >= 18
+  if (isWeekend || isOffHours) signals.push('off_hours')
+
+  // Signal 5 — Zero review fast merge: no reviews AND merged within 2 hours
+  const reviewCount = pr.reviewCount ?? 0
+  const changesRequestedCount = pr.changesRequestedCount ?? 0
+  if (pr.openedAt) {
+    const openToMergeMs = pr.mergedAt.getTime() - pr.openedAt.getTime()
+    if (reviewCount === 0 && changesRequestedCount === 0 && openToMergeMs <= 2 * 60 * 60 * 1000) {
+      signals.push('zero_review_fast')
+    }
+  }
+
+  return { hadHotfix: signals.length > 0, hotfixSignals: signals }
 }

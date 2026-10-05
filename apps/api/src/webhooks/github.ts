@@ -3,7 +3,6 @@ import { Webhooks } from '@octokit/webhooks'
 import type { Request, Response } from 'express'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
-import { addDays } from '@grassion/shared'
 import { createTeamFromInstallation, deactivateTeam } from '../services/teams.js'
 import { connectRepo, disconnectRepo } from '../services/repos.js'
 import {
@@ -79,7 +78,7 @@ function getWebhooks(): Webhooks {
           payload.pull_request.merged &&
           payload.pull_request.merged_at
         ) {
-          await scheduleOutcomeCheck(pr.id, addDays(new Date(), 7))
+          await scheduleOutcomeCheck(pr.id, pr.mergedAt ?? new Date())
 
           // Instant Slack alert for reverted PRs (GitHub names them "Revert '...'")
           if (payload.pull_request.title.startsWith('Revert ')) {

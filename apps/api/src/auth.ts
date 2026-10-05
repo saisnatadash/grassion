@@ -5,9 +5,10 @@ import { eq, and, gt } from 'drizzle-orm'
 import { sessions, users, teams } from '@grassion/db'
 import { db } from './db.js'
 import { env } from './env.js'
+import { logger } from './logger.js'
 
 const SESSION_COOKIE = 'grassion_session'
-const SESSION_TTL_DAYS = 30
+const SESSION_TTL_DAYS = 7
 
 export interface SessionUser {
   userId: string
@@ -105,12 +106,18 @@ export async function attachSession(req: Request, _res: Response, next: NextFunc
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
   const token = bearerToken ?? req.cookies?.[SESSION_COOKIE]
   const sess = await readSession(token)
-  if (sess) req.session = sess
+  if (sess) {
+    req.session = sess
+  } else if (token) {
+    // Token was present but invalid or expired — log without including the token value.
+    logger.warn({ ip: req.ip, path: req.path }, 'invalid or expired session token rejected')
+  }
   next()
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session) {
+    logger.warn({ ip: req.ip, path: req.path, method: req.method }, 'auth required: no session')
     res.status(401).json({ error: 'unauthorized' })
     return
   }

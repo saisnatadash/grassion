@@ -7,9 +7,17 @@ export interface DetectionResult {
 }
 
 export interface PRForDetection {
+  title: string
   body: string | null
   labels: string[]
   commits: Array<{ message: string; author: { name?: string; email?: string } }>
+  additions: number
+  deletions: number
+  changedFiles: number
+  commitCount: number
+  openedAt: Date | null
+  mergedAt: Date | null
+  reviewCount: number
 }
 
 const TOOL_PATTERNS = {
@@ -84,6 +92,38 @@ export function detectAI(pr: PRForDetection): DetectionResult {
         return { source, method: 'body_regex', confidence: 0.7 }
       }
     }
+  }
+
+  // Priority 4: Statistical pattern — infer from PR shape when no explicit signal exists.
+  // Low-confidence by design; honest tooltip shown in the dashboard.
+  const openToMergeMs =
+    pr.openedAt && pr.mergedAt ? pr.mergedAt.getTime() - pr.openedAt.getTime() : null
+
+  // 4a — Bulk generation: large addition, few files, fast merge
+  if (
+    pr.additions > 200 &&
+    pr.deletions < 30 &&
+    pr.changedFiles <= 5 &&
+    openToMergeMs !== null &&
+    openToMergeMs <= 4 * 60 * 60 * 1000
+  ) {
+    return { source: 'unknown_ai', method: 'statistical_pattern', confidence: 0.45 }
+  }
+
+  // 4b — Single-commit large write
+  if (pr.commitCount === 1 && pr.additions > 150 && pr.deletions < 20) {
+    return { source: 'unknown_ai', method: 'statistical_pattern', confidence: 0.40 }
+  }
+
+  // 4c — Conventional commit + large PR merged without review
+  if (
+    /^(feat|fix|chore|refactor|docs|style|test|perf)(\(.+\))?:/i.test(pr.title) &&
+    pr.additions > 100 &&
+    pr.reviewCount === 0 &&
+    openToMergeMs !== null &&
+    openToMergeMs <= 2 * 60 * 60 * 1000
+  ) {
+    return { source: 'unknown_ai', method: 'statistical_pattern', confidence: 0.35 }
   }
 
   return { source: null, method: null, confidence: 0 }

@@ -64,9 +64,20 @@ function OutcomeRow({ item }: { item: PrOutcomeItem }) {
             </span>
             <span className="text-sm text-[#aaa] truncate max-w-xs">{item.prTitle}</span>
             {item.aiSource && (
-              <span className="ml-auto flex-shrink-0 rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-medium text-[#888] uppercase tracking-wide">
-                {item.aiSource}
-              </span>
+              item.aiDetectionMethod === 'statistical_pattern' ? (
+                <span className="relative group/sptip ml-auto flex-shrink-0">
+                  <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-medium text-[#888] uppercase tracking-wide cursor-help">
+                    {item.aiSource}
+                  </span>
+                  <span className="pointer-events-none absolute hidden group-hover/sptip:block bottom-full right-0 mb-1.5 w-64 text-xs bg-[#1a1a1a] border border-[#333] rounded-lg px-2.5 py-2 text-[#999] z-50 shadow-lg leading-relaxed">
+                    Detected via code pattern analysis. Add a grassion:ai-[tool] label to confirm.
+                  </span>
+                </span>
+              ) : (
+                <span className="ml-auto flex-shrink-0 rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-medium text-[#888] uppercase tracking-wide">
+                  {item.aiSource}
+                </span>
+              )
             )}
           </div>
           <div className="mt-1.5 flex items-center gap-3 flex-wrap text-xs text-[#555]">

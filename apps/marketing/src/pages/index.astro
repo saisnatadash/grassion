@@ -737,6 +737,24 @@
         }, 500 + i * 150);
       });
     });
+
+    // Referral tracking: capture ?ref= and append to OAuth links
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var urlRef = params.get('ref');
+      if (urlRef) {
+        document.cookie = 'grassion_ref=' + encodeURIComponent(urlRef) +
+          ';max-age=' + (30 * 24 * 60 * 60) + ';path=/;SameSite=Lax';
+      }
+      var m = document.cookie.match(/(?:^|;\s*)grassion_ref=([^;]+)/);
+      var ref = m ? decodeURIComponent(m[1]) : null;
+      if (!ref) return;
+      document.querySelectorAll('a[href*="auth/github"]').forEach(function (a) {
+        var u = new URL(a.getAttribute('href'), window.location.href);
+        u.searchParams.set('ref', ref);
+        a.setAttribute('href', u.toString());
+      });
+    })();
   </script>
 
 </body>

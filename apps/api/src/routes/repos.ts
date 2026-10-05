@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express'
+import { z } from 'zod'
 import { eq, and, sql } from 'drizzle-orm'
 import { repos, pullRequests, teams } from '@grassion/db'
 import { db } from '../db.js'
@@ -6,6 +7,12 @@ import { requireAuth, requireRole } from '../auth.js'
 import { repoToggleSchema } from '@grassion/shared'
 import { logger } from '../logger.js'
 import { getInstallationOctokit } from '../github.js'
+import { validateBody } from '../middleware/validate.js'
+import { logAuditEvent, getIp } from '../services/audit.js'
+
+const connectRepoSchema = z.object({
+  repoUrl: z.string().min(1),
+})
 
 export const reposRouter = Router()
 
@@ -25,98 +32,108 @@ type AvailableGhRepo = {
  */
 reposRouter.get('/api/repos/available', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  const [teamRow] = await db
-    .select({
-      githubInstallationId: teams.githubInstallationId,
-      githubOauthToken: teams.githubOauthToken,
-    })
-    .from(teams)
-    .where(eq(teams.id, sess.teamId))
-    .limit(1)
+  try {
+    const [teamRow] = await db
+      .select({
+        githubInstallationId: teams.githubInstallationId,
+        githubOauthToken: teams.githubOauthToken,
+      })
+      .from(teams)
+      .where(eq(teams.id, sess.teamId))
+      .limit(1)
 
-  let repositories: AvailableGhRepo[] = []
+    let repositories: AvailableGhRepo[] = []
 
-  const installationId = teamRow?.githubInstallationId ?? null
-  if (installationId) {
-    try {
-      const octokit = await getInstallationOctokit(installationId)
-      const { data } = await (octokit as unknown as {
-        request: (path: string, opts: { per_page: number }) => Promise<{ data: { repositories: AvailableGhRepo[] } }>
-      }).request('GET /installation/repositories', { per_page: 100 })
-      repositories = data.repositories
-    } catch (err) {
-      logger.error({ err, installationId }, '[repos/available] installation API failed, trying OAuth fallback')
-    }
-  }
-
-  if (repositories.length === 0 && teamRow?.githubOauthToken) {
-    try {
-      const ghRes = await fetch(
-        'https://api.github.com/user/repos?type=all&per_page=100&sort=updated',
-        {
-          headers: {
-            Authorization: `Bearer ${teamRow.githubOauthToken}`,
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'grassion-app',
-            'X-GitHub-Api-Version': '2022-11-28',
-          },
-        },
-      )
-      if (ghRes.ok) {
-        repositories = (await ghRes.json()) as AvailableGhRepo[]
-      } else {
-        logger.warn({ status: ghRes.status }, '[repos/available] oauth-token repo listing failed')
+    const installationId = teamRow?.githubInstallationId ?? null
+    if (installationId) {
+      try {
+        const octokit = await getInstallationOctokit(installationId)
+        const { data } = await (octokit as unknown as {
+          request: (path: string, opts: { per_page: number }) => Promise<{ data: { repositories: AvailableGhRepo[] } }>
+        }).request('GET /installation/repositories', { per_page: 100 })
+        repositories = data.repositories
+      } catch (err) {
+        logger.error({ err, installationId }, 'repos/available installation API failed, trying OAuth fallback')
       }
-    } catch (err) {
-      logger.error({ err }, '[repos/available] oauth-token repo listing threw')
     }
+
+    if (repositories.length === 0 && teamRow?.githubOauthToken) {
+      try {
+        const ghRes = await fetch(
+          'https://api.github.com/user/repos?type=all&per_page=100&sort=updated',
+          {
+            headers: {
+              Authorization: `Bearer ${teamRow.githubOauthToken}`,
+              Accept: 'application/vnd.github+json',
+              'User-Agent': 'grassion-app',
+              'X-GitHub-Api-Version': '2022-11-28',
+            },
+          },
+        )
+        if (ghRes.ok) {
+          repositories = (await ghRes.json()) as AvailableGhRepo[]
+        } else {
+          logger.warn({ status: ghRes.status }, 'repos/available oauth-token repo listing failed')
+        }
+      } catch (err) {
+        logger.error({ err }, 'repos/available oauth-token repo listing threw')
+      }
+    }
+
+    const connected = await db
+      .select({ owner: repos.owner, name: repos.name })
+      .from(repos)
+      .where(eq(repos.teamId, sess.teamId))
+    const connectedSet = new Set(connected.map((r) => `${r.owner}/${r.name}`))
+
+    res.json(
+      repositories.map((r) => ({
+        fullName: r.full_name,
+        name: r.name,
+        owner: r.owner?.login ?? '',
+        private: r.private,
+        description: r.description ?? null,
+        alreadyConnected: connectedSet.has(r.full_name),
+      })),
+    )
+  } catch (err) {
+    logger.error({ err }, 'repos/available failed')
+    res.status(500).json({ error: 'internal_error' })
   }
-
-  const connected = await db
-    .select({ owner: repos.owner, name: repos.name })
-    .from(repos)
-    .where(eq(repos.teamId, sess.teamId))
-  const connectedSet = new Set(connected.map((r) => `${r.owner}/${r.name}`))
-
-  res.json(
-    repositories.map((r) => ({
-      fullName: r.full_name,
-      name: r.name,
-      owner: r.owner?.login ?? '',
-      private: r.private,
-      description: r.description ?? null,
-      alreadyConnected: connectedSet.has(r.full_name),
-    })),
-  )
 })
 
 reposRouter.get('/api/repos', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  const list = await db
-    .select({
-      id: repos.id,
-      owner: repos.owner,
-      name: repos.name,
-      defaultBranch: repos.defaultBranch,
-      isActive: repos.isActive,
-      connectedAt: repos.connectedAt,
-      lastSyncedAt: repos.lastSyncedAt,
-      prCount: sql<number>`(SELECT COUNT(*)::int FROM pull_requests WHERE pull_requests.repo_id = repos.id)`,
-    })
-    .from(repos)
-    .where(eq(repos.teamId, sess.teamId))
-  res.json(
-    list.map((r) => ({
-      id: r.id,
-      owner: r.owner,
-      name: r.name,
-      defaultBranch: r.defaultBranch,
-      isActive: r.isActive,
-      connectedAt: r.connectedAt.toISOString(),
-      lastSyncedAt: r.lastSyncedAt?.toISOString() ?? null,
-      prCount: r.prCount ?? 0,
-    })),
-  )
+  try {
+    const list = await db
+      .select({
+        id: repos.id,
+        owner: repos.owner,
+        name: repos.name,
+        defaultBranch: repos.defaultBranch,
+        isActive: repos.isActive,
+        connectedAt: repos.connectedAt,
+        lastSyncedAt: repos.lastSyncedAt,
+        prCount: sql<number>`(SELECT COUNT(*)::int FROM pull_requests WHERE pull_requests.repo_id = repos.id)`,
+      })
+      .from(repos)
+      .where(eq(repos.teamId, sess.teamId))
+    res.json(
+      list.map((r) => ({
+        id: r.id,
+        owner: r.owner,
+        name: r.name,
+        defaultBranch: r.defaultBranch,
+        isActive: r.isActive,
+        connectedAt: r.connectedAt.toISOString(),
+        lastSyncedAt: r.lastSyncedAt?.toISOString() ?? null,
+        prCount: r.prCount ?? 0,
+      })),
+    )
+  } catch (err) {
+    logger.error({ err }, 'repos list failed')
+    res.status(500).json({ error: 'internal_error' })
+  }
 })
 
 /**
@@ -129,13 +146,10 @@ reposRouter.post(
   '/api/repos/connect',
   requireAuth,
   requireRole('owner', 'admin'),
+  validateBody(connectRepoSchema),
   async (req: Request, res: Response) => {
     const sess = req.session!
-    const { repoUrl } = req.body as { repoUrl?: string }
-    if (!repoUrl || typeof repoUrl !== 'string') {
-      res.status(400).json({ error: 'missing_repo_url' })
-      return
-    }
+    const { repoUrl } = req.body as { repoUrl: string }
 
     // Parse owner/repo from GitHub URL
     const match = repoUrl.trim().match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/.*)?$/)
@@ -205,6 +219,17 @@ reposRouter.post(
     }
 
     logger.info({ teamId: sess.teamId, repo: ghData.full_name }, 'repo manually connected')
+
+    logAuditEvent({
+      teamId: sess.teamId,
+      userId: sess.userId,
+      action: 'repo.connected',
+      resourceType: 'repo',
+      resourceId: newRepo.id,
+      ipAddress: getIp(req),
+      userAgent: req.headers['user-agent'] ?? null,
+      metadata: { repoName: ghData.full_name },
+    })
 
     // Back-fill last 100 merged PRs
     const prsSynced = await syncHistoricalPrs(sess.teamId, newRepo.id, owner, ghData.name)
@@ -659,11 +684,16 @@ reposRouter.post(
       res.status(400).json({ error: 'missing_id' })
       return
     }
-    await db
-      .update(repos)
-      .set({ isActive: parsed.data.isActive })
-      .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
-    res.json({ ok: true })
+    try {
+      await db
+        .update(repos)
+        .set({ isActive: parsed.data.isActive })
+        .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
+      res.json({ ok: true })
+    } catch (err) {
+      logger.error({ err }, 'repo toggle failed')
+      res.status(500).json({ error: 'internal_error' })
+    }
   },
 )
 
@@ -678,16 +708,30 @@ reposRouter.delete(
       res.status(400).json({ error: 'missing_id' })
       return
     }
-    const deleted = await db
-      .delete(repos)
-      .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
-      .returning({ id: repos.id })
-    if (!deleted.length) {
-      res.status(404).json({ error: 'not_found' })
-      return
+    try {
+      const deleted = await db
+        .delete(repos)
+        .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
+        .returning({ id: repos.id })
+      if (!deleted.length) {
+        res.status(404).json({ error: 'not_found' })
+        return
+      }
+      logger.info({ teamId: sess.teamId, repoId: id }, 'repo disconnected')
+      logAuditEvent({
+        teamId: sess.teamId,
+        userId: sess.userId,
+        action: 'repo.disconnected',
+        resourceType: 'repo',
+        resourceId: id,
+        ipAddress: getIp(req),
+        userAgent: req.headers['user-agent'] ?? null,
+      })
+      res.json({ ok: true })
+    } catch (err) {
+      logger.error({ err }, 'repo delete failed')
+      res.status(500).json({ error: 'internal_error' })
     }
-    logger.info({ teamId: sess.teamId, repoId: id }, 'repo disconnected')
-    res.json({ ok: true })
   },
 )
 
@@ -702,19 +746,24 @@ reposRouter.post(
       res.status(400).json({ error: 'missing_id' })
       return
     }
-    const existing = await db
-      .select()
-      .from(repos)
-      .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
-      .limit(1)
-    const repo = existing[0]
-    if (!repo) {
-      res.status(404).json({ error: 'not_found' })
-      return
+    try {
+      const existing = await db
+        .select()
+        .from(repos)
+        .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
+        .limit(1)
+      const repo = existing[0]
+      if (!repo) {
+        res.status(404).json({ error: 'not_found' })
+        return
+      }
+      const prsSynced = await syncHistoricalPrs(sess.teamId, repo.id, repo.owner, repo.name)
+      await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
+      logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
+      res.json({ ok: true, prsSynced })
+    } catch (err) {
+      logger.error({ err }, 'repo sync failed')
+      res.status(500).json({ error: 'internal_error' })
     }
-    const prsSynced = await syncHistoricalPrs(sess.teamId, repo.id, repo.owner, repo.name)
-    await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
-    logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
-    res.json({ ok: true, prsSynced })
   },
 )

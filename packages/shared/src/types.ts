@@ -1,5 +1,5 @@
 export type AiSource = 'copilot' | 'cursor' | 'claude' | 'windsurf' | 'unknown_ai'
-export type AiDetectionMethod = 'trailer' | 'body_regex' | 'label' | 'manual'
+export type AiDetectionMethod = 'trailer' | 'body_regex' | 'label' | 'manual' | 'statistical_pattern'
 export type Plan = 'trial' | 'starter' | 'team' | 'business' | 'admin'
 export type Role = 'owner' | 'admin' | 'member'
 export type Verdict = 'net_positive' | 'net_negative' | 'unclear' | 'insufficient_data'
@@ -28,6 +28,7 @@ export interface ProblemPRDto {
   aiSummary: string | null
   reworkScore: number
   aiSource: AiSource | null
+  aiDetectionMethod: string | null
   mergedAt: string
 }
 

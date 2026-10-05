@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express'
 import { eq, and } from 'drizzle-orm'
-import { teams, users } from '@grassion/db'
+import { teams, users, referralCodes, referralConversions } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth, requireRole } from '../auth.js'
 import {
@@ -15,14 +15,39 @@ import {
 import { env } from '../env.js'
 import { checkoutSchema, verifyPaymentSchema, verifyOrderPaymentSchema } from '@grassion/shared'
 import { sendPlanUpgradeEmail } from '../lib/email.js'
+import { logger } from '../logger.js'
+import { logAuditEvent, getIp } from '../services/audit.js'
 
 export const billingRouter = Router()
+
+const PLAN_BASE_MRR_USD: Record<string, number> = {
+  starter: 49,
+  team: 149,
+  business: 399,
+}
 
 const PLAN_PRICING = {
   starter:  { baseCents: 4900,  includedSeats: 10, extraCentsPerSeat: 500  },
   team:     { baseCents: 14900, includedSeats: 30, extraCentsPerSeat: 400  },
   business: { baseCents: 39900, includedSeats: 75, extraCentsPerSeat: 300  },
 } as const
+
+async function recordReferralConversion(teamId: string, plan: string) {
+  const team = (await db.select().from(teams).where(eq(teams.id, teamId)).limit(1))[0]
+  if (!team?.referralCodeId) return
+  const code = (
+    await db.select().from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1)
+  )[0]
+  if (!code) return
+  const mrrUsd = PLAN_BASE_MRR_USD[plan] ?? 0
+  if (mrrUsd === 0) return
+  const commissionUsd = mrrUsd * ((code.commissionPct ?? 20) / 100)
+  await db
+    .insert(referralConversions)
+    .values({ referralCodeId: code.id, teamId, planAtConversion: plan, mrrUsd, commissionUsd })
+    .onConflictDoNothing()
+  logger.info({ teamId, refCode: code.code, mrrUsd, commissionUsd }, 'referral conversion recorded')
+}
 
 /**
  * POST /api/billing/checkout
@@ -97,7 +122,18 @@ billingRouter.post(
           updatedAt: new Date(),
         })
         .where(eq(teams.id, sess.teamId))
-      // fire-and-forget upgrade confirmation email
+      logAuditEvent({
+        teamId: sess.teamId,
+        userId: sess.userId,
+        action: 'subscription.plan_changed',
+        resourceType: 'team',
+        resourceId: sess.teamId,
+        ipAddress: getIp(req),
+        userAgent: req.headers['user-agent'] ?? null,
+        metadata: { plan: chosenPlan, via: 'order' },
+      })
+      // fire-and-forget: referral conversion tracking + upgrade email
+      recordReferralConversion(sess.teamId, chosenPlan).catch(() => {})
       db.select({ email: users.email, githubLogin: users.githubLogin })
         .from(users)
         .where(and(eq(users.teamId, sess.teamId), eq(users.role, 'owner')))
@@ -142,8 +178,19 @@ billingRouter.post(
         updatedAt: new Date(),
       })
       .where(eq(teams.id, sess.teamId))
-    // fire-and-forget upgrade confirmation email for paid plans
+    logAuditEvent({
+      teamId: sess.teamId,
+      userId: sess.userId,
+      action: 'subscription.plan_changed',
+      resourceType: 'team',
+      resourceId: sess.teamId,
+      ipAddress: getIp(req),
+      userAgent: req.headers['user-agent'] ?? null,
+      metadata: { plan: newPlan, via: 'subscription' },
+    })
+    // fire-and-forget: referral conversion tracking + upgrade email
     if (newPlan !== 'trial') {
+      recordReferralConversion(sess.teamId, newPlan).catch(() => {})
       db.select({ email: users.email, githubLogin: users.githubLogin })
         .from(users)
         .where(and(eq(users.teamId, sess.teamId), eq(users.role, 'owner')))

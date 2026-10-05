@@ -1,12 +1,14 @@
 import { Router, type Request, type Response } from 'express'
-import { eq, and, sql, gte, desc, gt } from 'drizzle-orm'
+import { eq, and, sql, gte, desc, gt, inArray } from 'drizzle-orm'
 import {
-  pullRequests, prOutcomes, users, savingsEvents, teams, teamWeeklyMetrics,
+  pullRequests, prOutcomes, prOutcomeTimeline, users, savingsEvents, teams, teamWeeklyMetrics,
   weeklySnapshots, developerHistory, teamMilestones,
   developerWeeklyMetrics, toolWeeklyMetrics, codbaseHealthSnapshots,
+  industryBenchmarks,
 } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
+import { logger } from '../logger.js'
 import { generatePrSummary } from '../lib/ai-summary.js'
 
 export const analyticsRouter = Router()
@@ -139,7 +141,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
         })
       }
     } catch (savingsErr) {
-      console.warn('[seat-waste] savings event write skipped:', (savingsErr as Error).message)
+      logger.warn({ err: savingsErr }, 'seat-waste savings event write skipped')
     }
 
     // Upsert seat data into weekly_snapshots
@@ -163,7 +165,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
           computedAt: new Date(),
         },
       })
-      .catch((e: Error) => console.warn('[seat-waste] snapshot upsert skipped:', e.message))
+      .catch((e: Error) => logger.warn({ err: e }, 'seat-waste snapshot upsert skipped'))
 
     // Weekly PR totals for milestone checking
     const [weeklyTotals] = await db
@@ -186,7 +188,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
       totalPrs: weeklyTotals?.total ?? 0,
       inactiveSeats: inactiveUsers.length,
       netRoi: 0, // ROI is set by the metrics endpoint
-    }).catch((e: Error) => console.warn('[seat-waste] milestone check skipped:', e.message))
+    }).catch((e: Error) => logger.warn({ err: e }, 'seat-waste milestone check skipped'))
 
     // Insert developer_history for each team member this week
     db.insert(developerHistory)
@@ -201,7 +203,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
         })),
       )
       .onConflictDoNothing()
-      .catch((e: Error) => console.warn('[seat-waste] dev history skipped:', e.message))
+      .catch((e: Error) => logger.warn({ err: e }, 'seat-waste dev history skipped'))
 
     res.json({
       totalSeats: rows.length,
@@ -210,7 +212,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
       totalMonthlySavings: monthlyWaste,
     })
   } catch (err) {
-    console.error('[seat-waste]', err)
+    logger.error({ err }, 'seat-waste failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -314,7 +316,7 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
         .insert(teamMilestones)
         .values(toRecord.map((m) => ({ teamId, milestone: m })))
         .onConflictDoNothing()
-        .catch((e: Error) => console.warn('[journey] milestones write skipped:', e.message))
+        .catch((e: Error) => logger.warn({ err: e }, 'journey milestones write skipped'))
       for (const m of toRecord) achieved.set(m, new Date())
     }
 
@@ -333,7 +335,7 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
       milestones,
     })
   } catch (err) {
-    console.error('[journey]', err)
+    logger.error({ err }, 'journey failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -341,7 +343,7 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
 analyticsRouter.get('/api/analytics/savings-history', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
-  console.log('[savings-history] teamId:', teamId)
+  logger.debug({ teamId }, 'savings-history request')
 
   try {
     // Aggregate by calendar month: take max waste per month (avoids inflating totals from multiple daily events)
@@ -374,10 +376,10 @@ analyticsRouter.get('/api/analytics/savings-history', requireAuth, async (req: R
     })
     const thisMonthWaste = thisMonthEntry?.wasteUsd ?? 0
 
-    console.log('[savings-history] returning:', { totalWasteIdentified, thisMonthWaste, months: monthlyHistory.length })
+    logger.debug({ totalWasteIdentified, thisMonthWaste, months: monthlyHistory.length }, 'savings-history result')
     res.json({ totalWasteIdentified, thisMonthWaste, monthlyHistory })
   } catch (err) {
-    console.error('[savings-history] error (returning zeros):', (err as Error).message)
+    logger.error({ err }, 'savings-history failed')
     res.json({ totalWasteIdentified: 0, thisMonthWaste: 0, monthlyHistory: [] })
   }
 })
@@ -503,7 +505,7 @@ analyticsRouter.get('/api/analytics/health', requireAuth, async (req: Request, r
 
     res.json({ healthScore, riskLevel, weekCount: trend.length, revertRate, hotfixRate, avgReviewCycles, totalAiPrs, trend, developers, riskSignals })
   } catch (err) {
-    console.error('[health]', err)
+    logger.error({ err }, 'codebase health failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -598,7 +600,7 @@ analyticsRouter.get('/api/analytics/outcomes', requireAuth, async (req: Request,
       toolBreakdown,
     })
   } catch (err) {
-    console.error('[outcomes]', err)
+    logger.error({ err }, 'outcomes failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -655,6 +657,7 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
         authorLogin: pullRequests.authorLogin,
         mergedAt: pullRequests.mergedAt,
         aiSource: pullRequests.aiSource,
+        aiDetectionMethod: pullRequests.aiDetectionMethod,
       })
       .from(pullRequests)
       .leftJoin(prOutcomes, eq(prOutcomes.prId, pullRequests.id))
@@ -665,6 +668,20 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
         LEAST(COALESCE(${pullRequests.changesRequestedCount}, 0) * 5, 20)
       )`))
       .limit(50)
+
+    // Batch-fetch decay timeline checkpoints for all returned PRs.
+    const prIds = rows.map((r) => r.prId)
+    const timelineRows = prIds.length > 0
+      ? await db
+          .select()
+          .from(prOutcomeTimeline)
+          .where(inArray(prOutcomeTimeline.prId, prIds))
+      : []
+    const timelineByPr = new Map<string, typeof timelineRows>()
+    for (const t of timelineRows) {
+      if (!timelineByPr.has(t.prId)) timelineByPr.set(t.prId, [])
+      timelineByPr.get(t.prId)!.push(t)
+    }
 
     // Build mapped items with fallback rework scores
     const mapped = rows.map((r) => {
@@ -679,6 +696,7 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
         authorLogin: r.authorLogin,
         mergedAt: r.mergedAt?.toISOString() ?? null,
         aiSource: r.aiSource,
+        aiDetectionMethod: r.aiDetectionMethod,
         wasReverted: r.wasReverted,
         revertedAt: r.revertedAt?.toISOString() ?? null,
         revertPrNumber: r.revertPrNumber ?? null,
@@ -688,6 +706,19 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
         reworkScore: r.reworkScore ?? fallbackScore,
         aiSummary: r.aiSummary ?? null,
         computedAt: r.computedAt?.toISOString() ?? r.mergedAt?.toISOString() ?? new Date().toISOString(),
+        decayTimeline: (timelineByPr.get(r.prId) ?? [])
+          .sort((a, b) => a.checkpointDays - b.checkpointDays)
+          .map((t) => ({
+            checkpointDays: t.checkpointDays,
+            reworkScore: t.reworkScore ?? 0,
+            wasReverted: t.wasReverted ?? false,
+            ciFailureCount: t.ciFailureCount ?? 0,
+            downstreamFixCount: t.downstreamFixCount ?? 0,
+            hadHotfix: t.hadHotfix ?? false,
+            hotfixSignals: t.hotfixSignals ?? [],
+            dollarImpact: t.dollarImpact ?? 0,
+            computedAt: t.computedAt.toISOString(),
+          })),
         _rawReworkScore: r.reworkScore,
         _rawCiFailureCount: r.ciFailureCount,
         _rawChangesRequested: r.changesRequestedCount,
@@ -723,7 +754,7 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
             db.update(prOutcomes)
               .set({ aiSummary: gen })
               .where(eq(prOutcomes.prId, m.prId))
-              .catch((e: unknown) => console.error('[pr-outcomes] cache summary error', e))
+              .catch((e: unknown) => logger.error({ err: e }, 'pr-outcomes cache summary error'))
           }
         }
       }
@@ -731,7 +762,39 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
 
     res.json(mapped.map(({ _rawReworkScore: _r, _rawCiFailureCount: _c, _rawChangesRequested: _ch, ...item }) => item))
   } catch (err) {
-    console.error('[pr-outcomes]', err)
+    logger.error({ err }, 'pr-outcomes failed')
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+analyticsRouter.get('/api/analytics/pr-decay/:prId', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+  const { prId } = req.params as { prId: string }
+
+  try {
+    const checkpoints = await db
+      .select()
+      .from(prOutcomeTimeline)
+      .where(and(eq(prOutcomeTimeline.prId, prId), eq(prOutcomeTimeline.teamId, teamId)))
+      .orderBy(prOutcomeTimeline.checkpointDays)
+
+    res.json({
+      prId,
+      checkpoints: checkpoints.map((c) => ({
+        checkpointDays: c.checkpointDays,
+        reworkScore: c.reworkScore ?? 0,
+        wasReverted: c.wasReverted ?? false,
+        ciFailureCount: c.ciFailureCount ?? 0,
+        downstreamFixCount: c.downstreamFixCount ?? 0,
+        hadHotfix: c.hadHotfix ?? false,
+        hotfixSignals: c.hotfixSignals ?? [],
+        dollarImpact: c.dollarImpact ?? 0,
+        computedAt: c.computedAt.toISOString(),
+      })),
+    })
+  } catch (err) {
+    logger.error({ err }, 'pr-decay failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -779,7 +842,7 @@ analyticsRouter.get('/api/analytics/developer-metrics', requireAuth, async (req:
 
     res.json({ developers })
   } catch (err) {
-    console.error('[developer-metrics]', err)
+    logger.error({ err }, 'developer-metrics failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -815,7 +878,7 @@ analyticsRouter.get('/api/analytics/tool-comparison', requireAuth, async (req: R
 
     res.json({ tools })
   } catch (err) {
-    console.error('[tool-comparison]', err)
+    logger.error({ err }, 'tool-comparison failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -856,7 +919,138 @@ analyticsRouter.get('/api/analytics/codebase-health', requireAuth, async (req: R
       })).reverse(),
     })
   } catch (err) {
-    console.error('[codebase-health]', err)
+    logger.error({ err }, 'codebase-health failed')
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+// ─── Hardcoded research-based baseline (used before real data accumulates) ───
+const BASELINE = {
+  revertRate: { p25: 0.03, p50: 0.06, p75: 0.12 },
+  hotfixRate: { p25: 0.04, p50: 0.08, p75: 0.15 },
+  adoptionPct: { p25: 0.40, p50: 0.65, p75: 0.85 },
+}
+
+type Rank = 'top_quartile' | 'above_median' | 'below_median' | 'bottom_quartile'
+
+function rankRate(v: number, p25: number, p50: number, p75: number): Rank {
+  if (v < p25) return 'top_quartile'
+  if (v < p50) return 'above_median'
+  if (v < p75) return 'below_median'
+  return 'bottom_quartile'
+}
+
+function rankAdoption(v: number, p25: number, p50: number, p75: number): Rank {
+  if (v > p75) return 'top_quartile'
+  if (v > p50) return 'above_median'
+  if (v > p25) return 'below_median'
+  return 'bottom_quartile'
+}
+
+analyticsRouter.get('/api/analytics/benchmarks', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+
+  try {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+
+    const [prStat, teamRow, realBenchmarks] = await Promise.all([
+      db
+        .select({
+          totalMerged: sql<number>`COUNT(*)::int`,
+          aiPrs: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.aiSource} IS NOT NULL)::int`,
+          revertedAi: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.wasReverted} = true AND ${pullRequests.aiSource} IS NOT NULL)::int`,
+          hotfixAi: sql<number>`COUNT(*) FILTER (WHERE ${pullRequests.triggeredHotfix} = true AND ${pullRequests.aiSource} IS NOT NULL)::int`,
+        })
+        .from(pullRequests)
+        .where(
+          and(
+            eq(pullRequests.teamId, teamId),
+            eq(pullRequests.state, 'merged'),
+            gte(pullRequests.mergedAt, ninetyDaysAgo),
+          ),
+        )
+        .then((rows) => rows[0]),
+
+      db
+        .select({
+          teamSizeRange: teams.teamSizeRange,
+          industry: teams.industry,
+          benchmarkingOptIn: teams.benchmarkingOptIn,
+        })
+        .from(teams)
+        .where(eq(teams.id, teamId))
+        .limit(1)
+        .then((rows) => rows[0]),
+
+      db
+        .select()
+        .from(industryBenchmarks)
+        .where(
+          and(
+            eq(industryBenchmarks.toolName, 'all'),
+            eq(industryBenchmarks.teamSizeRange, 'all'),
+            eq(industryBenchmarks.industry, 'all'),
+            gt(industryBenchmarks.validUntil, new Date()),
+          ),
+        )
+        .orderBy(desc(industryBenchmarks.computedAt)),
+    ])
+
+    const aiPrs = prStat?.aiPrs ?? 0
+    const yourRevertRate = aiPrs > 0 ? (prStat?.revertedAi ?? 0) / aiPrs : 0
+    const yourHotfixRate = aiPrs > 0 ? (prStat?.hotfixAi ?? 0) / aiPrs : 0
+    const yourAdoptionPct = (prStat?.totalMerged ?? 0) > 0 ? aiPrs / (prStat?.totalMerged ?? 1) : 0
+
+    let usingRealData = false
+    let rrBench = BASELINE.revertRate
+    let hrBench = BASELINE.hotfixRate
+    let apBench = BASELINE.adoptionPct
+
+    if (realBenchmarks.length > 0) {
+      const find = (name: string) => realBenchmarks.find((b) => b.metricName === name)
+      const rr = find('revert_rate')
+      const hr = find('hotfix_rate')
+      const ap = find('adoption_pct')
+      if (rr?.p25Value != null && rr.p50Value != null && rr.p75Value != null) {
+        rrBench = { p25: rr.p25Value, p50: rr.p50Value, p75: rr.p75Value }
+        usingRealData = true
+      }
+      if (hr?.p25Value != null && hr.p50Value != null && hr.p75Value != null) {
+        hrBench = { p25: hr.p25Value, p50: hr.p50Value, p75: hr.p75Value }
+      }
+      if (ap?.p25Value != null && ap.p50Value != null && ap.p75Value != null) {
+        apBench = { p25: ap.p25Value, p50: ap.p50Value, p75: ap.p75Value }
+      }
+    }
+
+    const round3 = (n: number) => Math.round(n * 1000) / 1000
+
+    res.json({
+      revertRate: {
+        yours: round3(yourRevertRate),
+        median: rrBench.p50,
+        p75: rrBench.p75,
+        rank: rankRate(yourRevertRate, rrBench.p25, rrBench.p50, rrBench.p75),
+      },
+      hotfixRate: {
+        yours: round3(yourHotfixRate),
+        median: hrBench.p50,
+        p75: hrBench.p75,
+        rank: rankRate(yourHotfixRate, hrBench.p25, hrBench.p50, hrBench.p75),
+      },
+      adoptionPct: {
+        yours: round3(yourAdoptionPct),
+        median: apBench.p50,
+        p75: apBench.p75,
+        rank: rankAdoption(yourAdoptionPct, apBench.p25, apBench.p50, apBench.p75),
+      },
+      usingRealData,
+      disclaimer: usingRealData ? null : 'Based on industry research — improves with more Grassion customers',
+      optedIn: teamRow?.benchmarkingOptIn ?? false,
+    })
+  } catch (err) {
+    logger.error({ err }, 'benchmarks failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })

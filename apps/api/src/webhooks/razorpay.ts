@@ -1,9 +1,15 @@
 import type { Request, Response } from 'express'
 import { eq } from 'drizzle-orm'
-import { teams } from '@grassion/db'
+import { teams, referralCodes, referralConversions } from '@grassion/db'
 import { db } from '../db.js'
 import { logger } from '../logger.js'
 import { verifyWebhookSignature, planFromStatus } from '../billing/razorpay.js'
+
+const PLAN_BASE_MRR_USD: Record<string, number> = {
+  starter: 49,
+  team: 149,
+  business: 399,
+}
 
 interface RazorpayWebhookEvent {
   event: string
@@ -67,7 +73,19 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
 async function routeRazorpayEvent(event: RazorpayWebhookEvent) {
   switch (event.event) {
     case 'subscription.activated':
-    case 'subscription.charged':
+    case 'subscription.charged': {
+      const sub = event.payload.subscription?.entity
+      if (sub) {
+        await syncSubscription(sub)
+        // Record referral conversion on first paid event — ON CONFLICT DO NOTHING prevents duplicates
+        const teamId = readTeamIdFromNotes(sub.notes)
+        const resolvedTeamId = teamId ?? (
+          (await db.select({ id: teams.id }).from(teams).where(eq(teams.razorpaySubscriptionId, sub.id)).limit(1))[0]?.id
+        )
+        if (resolvedTeamId) await recordReferralConversionFromWebhook(resolvedTeamId, planFromStatus(sub.status))
+      }
+      break
+    }
     case 'subscription.updated':
     case 'subscription.resumed':
     case 'subscription.authenticated': {
@@ -140,4 +158,23 @@ function readTeamIdFromNotes(notes: RazorpaySubscription['notes']): string | und
   if (!notes) return undefined
   if (Array.isArray(notes)) return undefined
   return notes.team_id
+}
+
+async function recordReferralConversionFromWebhook(teamId: string, plan: string) {
+  try {
+    const team = (await db.select().from(teams).where(eq(teams.id, teamId)).limit(1))[0]
+    if (!team?.referralCodeId) return
+    const code = (await db.select().from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1))[0]
+    if (!code) return
+    const mrrUsd = PLAN_BASE_MRR_USD[plan] ?? 0
+    if (mrrUsd === 0) return
+    const commissionUsd = mrrUsd * ((code.commissionPct ?? 20) / 100)
+    await db
+      .insert(referralConversions)
+      .values({ referralCodeId: code.id, teamId, planAtConversion: plan, mrrUsd, commissionUsd })
+      .onConflictDoNothing()
+    logger.info({ teamId, refCode: code.code, mrrUsd, commissionUsd }, 'referral conversion recorded via webhook')
+  } catch (err) {
+    logger.warn({ err, teamId }, 'referral conversion recording failed (non-fatal)')
+  }
 }

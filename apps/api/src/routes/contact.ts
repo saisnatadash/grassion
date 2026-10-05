@@ -34,9 +34,6 @@ const contactLimiter = rateLimit({
 })
 
 contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Response) => {
-  console.log('[contact] POST received')
-  console.log('contact body:', req.body)
-
   const parsed = contactSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ error: 'invalid_input', issues: parsed.error.flatten().fieldErrors })

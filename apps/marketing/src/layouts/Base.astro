@@ -43,5 +43,38 @@ const og = ogImage ?? '/og.png'
       <slot />
     </main>
     <Footer />
+    <script>
+      ;(function () {
+        // Capture ?ref= from URL and store in cookie (30 days, readable by JS)
+        var params = new URLSearchParams(window.location.search)
+        var urlRef = params.get('ref')
+        if (urlRef) {
+          document.cookie =
+            'grassion_ref=' +
+            encodeURIComponent(urlRef) +
+            ';max-age=' +
+            30 * 24 * 60 * 60 +
+            ';path=/;SameSite=Lax'
+        }
+        // Read stored ref
+        var m = document.cookie.match(/(?:^|;\s*)grassion_ref=([^;]+)/)
+        var ref = m ? decodeURIComponent(m[1]) : null
+        if (!ref) return
+        var refStr = ref
+        // Append ?ref= to all OAuth / login links so it reaches the API
+        var API = 'https://grassion-api.fly.dev'
+        document.querySelectorAll('a').forEach(function (a) {
+          var href = a.getAttribute('href')
+          if (!href) return
+          if (href.indexOf('auth/github') !== -1) {
+            var u = new URL(href, window.location.href)
+            u.searchParams.set('ref', refStr)
+            a.setAttribute('href', u.toString())
+          } else if (href.indexOf('/login') !== -1) {
+            a.setAttribute('href', API + '/auth/github?ref=' + encodeURIComponent(refStr))
+          }
+        })
+      })()
+    </script>
   </body>
 </html>

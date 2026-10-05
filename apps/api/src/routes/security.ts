@@ -3,6 +3,7 @@ import { eq, desc, and, gt } from 'drizzle-orm'
 import { teamMilestones, sessions, users, repos } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
+import { logger } from '../logger.js'
 
 export const securityRouter = Router()
 
@@ -65,7 +66,7 @@ securityRouter.get('/api/security/overview', requireAuth, async (req: Request, r
       },
     })
   } catch (err) {
-    console.error('[security-overview]', err)
+    logger.error({ err }, 'security overview failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })

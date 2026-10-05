@@ -64,6 +64,48 @@
       "when": 1759708800000,
       "tag": "0009_tool_seat_costs",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1759795200000,
+      "tag": "0010_hotfix_signals",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1759881600000,
+      "tag": "0011_referral_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1759968000000,
+      "tag": "0012_pr_outcome_timeline",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1760054400000,
+      "tag": "0013_missing_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1760140800000,
+      "tag": "0014_audit_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1760227200000,
+      "tag": "0015_benchmarks",
+      "breakpoints": true
     }
   ]
 }

@@ -125,6 +125,7 @@ async function populateWeeklyMetrics(teamId: string, weekStart: Date): Promise<v
 }
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
+import { logger } from '../logger.js'
 import { startOfWeekUtc, addDays } from '@grassion/shared'
 
 async function freshTeamId(githubLogin: string, fallback: string): Promise<string> {
@@ -167,7 +168,7 @@ async function snapshotWeek(
 metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
-  console.log('[metrics/summary] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
+  logger.debug({ githubLogin: sess.githubLogin, teamId }, 'metrics/summary request')
   const team = (await db.select().from(teams).where(eq(teams.id, teamId)).limit(1))[0]
   if (!team) {
     res.status(404).json({ error: 'not_found' })
@@ -185,10 +186,10 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
   if (cached && cached.totalPrs && cached.totalPrs > 0) {
     const summary = toSummary(cached, team.monthlyAiSpendUsd ?? 0)
     snapshotWeek(teamId, weekStart, summary).catch((e: Error) =>
-      console.warn('[summary] snapshot skipped:', e.message),
+      logger.warn({ err: e }, 'summary snapshot skipped'),
     )
     populateWeeklyMetrics(teamId, weekStart).catch((e: Error) =>
-      console.warn('[summary] metrics populate skipped:', e.message),
+      logger.warn({ err: e }, 'summary metrics populate skipped'),
     )
     res.json(summary)
     return
@@ -203,10 +204,10 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
   )
   const liveResponse = { ...live, monthlySpend: team.monthlyAiSpendUsd ?? 0 }
   snapshotWeek(teamId, weekStart, live).catch((e: Error) =>
-    console.warn('[summary] snapshot skipped:', e.message),
+    logger.warn({ err: e }, 'summary snapshot skipped'),
   )
   populateWeeklyMetrics(teamId, weekStart).catch((e: Error) =>
-    console.warn('[summary] metrics populate skipped:', e.message),
+    logger.warn({ err: e }, 'summary metrics populate skipped'),
   )
   res.json(liveResponse)
 })
@@ -236,7 +237,7 @@ metricsRouter.get('/api/metrics/history', requireAuth, async (req: Request, res:
       })),
     )
   } catch (err) {
-    console.error('[metrics/history]', err)
+    logger.error({ err }, 'metrics/history failed')
     res.json([])
   }
 })
@@ -244,7 +245,7 @@ metricsRouter.get('/api/metrics/history', requireAuth, async (req: Request, res:
 metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
-  console.log('[metrics/weekly] githubLogin:', sess.githubLogin, 'sessionTeamId:', sess.teamId, 'freshTeamId:', teamId)
+  logger.debug({ githubLogin: sess.githubLogin, teamId }, 'metrics/weekly request')
 
   try {
     const eightWeeksAgo = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000)
@@ -278,7 +279,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
       .groupBy(sql`DATE_TRUNC('week', ${pullRequests.mergedAt})`)
       .orderBy(sql`DATE_TRUNC('week', ${pullRequests.mergedAt}) ASC`)
 
-    console.log('[metrics/weekly] DB rows:', liveRows.length, JSON.stringify(liveRows))
+    logger.debug({ rowCount: liveRows.length }, 'metrics/weekly db rows')
 
     // Build 6-week Monday-aligned grid; fills zeros for weeks with no merged PRs
     const now = new Date()
@@ -340,7 +341,7 @@ metricsRouter.get('/api/metrics/weekly', requireAuth, async (req: Request, res: 
 
     res.json(out)
   } catch (err) {
-    console.error('[metrics/weekly]', err)
+    logger.error({ err }, 'metrics/weekly failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -441,6 +442,7 @@ metricsRouter.get('/api/prs/problem', requireAuth, async (req: Request, res: Res
           aiSummary: outcome.aiSummary ?? null,
           reworkScore: outcome.reworkScore ?? 0,
           aiSource: pr.aiSource,
+          aiDetectionMethod: pr.aiDetectionMethod,
           mergedAt: pr.mergedAt?.toISOString() ?? null,
         })),
       )
@@ -491,6 +493,7 @@ metricsRouter.get('/api/prs/problem', requireAuth, async (req: Request, res: Res
             aiSummary: null,
             reworkScore: deletionHeavy ? 35 : 30,
             aiSource: pr.aiSource,
+            aiDetectionMethod: pr.aiDetectionMethod,
             mergedAt: pr.mergedAt?.toISOString() ?? null,
           }
         }),
@@ -500,7 +503,7 @@ metricsRouter.get('/api/prs/problem', requireAuth, async (req: Request, res: Res
 
     res.json([])
   } catch (err) {
-    console.error('[problem-prs]', err)
+    logger.error({ err }, 'problem-prs failed')
     res.json([])
   }
 })

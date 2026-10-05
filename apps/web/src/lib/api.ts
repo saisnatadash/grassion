@@ -126,6 +126,18 @@ export interface JourneyResponse {
   milestones: Array<{ type: string; label: string; achievedAt: string }>
 }
 
+export interface PrDecayCheckpoint {
+  checkpointDays: number
+  reworkScore: number
+  wasReverted: boolean
+  ciFailureCount: number
+  downstreamFixCount: number
+  hadHotfix: boolean
+  hotfixSignals: string[]
+  dollarImpact: number
+  computedAt: string
+}
+
 export interface PrOutcomeItem {
   prId: string
   prNumber: number
@@ -133,6 +145,7 @@ export interface PrOutcomeItem {
   authorLogin: string | null
   mergedAt: string | null
   aiSource: string | null
+  aiDetectionMethod: string | null
   wasReverted: boolean | null
   revertedAt: string | null
   revertPrNumber: number | null
@@ -142,6 +155,7 @@ export interface PrOutcomeItem {
   reworkScore: number
   aiSummary: string | null
   computedAt: string
+  decayTimeline: PrDecayCheckpoint[]
 }
 
 export interface NotificationItem {
@@ -282,6 +296,8 @@ export const api = {
     health: () => request<HealthResponse>('/api/analytics/health'),
     prOutcomes: (filter?: string) =>
       request<PrOutcomeItem[]>(`/api/analytics/pr-outcomes${filter && filter !== 'all' ? `?filter=${filter}` : ''}`),
+    prDecay: (prId: string) =>
+      request<{ prId: string; checkpoints: PrDecayCheckpoint[] }>(`/api/analytics/pr-decay/${prId}`),
     developerMetrics: () => request<{ developers: DeveloperMetricsRow[] }>('/api/analytics/developer-metrics'),
     toolComparison: () => request<{ tools: ToolComparisonRow[] }>('/api/analytics/tool-comparison'),
     codbaseHealth: () => request<CodebaseHealthResponse>('/api/analytics/codebase-health'),

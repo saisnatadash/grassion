@@ -8,7 +8,7 @@ describe('computeReworkScore', () => {
         wasReverted: false,
         downstreamFixCount: 0,
         ciFailureCount: 0,
-        hadHotfix: false,
+        hotfixSignals: [],
       }),
     ).toBe(0)
   })
@@ -19,9 +19,31 @@ describe('computeReworkScore', () => {
         wasReverted: true,
         downstreamFixCount: 0,
         ciFailureCount: 0,
-        hadHotfix: false,
+        hotfixSignals: [],
       }),
     ).toBe(60)
+  })
+
+  it('single hotfix signal adds 25', () => {
+    expect(
+      computeReworkScore({
+        wasReverted: false,
+        downstreamFixCount: 0,
+        ciFailureCount: 0,
+        hotfixSignals: ['label'],
+      }),
+    ).toBe(25)
+  })
+
+  it('two or more hotfix signals add 35', () => {
+    expect(
+      computeReworkScore({
+        wasReverted: false,
+        downstreamFixCount: 0,
+        ciFailureCount: 0,
+        hotfixSignals: ['label', 'fast_merge'],
+      }),
+    ).toBe(35)
   })
 
   it('caps downstream fix contribution at 30', () => {
@@ -29,7 +51,7 @@ describe('computeReworkScore', () => {
       wasReverted: false,
       downstreamFixCount: 10,
       ciFailureCount: 0,
-      hadHotfix: false,
+      hotfixSignals: [],
     })
     expect(score).toBe(30)
   })
@@ -39,7 +61,7 @@ describe('computeReworkScore', () => {
       wasReverted: true,
       downstreamFixCount: 5,
       ciFailureCount: 10,
-      hadHotfix: true,
+      hotfixSignals: ['label', 'fast_merge'],
     })
     expect(score).toBe(100)
   })

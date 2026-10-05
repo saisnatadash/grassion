@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+const TEAM_SIZE_RANGES = ['1-15', '16-50', '51-150', '151-500'] as const
+const INDUSTRIES = ['fintech', 'healthtech', 'saas', 'all'] as const
+
 export const updateTeamSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   timezone: z.string().min(1).max(64).optional(),
@@ -9,6 +12,9 @@ export const updateTeamSchema = z.object({
   emailDigestDay: z.number().int().min(0).max(6).optional(),
   emailDigestHour: z.number().int().min(0).max(23).optional(),
   slackWebhookUrl: z.string().url().nullable().optional(),
+  benchmarkingOptIn: z.boolean().optional(),
+  teamSizeRange: z.enum(TEAM_SIZE_RANGES).nullable().optional(),
+  industry: z.enum(INDUSTRIES).nullable().optional(),
 })
 
 export const checkoutSchema = z.object({

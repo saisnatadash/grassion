@@ -656,6 +656,7 @@ function ProblemPRsList({
     reason: string
     aiSummary: string | null
     aiSource: string | null
+    aiDetectionMethod: string | null
     reworkScore: number
   }>
   loading: boolean
@@ -694,7 +695,18 @@ function ProblemPRsList({
                   <div className="text-xs text-[#888888] mt-1">{p.aiSummary ?? p.reason}</div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  {p.aiSource && <Badge tone="blue">{p.aiSource}</Badge>}
+                  {p.aiSource && (
+                    p.aiDetectionMethod === 'statistical_pattern' ? (
+                      <span className="relative group/sptip">
+                        <Badge tone="blue">{p.aiSource}</Badge>
+                        <span className="pointer-events-none absolute hidden group-hover/sptip:block bottom-full right-0 mb-1.5 w-64 text-xs bg-[#1a1a1a] border border-[#333] rounded-lg px-2.5 py-2 text-[#999] z-50 shadow-lg leading-relaxed">
+                          Detected via code pattern analysis. Add a grassion:ai-[tool] label to confirm.
+                        </span>
+                      </span>
+                    ) : (
+                      <Badge tone="blue">{p.aiSource}</Badge>
+                    )
+                  )}
                   <span className="text-xs text-[#555555]">score {Math.round(p.reworkScore)}</span>
                 </div>
               </li>

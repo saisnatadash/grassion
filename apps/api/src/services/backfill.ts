@@ -71,9 +71,18 @@ async function backfillRepo(
       }))
 
       const detection = detectAI({
+        title: pr.title,
         body: pr.body ?? null,
         labels: pr.labels.map((l) => l.name),
         commits,
+        // pulls.list does not return additions/deletions/changed_files — stats unavailable at backfill
+        additions: 0,
+        deletions: 0,
+        changedFiles: 0,
+        commitCount: commits.length,
+        openedAt: createdAt,
+        mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+        reviewCount: 0,
       })
 
       const state: 'open' | 'merged' | 'closed' =

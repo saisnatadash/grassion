@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -17,7 +18,34 @@ export function buildApp() {
 
   app.set('trust proxy', 1)
   app.use(pinoHttp({ logger }))
-  app.use(helmet({ crossOriginResourcePolicy: false }))
+
+  // Security headers — explicitly configured for SOC2 alignment.
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+        },
+      },
+      hsts: {
+        maxAge: 31_536_000,
+        includeSubDomains: true,
+      },
+      frameguard: { action: 'deny' },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    }),
+  )
+  // X-XSS-Protection — removed from helmet v7 but still required by many SOC2 scanners.
+  app.use((_req, res, next) => {
+    res.setHeader('X-XSS-Protection', '1; mode=block')
+    next()
+  })
+  // X-Request-ID — unique ID per request for log correlation.
+  app.use((_req, res, next) => {
+    res.setHeader('X-Request-ID', crypto.randomUUID())
+    next()
+  })
 
   // Public contact endpoint — no cookies needed, allow any origin so the marketing
   // site can POST regardless of whether MARKETING_URL is configured in env.

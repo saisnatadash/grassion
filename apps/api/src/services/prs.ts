@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm'
 import { pullRequests, repos, outcomeCheckQueue, type NewPullRequest } from '@grassion/db'
 import { db } from '../db.js'
 import { logger } from '../logger.js'
+import { addDays } from '@grassion/shared'
 import { detectAI, type PRForDetection } from './ai-detection.js'
 import { getInstallationOctokit } from '../github.js'
 
@@ -46,9 +47,17 @@ export async function upsertPRFromWebhook(payload: PullRequestWebhookPayload) {
   const commits = installationId ? await fetchPrCommits(installationId, repo.owner, repo.name, pr.number) : []
 
   const detection = detectAI({
+    title: pr.title,
     body: pr.body,
     labels: pr.labels.map((l) => l.name),
     commits,
+    additions: pr.additions ?? 0,
+    deletions: pr.deletions ?? 0,
+    changedFiles: pr.changed_files ?? 0,
+    commitCount: pr.commits ?? commits.length,
+    openedAt: new Date(pr.created_at),
+    mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+    reviewCount: 0,
   })
 
   const state: 'open' | 'merged' | 'closed' =
@@ -138,9 +147,17 @@ export async function recomputeAIForPR(prGithubId: number) {
     commits?: Array<{ message: string; author: { name?: string; email?: string } }>
   }
   const detection = detectAI({
+    title: pr.title,
     body: meta.body ?? null,
     labels: (meta.labels ?? []).map((l) => l.name),
     commits: meta.commits ?? [],
+    additions: pr.additions ?? 0,
+    deletions: pr.deletions ?? 0,
+    changedFiles: pr.changedFiles ?? 0,
+    commitCount: pr.commitCount ?? 0,
+    openedAt: pr.openedAt,
+    mergedAt: pr.mergedAt,
+    reviewCount: pr.reviewCount ?? 0,
   })
   await db
     .update(pullRequests)
@@ -153,14 +170,13 @@ export async function recomputeAIForPR(prGithubId: number) {
     .where(eq(pullRequests.id, pr.id))
 }
 
-export async function scheduleOutcomeCheck(prDbId: string, runAfter: Date) {
-  await db
-    .insert(outcomeCheckQueue)
-    .values({ prId: prDbId, runAfter })
-    .onConflictDoUpdate({
-      target: outcomeCheckQueue.prId,
-      set: { runAfter, completedAt: null, attempts: 0, lastError: null },
-    })
+export async function scheduleOutcomeCheck(prDbId: string, mergedAt: Date) {
+  for (const checkpointDays of [7, 14, 30] as const) {
+    await db
+      .insert(outcomeCheckQueue)
+      .values({ prId: prDbId, checkpointDays, runAfter: addDays(mergedAt, checkpointDays) })
+      .onConflictDoNothing()
+  }
 }
 
 export async function storeCheckRun(githubRepoId: number, checkRun: {

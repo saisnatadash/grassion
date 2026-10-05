@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express'
-import { eq, sql } from 'drizzle-orm'
-import { teams, users, type NewTeam } from '@grassion/db'
+import { eq, sql, and, ilike } from 'drizzle-orm'
+import { teams, users, referralCodes, type NewTeam } from '@grassion/db'
 import { db } from '../db.js'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
@@ -8,26 +8,34 @@ import { createSession, setSessionCookie, clearSessionCookie, requireAuth } from
 import { upsertUser, slugify, ensureUniqueSlug, storeTeamOAuthToken } from '../services/teams.js'
 import { addDays } from '@grassion/shared'
 import { sendWelcomeEmail } from '../lib/email.js'
+import { logAuditEvent, getIp } from '../services/audit.js'
 
 export const authRouter = Router()
 
 const GITHUB_CALLBACK_URL = 'https://grassion-api.fly.dev/auth/github/callback'
 
-authRouter.get('/auth/github', (_req: Request, res: Response) => {
+authRouter.get('/auth/github', (req: Request, res: Response) => {
   const e = env()
+  // Read referral code from ?ref= query param, falling back to grassion_ref cookie
+  const ref = (req.query.ref as string | undefined) ?? (req.cookies.grassion_ref as string | undefined) ?? ''
   const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
   githubAuthUrl.searchParams.set('client_id', e.GITHUB_APP_CLIENT_ID)
   githubAuthUrl.searchParams.set('redirect_uri', GITHUB_CALLBACK_URL)
   // `repo` lets the OAuth-token fallback list/read private repos when the
   // GitHub App isn't installed yet. GitHub App-type client IDs ignore `scope`.
   githubAuthUrl.searchParams.set('scope', 'read:user user:email repo')
-  githubAuthUrl.searchParams.set('state', generateState())
+  githubAuthUrl.searchParams.set('state', generateState(ref || undefined))
   res.redirect(githubAuthUrl.toString())
 })
 
 authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
   const e = env()
   const errorRedirect = `${e.APP_URL}/login?error=auth_failed`
+
+  // Extract referral code embedded in OAuth state as "nonce:ref"
+  const stateStr = typeof req.query.state === 'string' ? req.query.state : ''
+  const colonIdx = stateStr.indexOf(':')
+  const refCode = colonIdx >= 0 ? stateStr.slice(colonIdx + 1).trim() : ''
 
   const code = req.query.code
   const errorParam = req.query.error
@@ -133,6 +141,24 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
           }
           const [newTeam] = await db.insert(teams).values(insert).returning()
           teamId = newTeam!.id
+
+          // Apply referral code if one was passed through the OAuth state
+          if (refCode) {
+            const refRow = (
+              await db
+                .select()
+                .from(referralCodes)
+                .where(and(ilike(referralCodes.code, refCode), eq(referralCodes.isActive, true)))
+                .limit(1)
+            )[0]
+            if (refRow) {
+              await db
+                .update(teams)
+                .set({ referralCode: refRow.code, referralCodeId: refRow.id, updatedAt: new Date() })
+                .where(eq(teams.id, teamId))
+              logger.info({ teamId, refCode: refRow.code }, 'referral code applied to new team')
+            }
+          }
         } else {
           teamId = teamMatch[0].id
         }
@@ -175,6 +201,17 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
 
     const token = await createSession(userRow.id)
     setSessionCookie(res, token)
+
+    logAuditEvent({
+      teamId: userRow.teamId,
+      userId: userRow.id,
+      action: 'user.login',
+      resourceType: 'user',
+      resourceId: userRow.id,
+      ipAddress: getIp(req),
+      userAgent: req.headers['user-agent'] ?? null,
+      metadata: { githubLogin: profile.login },
+    })
 
     logger.info({ login: profile.login }, 'github oauth success')
     res.redirect(`${e.APP_URL}/auth/callback?token=${encodeURIComponent(token)}`)
@@ -222,6 +259,7 @@ authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
   })
 })
 
-function generateState(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+function generateState(ref?: string): string {
+  const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36)
+  return ref ? `${nonce}:${ref}` : nonce
 }

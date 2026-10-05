@@ -3,6 +3,7 @@ import { eq, and, isNull, desc, gt } from 'drizzle-orm'
 import { notifications } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth } from '../auth.js'
+import { logger } from '../logger.js'
 
 export const notificationsRouter = Router()
 
@@ -21,7 +22,7 @@ notificationsRouter.get('/api/notifications', requireAuth, async (req: Request, 
       readAt: r.readAt?.toISOString() ?? null,
     })))
   } catch (err) {
-    console.error('[notifications]', err)
+    logger.error({ err }, 'notifications list failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -37,7 +38,7 @@ notificationsRouter.post('/api/notifications/:id/read', requireAuth, async (req:
       .where(and(eq(notifications.id, id), eq(notifications.teamId, teamId), isNull(notifications.readAt)))
     res.json({ ok: true })
   } catch (err) {
-    console.error('[notifications/read]', err)
+    logger.error({ err }, 'notifications mark-read failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
@@ -51,7 +52,7 @@ notificationsRouter.post('/api/notifications/read-all', requireAuth, async (req:
       .where(and(eq(notifications.teamId, teamId), isNull(notifications.readAt)))
     res.json({ ok: true })
   } catch (err) {
-    console.error('[notifications/read-all]', err)
+    logger.error({ err }, 'notifications read-all failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })
