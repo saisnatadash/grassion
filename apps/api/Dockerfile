@@ -9,4 +9,6 @@ RUN pnpm --filter "./packages/shared" run build
 RUN pnpm --filter "./packages/db" run build
 RUN pnpm --filter "./apps/api" run build
 EXPOSE 3001
-CMD ["node", "apps/api/dist/index.js"]
+COPY apps/api/start.sh /start.sh
+RUN chmod +x /start.sh
+CMD ["/start.sh"]
