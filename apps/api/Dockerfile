@@ -9,6 +9,6 @@ RUN pnpm --filter "./packages/shared" run build
 RUN pnpm --filter "./packages/db" run build
 RUN pnpm --filter "./apps/api" run build
 EXPOSE 3001
-COPY apps/api/start.sh /start.sh
-RUN chmod +x /start.sh
-CMD ["/start.sh"]
+COPY apps/api/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+CMD ["/app/start.sh"]
