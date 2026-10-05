@@ -1,11 +1,15 @@
 #!/bin/sh
 set -e
 
+echo "Starting Grassion API..."
+
+# Run migrations with tsx
 echo "Running database migrations..."
-cd /app/packages/db
-node dist/migrate.js
+cd /app
+node_modules/.bin/tsx packages/db/src/migrate.ts
+
 echo "Migrations complete."
 
-echo "Starting Grassion API..."
-cd /app
+# Start the app
+echo "Starting API server..."
 exec node apps/api/dist/index.js
