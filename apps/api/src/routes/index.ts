@@ -13,6 +13,7 @@ import { adminRouter } from './admin.js'
 import { notificationsRouter } from './notifications.js'
 import { securityRouter } from './security.js'
 import { slackRouter } from './slack.js'
+import { demoRouter } from './demo.js'
 
 export const router = Router()
 
@@ -37,3 +38,4 @@ router.use(adminRouter)
 router.use(notificationsRouter)
 router.use(securityRouter)
 router.use(slackRouter)
+router.use(demoRouter)

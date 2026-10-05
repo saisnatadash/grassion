@@ -106,6 +106,13 @@
       "when": 1760227200000,
       "tag": "0015_benchmarks",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1760313600000,
+      "tag": "0016_demo_mode",
+      "breakpoints": true
     }
   ]
 }

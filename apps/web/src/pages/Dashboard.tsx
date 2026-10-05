@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, BarChart2, CheckCircle2, Clock, RefreshCw, Crown, Lock, Calendar, Shield, Wrench } from 'lucide-react'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { ExternalLink, GitPullRequest, Sparkles, TrendingUp, ArrowRight, Zap, Users, BarChart2, CheckCircle2, Clock, RefreshCw, Crown, Lock, Calendar, Shield, Wrench, FlaskConical } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
@@ -115,6 +115,31 @@ export function DashboardPage() {
   const history = useQuery({ queryKey: ['metrics', 'history'], queryFn: api.metrics.history })
   const [tab, setTab] = useState<'overview' | 'history'>('overview')
   const [refreshing, setRefreshing] = useState(false)
+
+  const seedMutation = useMutation({
+    mutationFn: api.demo.seed,
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['metrics'] }),
+        qc.invalidateQueries({ queryKey: ['prs'] }),
+        qc.invalidateQueries({ queryKey: ['analytics'] }),
+        qc.invalidateQueries({ queryKey: ['team'] }),
+        qc.invalidateQueries({ queryKey: ['repos'] }),
+      ])
+    },
+  })
+  const resetMutation = useMutation({
+    mutationFn: api.demo.reset,
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['metrics'] }),
+        qc.invalidateQueries({ queryKey: ['prs'] }),
+        qc.invalidateQueries({ queryKey: ['analytics'] }),
+        qc.invalidateQueries({ queryKey: ['team'] }),
+        qc.invalidateQueries({ queryKey: ['repos'] }),
+      ])
+    },
+  })
   async function refresh() {
     setRefreshing(true)
     await Promise.all([
@@ -167,6 +192,9 @@ export function DashboardPage() {
   const totalMergedAllTime = (weekly.data ?? []).reduce((s, w) => s + w.totalPrs, 0)
   const hasVerdict = data.verdict !== 'insufficient_data'
   const showProgressBar = !localStorage.getItem('onboarding_complete')
+  const demoMode = team.data?.demoMode ?? false
+  const canUseDemoMode = isTrial || demoMode
+  const hasPrs = totalMergedAllTime > 0 || hasChartData
 
   // Empty state: no repos connected yet
   if (!repos.isLoading && !hasRepos) {
@@ -209,6 +237,39 @@ export function DashboardPage() {
         />
       )}
 
+      {/* ── DEMO BANNER: repos connected but no PRs yet ── */}
+      {!hasPrs && hasRepos && !demoMode && (
+        <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-5 py-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-blue-300 mb-1">No data yet</p>
+              <p className="text-sm text-[#888]">
+                Waiting for your first merged PR. While you wait, try the demo to see what Grassion looks like with real data.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {canUseDemoMode && (
+                <button
+                  onClick={() => seedMutation.mutate()}
+                  disabled={seedMutation.isPending}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 transition-colors disabled:opacity-50"
+                >
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  {seedMutation.isPending ? 'Loading…' : 'Load Demo Data'}
+                </button>
+              )}
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-2 rounded-lg border border-[#333] bg-[#111] px-4 py-2 text-sm font-medium text-[#aaa] hover:text-white hover:border-white/30 transition-colors"
+              >
+                Connect Real Repo
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── PAGE HEADER ── */}
       <div className="flex items-center justify-between">
         <div>
@@ -218,6 +279,20 @@ export function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {demoMode && (
+            <div className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-400">
+              <FlaskConical className="h-3.5 w-3.5" />
+              Demo Mode
+              <button
+                onClick={() => resetMutation.mutate()}
+                disabled={resetMutation.isPending}
+                className="ml-1 text-blue-400/60 hover:text-blue-300 transition-colors disabled:opacity-50"
+                title="Reset demo data"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           {plan && (
             <div className={cn(
               'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium',

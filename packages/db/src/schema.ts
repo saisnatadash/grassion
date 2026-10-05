@@ -63,6 +63,7 @@ export const teams = pgTable('teams', {
   benchmarkingOptIn: boolean('benchmarking_opt_in').default(false),
   teamSizeRange: text('team_size_range'),
   industry: text('industry'),
+  demoMode: boolean('demo_mode').default(false),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

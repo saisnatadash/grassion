@@ -313,6 +313,11 @@ export const api = {
     overview: () => request<SecurityOverview>('/api/security/overview'),
   },
 
+  demo: {
+    seed: () => request<{ seeded: true; summary: { prs: number; weeks: number; totalSavings: number } }>('/api/demo/seed', { method: 'POST' }),
+    reset: () => request<{ reset: true }>('/api/demo/reset', { method: 'DELETE' }),
+  },
+
   prs: {
     problem: () => request<ProblemPRDto[]>('/api/prs/problem'),
   },

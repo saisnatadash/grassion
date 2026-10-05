@@ -80,6 +80,16 @@ function getWebhooks(): Webhooks {
         ) {
           await scheduleOutcomeCheck(pr.id, pr.mergedAt ?? new Date())
 
+          // Clear demo mode when a real PR lands — owner !== 'grassion-demo'
+          const [repoRow] = await db
+            .select({ owner: repos.owner })
+            .from(repos)
+            .where(eq(repos.id, pr.repoId))
+            .limit(1)
+          if (repoRow && repoRow.owner !== 'grassion-demo') {
+            await db.update(teams).set({ demoMode: false }).where(eq(teams.id, pr.teamId))
+          }
+
           // Instant Slack alert for reverted PRs (GitHub names them "Revert '...'")
           if (payload.pull_request.title.startsWith('Revert ')) {
             const [team] = await db

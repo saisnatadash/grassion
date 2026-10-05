@@ -37,6 +37,7 @@ teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => 
       benchmarkingOptIn: t.benchmarkingOptIn ?? false,
       teamSizeRange: t.teamSizeRange ?? null,
       industry: t.industry ?? null,
+      demoMode: t.demoMode ?? false,
     })
   } catch (err) {
     logger.error({ err }, 'team get failed')

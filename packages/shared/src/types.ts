@@ -67,6 +67,7 @@ export interface MeResponse {
     timezone: string
     emailDigestEnabled: boolean
     slackWebhookUrl: string | null
+    demoMode: boolean
   }
 }
 
