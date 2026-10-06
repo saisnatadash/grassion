@@ -52,9 +52,21 @@ export function buildApp() {
   app.options('/api/contact', cors())
   app.use('/api/contact', cors())
 
+  // Always allow the canonical production origins so a misconfigured APP_URL /
+  // MARKETING_URL env var doesn't silently break CORS and lock users out.
+  const allowedOrigins = new Set([
+    e.APP_URL.replace(/\/$/, ''),
+    ...(e.MARKETING_URL ? [e.MARKETING_URL.replace(/\/$/, '')] : []),
+    'https://app.grassion.com',
+    'https://grassion.com',
+    'https://www.grassion.com',
+  ])
   app.use(
     cors({
-      origin: [e.APP_URL, ...(e.MARKETING_URL ? [e.MARKETING_URL] : [])],
+      origin: (origin, cb) => {
+        if (!origin || allowedOrigins.has(origin)) cb(null, true)
+        else cb(new Error(`CORS: origin not allowed: ${origin}`))
+      },
       credentials: true,
     }),
   )

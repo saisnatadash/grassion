@@ -30,7 +30,8 @@ authRouter.get('/auth/github', (req: Request, res: Response) => {
 
 authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
   const e = env()
-  const errorRedirect = `${e.APP_URL}/login?error=auth_failed`
+  const appUrl = e.APP_URL.replace(/\/$/, '')
+  const errorRedirect = `${appUrl}/login?error=auth_failed`
 
   // Extract referral code embedded in OAuth state as "nonce:ref"
   const stateStr = typeof req.query.state === 'string' ? req.query.state : ''
@@ -214,7 +215,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
     })
 
     logger.info({ login: profile.login }, 'github oauth success')
-    res.redirect(`${e.APP_URL}/auth/callback?token=${encodeURIComponent(token)}`)
+    res.redirect(`${appUrl}/auth/callback?token=${encodeURIComponent(token)}`)
   } catch (err) {
     logger.error({ err }, 'github oauth callback failed')
     res.redirect(`${errorRedirect}&reason=exception`)
