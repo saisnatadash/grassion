@@ -64,9 +64,6 @@ jobs:
       - name: Deploy web to Vercel
         working-directory: apps/web
         run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
   deploy-marketing:
     needs: test
@@ -85,6 +82,3 @@ jobs:
       - name: Deploy marketing to Vercel
         working-directory: apps/marketing
         run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_MARKETING_PROJECT_ID }}
