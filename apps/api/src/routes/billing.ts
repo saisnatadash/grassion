@@ -77,7 +77,7 @@ billingRouter.post(
     })
     res.json({
       orderId: order.id,
-      keyId: e.RAZORPAY_KEY_ID,
+      keyId: e.RAZORPAY_KEY_ID ?? '',
       amount: order.amount,
       currency: order.currency,
       seatCount,
@@ -246,7 +246,7 @@ billingRouter.post(
       .where(eq(teams.id, team.id))
     res.json({
       subscriptionId: sub.id,
-      razorpayKey: e.RAZORPAY_KEY_ID,
+      razorpayKey: e.RAZORPAY_KEY_ID ?? '',
       planId: e.RAZORPAY_PLAN_ID_STARTER ?? '',
       seatCount: parsed.data.seatCount,
     })

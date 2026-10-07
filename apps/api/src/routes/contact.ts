@@ -50,7 +50,7 @@ contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Res
 
   try {
     await transporter().sendMail({
-      from: e.ZOHO_FROM_ADDRESS,
+      from: e.ZOHO_FROM_ADDRESS ?? e.ZOHO_TO_ADDRESS,
       to: e.ZOHO_TO_ADDRESS,
       replyTo: email,
       subject: `[Grassion Contact] ${topic}: ${name}`,
@@ -58,7 +58,7 @@ contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Res
     })
 
     await transporter().sendMail({
-      from: e.ZOHO_FROM_ADDRESS,
+      from: e.ZOHO_FROM_ADDRESS ?? e.ZOHO_TO_ADDRESS,
       to: email,
       subject: 'Thanks for reaching out to Grassion',
       text: autoReplyText(name),
