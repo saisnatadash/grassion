@@ -61,9 +61,11 @@ jobs:
       - run: pnpm --filter @grassion/web build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://grassion-api.fly.dev' }}
-      - name: Deploy web to Vercel
+      - name: Package and deploy web to Vercel
         working-directory: apps/web
-        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npx vercel build --yes --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
 
   deploy-marketing:
     needs: test
@@ -79,6 +81,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile=false
       - run: pnpm --filter @grassion/marketing build
-      - name: Deploy marketing to Vercel
+      - name: Package and deploy marketing to Vercel
         working-directory: apps/marketing
-        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npx vercel build --yes --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
