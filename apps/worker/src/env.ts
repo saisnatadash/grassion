@@ -9,17 +9,17 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
 
   /** GitHub App numeric ID (from app settings) */
-  GITHUB_APP_ID: z.string().min(1),
+  GITHUB_APP_ID: z.string().min(1).optional(),
   /** GitHub App RSA private key — may use literal \n for newlines */
-  GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+  GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
 
   /** Resend API key for transactional email (weekly digest) */
-  RESEND_API_KEY: z.string().min(1),
+  RESEND_API_KEY: z.string().min(1).optional(),
   /** From address for outbound digest emails */
-  EMAIL_FROM: z.string().min(1),
+  EMAIL_FROM: z.string().min(1).optional(),
 
   /** OpenAI API key — used only for PR summaries in the worker */
-  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_API_KEY: z.string().min(1).optional(),
   /** OpenAI model to use for PR summaries (default: gpt-4o-mini) */
   OPENAI_MODEL: z.string().min(1).default('gpt-4o-mini'),
   /** Monthly OpenAI spend cap in USD — worker will skip summaries once exceeded */

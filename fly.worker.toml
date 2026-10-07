@@ -11,6 +11,7 @@ primary_region = "bom"
 
 [env]
   NODE_ENV = "production"
+  APP_URL = "https://app.grassion.com"
 
 # Worker doesn't expose HTTP — Fly will keep one machine alive for crons.
 [deploy]

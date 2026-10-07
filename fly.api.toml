@@ -27,3 +27,5 @@ primary_region = "bom"
 [env]
   NODE_ENV = "production"
   PORT = "3001"
+  APP_URL = "https://app.grassion.com"
+  API_URL = "https://grassion-api.fly.dev"
