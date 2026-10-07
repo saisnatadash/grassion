@@ -18,12 +18,18 @@ import { demoRouter } from './demo.js'
 export const router = Router()
 
 router.get('/health', async (_req: Request, res: Response) => {
+  // Always return 200 so Fly.io health checks pass even while Neon DB is waking up.
+  // DB connectivity is checked asynchronously and reported as info only.
+  let dbStatus = 'unknown'
   try {
-    await db.execute(sql`SELECT 1`)
-    res.json({ ok: true, db: 'up', ts: new Date().toISOString() })
-  } catch (err) {
-    res.status(503).json({ ok: false, db: 'down', error: (err as Error).message, ts: new Date().toISOString() })
+    await Promise.race([
+      db.execute(sql`SELECT 1`).then(() => { dbStatus = 'up' }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+    ])
+  } catch {
+    dbStatus = 'slow'
   }
+  res.json({ ok: true, db: dbStatus, ts: new Date().toISOString() })
 })
 
 router.use(authRouter)
