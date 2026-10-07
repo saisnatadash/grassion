@@ -13,7 +13,16 @@ async function main() {
     process.exit(1)
   }
 
-  const client = postgres(url, { max: 1 })
+  // Migrations need a direct Postgres connection — Supabase's pgBouncer pooler
+  // (port 6543) does not support advisory locks that Drizzle migrate uses.
+  // Set DIRECT_DATABASE_URL to the direct connection string (port 5432) in Fly
+  // secrets; fall back to DATABASE_URL if not provided.
+  const migrateUrl = process.env.DIRECT_DATABASE_URL ?? url
+  const client = postgres(migrateUrl, {
+    max: 1,
+    prepare: false,
+    ssl: { rejectUnauthorized: false },
+  })
   const db = drizzle(client)
 
   const migrationsFolder = join(__dirname, '../migrations')

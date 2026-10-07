@@ -20,6 +20,7 @@ export function getClient(): postgres.Sql {
       idle_timeout: 20,
       connect_timeout: 10,
       prepare: false,
+      ssl: { rejectUnauthorized: false },
     })
   }
   return _client
