@@ -6,10 +6,11 @@ let _razorpay: Razorpay | undefined
 
 export function razorpay(): Razorpay {
   if (!_razorpay) {
-    _razorpay = new Razorpay({
-      key_id: env().RAZORPAY_KEY_ID,
-      key_secret: env().RAZORPAY_KEY_SECRET,
-    })
+    const e = env()
+    if (!e.RAZORPAY_KEY_ID || !e.RAZORPAY_KEY_SECRET) {
+      throw new Error('Razorpay not configured: set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET')
+    }
+    _razorpay = new Razorpay({ key_id: e.RAZORPAY_KEY_ID, key_secret: e.RAZORPAY_KEY_SECRET })
   }
   return _razorpay
 }
@@ -70,11 +71,10 @@ export function verifyOrderSignature(params: {
   razorpayOrderId: string
   razorpaySignature: string
 }): boolean {
+  const secret = env().RAZORPAY_KEY_SECRET
+  if (!secret) return false
   const payload = `${params.razorpayOrderId}|${params.razorpayPaymentId}`
-  const expected = crypto
-    .createHmac('sha256', env().RAZORPAY_KEY_SECRET)
-    .update(payload)
-    .digest('hex')
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex')
   const a = Buffer.from(expected, 'utf8')
   const b = Buffer.from(params.razorpaySignature, 'utf8')
   if (a.length !== b.length) return false
@@ -87,10 +87,9 @@ export function verifyOrderSignature(params: {
  */
 export function verifyWebhookSignature(rawBody: string | Buffer, signature: string): boolean {
   if (!signature) return false
-  const expected = crypto
-    .createHmac('sha256', env().RAZORPAY_WEBHOOK_SECRET)
-    .update(rawBody)
-    .digest('hex')
+  const secret = env().RAZORPAY_WEBHOOK_SECRET
+  if (!secret) return false
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
   const a = Buffer.from(expected, 'utf8')
   const b = Buffer.from(signature, 'utf8')
   if (a.length !== b.length) return false
@@ -106,11 +105,10 @@ export function verifyCheckoutSignature(params: {
   razorpaySubscriptionId: string
   razorpaySignature: string
 }): boolean {
+  const secret = env().RAZORPAY_KEY_SECRET
+  if (!secret) return false
   const payload = `${params.razorpayPaymentId}|${params.razorpaySubscriptionId}`
-  const expected = crypto
-    .createHmac('sha256', env().RAZORPAY_KEY_SECRET)
-    .update(payload)
-    .digest('hex')
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex')
   const a = Buffer.from(expected, 'utf8')
   const b = Buffer.from(params.razorpaySignature, 'utf8')
   if (a.length !== b.length) return false

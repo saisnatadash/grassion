@@ -7,6 +7,9 @@ let _app: App | undefined
 export function getApp(): App {
   if (!_app) {
     const e = env()
+    if (!e.GITHUB_APP_ID || !e.GITHUB_APP_PRIVATE_KEY || !e.GITHUB_APP_WEBHOOK_SECRET) {
+      throw new Error('GitHub App not configured: set GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, and GITHUB_APP_WEBHOOK_SECRET')
+    }
     _app = new App({
       appId: Number(e.GITHUB_APP_ID),
       privateKey: normalizePrivateKey(e.GITHUB_APP_PRIVATE_KEY),

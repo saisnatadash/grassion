@@ -26,6 +26,9 @@ export interface DigestEmailData {
 
 function createZohoTransport() {
   const e = env()
+  if (!e.ZOHO_SMTP_USER || !e.ZOHO_SMTP_PASS) {
+    throw new Error('Zoho SMTP not configured: set ZOHO_SMTP_USER and ZOHO_SMTP_PASS')
+  }
   return nodemailer.createTransport({
     host: e.ZOHO_SMTP_HOST,
     port: e.ZOHO_SMTP_PORT,
@@ -35,9 +38,11 @@ function createZohoTransport() {
 }
 
 export async function sendWeeklyDigestEmail(to: string, data: DigestEmailData): Promise<void> {
+  const e = env()
+  if (!e.ZOHO_FROM_ADDRESS) return
   const transport = createZohoTransport()
   await transport.sendMail({
-    from: `Grassion <${env().ZOHO_FROM_ADDRESS}>`,
+    from: `Grassion <${e.ZOHO_FROM_ADDRESS}>`,
     to,
     subject: buildDigestSubject(data.verdict),
     text: buildDigestText(data),
@@ -182,15 +187,12 @@ export async function sendWelcomeEmail(to: string, username: string): Promise<vo
   const html = buildWelcomeHtml(username)
   try {
     await resendClient().emails.send({ from: FROM, to, subject, html })
-  } catch (resendErr) {
+  } catch {
     // Resend fails when grassion.com domain is not verified — fall back to Zoho SMTP
+    const fromAddr = env().ZOHO_FROM_ADDRESS
+    if (!fromAddr) return
     const transport = createZohoTransport()
-    await transport.sendMail({
-      from: `Grassion <${env().ZOHO_FROM_ADDRESS}>`,
-      to,
-      subject,
-      html,
-    })
+    await transport.sendMail({ from: `Grassion <${fromAddr}>`, to, subject, html })
   }
 }
 

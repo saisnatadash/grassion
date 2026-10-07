@@ -11,16 +11,16 @@ const schema = z.object({
   /** Neon Postgres connection string */
   DATABASE_URL: z.string().min(1),
 
-  /** GitHub App numeric ID (from app settings) */
-  GITHUB_APP_ID: z.string().min(1),
+  /** GitHub App numeric ID (from app settings) — required for webhook processing */
+  GITHUB_APP_ID: z.string().min(1).optional(),
   /** GitHub App RSA private key — may use literal \n for newlines */
-  GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+  GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
   /** GitHub OAuth App client ID */
   GITHUB_APP_CLIENT_ID: z.string().min(1),
   /** GitHub OAuth App client secret */
   GITHUB_APP_CLIENT_SECRET: z.string().min(1),
   /** HMAC secret used to verify incoming GitHub webhook deliveries */
-  GITHUB_APP_WEBHOOK_SECRET: z.string().min(1),
+  GITHUB_APP_WEBHOOK_SECRET: z.string().min(1).optional(),
   /** GitHub App slug (the app's URL-safe name) */
   GITHUB_APP_SLUG: z.string().min(1).default('grassion'),
 
@@ -29,12 +29,12 @@ const schema = z.object({
   /** Domain for the session cookie (e.g. '.grassion.com'); empty = current domain */
   SESSION_COOKIE_DOMAIN: z.string().default(''),
 
-  /** Razorpay publishable key ID */
-  RAZORPAY_KEY_ID: z.string().min(1),
+  /** Razorpay publishable key ID — required only when billing is active */
+  RAZORPAY_KEY_ID: z.string().min(1).optional(),
   /** Razorpay secret key */
-  RAZORPAY_KEY_SECRET: z.string().min(1),
+  RAZORPAY_KEY_SECRET: z.string().min(1).optional(),
   /** HMAC secret used to verify incoming Razorpay webhook deliveries */
-  RAZORPAY_WEBHOOK_SECRET: z.string().min(1),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1).optional(),
   /** Razorpay plan ID for the Starter subscription (optional — order-based payments work without it) */
   RAZORPAY_PLAN_ID_STARTER: z.string().min(1).optional(),
 
@@ -42,12 +42,12 @@ const schema = z.object({
   ZOHO_SMTP_HOST: z.string().min(1).default('smtp.zoho.in'),
   /** Zoho SMTP port — 587 (STARTTLS) or 465 (SSL) */
   ZOHO_SMTP_PORT: z.coerce.number().int().default(587),
-  /** Zoho SMTP username (the from address) */
-  ZOHO_SMTP_USER: z.string().min(1),
+  /** Zoho SMTP username — required only when email sending is active */
+  ZOHO_SMTP_USER: z.string().min(1).optional(),
   /** Zoho SMTP password or app-specific password */
-  ZOHO_SMTP_PASS: z.string().min(1),
+  ZOHO_SMTP_PASS: z.string().min(1).optional(),
   /** From address for outbound emails */
-  ZOHO_FROM_ADDRESS: z.string().min(1),
+  ZOHO_FROM_ADDRESS: z.string().min(1).optional(),
   /** Destination address for contact-form submissions */
   ZOHO_TO_ADDRESS: z.string().min(1).default('contact@grassion.com'),
 

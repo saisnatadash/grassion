@@ -21,7 +21,9 @@ let _webhooks: Webhooks | undefined
 
 function getWebhooks(): Webhooks {
   if (!_webhooks) {
-    _webhooks = new Webhooks({ secret: env().GITHUB_APP_WEBHOOK_SECRET })
+    const secret = env().GITHUB_APP_WEBHOOK_SECRET
+    if (!secret) throw new Error('GITHUB_APP_WEBHOOK_SECRET not configured')
+    _webhooks = new Webhooks({ secret })
 
     _webhooks.on('installation.created', async ({ payload }) => {
       const team = await createTeamFromInstallation(payload.installation)
@@ -132,6 +134,7 @@ function getWebhooks(): Webhooks {
 
 function verifySignature(rawBody: Buffer, signature: string): boolean {
   const secret = env().GITHUB_APP_WEBHOOK_SECRET
+  if (!secret) return false
   const expected = `sha256=${crypto.createHmac('sha256', secret).update(rawBody).digest('hex')}`
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
