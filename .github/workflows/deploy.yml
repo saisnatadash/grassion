@@ -72,17 +72,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.7.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
-      - run: pnpm --filter @grassion/marketing build
-      - name: Package and deploy marketing to Vercel
+      - name: Deploy marketing to Vercel
         working-directory: apps/marketing
-        run: |
-          npx vercel build --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-          npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}

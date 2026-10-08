@@ -1,7 +1,6 @@
 {
-  "buildCommand": "",
-  "installCommand": "",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "outputDirectory": "dist",
-  "cleanUrls": true,
-  "trailingSlash": true
+  "cleanUrls": true
 }
