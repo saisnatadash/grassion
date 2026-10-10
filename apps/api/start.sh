@@ -4,10 +4,10 @@ echo "Starting Grassion API..."
 
 echo "Running database migrations..."
 cd /app
-if node_modules/.bin/tsx packages/db/src/migrate.ts; then
+if node packages/db/dist/migrate.js; then
   echo "Migrations complete."
 else
-  echo "WARNING: migrations failed or skipped — server will start anyway."
+  echo "WARNING: migrations failed — server will start anyway. Check DB connection and DIRECT_DATABASE_URL secret."
 fi
 
 echo "Starting API server..."
