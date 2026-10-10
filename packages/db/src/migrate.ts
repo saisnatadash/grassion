@@ -7,22 +7,37 @@ import { dirname, join } from 'node:path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 async function main() {
-  const url = process.env.DATABASE_URL
-  if (!url) {
+  const rawUrl = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL
+  if (!rawUrl) {
     console.error('DATABASE_URL is not set')
     process.exit(1)
   }
 
-  // Migrations need a direct Postgres connection — Supabase's pgBouncer pooler
-  // (port 6543) does not support advisory locks that Drizzle migrate uses.
-  // Set DIRECT_DATABASE_URL to the direct connection string (port 5432) in Fly
-  // secrets; fall back to DATABASE_URL if not provided.
-  const migrateUrl = process.env.DIRECT_DATABASE_URL ?? url
-  const client = postgres(migrateUrl, {
+  let u: URL
+  try {
+    u = new URL(rawUrl)
+  } catch {
+    console.error('DATABASE_URL is not a valid URL:', rawUrl)
+    process.exit(1)
+  }
+
+  // DB_PASSWORD lets the raw password be set without URL encoding (e.g. passwords with @)
+  const password = process.env.DB_PASSWORD ?? decodeURIComponent(u.password)
+
+  console.log(`Connecting to ${u.hostname}:${u.port || 5432} as ${decodeURIComponent(u.username)}`)
+
+  const client = postgres({
+    host: u.hostname,
+    port: u.port ? parseInt(u.port) : 5432,
+    database: u.pathname.slice(1) || 'postgres',
+    username: decodeURIComponent(u.username) || 'postgres',
+    password,
+    ssl: { rejectUnauthorized: false },
     max: 1,
     prepare: false,
-    ssl: { rejectUnauthorized: false },
+    connect_timeout: 30,
   })
+
   const db = drizzle(client)
 
   const migrationsFolder = join(__dirname, '../migrations')

@@ -1,7 +1,7 @@
 import { buildApp } from './app.js'
 import { env } from './env.js'
 import { logger } from './logger.js'
-import { closeDb, sessions, lt } from '@grassion/db'
+import { closeDb, sessions, lt, sql } from '@grassion/db'
 import cron from 'node-cron'
 import { runWeeklySlackDigests, runSlackAlertCheck } from './lib/slack.js'
 import { db } from './db.js'
@@ -12,6 +12,12 @@ const app = buildApp()
 const PORT = Number(process.env.PORT) || 3001
 const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info({ port: PORT, env: e.NODE_ENV }, 'grassion api listening')
+  // Warm up the DB connection pool so it is ready before the first request arrives.
+  db.execute(sql`SELECT 1`).then(() => {
+    logger.info('db connection pool warmed up')
+  }).catch((err: unknown) => {
+    logger.warn({ err }, 'db warmup failed — will retry on first request')
+  })
 })
 
 // Weekly Slack digest — every Monday 9am IST (3:30 UTC)

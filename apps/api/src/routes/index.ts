@@ -23,9 +23,8 @@ router.get('/health', async (_req: Request, res: Response) => {
   try {
     await Promise.race([
       db.execute(sql`SELECT 1`).then(() => { dbStatus = 'up' }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000)),
     ])
-    // Check if migrations ran by verifying the users table exists
     await db.execute(sql`SELECT 1 FROM users LIMIT 1`)
     tablesOk = true
   } catch {
