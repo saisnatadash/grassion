@@ -192,11 +192,34 @@ export function AppLayout() {
       </div>
     )
   }
-  if (me.isError || !me.data) {
-    if ((me.error as { status?: number } | null)?.status === 401 || !me.data) {
-      localStorage.removeItem('grassion_token')
-    }
+
+  const meErrorStatus = (me.error as { status?: number } | null)?.status
+
+  // 401 = token invalid or expired — clear it and send to login.
+  if (meErrorStatus === 401) {
+    localStorage.removeItem('grassion_token')
     return <Navigate to="/login" replace />
+  }
+
+  // No token at all — redirect without clearing.
+  if (!me.isError && !me.data) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Transient API error (502, 503, network) — keep the token, offer retry.
+  // Don't wipe the token here: the server is just temporarily unreachable.
+  if (me.isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0a0a0a]">
+        <p className="text-sm text-[#666]">Unable to reach the server. Please wait a moment.</p>
+        <button
+          onClick={() => void me.refetch()}
+          className="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/15 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    )
   }
 
   const user = me.data.user
