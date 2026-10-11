@@ -106,6 +106,35 @@ function NotificationPanel({
   )
 }
 
+function ServerDownScreen({ refetch }: { refetch: () => void }) {
+  const [countdown, setCountdown] = useState(8)
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setCountdown((n) => {
+        if (n <= 1) {
+          refetch()
+          return 8
+        }
+        return n - 1
+      })
+    }, 1000)
+    return () => clearInterval(tick)
+  }, [refetch])
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0a0a0a]">
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#333] border-t-white" />
+      <p className="text-sm text-[#666]">Server is starting up — reconnecting in {countdown}s…</p>
+      <button
+        onClick={() => { refetch(); setCountdown(8) }}
+        className="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/15 transition-colors"
+      >
+        Retry now
+      </button>
+    </div>
+  )
+}
+
 export function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -206,20 +235,10 @@ export function AppLayout() {
     return <Navigate to="/login" replace />
   }
 
-  // Transient API error (502, 503, network) — keep the token, offer retry.
+  // Transient API error (502, 503, network) — keep the token, auto-retry.
   // Don't wipe the token here: the server is just temporarily unreachable.
   if (me.isError) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0a0a0a]">
-        <p className="text-sm text-[#666]">Unable to reach the server. Please wait a moment.</p>
-        <button
-          onClick={() => void me.refetch()}
-          className="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/15 transition-colors"
-        >
-          Retry
-        </button>
-      </div>
-    )
+    return <ServerDownScreen refetch={() => void me.refetch()} />
   }
 
   const user = me.data.user

@@ -30,8 +30,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check if API-related files changed
+        id: api_changed
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -qE '^(apps/api|packages/db|packages/shared|fly\.api\.toml)'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
       - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: steps.api_changed.outputs.changed == 'true'
       - run: flyctl deploy --config fly.api.toml --remote-only
+        if: steps.api_changed.outputs.changed == 'true'
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -40,8 +52,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check if worker-related files changed
+        id: worker_changed
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -qE '^(apps/worker|packages/db|packages/shared|fly\.worker\.toml)'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
       - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: steps.worker_changed.outputs.changed == 'true'
       - run: flyctl deploy --config fly.worker.toml --remote-only
+        if: steps.worker_changed.outputs.changed == 'true'
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
