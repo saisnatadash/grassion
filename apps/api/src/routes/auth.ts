@@ -234,8 +234,35 @@ authRouter.post('/auth/logout', (_req: Request, res: Response) => {
 authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
   try {
     const sess = req.session!
-    const userRow = await db.select().from(users).where(eq(users.id, sess.userId)).limit(1)
-    const teamRow = await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1)
+    // Select only the columns we actually return — avoids "column does not exist"
+    // errors if a schema migration hasn't run yet on this DB instance.
+    const userRow = await db
+      .select({
+        id: users.id,
+        githubLogin: users.githubLogin,
+        email: users.email,
+        avatarUrl: users.avatarUrl,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, sess.userId))
+      .limit(1)
+    const teamRow = await db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        slug: teams.slug,
+        plan: teams.plan,
+        trialEndsAt: teams.trialEndsAt,
+        githubInstallationId: teams.githubInstallationId,
+        monthlyAiSpendUsd: teams.monthlyAiSpendUsd,
+        avgDevHourlyRateUsd: teams.avgDevHourlyRateUsd,
+        timezone: teams.timezone,
+        emailDigestEnabled: teams.emailDigestEnabled,
+      })
+      .from(teams)
+      .where(eq(teams.id, sess.teamId))
+      .limit(1)
     const u = userRow[0]
     const t = teamRow[0]
     if (!u || !t) {
