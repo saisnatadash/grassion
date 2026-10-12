@@ -53,8 +53,11 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
   }
 
   try {
+    const abort = new AbortController()
+    const abortTimer = setTimeout(() => abort.abort(), 25_000)
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
+      signal: abort.signal,
       headers: { 'content-type': 'application/json', accept: 'application/json' },
       body: JSON.stringify({
         client_id: e.GITHUB_APP_CLIENT_ID,
@@ -63,6 +66,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         redirect_uri: GITHUB_CALLBACK_URL,
       }),
     })
+    clearTimeout(abortTimer)
     const tokenRaw = await tokenRes.text()
 
     let tokenJson: { access_token?: string; error?: string; error_description?: string }
@@ -228,36 +232,41 @@ authRouter.post('/auth/logout', (_req: Request, res: Response) => {
 })
 
 authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
-  const sess = req.session!
-  const userRow = await db.select().from(users).where(eq(users.id, sess.userId)).limit(1)
-  const teamRow = await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1)
-  const u = userRow[0]
-  const t = teamRow[0]
-  if (!u || !t) {
-    res.status(404).json({ error: 'not_found' })
-    return
+  try {
+    const sess = req.session!
+    const userRow = await db.select().from(users).where(eq(users.id, sess.userId)).limit(1)
+    const teamRow = await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1)
+    const u = userRow[0]
+    const t = teamRow[0]
+    if (!u || !t) {
+      res.status(404).json({ error: 'not_found' })
+      return
+    }
+    res.json({
+      user: {
+        id: u.id,
+        githubLogin: u.githubLogin,
+        email: u.email,
+        avatarUrl: u.avatarUrl,
+        role: u.role,
+      },
+      team: {
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        plan: t.plan,
+        trialEndsAt: t.trialEndsAt?.toISOString() ?? null,
+        githubInstallationId: t.githubInstallationId,
+        monthlyAiSpendUsd: t.monthlyAiSpendUsd ?? 0,
+        avgDevHourlyRateUsd: t.avgDevHourlyRateUsd ?? 75,
+        timezone: t.timezone ?? 'UTC',
+        emailDigestEnabled: t.emailDigestEnabled ?? true,
+      },
+    })
+  } catch (err) {
+    logger.error({ err }, 'auth/me db query failed')
+    res.status(500).json({ error: 'internal_error' })
   }
-  res.json({
-    user: {
-      id: u.id,
-      githubLogin: u.githubLogin,
-      email: u.email,
-      avatarUrl: u.avatarUrl,
-      role: u.role,
-    },
-    team: {
-      id: t.id,
-      name: t.name,
-      slug: t.slug,
-      plan: t.plan,
-      trialEndsAt: t.trialEndsAt?.toISOString() ?? null,
-      githubInstallationId: t.githubInstallationId,
-      monthlyAiSpendUsd: t.monthlyAiSpendUsd ?? 0,
-      avgDevHourlyRateUsd: t.avgDevHourlyRateUsd ?? 75,
-      timezone: t.timezone ?? 'UTC',
-      emailDigestEnabled: t.emailDigestEnabled ?? true,
-    },
-  })
 })
 
 function generateState(ref?: string): string {

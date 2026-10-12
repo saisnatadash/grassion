@@ -54,3 +54,10 @@ function shutdown(signal: string) {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
+
+// Prevent unhandled async errors from crashing the process in production.
+// Express 4 doesn't catch rejected Promises from async middleware/handlers,
+// so this is the last line of defence against a crash-restart loop.
+process.on('unhandledRejection', (reason) => {
+  logger.error({ reason }, 'unhandled promise rejection — server kept alive')
+})

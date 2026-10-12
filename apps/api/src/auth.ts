@@ -105,12 +105,15 @@ export async function attachSession(req: Request, _res: Response, next: NextFunc
   const authHeader = req.headers.authorization
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
   const token = bearerToken ?? req.cookies?.[SESSION_COOKIE]
-  const sess = await readSession(token)
-  if (sess) {
-    req.session = sess
-  } else if (token) {
-    // Token was present but invalid or expired — log without including the token value.
-    logger.warn({ ip: req.ip, path: req.path }, 'invalid or expired session token rejected')
+  try {
+    const sess = await readSession(token)
+    if (sess) {
+      req.session = sess
+    } else if (token) {
+      logger.warn({ ip: req.ip, path: req.path }, 'invalid or expired session token rejected')
+    }
+  } catch (err) {
+    logger.error({ err, path: req.path }, 'session lookup failed, treating as unauthenticated')
   }
   next()
 }
