@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS "weekly_snapshots" (
 	"computed_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "teams" ADD COLUMN "last_digest_sent_at" timestamp;--> statement-breakpoint
+ALTER TABLE "teams" ADD COLUMN IF NOT EXISTS "last_digest_sent_at" timestamp;--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "developer_history" ADD CONSTRAINT "developer_history_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION

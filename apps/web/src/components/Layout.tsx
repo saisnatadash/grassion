@@ -224,8 +224,10 @@ export function AppLayout() {
 
   const meErrorStatus = (me.error as { status?: number } | null)?.status
 
-  // 401 = token invalid or expired — clear it and send to login.
-  if (meErrorStatus === 401) {
+  // Any real HTTP error response from /auth/me (4xx, 5xx) means re-auth is needed.
+  // These errors don't resolve by retrying — the user must sign in again.
+  // Only gateway/network errors (no status code) are worth auto-retrying.
+  if (me.isError && meErrorStatus !== undefined) {
     localStorage.removeItem('grassion_token')
     return <Navigate to="/login" replace />
   }
@@ -235,8 +237,8 @@ export function AppLayout() {
     return <Navigate to="/login" replace />
   }
 
-  // Transient API error (502, 503, network) — keep the token, auto-retry.
-  // Don't wipe the token here: the server is just temporarily unreachable.
+  // Gateway/network error (502, CORS, connection refused) — server is temporarily
+  // unreachable. Keep the token and auto-retry until the machine comes back up.
   if (me.isError) {
     return <ServerDownScreen refetch={() => void me.refetch()} />
   }

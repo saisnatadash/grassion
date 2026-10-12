@@ -26,6 +26,7 @@ router.get('/health', async (_req: Request, res: Response) => {
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000)),
     ])
     await db.execute(sql`SELECT 1 FROM users LIMIT 1`)
+    await db.execute(sql`SELECT avg_dev_hourly_rate_usd FROM teams LIMIT 1`)
     tablesOk = true
   } catch {
     if (dbStatus === 'up') tablesOk = false
