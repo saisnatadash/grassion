@@ -748,7 +748,7 @@ reposRouter.post(
     }
     try {
       const existing = await db
-        .select()
+        .select({ id: repos.id, owner: repos.owner, name: repos.name })
         .from(repos)
         .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
         .limit(1)

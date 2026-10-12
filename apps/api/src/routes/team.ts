@@ -12,7 +12,18 @@ export const teamRouter = Router()
 teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   try {
-    const row = await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1)
+    const row = await db
+      .select({
+        id: teams.id, name: teams.name, slug: teams.slug, plan: teams.plan,
+        trialEndsAt: teams.trialEndsAt, githubInstallationId: teams.githubInstallationId,
+        monthlyAiSpendUsd: teams.monthlyAiSpendUsd, avgDevHourlyRateUsd: teams.avgDevHourlyRateUsd,
+        timezone: teams.timezone, emailDigestEnabled: teams.emailDigestEnabled,
+        emailDigestDay: teams.emailDigestDay, emailDigestHour: teams.emailDigestHour,
+        slackWebhookUrl: teams.slackWebhookUrl, perSeatCostUsd: teams.perSeatCostUsd,
+        toolSeatCosts: teams.toolSeatCosts, benchmarkingOptIn: teams.benchmarkingOptIn,
+        teamSizeRange: teams.teamSizeRange, industry: teams.industry, demoMode: teams.demoMode,
+      })
+      .from(teams).where(eq(teams.id, sess.teamId)).limit(1)
     if (!row[0]) {
       res.status(404).json({ error: 'not_found' })
       return
@@ -82,7 +93,12 @@ teamRouter.patch(
 teamRouter.get('/api/team/members', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   try {
-    const list = await db.select().from(users).where(eq(users.teamId, sess.teamId))
+    const list = await db
+      .select({
+        id: users.id, githubLogin: users.githubLogin, email: users.email,
+        avatarUrl: users.avatarUrl, role: users.role, createdAt: users.createdAt,
+      })
+      .from(users).where(eq(users.teamId, sess.teamId))
     res.json(
       list.map((u) => ({
         id: u.id,

@@ -673,7 +673,18 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
     const prIds = rows.map((r) => r.prId)
     const timelineRows = prIds.length > 0
       ? await db
-          .select()
+          .select({
+            prId: prOutcomeTimeline.prId,
+            checkpointDays: prOutcomeTimeline.checkpointDays,
+            reworkScore: prOutcomeTimeline.reworkScore,
+            wasReverted: prOutcomeTimeline.wasReverted,
+            ciFailureCount: prOutcomeTimeline.ciFailureCount,
+            downstreamFixCount: prOutcomeTimeline.downstreamFixCount,
+            hadHotfix: prOutcomeTimeline.hadHotfix,
+            hotfixSignals: prOutcomeTimeline.hotfixSignals,
+            dollarImpact: prOutcomeTimeline.dollarImpact,
+            computedAt: prOutcomeTimeline.computedAt,
+          })
           .from(prOutcomeTimeline)
           .where(inArray(prOutcomeTimeline.prId, prIds))
       : []
@@ -738,7 +749,9 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
             ciFailureCount: m._rawCiFailureCount ?? 0,
             reworkScore: m.reworkScore,
             aiSource: m.aiSource,
-          }).then((summary) => ({ prId: m.prId, summary }))
+          })
+            .then((summary) => ({ prId: m.prId, summary }))
+            .catch(() => ({ prId: m.prId, summary: null }))
         )
       )
 
@@ -774,7 +787,17 @@ analyticsRouter.get('/api/analytics/pr-decay/:prId', requireAuth, async (req: Re
 
   try {
     const checkpoints = await db
-      .select()
+      .select({
+        checkpointDays: prOutcomeTimeline.checkpointDays,
+        reworkScore: prOutcomeTimeline.reworkScore,
+        wasReverted: prOutcomeTimeline.wasReverted,
+        ciFailureCount: prOutcomeTimeline.ciFailureCount,
+        downstreamFixCount: prOutcomeTimeline.downstreamFixCount,
+        hadHotfix: prOutcomeTimeline.hadHotfix,
+        hotfixSignals: prOutcomeTimeline.hotfixSignals,
+        dollarImpact: prOutcomeTimeline.dollarImpact,
+        computedAt: prOutcomeTimeline.computedAt,
+      })
       .from(prOutcomeTimeline)
       .where(and(eq(prOutcomeTimeline.prId, prId), eq(prOutcomeTimeline.teamId, teamId)))
       .orderBy(prOutcomeTimeline.checkpointDays)
