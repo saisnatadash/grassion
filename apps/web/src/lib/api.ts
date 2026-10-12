@@ -15,15 +15,18 @@ const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('grassion_token')
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), 20_000)
   const res = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
+    signal: abort.signal,
     ...init,
     headers: {
       'content-type': 'application/json',
       ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(init.headers ?? {}),
     },
-  })
+  }).finally(() => clearTimeout(timer))
   if (res.status === 401) {
     localStorage.removeItem('grassion_token')
     throw new ApiError(401, 'unauthorized')

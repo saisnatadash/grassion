@@ -108,11 +108,13 @@ function NotificationPanel({
 
 function ServerDownScreen({ refetch }: { refetch: () => void }) {
   const [countdown, setCountdown] = useState(8)
+  const [retries, setRetries] = useState(0)
   useEffect(() => {
     const tick = setInterval(() => {
       setCountdown((n) => {
         if (n <= 1) {
           refetch()
+          setRetries((r) => r + 1)
           return 8
         }
         return n - 1
@@ -121,16 +123,31 @@ function ServerDownScreen({ refetch }: { refetch: () => void }) {
     return () => clearInterval(tick)
   }, [refetch])
 
+  function signInAgain() {
+    localStorage.removeItem('grassion_token')
+    window.location.href = '/login'
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0a0a0a]">
       <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#333] border-t-white" />
       <p className="text-sm text-[#666]">Server is starting up — reconnecting in {countdown}s…</p>
-      <button
-        onClick={() => { refetch(); setCountdown(8) }}
-        className="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/15 transition-colors"
-      >
-        Retry now
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => { refetch(); setCountdown(8) }}
+          className="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/15 transition-colors"
+        >
+          Retry now
+        </button>
+        {retries >= 3 && (
+          <button
+            onClick={signInAgain}
+            className="rounded-lg bg-white/5 px-4 py-2 text-xs font-medium text-[#888] hover:bg-white/10 hover:text-white transition-colors"
+          >
+            Sign in again
+          </button>
+        )}
+      </div>
     </div>
   )
 }
