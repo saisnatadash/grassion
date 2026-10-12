@@ -165,51 +165,77 @@ async function snapshotWeek(
     })
 }
 
-metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res: Response) => {
-  const sess = req.session!
-  const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
-  logger.debug({ githubLogin: sess.githubLogin, teamId }, 'metrics/summary request')
-  const team = (await db.select().from(teams).where(eq(teams.id, teamId)).limit(1))[0]
-  if (!team) {
-    res.status(404).json({ error: 'not_found' })
-    return
-  }
-  const weekStart = startOfWeekUtc()
-  const cached = (
-    await db
-      .select()
-      .from(teamWeeklyMetrics)
-      .where(and(eq(teamWeeklyMetrics.teamId, teamId), eq(teamWeeklyMetrics.weekStart, weekStart)))
-      .limit(1)
-  )[0]
+const EMPTY_SUMMARY = {
+  weekStart: new Date().toISOString(),
+  totalPrs: 0, aiPrs: 0, humanPrs: 0,
+  speedDeltaPercent: 0, reworkMultiplier: 1,
+  monthlySpend: 0, estimatedDollarSaved: 0,
+  estimatedDollarLost: 0, netDollar: 0,
+  verdict: 'insufficient_data' as const,
+}
 
-  if (cached && cached.totalPrs && cached.totalPrs > 0) {
-    const summary = toSummary(cached, team.monthlyAiSpendUsd ?? 0)
-    snapshotWeek(teamId, weekStart, summary).catch((e: Error) =>
+metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const sess = req.session!
+    const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
+    logger.debug({ githubLogin: sess.githubLogin, teamId }, 'metrics/summary request')
+    const teamRow = (
+      await db
+        .select({ monthlyAiSpendUsd: teams.monthlyAiSpendUsd, avgDevHourlyRateUsd: teams.avgDevHourlyRateUsd })
+        .from(teams)
+        .where(eq(teams.id, teamId))
+        .limit(1)
+    )[0]
+    if (!teamRow) {
+      res.status(404).json({ error: 'not_found' })
+      return
+    }
+    const weekStart = startOfWeekUtc()
+
+    let cached: typeof teamWeeklyMetrics.$inferSelect | undefined
+    try {
+      cached = (
+        await db
+          .select()
+          .from(teamWeeklyMetrics)
+          .where(and(eq(teamWeeklyMetrics.teamId, teamId), eq(teamWeeklyMetrics.weekStart, weekStart)))
+          .limit(1)
+      )[0]
+    } catch (e) {
+      logger.warn({ err: e }, 'teamWeeklyMetrics query failed — table may not exist yet')
+    }
+
+    if (cached && cached.totalPrs && cached.totalPrs > 0) {
+      const summary = toSummary(cached, teamRow.monthlyAiSpendUsd ?? 0)
+      snapshotWeek(teamId, weekStart, summary).catch((e: Error) =>
+        logger.warn({ err: e }, 'summary snapshot skipped'),
+      )
+      populateWeeklyMetrics(teamId, weekStart).catch((e: Error) =>
+        logger.warn({ err: e }, 'summary metrics populate skipped'),
+      )
+      res.json(summary)
+      return
+    }
+
+    // Fall back to live computation if cache empty.
+    const live = await liveSummary(
+      teamId,
+      weekStart,
+      teamRow.avgDevHourlyRateUsd ?? 75,
+      teamRow.monthlyAiSpendUsd ?? 30,
+    )
+    const liveResponse = { ...live, monthlySpend: teamRow.monthlyAiSpendUsd ?? 0 }
+    snapshotWeek(teamId, weekStart, live).catch((e: Error) =>
       logger.warn({ err: e }, 'summary snapshot skipped'),
     )
     populateWeeklyMetrics(teamId, weekStart).catch((e: Error) =>
       logger.warn({ err: e }, 'summary metrics populate skipped'),
     )
-    res.json(summary)
-    return
+    res.json(liveResponse)
+  } catch (err) {
+    logger.error({ err }, 'metrics/summary failed')
+    res.json(EMPTY_SUMMARY)
   }
-
-  // Fall back to live computation if cache empty.
-  const live = await liveSummary(
-    teamId,
-    weekStart,
-    team.avgDevHourlyRateUsd ?? 75,
-    team.monthlyAiSpendUsd ?? 30,
-  )
-  const liveResponse = { ...live, monthlySpend: team.monthlyAiSpendUsd ?? 0 }
-  snapshotWeek(teamId, weekStart, live).catch((e: Error) =>
-    logger.warn({ err: e }, 'summary snapshot skipped'),
-  )
-  populateWeeklyMetrics(teamId, weekStart).catch((e: Error) =>
-    logger.warn({ err: e }, 'summary metrics populate skipped'),
-  )
-  res.json(liveResponse)
 })
 
 metricsRouter.get('/api/metrics/history', requireAuth, async (req: Request, res: Response) => {

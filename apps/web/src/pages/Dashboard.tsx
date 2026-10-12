@@ -99,7 +99,7 @@ function OnboardingProgressBar({
 /* ── PAGE ── */
 export function DashboardPage() {
   const qc = useQueryClient()
-  const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary })
+  const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary, retry: false })
   const weekly = useQuery({ queryKey: ['metrics', 'weekly'], queryFn: api.metrics.weekly })
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
   const seatWaste = useQuery({ queryKey: ['analytics', 'seat-waste'], queryFn: api.analytics.seatWaste })
