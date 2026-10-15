@@ -843,7 +843,23 @@ analyticsRouter.get('/api/analytics/developer-metrics', requireAuth, async (req:
     const fourWeeksAgoStr = fourWeeksAgo.toISOString().split('T')[0]!
 
     const rows = await db
-      .select()
+      .select({
+        id: developerWeeklyMetrics.id,
+        teamId: developerWeeklyMetrics.teamId,
+        githubLogin: developerWeeklyMetrics.githubLogin,
+        weekStart: developerWeeklyMetrics.weekStart,
+        totalPrs: developerWeeklyMetrics.totalPrs,
+        aiPrs: developerWeeklyMetrics.aiPrs,
+        revertedPrs: developerWeeklyMetrics.revertedPrs,
+        hotfixPrs: developerWeeklyMetrics.hotfixPrs,
+        avgReviewCycles: developerWeeklyMetrics.avgReviewCycles,
+        avgPrSize: developerWeeklyMetrics.avgPrSize,
+        aiConfidenceAvg: developerWeeklyMetrics.aiConfidenceAvg,
+        qualityScore: developerWeeklyMetrics.qualityScore,
+        isActive: developerWeeklyMetrics.isActive,
+        primaryAiTool: developerWeeklyMetrics.primaryAiTool,
+        recordedAt: developerWeeklyMetrics.recordedAt,
+      })
       .from(developerWeeklyMetrics)
       .where(and(eq(developerWeeklyMetrics.teamId, teamId), gte(developerWeeklyMetrics.weekStart, fourWeeksAgoStr)))
       .orderBy(desc(developerWeeklyMetrics.weekStart))
@@ -890,7 +906,20 @@ analyticsRouter.get('/api/analytics/tool-comparison', requireAuth, async (req: R
     const weekStartStr = weekStart.toISOString().split('T')[0]!
 
     const rows = await db
-      .select()
+      .select({
+        id: toolWeeklyMetrics.id,
+        teamId: toolWeeklyMetrics.teamId,
+        toolName: toolWeeklyMetrics.toolName,
+        weekStart: toolWeeklyMetrics.weekStart,
+        prCount: toolWeeklyMetrics.prCount,
+        revertCount: toolWeeklyMetrics.revertCount,
+        hotfixCount: toolWeeklyMetrics.hotfixCount,
+        avgChangesRequested: toolWeeklyMetrics.avgChangesRequested,
+        qualityScore: toolWeeklyMetrics.qualityScore,
+        estimatedSpendUsd: toolWeeklyMetrics.estimatedSpendUsd,
+        activeUsers: toolWeeklyMetrics.activeUsers,
+        recordedAt: toolWeeklyMetrics.recordedAt,
+      })
       .from(toolWeeklyMetrics)
       .where(and(eq(toolWeeklyMetrics.teamId, teamId), gte(toolWeeklyMetrics.weekStart, weekStartStr)))
       .orderBy(desc(toolWeeklyMetrics.prCount))
@@ -923,7 +952,20 @@ analyticsRouter.get('/api/analytics/codebase-health', requireAuth, async (req: R
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
   try {
     const rows = await db
-      .select()
+      .select({
+        id: codbaseHealthSnapshots.id,
+        teamId: codbaseHealthSnapshots.teamId,
+        snapshotDate: codbaseHealthSnapshots.snapshotDate,
+        overallHealthScore: codbaseHealthSnapshots.overallHealthScore,
+        aiAdoptionPct: codbaseHealthSnapshots.aiAdoptionPct,
+        revertRatePct: codbaseHealthSnapshots.revertRatePct,
+        hotfixRatePct: codbaseHealthSnapshots.hotfixRatePct,
+        avgPrQuality: codbaseHealthSnapshots.avgPrQuality,
+        activeDevelopers: codbaseHealthSnapshots.activeDevelopers,
+        totalDevelopers: codbaseHealthSnapshots.totalDevelopers,
+        riskLevel: codbaseHealthSnapshots.riskLevel,
+        createdAt: codbaseHealthSnapshots.createdAt,
+      })
       .from(codbaseHealthSnapshots)
       .where(eq(codbaseHealthSnapshots.teamId, teamId))
       .orderBy(desc(codbaseHealthSnapshots.snapshotDate))
@@ -1019,7 +1061,19 @@ analyticsRouter.get('/api/analytics/benchmarks', requireAuth, async (req: Reques
         .then((rows) => rows[0]),
 
       db
-        .select()
+        .select({
+          id: industryBenchmarks.id,
+          toolName: industryBenchmarks.toolName,
+          teamSizeRange: industryBenchmarks.teamSizeRange,
+          industry: industryBenchmarks.industry,
+          metricName: industryBenchmarks.metricName,
+          p25Value: industryBenchmarks.p25Value,
+          p50Value: industryBenchmarks.p50Value,
+          p75Value: industryBenchmarks.p75Value,
+          sampleSize: industryBenchmarks.sampleSize,
+          computedAt: industryBenchmarks.computedAt,
+          validUntil: industryBenchmarks.validUntil,
+        })
         .from(industryBenchmarks)
         .where(
           and(

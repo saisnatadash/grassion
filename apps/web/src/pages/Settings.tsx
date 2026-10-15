@@ -570,7 +570,7 @@ function SlackSection() {
         {/* Preview */}
         <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
           <p className="text-xs text-[#555555] font-mono leading-relaxed">
-            📊 Weekly digest · Every Monday 9am IST<br />
+            📊 Weekly digest · Every {DAYS[(team.data as { emailDigestDay?: number } | undefined)?.emailDigestDay ?? 1]} {(team.data as { emailDigestHour?: number } | undefined)?.emailDigestHour ?? 9}:00 {(team.data as { timezone?: string } | undefined)?.timezone ?? 'UTC'}<br />
             Includes: ROI verdict, savings, health score, top performer<br />
             ⚠️ Instant alert when a PR is reverted<br />
             🔴 Alert when health score drops below 75<br />
