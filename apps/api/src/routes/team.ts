@@ -159,13 +159,13 @@ teamRouter.patch(
 teamRouter.get('/api/team/referral', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   try {
-    const team = (await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
+    const team = (await db.select({ referralCodeId: teams.referralCodeId }).from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
     if (!team?.referralCodeId) {
       res.json({ referredBy: null })
       return
     }
     const code = (
-      await db.select().from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1)
+      await db.select({ code: referralCodes.code, partnerName: referralCodes.partnerName }).from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1)
     )[0]
     res.json({
       referredBy: code ? { code: code.code, partnerName: code.partnerName } : null,

@@ -33,10 +33,10 @@ const PLAN_PRICING = {
 } as const
 
 async function recordReferralConversion(teamId: string, plan: string) {
-  const team = (await db.select().from(teams).where(eq(teams.id, teamId)).limit(1))[0]
+  const team = (await db.select({ referralCodeId: teams.referralCodeId }).from(teams).where(eq(teams.id, teamId)).limit(1))[0]
   if (!team?.referralCodeId) return
   const code = (
-    await db.select().from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1)
+    await db.select({ id: referralCodes.id, code: referralCodes.code, commissionPct: referralCodes.commissionPct }).from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1)
   )[0]
   if (!code) return
   const mrrUsd = PLAN_BASE_MRR_USD[plan] ?? 0
@@ -217,12 +217,12 @@ billingRouter.post(
       res.status(400).json({ error: 'invalid_input' })
       return
     }
-    const team = (await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
+    const team = (await db.select({ id: teams.id, name: teams.name }).from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
     if (!team) {
       res.status(404).json({ error: 'not_found' })
       return
     }
-    const user = (await db.select().from(users).where(eq(users.id, sess.userId)).limit(1))[0]
+    const user = (await db.select({ email: users.email, githubLogin: users.githubLogin }).from(users).where(eq(users.id, sess.userId)).limit(1))[0]
     const e = env()
     if (!e.RAZORPAY_PLAN_ID_STARTER) {
       res.status(501).json({ error: 'subscription_not_configured', hint: 'Use /api/billing/checkout for order-based payments' })
@@ -259,7 +259,7 @@ billingRouter.post(
   requireRole('owner', 'admin'),
   async (req: Request, res: Response) => {
     const sess = req.session!
-    const team = (await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
+    const team = (await db.select({ id: teams.id, razorpaySubscriptionId: teams.razorpaySubscriptionId }).from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
     if (!team?.razorpaySubscriptionId) {
       res.status(400).json({ error: 'no_subscription' })
       return
@@ -279,7 +279,13 @@ billingRouter.post(
 
 billingRouter.get('/api/billing/subscription', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
-  const team = (await db.select().from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
+  const team = (await db.select({
+    razorpaySubscriptionId: teams.razorpaySubscriptionId,
+    plan: teams.plan,
+    subscriptionStatus: teams.subscriptionStatus,
+    trialEndsAt: teams.trialEndsAt,
+    currentPeriodEnd: teams.currentPeriodEnd,
+  }).from(teams).where(eq(teams.id, sess.teamId)).limit(1))[0]
   if (!team) {
     res.status(404).json({ error: 'not_found' })
     return

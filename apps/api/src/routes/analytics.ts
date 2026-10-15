@@ -250,7 +250,13 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
 
     // Weekly snapshots for ROI + adoption history
     const snapshots = await db
-      .select()
+      .select({
+        weekStart: weeklySnapshots.weekStart,
+        aiPrs: weeklySnapshots.aiPrs,
+        totalPrs: weeklySnapshots.totalPrs,
+        aiAdoptionPct: weeklySnapshots.aiAdoptionPct,
+        netRoiUsd: weeklySnapshots.netRoiUsd,
+      })
       .from(weeklySnapshots)
       .where(eq(weeklySnapshots.teamId, teamId))
       .orderBy(desc(weeklySnapshots.weekStart))
@@ -259,7 +265,13 @@ analyticsRouter.get('/api/analytics/journey', requireAuth, async (req: Request, 
     // Fall back to teamWeeklyMetrics if no snapshots yet
     const metrics = snapshots.length === 0
       ? await db
-          .select()
+          .select({
+            weekStart: teamWeeklyMetrics.weekStart,
+            aiPrs: teamWeeklyMetrics.aiPrs,
+            totalPrs: teamWeeklyMetrics.totalPrs,
+            estimatedDollarSaved: teamWeeklyMetrics.estimatedDollarSaved,
+            estimatedDollarLost: teamWeeklyMetrics.estimatedDollarLost,
+          })
           .from(teamWeeklyMetrics)
           .where(eq(teamWeeklyMetrics.teamId, teamId))
           .orderBy(desc(teamWeeklyMetrics.weekStart))

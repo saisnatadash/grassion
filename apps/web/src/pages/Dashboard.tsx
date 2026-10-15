@@ -109,7 +109,7 @@ export function DashboardPage() {
   const health = useQuery({ queryKey: ['analytics', 'health'], queryFn: api.analytics.health, staleTime: 5 * 60 * 1000, retry: false })
   const toolComparison = useQuery({ queryKey: ['analytics', 'tool-comparison'], queryFn: api.analytics.toolComparison, staleTime: 5 * 60 * 1000, retry: false })
   const team = useQuery({ queryKey: ['team'], queryFn: api.team.get })
-  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
+  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list, retry: false })
   const { isPaid, isTrial, isTeam, isBusiness, plan } = usePlan()
 
   const history = useQuery({ queryKey: ['metrics', 'history'], queryFn: api.metrics.history })
@@ -196,8 +196,8 @@ export function DashboardPage() {
   const canUseDemoMode = isTrial || demoMode
   const hasPrs = totalMergedAllTime > 0 || hasChartData
 
-  // Empty state: no repos connected yet
-  if (!repos.isLoading && !hasRepos) {
+  // Empty state: no repos connected yet (skip if repos errored — show dashboard anyway)
+  if (!repos.isLoading && !repos.isError && !hasRepos) {
     return (
       <div className="space-y-5">
         {showOnboarding && <OnboardingModal onClose={() => setOnboardingDismissed(true)} />}

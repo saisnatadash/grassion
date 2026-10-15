@@ -243,7 +243,18 @@ metricsRouter.get('/api/metrics/history', requireAuth, async (req: Request, res:
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
   try {
     const rows = await db
-      .select()
+      .select({
+        weekStart: weeklySnapshots.weekStart,
+        totalSeats: weeklySnapshots.totalSeats,
+        activeSeats: weeklySnapshots.activeSeats,
+        inactiveSeats: weeklySnapshots.inactiveSeats,
+        aiPrs: weeklySnapshots.aiPrs,
+        totalPrs: weeklySnapshots.totalPrs,
+        aiAdoptionPct: weeklySnapshots.aiAdoptionPct,
+        monthlyWasteUsd: weeklySnapshots.monthlyWasteUsd,
+        netRoiUsd: weeklySnapshots.netRoiUsd,
+        verdict: weeklySnapshots.verdict,
+      })
       .from(weeklySnapshots)
       .where(eq(weeklySnapshots.teamId, teamId))
       .orderBy(desc(weeklySnapshots.weekStart))

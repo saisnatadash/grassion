@@ -113,6 +113,13 @@
       "when": 1760313600000,
       "tag": "0016_demo_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1760400000000,
+      "tag": "0017_fix_weekly_snapshots",
+      "breakpoints": true
     }
   ]
 }

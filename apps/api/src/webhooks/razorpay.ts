@@ -130,7 +130,7 @@ async function syncSubscription(sub: RazorpaySubscription) {
   if (!teamId) {
     // Fall back to looking up by stored razorpay_subscription_id.
     const row = (
-      await db.select().from(teams).where(eq(teams.razorpaySubscriptionId, sub.id)).limit(1)
+      await db.select({ id: teams.id }).from(teams).where(eq(teams.razorpaySubscriptionId, sub.id)).limit(1)
     )[0]
     if (!row) {
       logger.warn({ subscriptionId: sub.id }, 'no team for razorpay subscription event')
@@ -162,9 +162,9 @@ function readTeamIdFromNotes(notes: RazorpaySubscription['notes']): string | und
 
 async function recordReferralConversionFromWebhook(teamId: string, plan: string) {
   try {
-    const team = (await db.select().from(teams).where(eq(teams.id, teamId)).limit(1))[0]
+    const team = (await db.select({ referralCodeId: teams.referralCodeId }).from(teams).where(eq(teams.id, teamId)).limit(1))[0]
     if (!team?.referralCodeId) return
-    const code = (await db.select().from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1))[0]
+    const code = (await db.select({ id: referralCodes.id, code: referralCodes.code, commissionPct: referralCodes.commissionPct }).from(referralCodes).where(eq(referralCodes.id, team.referralCodeId)).limit(1))[0]
     if (!code) return
     const mrrUsd = PLAN_BASE_MRR_USD[plan] ?? 0
     if (mrrUsd === 0) return
