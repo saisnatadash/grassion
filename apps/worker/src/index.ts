@@ -10,6 +10,7 @@ import { startOfWeekUtc, addDays } from '@grassion/shared'
 import { closeDb, auditLogs, llmUsageLog, outcomeCheckQueue, webhookEvents, lt, and, isNotNull } from '@grassion/db'
 import { db } from './db.js'
 import { computeBenchmarks } from './benchmarks.js'
+import { sendTrialReminderEmails } from './trial-reminder.js'
 
 // ─── Global error safety ────────────────────────────────────────────────────
 
@@ -131,6 +132,16 @@ cron.schedule('0 4 * * 0', async () => {
     logger.error({ err }, 'data retention job failed')
   }
 })
+
+// Trial expiry reminder — daily at 10am UTC.
+cron.schedule('0 10 * * *', async () => {
+  logger.info('cron: trial reminder tick')
+  try {
+    await sendTrialReminderEmails()
+  } catch (err) {
+    logger.error({ err }, 'trial reminder cron failed')
+  }
+}, { timezone: 'UTC' })
 
 // Weekly benchmark recomputation — Monday 5am UTC.
 cron.schedule('0 5 * * 1', () => {

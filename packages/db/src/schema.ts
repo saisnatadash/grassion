@@ -57,6 +57,7 @@ export const teams = pgTable('teams', {
   emailDigestHour: integer('email_digest_hour').default(9),
 
   lastDigestSentAt: timestamp('last_digest_sent_at'),
+  trialReminderSentAt: timestamp('trial_reminder_sent_at'),
 
   slackWebhookUrl: text('slack_webhook_url'),
 

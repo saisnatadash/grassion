@@ -7,6 +7,42 @@ import { db } from './db.js'
 import { env } from './env.js'
 import { logger } from './logger.js'
 
+// Routes that remain accessible even after a trial expires.
+const TRIAL_EXEMPT_PREFIXES = [
+  '/auth/',
+  '/api/billing',
+  '/api/team',
+  '/webhooks/',
+  '/health',
+  '/api/contact',
+]
+
+export async function requireActivePlan(req: Request, res: Response, next: NextFunction) {
+  const sess = req.session
+  if (!sess) { next(); return }
+
+  const path = req.path
+  if (TRIAL_EXEMPT_PREFIXES.some((p) => path.startsWith(p))) { next(); return }
+
+  try {
+    const row = (
+      await db
+        .select({ plan: teams.plan, trialEndsAt: teams.trialEndsAt })
+        .from(teams)
+        .where(eq(teams.id, sess.teamId))
+        .limit(1)
+    )[0]
+
+    if (row?.plan === 'trial' && row.trialEndsAt && row.trialEndsAt < new Date()) {
+      res.status(402).json({ error: 'trial_expired', message: 'Your free trial has ended. Upgrade to continue.' })
+      return
+    }
+  } catch (err) {
+    logger.error({ err }, 'requireActivePlan DB check failed — allowing request through')
+  }
+  next()
+}
+
 const SESSION_COOKIE = 'grassion_session'
 const SESSION_TTL_DAYS = 7
 

@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { sql } from 'drizzle-orm'
 import { db } from '../db.js'
+import { requireActivePlan } from '../auth.js'
 import { authRouter } from './auth.js'
 import { teamRouter } from './team.js'
 import { reposRouter } from './repos.js'
@@ -34,6 +35,8 @@ router.get('/health', async (_req: Request, res: Response) => {
   }
   res.json({ ok: true, db: dbStatus, tables: tablesOk, ts: new Date().toISOString() })
 })
+
+router.use(requireActivePlan)
 
 router.use(authRouter)
 router.use(teamRouter)
