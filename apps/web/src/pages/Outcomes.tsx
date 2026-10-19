@@ -152,7 +152,7 @@ function OutcomeRow({ item }: { item: PrOutcomeItem }) {
 export function OutcomesPage() {
   const [filter, setFilter] = useState<Filter>('all')
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['analytics', 'pr-outcomes', filter],
     queryFn: () => api.analytics.prOutcomes(filter),
     staleTime: 5 * 60 * 1000,
@@ -197,7 +197,11 @@ export function OutcomesPage() {
       ) : isError ? (
         <div className="rounded-xl border border-[#222] bg-[#111] p-8 text-center">
           <AlertTriangle className="mx-auto h-8 w-8 text-[#444] mb-3" />
-          <p className="text-[#666] text-sm">Could not load outcomes. Try again later.</p>
+          {(error as { status?: number } | null)?.status === 402 ? (
+            <p className="text-[#666] text-sm">Your free trial has ended. <a href="/billing" className="text-white underline">Upgrade</a> to view outcomes.</p>
+          ) : (
+            <p className="text-[#666] text-sm">Could not load outcomes. Try again later.</p>
+          )}
         </div>
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-[#222] bg-[#111] p-12 text-center">

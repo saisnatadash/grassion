@@ -31,6 +31,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     localStorage.removeItem('grassion_token')
     throw new ApiError(401, 'unauthorized')
   }
+  if (res.status === 402) {
+    throw new ApiError(402, 'trial_expired')
+  }
   if (!res.ok) {
     let body: unknown = null
     try {

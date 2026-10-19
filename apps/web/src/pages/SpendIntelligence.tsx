@@ -68,11 +68,32 @@ export function SpendIntelligencePage() {
     )
   }
 
-  if (seatWaste.isError || !seatWaste.data) {
+  if (seatWaste.isError) {
+    const err = seatWaste.error as { status?: number } | null
+    const isExpired = err?.status === 402
     return (
       <div className="space-y-4">
-        <Alert tone="red">Failed to load spend data. Check your connection and try again.</Alert>
-        <Button variant="secondary" onClick={() => seatWaste.refetch()}>Retry</Button>
+        <Alert tone="red">
+          {isExpired
+            ? 'Your free trial has ended. Upgrade to continue using AI Spend Intelligence.'
+            : 'Failed to load spend data. Check your connection and try again.'}
+        </Alert>
+        {isExpired ? (
+          <a href="/billing" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-[#e5e5e5] transition-colors">
+            Upgrade now
+          </a>
+        ) : (
+          <Button variant="secondary" onClick={() => seatWaste.refetch()}>Retry</Button>
+        )}
+      </div>
+    )
+  }
+
+  if (!seatWaste.data) {
+    return (
+      <div className="flex items-center justify-center gap-3 py-32 text-[#888888]">
+        <Spinner />
+        <span className="text-sm">Analysing AI spend…</span>
       </div>
     )
   }

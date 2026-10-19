@@ -66,7 +66,14 @@ export interface MeResponse {
     avgDevHourlyRateUsd: number
     timezone: string
     emailDigestEnabled: boolean
+    emailDigestDay: number
+    emailDigestHour: number
     slackWebhookUrl: string | null
+    perSeatCostUsd: number
+    toolSeatCosts: Record<string, number>
+    benchmarkingOptIn: boolean
+    teamSizeRange: string | null
+    industry: string | null
     demoMode: boolean
   }
 }

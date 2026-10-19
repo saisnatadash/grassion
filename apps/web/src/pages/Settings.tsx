@@ -174,8 +174,8 @@ function TeamSettings() {
         avgDevHourlyRateUsd: team.data.avgDevHourlyRateUsd,
         timezone: team.data.timezone,
         emailDigestEnabled: team.data.emailDigestEnabled,
-        emailDigestDay: (team.data as { emailDigestDay?: number }).emailDigestDay ?? 1,
-        emailDigestHour: (team.data as { emailDigestHour?: number }).emailDigestHour ?? 9,
+        emailDigestDay: team.data.emailDigestDay ?? 1,
+        emailDigestHour: team.data.emailDigestHour ?? 9,
       })
     }
   }, [team.data])
@@ -381,10 +381,9 @@ function AiToolCostsSection() {
   const [toast, setToast] = useState<'saved' | 'error' | null>(null)
 
   useEffect(() => {
-    const t = team.data as (typeof team.data & { perSeatCostUsd?: number; toolSeatCosts?: Record<string, number> }) | undefined
-    if (t) {
-      setPerSeat(t.perSeatCostUsd ?? 19)
-      const costs = t.toolSeatCosts ?? {}
+    if (team.data) {
+      setPerSeat(team.data.perSeatCostUsd ?? 19)
+      const costs = team.data.toolSeatCosts ?? {}
       setToolCosts(
         Object.fromEntries(
           TOOL_COST_FIELDS.map(({ id }) => [id, costs[id] !== undefined ? String(costs[id]) : '']),
@@ -487,7 +486,7 @@ function SlackSection() {
 
   useEffect(() => {
     if (team.data) {
-      setWebhookUrl((team.data as { slackWebhookUrl?: string | null }).slackWebhookUrl ?? '')
+      setWebhookUrl(team.data.slackWebhookUrl ?? '')
     }
   }, [team.data])
 
@@ -524,7 +523,7 @@ function SlackSection() {
     }
   }
 
-  const isConfigured = !!((team.data as { slackWebhookUrl?: string | null } | undefined)?.slackWebhookUrl)
+  const isConfigured = !!(team.data?.slackWebhookUrl)
   const hasLocalUrl = webhookUrl.trim().length > 0
 
   return (
@@ -570,7 +569,7 @@ function SlackSection() {
         {/* Preview */}
         <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
           <p className="text-xs text-[#555555] font-mono leading-relaxed">
-            📊 Weekly digest · Every {DAYS[(team.data as { emailDigestDay?: number } | undefined)?.emailDigestDay ?? 1]} {(team.data as { emailDigestHour?: number } | undefined)?.emailDigestHour ?? 9}:00 {(team.data as { timezone?: string } | undefined)?.timezone ?? 'UTC'}<br />
+            📊 Weekly digest · Every {DAYS[team.data?.emailDigestDay ?? 1]} {team.data?.emailDigestHour ?? 9}:00 {team.data?.timezone ?? 'UTC'}<br />
             Includes: ROI verdict, savings, health score, top performer<br />
             ⚠️ Instant alert when a PR is reverted<br />
             🔴 Alert when health score drops below 75<br />

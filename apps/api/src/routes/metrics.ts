@@ -196,7 +196,24 @@ metricsRouter.get('/api/metrics/summary', requireAuth, async (req: Request, res:
     try {
       cached = (
         await db
-          .select()
+          .select({
+            id: teamWeeklyMetrics.id,
+            teamId: teamWeeklyMetrics.teamId,
+            weekStart: teamWeeklyMetrics.weekStart,
+            totalPrs: teamWeeklyMetrics.totalPrs,
+            aiPrs: teamWeeklyMetrics.aiPrs,
+            humanPrs: teamWeeklyMetrics.humanPrs,
+            aiAvgMergeHours: teamWeeklyMetrics.aiAvgMergeHours,
+            humanAvgMergeHours: teamWeeklyMetrics.humanAvgMergeHours,
+            aiReworkRate: teamWeeklyMetrics.aiReworkRate,
+            humanReworkRate: teamWeeklyMetrics.humanReworkRate,
+            estimatedHoursSaved: teamWeeklyMetrics.estimatedHoursSaved,
+            estimatedHoursLost: teamWeeklyMetrics.estimatedHoursLost,
+            estimatedDollarSaved: teamWeeklyMetrics.estimatedDollarSaved,
+            estimatedDollarLost: teamWeeklyMetrics.estimatedDollarLost,
+            verdict: teamWeeklyMetrics.verdict,
+            computedAt: teamWeeklyMetrics.computedAt,
+          })
           .from(teamWeeklyMetrics)
           .where(and(eq(teamWeeklyMetrics.teamId, teamId), eq(teamWeeklyMetrics.weekStart, weekStart)))
           .limit(1)
@@ -416,7 +433,7 @@ async function liveSummary(
 ) {
   const weekEnd = addDays(weekStart, 7)
   const merged = await db
-    .select()
+    .select({ aiSource: pullRequests.aiSource })
     .from(pullRequests)
     .where(
       and(
