@@ -268,7 +268,8 @@ export function AppLayout() {
     qc.clear()
     localStorage.removeItem('grassion_token')
     localStorage.removeItem('grassion_onboarded')
-    window.location.href = 'https://grassion.com'
+    // ?force=true tells the API to pass login= to GitHub, showing the account chooser
+    window.location.href = '/login?signed_out=1'
   }
 
   const navLinks = [

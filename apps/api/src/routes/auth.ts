@@ -18,6 +18,7 @@ authRouter.get('/auth/github', (req: Request, res: Response) => {
   const e = env()
   // Read referral code from ?ref= query param, falling back to grassion_ref cookie
   const ref = (req.query.ref as string | undefined) ?? (req.cookies.grassion_ref as string | undefined) ?? ''
+  const force = req.query.force === 'true' || req.query.force === '1'
   const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
   githubAuthUrl.searchParams.set('client_id', e.GITHUB_APP_CLIENT_ID)
   githubAuthUrl.searchParams.set('redirect_uri', GITHUB_CALLBACK_URL)
@@ -25,6 +26,9 @@ authRouter.get('/auth/github', (req: Request, res: Response) => {
   // GitHub App isn't installed yet. GitHub App-type client IDs ignore `scope`.
   githubAuthUrl.searchParams.set('scope', 'read:user user:email repo')
   githubAuthUrl.searchParams.set('state', generateState(ref || undefined))
+  // Passing login= empty forces GitHub to show the account chooser / login page
+  // instead of silently re-using the existing GitHub session.
+  if (force) githubAuthUrl.searchParams.set('login', '')
   res.redirect(githubAuthUrl.toString())
 })
 
@@ -259,6 +263,15 @@ authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
         avgDevHourlyRateUsd: teams.avgDevHourlyRateUsd,
         timezone: teams.timezone,
         emailDigestEnabled: teams.emailDigestEnabled,
+        emailDigestDay: teams.emailDigestDay,
+        emailDigestHour: teams.emailDigestHour,
+        slackWebhookUrl: teams.slackWebhookUrl,
+        perSeatCostUsd: teams.perSeatCostUsd,
+        toolSeatCosts: teams.toolSeatCosts,
+        benchmarkingOptIn: teams.benchmarkingOptIn,
+        teamSizeRange: teams.teamSizeRange,
+        industry: teams.industry,
+        demoMode: teams.demoMode,
       })
       .from(teams)
       .where(eq(teams.id, sess.teamId))
@@ -288,6 +301,15 @@ authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
         avgDevHourlyRateUsd: t.avgDevHourlyRateUsd ?? 75,
         timezone: t.timezone ?? 'UTC',
         emailDigestEnabled: t.emailDigestEnabled ?? true,
+        emailDigestDay: t.emailDigestDay ?? 1,
+        emailDigestHour: t.emailDigestHour ?? 9,
+        slackWebhookUrl: t.slackWebhookUrl ?? null,
+        perSeatCostUsd: t.perSeatCostUsd ?? 19,
+        toolSeatCosts: (t.toolSeatCosts ?? {}) as Record<string, number>,
+        benchmarkingOptIn: t.benchmarkingOptIn ?? false,
+        teamSizeRange: t.teamSizeRange ?? null,
+        industry: t.industry ?? null,
+        demoMode: t.demoMode ?? false,
       },
     })
   } catch (err) {
