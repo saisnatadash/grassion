@@ -651,6 +651,91 @@ export type NewReferralCode = typeof referralCodes.$inferInsert
 export type ReferralConversion = typeof referralConversions.$inferSelect
 export type NewReferralConversion = typeof referralConversions.$inferInsert
 
+// ============ RFG: ANALYSIS RUNS ============
+export const rfgAnalysisRuns = pgTable(
+  'rfg_analysis_runs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    // 'pending' | 'running' | 'complete' | 'failed'
+    status: text('status').notNull().default('pending'),
+    cursor: integer('cursor').default(1),
+    sinceDate: timestamp('since_date').notNull(),
+    prsFetched: integer('prs_fetched').default(0),
+    error: text('error'),
+    startedAt: timestamp('started_at'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    repoIdx: index('rfg_runs_repo_idx').on(t.repoId),
+    teamIdx: index('rfg_runs_team_idx').on(t.teamId),
+    statusIdx: index('rfg_runs_status_idx').on(t.status),
+  }),
+)
+
+// ============ RFG: PR LABELS ============
+export const rfgPrLabels = pgTable(
+  'rfg_pr_labels',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    runId: uuid('run_id')
+      .references(() => rfgAnalysisRuns.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    prNumber: integer('pr_number').notNull(),
+    prTitle: text('pr_title').notNull(),
+    prMergedAt: timestamp('pr_merged_at').notNull(),
+    authorLogin: text('author_login'),
+    additions: integer('additions').default(0),
+    deletions: integer('deletions').default(0),
+    changedFiles: integer('changed_files').default(0),
+    hasTestChanges: boolean('has_test_changes').default(false),
+    // 'reverted' | 'hotfix' | null
+    label: text('label'),
+    labelReason: text('label_reason'),
+    revertPrNumber: integer('revert_pr_number'),
+    hotfixPrNumber: integer('hotfix_pr_number'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    runPrIdx: uniqueIndex('rfg_pr_labels_run_pr_idx').on(t.runId, t.prNumber),
+    repoIdx: index('rfg_pr_labels_repo_idx').on(t.repoId),
+    labelIdx: index('rfg_pr_labels_label_idx').on(t.repoId, t.label),
+  }),
+)
+
+// ============ RFG: PR FILE PATHS ============
+export const rfgPrFilePaths = pgTable(
+  'rfg_pr_file_paths',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    prLabelId: uuid('pr_label_id')
+      .references(() => rfgPrLabels.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    filePath: text('file_path').notNull(),
+    additions: integer('additions').default(0),
+    deletions: integer('deletions').default(0),
+  },
+  (t) => ({
+    prIdx: index('rfg_file_paths_pr_idx').on(t.prLabelId),
+    repoIdx: index('rfg_file_paths_repo_idx').on(t.repoId, t.filePath),
+  }),
+)
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -735,3 +820,10 @@ export type IndustryBenchmark = typeof industryBenchmarks.$inferSelect
 export type NewIndustryBenchmark = typeof industryBenchmarks.$inferInsert
 export type TeamBenchmarkContribution = typeof teamBenchmarkContributions.$inferSelect
 export type NewTeamBenchmarkContribution = typeof teamBenchmarkContributions.$inferInsert
+
+export type RfgAnalysisRun = typeof rfgAnalysisRuns.$inferSelect
+export type NewRfgAnalysisRun = typeof rfgAnalysisRuns.$inferInsert
+export type RfgPrLabel = typeof rfgPrLabels.$inferSelect
+export type NewRfgPrLabel = typeof rfgPrLabels.$inferInsert
+export type RfgPrFilePath = typeof rfgPrFilePaths.$inferSelect
+export type NewRfgPrFilePath = typeof rfgPrFilePaths.$inferInsert
