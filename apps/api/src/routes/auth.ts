@@ -12,7 +12,9 @@ import { logAuditEvent, getIp } from '../services/audit.js'
 
 export const authRouter = Router()
 
-const GITHUB_CALLBACK_URL = 'https://grassion-api.fly.dev/auth/github/callback'
+function getCallbackUrl() {
+  return `${env().API_URL.replace(/\/$/, '')}/auth/github/callback`
+}
 
 authRouter.get('/auth/github', (req: Request, res: Response) => {
   const e = env()
@@ -21,7 +23,7 @@ authRouter.get('/auth/github', (req: Request, res: Response) => {
   const force = req.query.force === 'true' || req.query.force === '1'
   const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
   githubAuthUrl.searchParams.set('client_id', e.GITHUB_APP_CLIENT_ID)
-  githubAuthUrl.searchParams.set('redirect_uri', GITHUB_CALLBACK_URL)
+  githubAuthUrl.searchParams.set('redirect_uri', getCallbackUrl())
   // `repo` lets the OAuth-token fallback list/read private repos when the
   // GitHub App isn't installed yet. GitHub App-type client IDs ignore `scope`.
   githubAuthUrl.searchParams.set('scope', 'read:user user:email repo')
@@ -67,7 +69,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
         client_id: e.GITHUB_APP_CLIENT_ID,
         client_secret: e.GITHUB_APP_CLIENT_SECRET,
         code,
-        redirect_uri: GITHUB_CALLBACK_URL,
+        redirect_uri: getCallbackUrl(),
       }),
     })
     clearTimeout(abortTimer)
