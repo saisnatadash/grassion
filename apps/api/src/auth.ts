@@ -12,9 +12,12 @@ const TRIAL_EXEMPT_PREFIXES = [
   '/auth/',
   '/api/billing',
   '/api/team',
+  '/api/repos',
+  '/api/notifications',
   '/webhooks/',
   '/health',
   '/api/contact',
+  '/api/demo',
 ]
 
 export async function requireActivePlan(req: Request, res: Response, next: NextFunction) {

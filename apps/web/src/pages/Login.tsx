@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'https://grassion-api.fly.dev'
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'https://grassion-api.fly.dev'
 
 function githubUrl(force = false) {
   return `${API_URL}/auth/github${force ? '?force=true' : ''}`

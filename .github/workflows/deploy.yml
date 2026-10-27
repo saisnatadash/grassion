@@ -87,6 +87,8 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://grassion-api.fly.dev' }}
       - name: Package and deploy web to Vercel
         working-directory: apps/web
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://grassion-api.fly.dev' }}
         run: |
           npx vercel build --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
           npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}

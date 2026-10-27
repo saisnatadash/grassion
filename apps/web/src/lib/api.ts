@@ -11,7 +11,7 @@ import type {
   ContactInput,
 } from '@grassion/shared'
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'https://grassion-api.fly.dev'
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('grassion_token')

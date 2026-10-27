@@ -175,6 +175,24 @@ export function DashboardPage() {
   }
 
   if (summary.isError) {
+    const errStatus = (summary.error as { status?: number } | null)?.status
+    if (errStatus === 402) {
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
+          <div className="rounded-full bg-yellow-500/10 p-4">
+            <Lock className="h-8 w-8 text-yellow-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white mb-2">Your free trial has ended</h2>
+            <p className="text-sm text-[#666] max-w-sm">Upgrade to continue viewing your AI ROI metrics and analytics.</p>
+          </div>
+          <Link to="/billing" className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-white/90 transition-colors">
+            <Zap className="h-4 w-4" />
+            Upgrade now
+          </Link>
+        </div>
+      )
+    }
     return (
       <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
         Failed to load metrics. Please refresh.

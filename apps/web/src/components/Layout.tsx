@@ -8,7 +8,7 @@ import {
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'https://grassion-api.fly.dev'
 
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
