@@ -211,8 +211,9 @@ export function DashboardPage() {
   const hasVerdict = data.verdict !== 'insufficient_data'
   const showProgressBar = !localStorage.getItem('onboarding_complete')
   const demoMode = team.data?.demoMode ?? false
-  const canUseDemoMode = isTrial || demoMode
   const hasPrs = totalMergedAllTime > 0 || hasChartData
+  // Allow demo data seeding whenever there's no real PR data yet (not just on trial)
+  const canUseDemoMode = !hasPrs || isTrial || demoMode
 
   // Empty state: no repos connected yet (skip if repos errored — show dashboard anyway)
   if (!repos.isLoading && !repos.isError && !hasRepos) {
@@ -255,32 +256,38 @@ export function DashboardPage() {
         />
       )}
 
-      {/* ── DEMO BANNER: repos connected but no PRs yet ── */}
+      {/* ── REPO CONNECTED CONFIRMATION + no PRs yet ── */}
       {!hasPrs && hasRepos && !demoMode && (
-        <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-5 py-5">
+        <div className="rounded-xl border border-green-500/20 bg-green-500/5 px-5 py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-blue-300 mb-1">No data yet</p>
-              <p className="text-sm text-[#888]">
-                Waiting for your first merged PR. While you wait, try the demo to see what Grassion looks like with real data.
-              </p>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-300 mb-1">
+                  {repos.data?.length === 1
+                    ? `${repos.data[0]!.owner}/${repos.data[0]!.name} connected ✓`
+                    : `${repos.data?.length ?? 0} repos connected ✓`}
+                </p>
+                <p className="text-sm text-[#888]">
+                  Waiting for merged PRs to arrive via webhook. New PRs appear within seconds of merging.
+                  Load demo data to see a preview now.
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
-              {canUseDemoMode && (
-                <button
-                  onClick={() => seedMutation.mutate()}
-                  disabled={seedMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 transition-colors disabled:opacity-50"
-                >
-                  <FlaskConical className="h-3.5 w-3.5" />
-                  {seedMutation.isPending ? 'Loading…' : 'Load Demo Data'}
-                </button>
-              )}
+              <button
+                onClick={() => seedMutation.mutate()}
+                disabled={seedMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 transition-colors disabled:opacity-50"
+              >
+                <FlaskConical className="h-3.5 w-3.5" />
+                {seedMutation.isPending ? 'Loading…' : 'Load Demo Data'}
+              </button>
               <Link
                 to="/settings"
                 className="inline-flex items-center gap-2 rounded-lg border border-[#333] bg-[#111] px-4 py-2 text-sm font-medium text-[#aaa] hover:text-white hover:border-white/30 transition-colors"
               >
-                Connect Real Repo
+                Manage Repos
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
