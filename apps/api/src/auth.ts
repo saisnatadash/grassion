@@ -8,12 +8,18 @@ import { env } from './env.js'
 import { logger } from './logger.js'
 
 // Routes that remain accessible even after a trial expires.
+// Analytics and metrics are read-only — blocking them after trial expiry
+// breaks demo mode and leaves users with zero visibility into their own data.
+// Feature gating (CSV export, extra repos, etc.) is enforced in the UI by plan checks.
 const TRIAL_EXEMPT_PREFIXES = [
   '/auth/',
   '/api/billing',
   '/api/team',
   '/api/repos',
   '/api/notifications',
+  '/api/analytics',
+  '/api/metrics',
+  '/api/prs',
   '/webhooks/',
   '/health',
   '/api/contact',
