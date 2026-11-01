@@ -24,6 +24,7 @@ const TRIAL_EXEMPT_PREFIXES = [
   '/health',
   '/api/contact',
   '/api/demo',
+  '/api/hc',
 ]
 
 export async function requireActivePlan(req: Request, res: Response, next: NextFunction) {

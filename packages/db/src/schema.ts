@@ -919,6 +919,28 @@ export const hcBackfillRuns = pgTable(
   }),
 )
 
+// Shareable read-only links to HC reports (expire in 14 days).
+export const hcShareTokens = pgTable(
+  'hc_share_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    token: text('token').notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdBy: text('created_by').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    tokenIdx: uniqueIndex('hc_share_tokens_token_idx').on(t.token),
+    expiresIdx: index('hc_share_tokens_expires_idx').on(t.expiresAt),
+  }),
+)
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -1025,3 +1047,5 @@ export type HcUnderstandingAnswer = typeof hcUnderstandingAnswers.$inferSelect
 export type NewHcUnderstandingAnswer = typeof hcUnderstandingAnswers.$inferInsert
 export type HcBackfillRun = typeof hcBackfillRuns.$inferSelect
 export type NewHcBackfillRun = typeof hcBackfillRuns.$inferInsert
+export type HcShareToken = typeof hcShareTokens.$inferSelect
+export type NewHcShareToken = typeof hcShareTokens.$inferInsert

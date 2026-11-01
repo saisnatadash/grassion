@@ -14,6 +14,8 @@ import { OutcomesPage } from './pages/Outcomes.js'
 import { SecurityPage } from './pages/Security.js'
 import { AuthCallbackPage } from './pages/AuthCallback.js'
 import { NotFoundPage } from './pages/NotFound.js'
+import { DarkCodeReportPage } from './pages/DarkCodeReport.js'
+import { DarkCodeReportShared } from './pages/DarkCodeReportShared.js'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,7 +61,9 @@ export function App() {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/dark-code" element={<DarkCodeReportPage />} />
           </Route>
+          <Route path="/report/share/:token" element={<DarkCodeReportShared />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>

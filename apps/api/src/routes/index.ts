@@ -16,6 +16,7 @@ import { securityRouter } from './security.js'
 import { slackRouter } from './slack.js'
 import { demoRouter } from './demo.js'
 import { rfgRouter } from './rfg.js'
+import { hcRouter } from './hc.js'
 
 export const router = Router()
 
@@ -53,3 +54,4 @@ router.use(securityRouter)
 router.use(slackRouter)
 router.use(demoRouter)
 router.use(rfgRouter)
+router.use(hcRouter)

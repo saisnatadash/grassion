@@ -3,7 +3,7 @@ import { Link, NavLink, Navigate, Outlet, useNavigate, useLocation } from 'react
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
   ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard,
-  Shield, Activity, GitPullRequest, Bell, CheckCheck, XCircle, Zap,
+  Shield, Activity, GitPullRequest, Bell, CheckCheck, XCircle, Zap, EyeOff,
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
@@ -277,6 +277,7 @@ export function AppLayout() {
     { to: '/spend-intelligence', label: 'AI Spend', icon: DollarSign, badge: spendBadge },
     { to: '/health', label: 'Health', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
     { to: '/outcomes', label: 'Outcomes', icon: GitPullRequest, badge: null as number | null },
+    { to: '/dark-code', label: 'Dark Code', icon: EyeOff, badge: null as number | null },
     { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
   ]
 
