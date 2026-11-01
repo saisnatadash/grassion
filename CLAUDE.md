@@ -51,3 +51,4 @@ pnpm db:migrate                 # apply migrations against $DATABASE_URL
 - Don't bake secrets into Dockerfiles or env defaults.
 - Don't introduce LLM calls outside the worker's `llm/pr-summary.ts` flow — that's the only sanctioned use of OpenAI in v1, and it carries a budget guard.
 - Don't reintroduce Stripe code in v1. Razorpay is the primary processor; Stripe is deferred per SPEC2.md.
+- **Human Coverage privacy rule (hard):** never read, store, or send source code or diff patches. From the GitHub "list pull request files" API, store only `filename`, `status`, `additions`, `deletions`. Ignore and never persist the `patch` field. Store PR/review/comment metadata and short user-entered answers only.

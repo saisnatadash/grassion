@@ -1,0 +1,23 @@
+{
+  "10": [
+    { "filename": "src/auth/jwt.ts", "status": "added", "additions": 80, "deletions": 0 },
+    { "filename": "src/auth/middleware.ts", "status": "added", "additions": 30, "deletions": 0 },
+    { "filename": "src/routes/auth.ts", "status": "modified", "additions": 10, "deletions": 5 }
+  ],
+  "11": [
+    { "filename": "apps/web/src/Dashboard.tsx", "status": "added", "additions": 280, "deletions": 0 },
+    { "filename": "apps/web/src/components/Chart.tsx", "status": "added", "additions": 70, "deletions": 0 }
+  ],
+  "12": [
+    { "filename": "src/auth/jwt.ts", "status": "deleted", "additions": 0, "deletions": 80 },
+    { "filename": "src/auth/middleware.ts", "status": "deleted", "additions": 0, "deletions": 30 },
+    { "filename": "src/routes/auth.ts", "status": "modified", "additions": 5, "deletions": 10 }
+  ],
+  "13": [
+    { "filename": "src/auth/jwt.ts", "status": "modified", "additions": 20, "deletions": 3 }
+  ],
+  "14": [
+    { "filename": "src/services/user.ts", "status": "modified", "additions": 25, "deletions": 25 },
+    { "filename": "src/services/team.ts", "status": "modified", "additions": 25, "deletions": 25 }
+  ]
+}

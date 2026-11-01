@@ -736,6 +736,189 @@ export const rfgPrFilePaths = pgTable(
   }),
 )
 
+// ============ HUMAN COVERAGE ============
+// Privacy: never store source code or diff patches.
+// From GitHub PR files API: filename, status, additions, deletions only. Patch field never persisted.
+
+export const hcPeople = pgTable(
+  'hc_people',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    githubLogin: text('github_login').notNull(),
+    githubId: integer('github_id'),
+    isActive: boolean('is_active').default(true).notNull(),
+    leftAt: timestamp('left_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    orgLoginIdx: uniqueIndex('hc_people_org_login_idx').on(t.orgId, t.githubLogin),
+  }),
+)
+
+export const hcCodeAreas = pgTable(
+  'hc_code_areas',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Top-2 directory levels by default, e.g. "src/services"
+    path: text('path').notNull(),
+    isCritical: boolean('is_critical').default(false).notNull(),
+    lastChangedAt: timestamp('last_changed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    orgRepoPathIdx: uniqueIndex('hc_code_areas_org_repo_path_idx').on(t.orgId, t.repoId, t.path),
+    orgRepoIdx: index('hc_code_areas_org_repo_idx').on(t.orgId, t.repoId),
+  }),
+)
+
+// type: incident_fix | successful_edit | substantive_review |
+//       answered_question | understanding_click | explain_back | large_ai_change_unreviewed
+export const hcEvidenceEvents = pgTable(
+  'hc_evidence_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    personId: uuid('person_id')
+      .references(() => hcPeople.id, { onDelete: 'cascade' })
+      .notNull(),
+    areaId: uuid('area_id')
+      .references(() => hcCodeAreas.id, { onDelete: 'cascade' })
+      .notNull(),
+    type: text('type').notNull(),
+    weight: real('weight').default(1.0).notNull(),
+    occurredAt: timestamp('occurred_at').notNull(),
+    sourceUrl: text('source_url'),
+    prNumber: integer('pr_number'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    // Dedup on resume: one event per person+area+type+pr
+    personAreaTypePrIdx: uniqueIndex('hc_evidence_person_area_type_pr_idx').on(
+      t.personId,
+      t.areaId,
+      t.type,
+      t.prNumber,
+    ),
+    orgOccurredIdx: index('hc_evidence_org_occurred_idx').on(t.orgId, t.occurredAt),
+    personAreaIdx: index('hc_evidence_person_area_idx').on(t.personId, t.areaId),
+  }),
+)
+
+// state: candidate | confirmed | obsolete
+export const hcFailures = pgTable(
+  'hc_failures',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    areaIds: jsonb('area_ids').default([]).$type<string[]>().notNull(),
+    originalPr: integer('original_pr'),
+    revertPr: integer('revert_pr'),
+    fixPr: integer('fix_pr'),
+    testNames: jsonb('test_names').default([]).$type<string[]>().notNull(),
+    state: text('state').default('candidate').notNull(),
+    confirmedBy: text('confirmed_by'),
+    confirmedAt: timestamp('confirmed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    originalPrIdx: uniqueIndex('hc_failures_original_pr_idx').on(
+      t.orgId,
+      t.repoId,
+      t.originalPr,
+    ),
+    orgRepoIdx: index('hc_failures_org_repo_idx').on(t.orgId, t.repoId),
+    stateIdx: index('hc_failures_state_idx').on(t.orgId, t.state),
+  }),
+)
+
+export const hcCoverageSnapshots = pgTable(
+  'hc_coverage_snapshots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    areaId: uuid('area_id')
+      .references(() => hcCodeAreas.id, { onDelete: 'cascade' })
+      .notNull(),
+    coverageCount: integer('coverage_count').default(0).notNull(),
+    // [{githubLogin: string, weight: number}]
+    people: jsonb('people').default([]).$type<Array<{ githubLogin: string; weight: number }>>().notNull(),
+    dark: boolean('dark').default(false).notNull(),
+    fragile: boolean('fragile').default(false).notNull(),
+    computedAt: timestamp('computed_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    orgAreaIdx: index('hc_snapshots_org_area_idx').on(t.orgId, t.areaId),
+    orgComputedIdx: index('hc_snapshots_computed_idx').on(t.orgId, t.computedAt),
+  }),
+)
+
+// answer: understand | partly | ai_wrote_it
+export const hcUnderstandingAnswers = pgTable(
+  'hc_understanding_answers',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    prNumber: integer('pr_number').notNull(),
+    personId: uuid('person_id')
+      .references(() => hcPeople.id, { onDelete: 'cascade' })
+      .notNull(),
+    answer: text('answer').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    personPrIdx: uniqueIndex('hc_answers_person_pr_idx').on(t.personId, t.prNumber),
+    orgIdx: index('hc_answers_org_idx').on(t.orgId),
+  }),
+)
+
+// Tracks backfill job state so it can resume after crashes or rate-limit pauses.
+// status: pending | running | complete | failed
+export const hcBackfillRuns = pgTable(
+  'hc_backfill_runs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    status: text('status').default('pending').notNull(),
+    sinceDate: timestamp('since_date').notNull(),
+    // Phase-2 cursor: last fully-processed page number (phase 1 is always re-run on resume).
+    lastProcessedPage: integer('last_processed_page').default(0).notNull(),
+    prsFetched: integer('prs_fetched').default(0).notNull(),
+    evidenceCreated: integer('evidence_created').default(0).notNull(),
+    error: text('error'),
+    startedAt: timestamp('started_at'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    repoStatusIdx: index('hc_backfill_repo_status_idx').on(t.repoId, t.status),
+  }),
+)
+
 // ============ RELATIONS ============
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -827,3 +1010,18 @@ export type RfgPrLabel = typeof rfgPrLabels.$inferSelect
 export type NewRfgPrLabel = typeof rfgPrLabels.$inferInsert
 export type RfgPrFilePath = typeof rfgPrFilePaths.$inferSelect
 export type NewRfgPrFilePath = typeof rfgPrFilePaths.$inferInsert
+
+export type HcPerson = typeof hcPeople.$inferSelect
+export type NewHcPerson = typeof hcPeople.$inferInsert
+export type HcCodeArea = typeof hcCodeAreas.$inferSelect
+export type NewHcCodeArea = typeof hcCodeAreas.$inferInsert
+export type HcEvidenceEvent = typeof hcEvidenceEvents.$inferSelect
+export type NewHcEvidenceEvent = typeof hcEvidenceEvents.$inferInsert
+export type HcFailure = typeof hcFailures.$inferSelect
+export type NewHcFailure = typeof hcFailures.$inferInsert
+export type HcCoverageSnapshot = typeof hcCoverageSnapshots.$inferSelect
+export type NewHcCoverageSnapshot = typeof hcCoverageSnapshots.$inferInsert
+export type HcUnderstandingAnswer = typeof hcUnderstandingAnswers.$inferSelect
+export type NewHcUnderstandingAnswer = typeof hcUnderstandingAnswers.$inferInsert
+export type HcBackfillRun = typeof hcBackfillRuns.$inferSelect
+export type NewHcBackfillRun = typeof hcBackfillRuns.$inferInsert

@@ -1,0 +1,54 @@
+{
+  "10": [
+    {
+      "commit": {
+        "message": "feat: initial auth endpoint",
+        "committer": { "date": "2026-09-29T12:00:00Z" },
+        "author": { "date": "2026-09-29T12:00:00Z" }
+      }
+    },
+    {
+      "commit": {
+        "message": "fix: address review comments",
+        "committer": { "date": "2026-09-30T14:00:00Z" },
+        "author": { "date": "2026-09-30T14:00:00Z" }
+      }
+    }
+  ],
+  "11": [
+    {
+      "commit": {
+        "message": "feat: add dashboard\n\nCo-authored-by: Copilot <Copilot@users.noreply.github.com>",
+        "committer": { "date": "2026-10-04T10:00:00Z" },
+        "author": { "date": "2026-10-04T10:00:00Z" }
+      }
+    }
+  ],
+  "12": [
+    {
+      "commit": {
+        "message": "Revert \"feat: add user auth endpoint\"",
+        "committer": { "date": "2026-10-07T14:00:00Z" },
+        "author": { "date": "2026-10-07T14:00:00Z" }
+      }
+    }
+  ],
+  "13": [
+    {
+      "commit": {
+        "message": "hotfix: patch auth token expiry",
+        "committer": { "date": "2026-10-08T02:00:00Z" },
+        "author": { "date": "2026-10-08T02:00:00Z" }
+      }
+    }
+  ],
+  "14": [
+    {
+      "commit": {
+        "message": "refactor: clean up user service",
+        "committer": { "date": "2026-10-09T09:00:00Z" },
+        "author": { "date": "2026-10-09T09:00:00Z" }
+      }
+    }
+  ]
+}
