@@ -89,11 +89,11 @@ async function mockApiRoutes(page: Page) {
 }
 
 async function mockShareRoute(page: Page) {
+  // API does NOT echo back the token — only the report data + expiresAt
   await page.route('**/api/hc/share/test-share-token-abc', (r) =>
     r.fulfill({
       json: {
         ...mockReport,
-        shareToken: 'test-share-token-abc',
         expiresAt: new Date(Date.now() + 14 * 86_400_000).toISOString(),
       },
     }),

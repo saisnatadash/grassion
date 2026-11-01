@@ -128,11 +128,11 @@ async function fetchPrDetail(
   repoName: string,
   prNumber: number,
 ): Promise<PrDetail> {
-  const [filesRes, reviewsRes, commitsRes] = await Promise.all([
-    octokit.pulls.listFiles({ owner, repo: repoName, pull_number: prNumber, per_page: 100 }),
-    octokit.pulls.listReviews({ owner, repo: repoName, pull_number: prNumber }),
-    octokit.pulls.listCommits({ owner, repo: repoName, pull_number: prNumber }),
-  ])
+  // Serialised — not concurrent — to stay well within GitHub App secondary rate limits.
+  // (3 concurrent calls × N PRs/80ms was ~37 req/s, over the 5 000/hr installation cap.)
+  const filesRes = await octokit.pulls.listFiles({ owner, repo: repoName, pull_number: prNumber, per_page: 100 })
+  const reviewsRes = await octokit.pulls.listReviews({ owner, repo: repoName, pull_number: prNumber })
+  const commitsRes = await octokit.pulls.listCommits({ owner, repo: repoName, pull_number: prNumber })
 
   // PRIVACY: sanitize every file entry — patch field is stripped here.
   const files = filesRes.data.map((f) => sanitizeFile(f))
@@ -462,7 +462,8 @@ export async function backfillCoverageForRepo(
           if (inserted) evidenceCount++
         }
 
-        await sleep(80)
+        // ~3 sequential calls per PR at ~300 ms apart ≈ 10 calls/sec ≈ 600/min — safe under 5 000/hr cap.
+        await sleep(300)
       }
 
       await db

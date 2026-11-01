@@ -319,8 +319,8 @@ hcRouter.post('/api/hc/:repoId/share', requireAuth, async (req: Request, res: Re
 hcRouter.get('/api/hc/share/:token', async (req: Request, res: Response) => {
   const { token } = req.params as { token: string }
 
-  // Clean up expired tokens opportunistically
-  await db.delete(hcShareTokens).where(lt(hcShareTokens.expiresAt, new Date())).catch(() => {})
+  // Clean up expired tokens fire-and-forget — don't block this request on it.
+  db.delete(hcShareTokens).where(lt(hcShareTokens.expiresAt, new Date())).catch(() => {})
 
   const tokenRows = await db
     .select()
@@ -340,5 +340,6 @@ hcRouter.get('/api/hc/share/:token', async (req: Request, res: Response) => {
     return
   }
 
-  res.json({ ...report, shareToken: token, expiresAt: tokenRow.expiresAt.toISOString() })
+  // Do NOT echo the token back — it's already in the URL.
+  res.json({ ...report, expiresAt: tokenRow.expiresAt.toISOString() })
 })
