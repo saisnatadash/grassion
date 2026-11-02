@@ -7,10 +7,30 @@ import { db } from './db.js'
 import { env } from './env.js'
 import { logger } from './logger.js'
 
-// Routes that remain accessible even after a trial expires.
-// Analytics and metrics are read-only — blocking them after trial expiry
-// breaks demo mode and leaves users with zero visibility into their own data.
-// Feature gating (CSV export, extra repos, etc.) is enforced in the UI by plan checks.
+// ── Plan tier helpers ──────────────────────────────────────────────────────────
+// Valid plans: free | pro | business | enterprise
+// Legacy values (trial | starter | growth) are mapped to their nearest equivalent.
+
+export function isFreePlan(plan: string): boolean {
+  return plan === 'free'
+}
+
+export function isProOrAbove(plan: string): boolean {
+  // 'team' and 'growth' are legacy names for pro-tier plans.
+  return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
+}
+
+export function isBusinessOrAbove(plan: string): boolean {
+  return plan === 'business' || plan === 'enterprise'
+}
+
+export function isEnterprisePlan(plan: string): boolean {
+  return plan === 'enterprise'
+}
+
+// ── Routes that remain accessible even after a trial expires / on free plan. ──
+// Analytics and metrics are read-only — blocking them breaks demo mode.
+// Feature gating is enforced per-route for Pro/Business/Enterprise features.
 const TRIAL_EXEMPT_PREFIXES = [
   '/auth/',
   '/api/billing',
@@ -43,6 +63,7 @@ export async function requireActivePlan(req: Request, res: Response, next: NextF
         .limit(1)
     )[0]
 
+    // Legacy: block expired trials. New 'free' plan is always active.
     if (row?.plan === 'trial' && row.trialEndsAt && row.trialEndsAt < new Date()) {
       res.status(402).json({ error: 'trial_expired', message: 'Your free trial has ended. Upgrade to continue.' })
       return

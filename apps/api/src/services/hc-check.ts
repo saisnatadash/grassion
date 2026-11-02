@@ -26,7 +26,8 @@ import { logger } from '../logger.js'
 type OctokitInstance = Awaited<ReturnType<typeof getInstallationOctokit>>
 
 export function isProPlan(plan: string): boolean {
-  return plan === 'team' || plan === 'business'
+  // Accepts new tier names (pro, business, enterprise) and legacy names (team, growth).
+  return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
 }
 
 // ── Coverage lookup ────────────────────────────────────────────────────────────

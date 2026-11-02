@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { Router, type Request, type Response } from 'express'
 import { eq, and, inArray, desc, asc, lt } from 'drizzle-orm'
 import {
+  teams,
   repos,
   hcPeople,
   hcCodeAreas,
@@ -14,7 +15,7 @@ import {
   type HcCodeArea,
 } from '@grassion/db'
 import { db } from '../db.js'
-import { requireAuth } from '../auth.js'
+import { requireAuth, isProOrAbove } from '../auth.js'
 import { logger } from '../logger.js'
 
 export const hcRouter = Router()
@@ -219,16 +220,40 @@ hcRouter.get('/api/hc/:repoId/report', requireAuth, async (req: Request, res: Re
   const sess = req.session!
   const { repoId } = req.params as { repoId: string }
 
+  const [teamRow] = await db
+    .select({ plan: teams.plan })
+    .from(teams)
+    .where(eq(teams.id, sess.teamId))
+    .limit(1)
+
+  const plan = teamRow?.plan ?? 'free'
+  const isPro = isProOrAbove(plan)
+
   const report = await buildReport(sess.teamId, repoId)
   if (!report) {
     res.status(404).json({ error: 'repo_not_found' })
     return
   }
+
+  // Free plan: blur all but the top 3 fragile-and-dark areas; hide offboarding view.
+  if (!isPro) {
+    const FREE_VISIBLE = 3
+    const blurredCount = Math.max(0, report.fragileAndDark.length - FREE_VISIBLE)
+    return res.json({
+      ...report,
+      fragileAndDark: report.fragileAndDark.slice(0, FREE_VISIBLE),
+      blurredCount,
+      offboarding: [],
+      planGate: blurredCount > 0 ? 'Upgrade to Pro to see all fragile areas.' : null,
+    })
+  }
+
   res.json(report)
 })
 
 // POST /api/hc/:repoId/failures/:failureId/verdict
 // body: { verdict: 'confirmed' | 'dismissed' }
+// Requires Pro plan.
 hcRouter.post(
   '/api/hc/:repoId/failures/:failureId/verdict',
   requireAuth,
@@ -236,6 +261,16 @@ hcRouter.post(
     const sess = req.session!
     const { repoId, failureId } = req.params as { repoId: string; failureId: string }
     const { verdict } = req.body as { verdict?: string }
+
+    const [teamRow] = await db
+      .select({ plan: teams.plan })
+      .from(teams)
+      .where(eq(teams.id, sess.teamId))
+      .limit(1)
+    if (!isProOrAbove(teamRow?.plan ?? '')) {
+      res.status(403).json({ error: 'plan_required', message: 'Failure confirmation requires a Pro plan.' })
+      return
+    }
 
     if (verdict !== 'confirmed' && verdict !== 'dismissed') {
       res.status(400).json({ error: 'invalid_verdict', message: 'verdict must be confirmed or dismissed' })
@@ -318,6 +353,7 @@ hcRouter.post('/api/hc/:repoId/share', requireAuth, async (req: Request, res: Re
 // ── Dispute endpoints ─────────────────────────────────────────────────────────
 
 // POST /api/hc/:repoId/evidence/:evidenceId/dispute
+// Requires Pro plan.
 hcRouter.post(
   '/api/hc/:repoId/evidence/:evidenceId/dispute',
   requireAuth,
@@ -325,6 +361,16 @@ hcRouter.post(
     const sess = req.session!
     const { repoId, evidenceId } = req.params as { repoId: string; evidenceId: string }
     const { reason } = req.body as { reason?: string }
+
+    const [teamRow] = await db
+      .select({ plan: teams.plan })
+      .from(teams)
+      .where(eq(teams.id, sess.teamId))
+      .limit(1)
+    if (!isProOrAbove(teamRow?.plan ?? '')) {
+      res.status(403).json({ error: 'plan_required', message: 'Evidence disputes require a Pro plan.' })
+      return
+    }
 
     if (!reason || reason.trim().length === 0) {
       res.status(400).json({ error: 'missing_reason' })

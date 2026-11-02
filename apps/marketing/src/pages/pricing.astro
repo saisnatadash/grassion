@@ -8,7 +8,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing · Grassion</title>
-  <meta name="description" content="Simple team-based pricing. Includes seats, not per-seat overhead. 14-day free trial. No credit card required." />
+  <meta name="description" content="Free forever for small teams. Pro at $10/dev/mo (₹599 in India). Business and Enterprise for compliance and self-hosting." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
@@ -57,17 +57,10 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     .cta-btn { cursor: pointer; }
     .cta-btn:hover { color: var(--black); opacity: 0.85; }
 
-    .logo-link {
-      position: fixed;
-      top: 20px; left: 24px;
-      z-index: 1000;
-    }
-    .logo-link img { height: 36px; display: block; }
-
     /* ── MAIN ───────────────────────────────── */
     main {
       padding: 120px 52px 80px;
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
     }
 
@@ -159,18 +152,19 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       line-height: 1;
     }
 
+    .plan-price-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.38);
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
     .plan-seats {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
       color: rgba(255,255,255,0.55);
       margin-bottom: 4px;
-    }
-
-    .plan-extra {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      color: rgba(255,255,255,0.38);
-      margin-bottom: 8px;
     }
 
     .plan-best {
@@ -293,6 +287,45 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       font-weight: 400;
     }
 
+    /* ── PRIVACY SECTION ────────────────────── */
+    .privacy-section {
+      border: 1px solid var(--line);
+      padding: 28px 32px;
+      margin-bottom: 60px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .privacy-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 16px;
+    }
+
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 40px;
+    }
+
+    .privacy-item {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.6;
+      display: flex;
+      gap: 10px;
+    }
+
+    .privacy-item::before {
+      content: '·';
+      color: rgba(255,255,255,0.40);
+      flex-shrink: 0;
+    }
+
     /* ── FAQ ────────────────────────────────── */
     .faq-section { margin-bottom: 60px; }
 
@@ -374,45 +407,13 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     }
     footer a:hover { color: var(--white); }
 
-    /* ── FLOATING ELEMENT ───────────────────── */
-    .float-badge {
-      position: fixed;
-      bottom: 80px;
-      right: 28px;
-      background: rgba(10,10,10,0.95);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-family: 'DM Mono', monospace;
-      backdrop-filter: blur(12px);
-      z-index: 50;
-      animation: floatBadge 4s ease-in-out infinite;
-    }
-    @keyframes floatBadge {
-      0%,100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
-    }
-    .float-badge-label {
-      font-size: 8px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.35);
-      margin-bottom: 4px;
-    }
-    .float-badge-value {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--white);
-    }
-
     /* ── MOBILE ─────────────────────────────── */
     @media (max-width: 1023px) {
       .plans-grid { grid-template-columns: repeat(2, 1fr); }
+      .privacy-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 767px) {
-      .logo-link { top: 14px; left: 16px; }
-      .logo-link img { height: 28px; }
       header { padding: 14px 16px; }
       nav { gap: 16px; }
 
@@ -424,9 +425,9 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
       .payment-note { flex-direction: column; align-items: flex-start; }
 
-      footer { padding: 16px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .privacy-section { padding: 20px; }
 
-      .float-badge { display: none; }
+      footer { padding: 16px 24px; flex-direction: column; gap: 8px; text-align: center; }
     }
   </style>
 </head>
@@ -444,57 +445,58 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
   <main>
     <div class="eyebrow">Pricing</div>
-    <h1>Flat monthly price.<br />Seats included.</h1>
+    <h1>Start free.<br />Scale with your team.</h1>
     <p class="hero-sub">
-      Each plan includes a seat bundle. Add extras at a low per-seat rate.<br />
-      14-day free trial · no credit card required · cancel anytime.
+      Free forever for small teams. Pro at $10 per active developer per month (₹599 in India).<br />
+      14-day trial on Pro · no credit card required · cancel anytime.
     </p>
 
     <!-- PLAN CARDS -->
     <div class="plans-grid">
 
-      <!-- Starter -->
+      <!-- Free -->
       <div class="plan-card">
-        <div class="plan-name">Starter</div>
-        <div class="plan-price">$49</div>
-        <div class="plan-seats">Includes 10 seats</div>
-        <div class="plan-extra">Extra seats $5/dev/mo</div>
-        <div class="plan-best">Best for 1–10 devs</div>
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0</div>
+        <div class="plan-price-sub">forever</div>
+        <div class="plan-seats">Up to 10 active developers</div>
+        <div class="plan-best">1 repo · always free</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li>All repos monitored, no limit</li>
-          <li>AI PR detection via label, git trailer &amp; body</li>
+          <li>AI-PR detection via label, git trailer &amp; body regex</li>
           <li>Weekly ROI verdict: Net Positive / Neutral / Negative</li>
-          <li>Problem PR alerts with AI root-cause summaries</li>
-          <li>Seat waste analysis: spot unused AI licences</li>
-          <li>Codebase health score &amp; trend</li>
-          <li>Outcomes tracking: reverts, hotfixes, review cycles</li>
+          <li>Codebase health score</li>
           <li>Weekly email digest</li>
-          <li>Slack weekly digest + instant alerts</li>
+          <li>Dark Code Report — monthly refresh, top 3 fragile areas</li>
           <li>GitHub App · 5-minute setup</li>
-          <li>Email support</li>
         </ul>
-        <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
-        <p class="plan-hint">14-day trial · no card required</p>
+        <a class="plan-cta" href={`${APP_URL}/login`}>Get Started Free</a>
+        <p class="plan-hint">No credit card · no time limit</p>
       </div>
 
-      <!-- Growth (featured) -->
+      <!-- Pro (featured) -->
       <div class="plan-card featured">
         <div class="plan-popular">Most Popular</div>
-        <div class="plan-name">Growth</div>
-        <div class="plan-price">$149</div>
-        <div class="plan-seats">Includes 30 seats</div>
-        <div class="plan-extra">Extra seats $4/dev/mo</div>
-        <div class="plan-best">Best for 11–30 devs</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$10</div>
+        <div class="plan-price-sub">per active dev / month<br />₹599 in India · min 5 seats</div>
+        <div class="plan-seats">All repos · unlimited devs</div>
+        <div class="plan-best">14-day trial included</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li class="inherit">Everything in Starter</li>
-          <li>Per-developer seat waste breakdown</li>
-          <li>AI adoption rate by team member</li>
-          <li>Tool comparison: Copilot vs Cursor vs Claude Code</li>
-          <li>Developer metrics &amp; trend analysis</li>
-          <li>Journey milestones tracker</li>
-          <li>Priority email support</li>
+          <li class="inherit">Everything in Free</li>
+          <li>All repos monitored, no limit</li>
+          <li>Daily Dark Code Report — full fragile-and-dark list</li>
+          <li>PR coverage check + reviewer routing + understanding buttons</li>
+          <li>Slack /grassion who &lt;path&gt;</li>
+          <li>MCP server for AI coding agents</li>
+          <li>Monday coverage email digest</li>
+          <li>Offboarding view — areas losing their last person</li>
+          <li>Failure confirmation</li>
+          <li>Problem PR alerts with AI root-cause summaries</li>
+          <li>Seat waste analysis + tool comparison (Copilot / Cursor / Claude Code)</li>
+          <li>Outcomes tracking: reverts, hotfixes, review cycles</li>
+          <li>Slack weekly digest + instant alerts</li>
         </ul>
         <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
         <p class="plan-hint">14-day trial · no card required</p>
@@ -503,17 +505,20 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <!-- Business -->
       <div class="plan-card">
         <div class="plan-name">Business</div>
-        <div class="plan-price">$399</div>
-        <div class="plan-seats">Includes 75 seats</div>
-        <div class="plan-extra">Extra seats $3/dev/mo</div>
-        <div class="plan-best">Best for 31–75 devs</div>
+        <div class="plan-price" style="font-size:22px; padding-top:6px;">$1,500</div>
+        <div class="plan-price-sub">flat / month + Pro seats</div>
+        <div class="plan-seats">Everything in Pro</div>
+        <div class="plan-best">Compliance + security tier</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li class="inherit">Everything in Growth</li>
-          <li>Security overview &amp; audit log</li>
+          <li class="inherit">Everything in Pro</li>
+          <li>Critical-path settings + optional explain-back question</li>
+          <li>Compliance evidence export — CSV &amp; PDF per month</li>
+          <li>SSO (SAML / OIDC)</li>
+          <li>Audit log</li>
           <li>Custom data retention policy</li>
-          <li>Dedicated onboarding session</li>
-          <li>24h support SLA</li>
+          <li>Security overview dashboard</li>
+          <li>24-hour support SLA</li>
         </ul>
         <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
         <p class="plan-hint">14-day trial · no card required</p>
@@ -523,15 +528,17 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="plan-card">
         <div class="plan-name">Enterprise</div>
         <div class="plan-price" style="font-size: 20px; padding-top: 8px;">Contact us</div>
-        <div class="plan-seats">Unlimited seats</div>
-        <div class="plan-extra">Tailored to your usage</div>
-        <div class="plan-best">75+ devs</div>
+        <div class="plan-price-sub">custom contract</div>
+        <div class="plan-seats">Self-hosted or customer VPC</div>
+        <div class="plan-best">India · EU · global</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
           <li class="inherit">Everything in Business</li>
+          <li>Self-hosted or customer-VPC deployment</li>
+          <li>Bring-your-own LLM endpoint</li>
+          <li>India or EU data hosting</li>
           <li>Custom contract &amp; SLA</li>
           <li>Dedicated account manager</li>
-          <li>On-premise deployment option</li>
         </ul>
         <a class="plan-cta" href="/contact/">Contact Sales</a>
         <p class="plan-hint">We respond within 24 hours</p>
@@ -543,10 +550,22 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     <div class="payment-note">
       <div class="payment-note-icon">PAY</div>
       <p class="payment-note-text">
-        <strong>All prices in USD.</strong> Charged via Razorpay. Supports credit/debit cards and UPI.
+        <strong>USD pricing for global teams. ₹599/dev/mo for India-billed accounts.</strong>
+        Charged via Razorpay. Supports credit/debit cards, UPI, and netbanking.
         Clicking "Start Free Trial" takes you to the dashboard — choose your plan there to go directly to checkout.
         Features activate instantly after payment.
       </p>
+    </div>
+
+    <!-- PRIVACY CONTROLS -->
+    <div class="privacy-section">
+      <div class="privacy-label">Privacy controls — all plans</div>
+      <div class="privacy-grid">
+        <div class="privacy-item">Managers see coverage by area and team. Per-person evidence is visible to that person and used for routing only — no per-person ranking or export anywhere.</div>
+        <div class="privacy-item"><strong>Team-only mode</strong> (org setting): store only area and team aggregates, no per-person data. Available for EU customers on any plan.</div>
+        <div class="privacy-item">Per-developer metrics (seat waste per developer, adoption by member) are admin-only and off by default. Enable in Settings.</div>
+        <div class="privacy-item">Data deletion from Settings removes all coverage data within 24 hours — including backups.</div>
+      </div>
     </div>
 
     <!-- FAQ -->
@@ -554,13 +573,18 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="faq-label">Billing FAQ</div>
 
       <details>
-        <summary>What's included in each plan's seat count?</summary>
-        <p>Starter includes 10 seats, Growth includes 30, Business includes 75. A "seat" is one GitHub user whose PRs Grassion monitors. Add extra seats at the plan's per-seat rate — no plan change needed.</p>
+        <summary>How does "per active developer" billing work?</summary>
+        <p>An "active developer" is a GitHub user who opened or reviewed a pull request in the current billing month. Developers who were inactive that month are not counted. You're billed for the peak active count during the cycle.</p>
       </details>
 
       <details>
-        <summary>Do you charge per repo or per developer?</summary>
-        <p>Per developer (seat). Repos are unlimited across all plans.</p>
+        <summary>What is the minimum seat count for Pro?</summary>
+        <p>5 seats minimum. Teams smaller than 5 pay for 5 seats. There is no minimum on the Free plan.</p>
+      </details>
+
+      <details>
+        <summary>How does INR pricing work?</summary>
+        <p>If your Razorpay account is billed in India, the Pro plan is charged at ₹599 per active developer per month instead of $10 USD. The Business flat fee is charged in USD regardless of region. Enterprise pricing is negotiated in the contract.</p>
       </details>
 
       <details>
@@ -570,7 +594,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
       <details>
         <summary>What happens after the free trial?</summary>
-        <p>You'll be prompted to choose a plan and add a payment method. No charge is made until you confirm. If you don't subscribe, your data is retained for 30 days.</p>
+        <p>You'll be prompted to choose a plan and add a payment method. No charge is made until you confirm. If you don't subscribe, your account reverts to the Free plan — data is retained.</p>
       </details>
 
       <details>
@@ -584,8 +608,8 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       </details>
 
       <details>
-        <summary>Can I add seats mid-cycle?</summary>
-        <p>Yes — just update your seat count in the dashboard. Extra seats above your plan's included amount are billed at the plan's per-seat rate, pro-rated to the billing cycle.</p>
+        <summary>What is the compliance evidence export on Business?</summary>
+        <p>A monthly PDF and CSV showing, for each change: the file path, the author's understanding answer (from the PR check-run buttons), the covering reviewer, and the evidence events used for routing. Source code and diffs are never included.</p>
       </details>
     </div>
 
@@ -600,12 +624,6 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <a href="mailto:info@grassion.com">info@grassion.com</a>
     </div>
   </footer>
-
-  <!-- Floating element -->
-  <div class="float-badge">
-    <div class="float-badge-label">Free Trial</div>
-    <div class="float-badge-value">14 days · no card</div>
-  </div>
 
 </body>
 </html>

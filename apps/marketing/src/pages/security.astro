@@ -230,6 +230,14 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       margin-bottom: 24px;
     }
 
+    .perm-card code {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      background: rgba(255,255,255,0.06);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
     .perm-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -370,6 +378,10 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     footer a:hover { color: var(--white); }
 
     /* ── RESPONSIVE ─────────────────────────── */
+    @media (max-width: 900px) {
+      .perm-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
     @media (max-width: 768px) {
       header { padding: 14px 20px; }
       nav { gap: 20px; }
@@ -410,9 +422,9 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="promise-box">
         <div class="promise-label">Our commitment</div>
         <p>
-          <strong>Grassion never reads your source code.</strong>
-          We only read PR metadata visible in GitHub — titles, commit messages, and timestamps.
-          No code is stored. Ever.
+          <strong>Grassion never reads your source code or diffs.</strong>
+          We only read PR metadata — titles, commit messages, timestamps, and changed file paths with line counts.
+          File contents and patches are never requested, stored, or sent anywhere. Ever.
         </p>
       </div>
     </div>
@@ -428,6 +440,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         <li class="check-item"><span class="ico-check">✓</span><span>Author GitHub usernames (public data)</span></li>
         <li class="check-item"><span class="ico-check">✓</span><span>Review counts and approval status</span></li>
         <li class="check-item"><span class="ico-check">✓</span><span>PR open / close / merge events</span></li>
+        <li class="check-item"><span class="ico-check">✓</span><span>Changed file paths and line counts (never file contents or diffs)</span></li>
       </ul>
     </div>
 
@@ -436,12 +449,12 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="section-label">Off limits</div>
       <h2>What Grassion never touches</h2>
       <ul class="check-list">
-        <li class="check-item"><span class="ico-cross">✗</span><span>Your source code or file contents</span></li>
+        <li class="check-item"><span class="ico-cross">✗</span><span>Source code or file contents of any kind</span></li>
+        <li class="check-item"><span class="ico-cross">✗</span><span>Diff patches — we read only filename, status, additions, deletions</span></li>
         <li class="check-item"><span class="ico-cross">✗</span><span>Secrets, API keys, or environment variables</span></li>
         <li class="check-item"><span class="ico-cross">✗</span><span>Private keys or credentials of any kind</span></li>
         <li class="check-item"><span class="ico-cross">✗</span><span>Internal Slack or email communications</span></li>
         <li class="check-item"><span class="ico-cross">✗</span><span>Developer personal data beyond GitHub profile</span></li>
-        <li class="check-item"><span class="ico-cross">✗</span><span>Code diffs or actual implementation details</span></li>
       </ul>
     </div>
 
@@ -455,18 +468,29 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
           <p>Your GitHub username and public profile. Same as any GitHub OAuth app.</p>
         </div>
         <div class="perm-card">
-          <div class="perm-scope">repo</div>
-          <p>Read PR metadata, commit messages, and review outcomes. Cannot write, merge, or modify anything.</p>
+          <div class="perm-scope">repo (read)</div>
+          <p>Read PR metadata, commit messages, and review outcomes. We never read file contents or diffs.</p>
         </div>
         <div class="perm-card">
           <div class="perm-scope">read:org</div>
           <p>Verify organisation membership. Cannot modify org settings or member permissions.</p>
         </div>
+        <div class="perm-card">
+          <div class="perm-scope">checks:write</div>
+          <p>Post the "Grassion Human Coverage" check run on pull requests (Pro plan). Cannot modify code or merges.</p>
+        </div>
+        <div class="perm-card">
+          <div class="perm-scope">pull_requests:write</div>
+          <p>Request reviewers on PRs when coverage routing is enabled (Pro plan). No other write access.</p>
+        </div>
+        <div class="perm-card">
+          <div class="perm-scope">members:read</div>
+          <p>List organisation members to populate the reviewer pool for coverage routing.</p>
+        </div>
       </div>
       <div class="perm-note">
-        These are read-only scopes enforced by GitHub, not just our policy.
-        Grassion is <em>technically incapable</em> of modifying your repositories.
-        The same scopes are used by Vercel, Netlify, Linear, and thousands of developer tools.
+        Read-only scopes are enforced by GitHub, not just our policy — Grassion is <em>technically incapable</em> of reading your code.
+        The <code>checks:write</code> and <code>pull_requests:write</code> scopes are used only on Pro plans to post check results and suggest reviewers; they cannot merge or modify anything.
       </div>
     </div>
 

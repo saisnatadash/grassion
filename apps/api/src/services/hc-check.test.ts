@@ -3,24 +3,36 @@ import { describe, it, expect } from 'vitest'
 // ── isProPlan — tested inline to avoid DB initialization ────────────────────
 
 function isProPlan(plan: string): boolean {
-  return plan === 'team' || plan === 'business'
+  return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
 }
 
 describe('isProPlan', () => {
-  it('returns true for team plan', () => {
-    expect(isProPlan('team')).toBe(true)
+  it('returns true for pro plan', () => {
+    expect(isProPlan('pro')).toBe(true)
   })
 
   it('returns true for business plan', () => {
     expect(isProPlan('business')).toBe(true)
   })
 
-  it('returns false for trial', () => {
-    expect(isProPlan('trial')).toBe(false)
+  it('returns true for enterprise plan', () => {
+    expect(isProPlan('enterprise')).toBe(true)
   })
 
-  it('returns false for starter', () => {
-    expect(isProPlan('starter')).toBe(false)
+  it('returns true for legacy team plan', () => {
+    expect(isProPlan('team')).toBe(true)
+  })
+
+  it('returns true for legacy growth plan', () => {
+    expect(isProPlan('growth')).toBe(true)
+  })
+
+  it('returns false for free', () => {
+    expect(isProPlan('free')).toBe(false)
+  })
+
+  it('returns false for trial', () => {
+    expect(isProPlan('trial')).toBe(false)
   })
 
   it('returns false for empty string', () => {

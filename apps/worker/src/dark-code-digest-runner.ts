@@ -20,7 +20,7 @@ import {
 import { sendEmail } from './emails/send.js'
 
 function isProPlan(plan: string): boolean {
-  return plan === 'team' || plan === 'business'
+  return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
 }
 
 async function buildDigestData(teamId: string): Promise<DarkCodeDigestData | null> {

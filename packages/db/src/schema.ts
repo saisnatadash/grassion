@@ -66,6 +66,12 @@ export const teams = pgTable('teams', {
   hcBlockOnCritical: boolean('hc_block_on_critical').default(false).notNull(),
   hcMaxReviewRequests: integer('hc_max_review_requests').default(5).notNull(),
 
+  // Privacy controls — valid plans: free | pro | business | enterprise
+  // teamOnlyMode: store only area/team aggregates, no per-person data (EU opt-in)
+  teamOnlyMode: boolean('team_only_mode').default(false).notNull(),
+  // perDevMetricsEnabled: show per-developer seat waste / adoption breakdown (admin-only, off by default)
+  perDevMetricsEnabled: boolean('per_dev_metrics_enabled').default(false).notNull(),
+
   benchmarkingOptIn: boolean('benchmarking_opt_in').default(false),
   teamSizeRange: text('team_size_range'),
   industry: text('industry'),
