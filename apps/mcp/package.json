@@ -1,0 +1,24 @@
+{
+  "name": "@grassion/mcp",
+  "version": "0.1.0",
+  "description": "Grassion MCP server — exposes Human Coverage data to AI coding tools",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@grassion/db": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "drizzle-orm": "^0.33.0",
+    "postgres": "^3.4.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}

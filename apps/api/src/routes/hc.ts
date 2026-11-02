@@ -8,6 +8,7 @@ import {
   hcEvidenceEvents,
   hcFailures,
   hcShareTokens,
+  hcEvidenceDisputes,
   type HcEvidenceEvent,
   type HcPerson,
   type HcCodeArea,
@@ -312,6 +313,134 @@ hcRouter.post('/api/hc/:repoId/share', requireAuth, async (req: Request, res: Re
   })
 
   res.json({ token, expiresAt: expiresAt.toISOString() })
+})
+
+// ── Dispute endpoints ─────────────────────────────────────────────────────────
+
+// POST /api/hc/:repoId/evidence/:evidenceId/dispute
+hcRouter.post(
+  '/api/hc/:repoId/evidence/:evidenceId/dispute',
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const sess = req.session!
+    const { repoId, evidenceId } = req.params as { repoId: string; evidenceId: string }
+    const { reason } = req.body as { reason?: string }
+
+    if (!reason || reason.trim().length === 0) {
+      res.status(400).json({ error: 'missing_reason' })
+      return
+    }
+
+    const repoRow = await db
+      .select({ id: repos.id })
+      .from(repos)
+      .where(and(eq(repos.id, repoId), eq(repos.teamId, sess.teamId)))
+      .limit(1)
+    if (!repoRow[0]) { res.status(404).json({ error: 'repo_not_found' }); return }
+
+    // Verify evidence belongs to this org
+    const ev = await db
+      .select({ id: hcEvidenceEvents.id })
+      .from(hcEvidenceEvents)
+      .where(and(eq(hcEvidenceEvents.id, evidenceId), eq(hcEvidenceEvents.orgId, sess.teamId)))
+      .limit(1)
+    if (!ev[0]) { res.status(404).json({ error: 'evidence_not_found' }); return }
+
+    const [dispute] = await db
+      .insert(hcEvidenceDisputes)
+      .values({
+        orgId: sess.teamId,
+        evidenceId,
+        reportedBy: sess.githubLogin,
+        reason: reason.trim().slice(0, 1000),
+        status: 'pending',
+      })
+      .returning({ id: hcEvidenceDisputes.id, status: hcEvidenceDisputes.status })
+
+    res.status(201).json(dispute)
+  },
+)
+
+// GET /api/hc/:repoId/disputes — admin: list pending disputes
+hcRouter.get('/api/hc/:repoId/disputes', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  if (sess.role !== 'admin' && sess.role !== 'owner') {
+    res.status(403).json({ error: 'forbidden' })
+    return
+  }
+  const { repoId } = req.params as { repoId: string }
+
+  const repoRow = await db
+    .select({ id: repos.id })
+    .from(repos)
+    .where(and(eq(repos.id, repoId), eq(repos.teamId, sess.teamId)))
+    .limit(1)
+  if (!repoRow[0]) { res.status(404).json({ error: 'repo_not_found' }); return }
+
+  const disputes = await db
+    .select()
+    .from(hcEvidenceDisputes)
+    .where(eq(hcEvidenceDisputes.orgId, sess.teamId))
+    .orderBy(desc(hcEvidenceDisputes.createdAt))
+    .limit(100)
+
+  res.json(disputes)
+})
+
+// PATCH /api/hc/disputes/:disputeId — admin: accept or reject a dispute
+hcRouter.patch('/api/hc/disputes/:disputeId', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  if (sess.role !== 'admin' && sess.role !== 'owner') {
+    res.status(403).json({ error: 'forbidden' })
+    return
+  }
+
+  const { disputeId } = req.params as { disputeId: string }
+  const { action, adminNote, weightOverride } = req.body as {
+    action?: string
+    adminNote?: string
+    weightOverride?: number
+  }
+
+  if (action !== 'accept' && action !== 'reject') {
+    res.status(400).json({ error: 'invalid_action', message: 'action must be accept or reject' })
+    return
+  }
+
+  const disputeRow = await db
+    .select()
+    .from(hcEvidenceDisputes)
+    .where(and(eq(hcEvidenceDisputes.id, disputeId), eq(hcEvidenceDisputes.orgId, sess.teamId)))
+    .limit(1)
+
+  if (!disputeRow[0]) { res.status(404).json({ error: 'dispute_not_found' }); return }
+  if (disputeRow[0].status !== 'pending') {
+    res.status(409).json({ error: 'already_resolved' })
+    return
+  }
+
+  const newStatus = action === 'accept' ? 'accepted' : 'rejected'
+  const [updated] = await db
+    .update(hcEvidenceDisputes)
+    .set({
+      status: newStatus,
+      adminNote: adminNote?.trim().slice(0, 1000) ?? null,
+      weightOverride: action === 'accept' && typeof weightOverride === 'number' ? weightOverride : null,
+      resolvedBy: sess.githubLogin,
+      resolvedAt: new Date(),
+    })
+    .where(eq(hcEvidenceDisputes.id, disputeId))
+    .returning()
+
+  // If accepted with a weight override, update the evidence event
+  if (action === 'accept' && typeof weightOverride === 'number') {
+    await db
+      .update(hcEvidenceEvents)
+      .set({ weight: weightOverride })
+      .where(eq(hcEvidenceEvents.id, disputeRow[0].evidenceId))
+  }
+
+  res.json(updated)
 })
 
 // GET /api/hc/share/:token — public read-only report via share token

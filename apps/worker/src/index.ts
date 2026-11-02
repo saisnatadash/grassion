@@ -11,6 +11,7 @@ import { closeDb, auditLogs, llmUsageLog, outcomeCheckQueue, webhookEvents, lt, 
 import { db } from './db.js'
 import { computeBenchmarks } from './benchmarks.js'
 import { sendTrialReminderEmails } from './trial-reminder.js'
+import { sendDarkCodeDigestForAllProTeams } from './dark-code-digest-runner.js'
 
 // ─── Global error safety ────────────────────────────────────────────────────
 
@@ -147,6 +148,12 @@ cron.schedule('0 10 * * *', async () => {
 cron.schedule('0 5 * * 1', () => {
   logger.info('cron: benchmark recomputation tick')
   computeBenchmarks().catch((err) => logger.error({ err }, 'benchmark recompute failed'))
+}, { timezone: 'UTC' })
+
+// Dark code digest for Pro teams — Monday 9am UTC.
+cron.schedule('0 9 * * 1', () => {
+  logger.info('cron: dark code digest tick')
+  sendDarkCodeDigestForAllProTeams().catch((err) => logger.error({ err }, 'dark code digest failed'))
 }, { timezone: 'UTC' })
 
 // ─── Health check HTTP server ────────────────────────────────────────────────

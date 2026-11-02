@@ -61,6 +61,11 @@ export const teams = pgTable('teams', {
 
   slackWebhookUrl: text('slack_webhook_url'),
 
+  // Human Coverage check-run settings (Pro plan only)
+  hcCheckRunEnabled: boolean('hc_check_run_enabled').default(false).notNull(),
+  hcBlockOnCritical: boolean('hc_block_on_critical').default(false).notNull(),
+  hcMaxReviewRequests: integer('hc_max_review_requests').default(5).notNull(),
+
   benchmarkingOptIn: boolean('benchmarking_opt_in').default(false),
   teamSizeRange: text('team_size_range'),
   industry: text('industry'),
@@ -1049,3 +1054,87 @@ export type HcBackfillRun = typeof hcBackfillRuns.$inferSelect
 export type NewHcBackfillRun = typeof hcBackfillRuns.$inferInsert
 export type HcShareToken = typeof hcShareTokens.$inferSelect
 export type NewHcShareToken = typeof hcShareTokens.$inferInsert
+
+// ============ HC CHECK RUNS ============
+// Tracks the latest GitHub Checks API run per PR. One row per (org, repo, PR).
+export const hcCheckRuns = pgTable(
+  'hc_check_runs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    prNumber: integer('pr_number').notNull(),
+    headSha: text('head_sha').notNull(),
+    // GitHub int64 stored as text to avoid JS safe-integer issues.
+    checkRunId: text('check_run_id').notNull(),
+    conclusion: text('conclusion'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    orgRepoPrIdx: uniqueIndex('hc_check_runs_org_repo_pr_idx').on(t.orgId, t.repoId, t.prNumber),
+    checkRunIdIdx: index('hc_check_runs_check_run_id_idx').on(t.checkRunId),
+  }),
+)
+
+// ============ MCP API TOKENS ============
+// Per-org tokens for the Grassion MCP server. Raw token is shown once at creation;
+// only the SHA-256 hash is stored.
+export const mcpApiTokens = pgTable(
+  'mcp_api_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    tokenHash: text('token_hash').notNull(),
+    name: text('name').notNull(),
+    createdBy: text('created_by').notNull(),
+    lastUsedAt: timestamp('last_used_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    tokenHashIdx: uniqueIndex('mcp_api_tokens_hash_idx').on(t.tokenHash),
+    orgIdx: index('mcp_api_tokens_org_idx').on(t.orgId),
+  }),
+)
+
+// ============ HC EVIDENCE DISPUTES ============
+// Users can dispute evidence items that affect their score.
+// status: pending | accepted | rejected
+export const hcEvidenceDisputes = pgTable(
+  'hc_evidence_disputes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    evidenceId: uuid('evidence_id')
+      .references(() => hcEvidenceEvents.id, { onDelete: 'cascade' })
+      .notNull(),
+    reportedBy: text('reported_by').notNull(),
+    reason: text('reason').notNull(),
+    adminNote: text('admin_note'),
+    status: text('status').default('pending').notNull(),
+    // When accepted, admin may override the weight (0 = hide; null = no change)
+    weightOverride: real('weight_override'),
+    resolvedBy: text('resolved_by'),
+    resolvedAt: timestamp('resolved_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    orgIdx: index('hc_disputes_org_idx').on(t.orgId),
+    evidenceIdx: index('hc_disputes_evidence_idx').on(t.evidenceId),
+    orgStatusIdx: index('hc_disputes_org_status_idx').on(t.orgId, t.status),
+  }),
+)
+
+export type HcCheckRun = typeof hcCheckRuns.$inferSelect
+export type NewHcCheckRun = typeof hcCheckRuns.$inferInsert
+export type McpApiToken = typeof mcpApiTokens.$inferSelect
+export type NewMcpApiToken = typeof mcpApiTokens.$inferInsert
+export type HcEvidenceDispute = typeof hcEvidenceDisputes.$inferSelect
+export type NewHcEvidenceDispute = typeof hcEvidenceDisputes.$inferInsert

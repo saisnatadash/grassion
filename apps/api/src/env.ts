@@ -66,6 +66,9 @@ const schema = z.object({
   /** Bearer token that protects /api/admin/* endpoints (optional — disabled if unset) */
   ADMIN_SECRET: z.string().min(1).optional(),
 
+  /** Slack signing secret used to verify slash-command request signatures */
+  SLACK_SIGNING_SECRET: z.string().min(1).optional(),
+
   /** Set to "true" to enable /api/demo/* endpoints regardless of plan */
   DEMO_MODE: z.string().default('false').transform((v) => v === 'true'),
 })

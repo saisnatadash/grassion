@@ -15,7 +15,9 @@ import { backfillTeamRepos } from '../services/backfill.js'
 import { db } from '../db.js'
 import { teams, repos, webhookEvents } from '@grassion/db'
 import { eq } from 'drizzle-orm'
+import { getInstallationOctokit } from '../github.js'
 import { sendRevertAlert } from '../lib/slack.js'
+import { runHcCheckForPr, handleUnderstandingAction, isProPlan } from '../services/hc-check.js'
 
 let _webhooks: Webhooks | undefined
 
@@ -74,6 +76,47 @@ function getWebhooks(): Webhooks {
       ],
       async ({ payload }) => {
         const pr = await upsertPRFromWebhook(payload)
+
+        // HC check run on open/synchronize (Pro plan + enabled)
+        if (pr && (payload.action === 'opened' || payload.action === 'synchronize')) {
+          const [teamRow] = await db
+            .select({ plan: teams.plan, hcCheckRunEnabled: teams.hcCheckRunEnabled, hcBlockOnCritical: teams.hcBlockOnCritical, hcMaxReviewRequests: teams.hcMaxReviewRequests })
+            .from(teams)
+            .where(eq(teams.id, pr.teamId))
+            .limit(1)
+
+          if (teamRow && isProPlan(teamRow.plan) && teamRow.hcCheckRunEnabled) {
+            const installationId = payload.installation?.id
+            if (installationId) {
+              const [repoRow] = await db
+                .select({ id: repos.id })
+                .from(repos)
+                .where(eq(repos.githubRepoId, payload.repository.id))
+                .limit(1)
+
+              if (repoRow) {
+                getInstallationOctokit(installationId)
+                  .then((octokit) =>
+                    runHcCheckForPr({
+                      octokit,
+                      owner: payload.repository.owner.login,
+                      repoName: payload.repository.name,
+                      headSha: payload.pull_request.head.sha,
+                      prNumber: payload.pull_request.number,
+                      authorLogin: payload.pull_request.user?.login ?? '',
+                      orgId: pr.teamId,
+                      repoId: repoRow.id,
+                      maxReviewRequests: teamRow.hcMaxReviewRequests,
+                      blockOnCritical: teamRow.hcBlockOnCritical,
+                      repoUrl: payload.repository.html_url,
+                    }),
+                  )
+                  .catch((err) => logger.error({ err, prNumber: payload.pull_request.number }, 'hc check run failed'))
+              }
+            }
+          }
+        }
+
         if (
           pr &&
           payload.action === 'closed' &&
@@ -123,6 +166,35 @@ function getWebhooks(): Webhooks {
 
     _webhooks.on('check_run.completed', async ({ payload }) => {
       await storeCheckRun(payload.repository.id, payload.check_run)
+    })
+
+    _webhooks.on('check_run.requested_action', async ({ payload }) => {
+      const identifier = payload.requested_action?.identifier
+      if (!identifier || !['understand', 'partly', 'ai_wrote_it'].includes(identifier)) return
+      if (payload.check_run.name !== 'Grassion Human Coverage') return
+
+      const installationId = payload.installation?.id
+      if (!installationId) return
+
+      const [repoRow] = await db
+        .select({ id: repos.id, teamId: repos.teamId })
+        .from(repos)
+        .where(eq(repos.githubRepoId, payload.repository.id))
+        .limit(1)
+      if (!repoRow) return
+
+      // Extract PR number from check run's pull_request references
+      const prRef = (payload.check_run.pull_requests as Array<{ number: number }>)[0]
+      if (!prRef) return
+
+      handleUnderstandingAction({
+        orgId: repoRow.teamId,
+        repoId: repoRow.id,
+        installationId,
+        prNumber: prRef.number,
+        senderLogin: payload.sender.login,
+        actionIdentifier: identifier,
+      }).catch((err) => logger.error({ err }, 'hc understanding action failed'))
     })
 
     _webhooks.onError((err) => {

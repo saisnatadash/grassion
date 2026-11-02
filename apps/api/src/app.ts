@@ -77,6 +77,9 @@ export function buildApp() {
   app.post('/webhooks/github', express.raw({ type: '*/*', limit: '5mb' }), handleGithubWebhook)
   app.post('/webhooks/razorpay', express.raw({ type: '*/*', limit: '2mb' }), handleRazorpayWebhook)
 
+  // Slack slash commands: raw body needed for HMAC-SHA256 signature verification.
+  app.post('/api/slack/commands', express.raw({ type: 'application/x-www-form-urlencoded', limit: '256kb' }))
+
   app.use(express.json({ limit: '1mb' }))
   app.use(cookieParser())
   app.use(attachSession)
