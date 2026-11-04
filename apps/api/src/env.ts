@@ -62,6 +62,10 @@ const schema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   /** OpenAI API key (optional — required only if the worker is also deployed via this container) */
   OPENAI_API_KEY: z.string().min(1).optional(),
+  /** Global daily OpenAI spend cap in USD — callOpenAI blocks all calls once exceeded (default: 20) */
+  OPENAI_DAILY_CAP_USD: z.coerce.number().min(0).optional(),
+  /** Global monthly OpenAI spend cap in USD — callOpenAI blocks all calls once exceeded (default: 50) */
+  OPENAI_MONTHLY_CAP_USD: z.coerce.number().min(0).optional(),
 
   /** Bearer token that protects /api/admin/* endpoints (optional — disabled if unset) */
   ADMIN_SECRET: z.string().min(1).optional(),

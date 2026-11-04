@@ -208,6 +208,34 @@ export function requireRole(...allowed: SessionUser['role'][]) {
   }
 }
 
+// Pure plan-tier gate — usable in unit tests without DB calls.
+export function checkPlanGate(plan: string, minimum: 'pro' | 'business' | 'enterprise'): boolean {
+  if (minimum === 'pro') return isProOrAbove(plan)
+  if (minimum === 'business') return isBusinessOrAbove(plan)
+  return isEnterprisePlan(plan)
+}
+
+// Express middleware factory — returns 403 if the authenticated team is below the minimum plan.
+export function requirePlan(minimum: 'pro' | 'business' | 'enterprise') {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const sess = req.session
+    if (!sess) { res.status(401).json({ error: 'unauthorized' }); return }
+    try {
+      const [row] = await db.select({ plan: teams.plan }).from(teams).where(eq(teams.id, sess.teamId)).limit(1)
+      const plan = row?.plan ?? 'free'
+      if (!checkPlanGate(plan, minimum)) {
+        res.status(403).json({ error: 'plan_required', minimum, current: plan })
+        return
+      }
+    } catch (err) {
+      logger.error({ err }, 'requirePlan DB check failed')
+      res.status(500).json({ error: 'internal_error' })
+      return
+    }
+    next()
+  }
+}
+
 export async function loadTeamForSession(teamId: string) {
   const result = await db.select().from(teams).where(eq(teams.id, teamId)).limit(1)
   return result[0] ?? null

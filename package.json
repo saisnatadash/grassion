@@ -14,7 +14,8 @@
     "db:generate": "pnpm --filter @grassion/db generate",
     "db:migrate": "pnpm --filter @grassion/db migrate",
     "db:push": "pnpm --filter @grassion/db push",
-    "db:studio": "pnpm --filter @grassion/db studio"
+    "db:studio": "pnpm --filter @grassion/db studio",
+    "db:status": "pnpm --filter @grassion/db status"
   },
   "devDependencies": {
     "typescript": "^5.5.4",

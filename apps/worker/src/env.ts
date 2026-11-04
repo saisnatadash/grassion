@@ -24,6 +24,8 @@ const schema = z.object({
   OPENAI_MODEL: z.string().min(1).default('gpt-4o-mini'),
   /** Monthly OpenAI spend cap in USD — worker will skip summaries once exceeded */
   OPENAI_MONTHLY_BUDGET_USD: z.coerce.number().min(0).default(10),
+  /** Daily OpenAI spend cap in USD — worker will skip summaries once exceeded (default: 20) */
+  OPENAI_DAILY_CAP_USD: z.coerce.number().min(0).default(20),
 
   /** Public URL of the Grassion web app — used in digest email links */
   APP_URL: z.string().url(),

@@ -1,14 +1,5 @@
-import OpenAI from 'openai'
-import { env } from '../env.js'
-
-let client: OpenAI | null = null
-
-function getClient(): OpenAI | null {
-  const key = env().OPENAI_API_KEY ?? process.env['OPENAI_API_KEY']
-  if (!key) return null
-  if (!client) client = new OpenAI({ apiKey: key })
-  return client
-}
+import { logger } from '../logger.js'
+import { callOpenAI, LlmCapExceededError } from '../services/llm.js'
 
 export interface PrSummaryInput {
   prTitle: string
@@ -20,10 +11,7 @@ export interface PrSummaryInput {
   aiSource: string | null
 }
 
-export async function generatePrSummary(pr: PrSummaryInput): Promise<string | null> {
-  const openai = getClient()
-  if (!openai) return null
-
+export async function generatePrSummary(pr: PrSummaryInput, teamId?: string | null): Promise<string | null> {
   const signals: string[] = []
   if (pr.wasReverted) signals.push('was reverted')
   if (pr.triggeredHotfix) signals.push('triggered a hotfix within 7 days')
@@ -38,13 +26,17 @@ export async function generatePrSummary(pr: PrSummaryInput): Promise<string | nu
 Write a single sentence (max 20 words) explaining the most likely root cause of the quality issue. Be specific and actionable. Do not start with "This PR".`
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      max_tokens: 80,
+    return await callOpenAI({
+      teamId: teamId ?? undefined,
       messages: [{ role: 'user', content: prompt }],
+      maxTokens: 80,
+      temperature: 0,
+      purpose: 'pr_summary',
     })
-    return completion.choices[0]?.message.content?.trim() ?? null
-  } catch {
+  } catch (err) {
+    if (err instanceof LlmCapExceededError) {
+      logger.warn({ scope: err.scope }, 'pr summary skipped: cap exceeded')
+    }
     return null
   }
 }

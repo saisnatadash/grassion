@@ -21,6 +21,7 @@
     "migrate": "tsx --env-file=../../.env ./src/migrate.ts",
     "push": "node --env-file=../../.env node_modules/drizzle-kit/bin.cjs push",
     "studio": "node --env-file=../../.env node_modules/drizzle-kit/bin.cjs studio",
+    "status": "tsx --env-file=../../.env ./scripts/db-status.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

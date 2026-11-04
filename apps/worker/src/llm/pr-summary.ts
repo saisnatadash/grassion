@@ -104,5 +104,14 @@ export async function isBudgetExceeded(now: Date = new Date()): Promise<boolean>
     .from(llmUsageLog)
     .where(gte(llmUsageLog.createdAt, monthStart))
   const spent = rows.reduce((sum, r) => sum + (r.cost ?? 0), 0)
-  return spent >= env().OPENAI_MONTHLY_BUDGET_USD
+  if (spent >= env().OPENAI_MONTHLY_BUDGET_USD) return true
+
+  // Also enforce daily cap to prevent runaway spend within a single day.
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  const dayRows = await db
+    .select({ cost: llmUsageLog.estimatedCostUsd })
+    .from(llmUsageLog)
+    .where(gte(llmUsageLog.createdAt, dayStart))
+  const daySpent = dayRows.reduce((sum, r) => sum + (r.cost ?? 0), 0)
+  return daySpent >= env().OPENAI_DAILY_CAP_USD
 }

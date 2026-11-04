@@ -15,8 +15,9 @@ import { logger } from './logger.js'
 import { daysAgo, addDays } from '@grassion/shared'
 import { summarizeProblemPR } from './llm/pr-summary.js'
 import { computeReworkScore } from './scoring.js'
+import { checkHotfixWithin7d } from './hotfix.js'
 
-export { computeReworkScore }
+export { computeReworkScore, checkHotfixWithin7d }
 
 /**
  * Runs every 6 hours. For each merged PR aged 7-30 days, compute outcomes.
@@ -289,47 +290,3 @@ function countCIFailures(pr: PullRequest): number {
   return meta.check_runs.filter((c) => c.conclusion === 'failure').length
 }
 
-async function checkHotfixWithin7d(pr: PullRequest): Promise<{ hadHotfix: boolean; hotfixSignals: string[] }> {
-  if (!pr.mergedAt) return { hadHotfix: false, hotfixSignals: [] }
-  const signals: string[] = []
-
-  // Signal 1 — Labels on the PR itself
-  const meta = (pr.rawMetadata ?? {}) as {
-    labels?: Array<{ name: string }>
-    reviews?: Array<{ state: string }>
-  }
-  const hasHotfixLabel = (meta.labels ?? []).some((l) =>
-    /hotfix|urgent|critical|emergency/i.test(l.name),
-  )
-  if (hasHotfixLabel) signals.push('label')
-
-  // Signal 2 — Title keywords
-  if (/hotfix|hot.fix|urgent|critical|emergency|patch|revert/i.test(pr.title)) {
-    signals.push('title_keyword')
-  }
-
-  // Signal 3 — Fast merge: opened and merged within 30 minutes
-  if (pr.openedAt) {
-    const openToMergeMs = pr.mergedAt.getTime() - pr.openedAt.getTime()
-    if (openToMergeMs <= 30 * 60 * 1000) signals.push('fast_merge')
-  }
-
-  // Signal 4 — Off-hours merge: outside 9am-6pm UTC on weekdays, or any weekend day
-  const mergedHour = pr.mergedAt.getUTCHours()
-  const mergedDay = pr.mergedAt.getUTCDay() // 0=Sun, 6=Sat
-  const isWeekend = mergedDay === 0 || mergedDay === 6
-  const isOffHours = mergedHour < 9 || mergedHour >= 18
-  if (isWeekend || isOffHours) signals.push('off_hours')
-
-  // Signal 5 — Zero review fast merge: no reviews AND merged within 2 hours
-  const reviewCount = pr.reviewCount ?? 0
-  const changesRequestedCount = pr.changesRequestedCount ?? 0
-  if (pr.openedAt) {
-    const openToMergeMs = pr.mergedAt.getTime() - pr.openedAt.getTime()
-    if (reviewCount === 0 && changesRequestedCount === 0 && openToMergeMs <= 2 * 60 * 60 * 1000) {
-      signals.push('zero_review_fast')
-    }
-  }
-
-  return { hadHotfix: signals.length > 0, hotfixSignals: signals }
-}

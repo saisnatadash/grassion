@@ -7,11 +7,37 @@ import {
   industryBenchmarks,
 } from '@grassion/db'
 import { db } from '../db.js'
-import { requireAuth } from '../auth.js'
+import { requireAuth, requirePlan } from '../auth.js'
 import { logger } from '../logger.js'
 import { generatePrSummary } from '../lib/ai-summary.js'
 
 export const analyticsRouter = Router()
+
+// In-memory per-team rate limit for /api/analytics/pr-outcomes (10 req/min).
+const _prOutcomesRateLimit = new Map<string, { count: number; resetAt: number }>()
+function checkPrOutcomesRateLimit(teamId: string): boolean {
+  const now = Date.now()
+  const entry = _prOutcomesRateLimit.get(teamId)
+  if (!entry || now > entry.resetAt) {
+    _prOutcomesRateLimit.set(teamId, { count: 1, resetAt: now + 60_000 })
+    return true
+  }
+  if (entry.count >= 10) return false
+  entry.count++
+  return true
+}
+
+// 24h per-team generation cache: tracks when we last ran OpenAI for a team.
+// Prevents repeated calls from burning budget on the same day's data.
+const _summaryGenCache = new Map<string, number>()
+const SUMMARY_GEN_TTL_MS = 24 * 60 * 60 * 1000
+function canGenerateSummaries(teamId: string): boolean {
+  const last = _summaryGenCache.get(teamId)
+  return last === undefined || Date.now() - last > SUMMARY_GEN_TTL_MS
+}
+function markSummariesGenerated(teamId: string): void {
+  _summaryGenCache.set(teamId, Date.now())
+}
 
 async function freshTeamId(githubLogin: string, fallback: string): Promise<string> {
   const row = await db.select({ teamId: users.teamId }).from(users).where(eq(users.githubLogin, githubLogin)).limit(1)
@@ -617,10 +643,15 @@ analyticsRouter.get('/api/analytics/outcomes', requireAuth, async (req: Request,
   }
 })
 
-analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Request, res: Response) => {
+analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, requirePlan('pro'), async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
   const filter = (req.query['filter'] as string | undefined) ?? 'all'
+
+  if (!checkPrOutcomesRateLimit(teamId)) {
+    res.status(429).json({ error: 'rate_limit_exceeded', message: 'Too many requests. Try again in a minute.' })
+    return
+  }
 
   try {
     // Query pull_requests as the base — left join pr_outcomes so we show PRs with
@@ -748,9 +779,11 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
       }
     })
 
-    // Generate Anthropic summaries on-the-fly for up to 3 rows missing them
+    // Generate AI summaries on-the-fly for up to 3 rows missing them.
+    // 24h cache: skip generation if we already called OpenAI for this team today.
     const needingSummary = mapped.filter((m) => !m.aiSummary).slice(0, 3)
-    if (needingSummary.length > 0) {
+    if (needingSummary.length > 0 && canGenerateSummaries(teamId)) {
+      markSummariesGenerated(teamId)
       const generated = await Promise.all(
         needingSummary.map((m) =>
           generatePrSummary({
@@ -761,7 +794,7 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
             ciFailureCount: m._rawCiFailureCount ?? 0,
             reworkScore: m.reworkScore,
             aiSource: m.aiSource,
-          })
+          }, teamId)
             .then((summary) => ({ prId: m.prId, summary }))
             .catch(() => ({ prId: m.prId, summary: null }))
         )
@@ -792,7 +825,7 @@ analyticsRouter.get('/api/analytics/pr-outcomes', requireAuth, async (req: Reque
   }
 })
 
-analyticsRouter.get('/api/analytics/pr-decay/:prId', requireAuth, async (req: Request, res: Response) => {
+analyticsRouter.get('/api/analytics/pr-decay/:prId', requireAuth, requirePlan('pro'), async (req: Request, res: Response) => {
   const sess = req.session!
   const teamId = await freshTeamId(sess.githubLogin, sess.teamId)
   const { prId } = req.params as { prId: string }

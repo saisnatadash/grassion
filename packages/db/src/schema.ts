@@ -204,12 +204,15 @@ export const prOutcomes = pgTable(
 )
 
 // ============ LLM USAGE LOG ============
-// Tracks OpenAI API usage so the worker can enforce a monthly USD budget cap.
+// Tracks OpenAI API usage for per-team daily cap and global monthly cap enforcement.
 export const llmUsageLog = pgTable(
   'llm_usage_log',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'set null' }),
     tokens: integer('tokens').notNull(),
+    inputTokens: integer('input_tokens'),
+    outputTokens: integer('output_tokens'),
     estimatedCostUsd: real('estimated_cost_usd').notNull(),
     purpose: text('purpose').default('pr_summary').notNull(),
     model: text('model'),
@@ -217,6 +220,7 @@ export const llmUsageLog = pgTable(
   },
   (t) => ({
     createdIdx: index('llm_usage_created_idx').on(t.createdAt),
+    teamCreatedIdx: index('llm_usage_team_created_idx').on(t.teamId, t.createdAt),
   }),
 )
 
