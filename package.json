@@ -18,9 +18,9 @@
     "db:status": "pnpm --filter @grassion/db status"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
+    "typescript": "^7.0.2",
     "prettier": "^3.3.3",
-    "@types/node": "^20.14.10"
+    "@types/node": "^26.6.6"
   },
   "engines": {
     "node": ">=20.0.0",
