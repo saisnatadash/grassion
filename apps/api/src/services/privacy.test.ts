@@ -27,12 +27,12 @@ describe('sanitizeFile strips patch and all non-allow-listed fields', () => {
       status: 'modified',
       additions: 5,
       deletions: 2,
-      patch: '@@ -1,3 +1,4 @@\n+const x = secret_key',
+      patch: '@@ -1,3 +1,4 @@\n+const x = fake_secret_value',
     } as Parameters<typeof sanitizeFile>[0] & { patch: string })
     expect(result).not.toHaveProperty('patch')
     // Confirm no leaked value
     const values = Object.values(result)
-    expect(values.some((v) => typeof v === 'string' && v.includes('secret_key'))).toBe(false)
+    expect(values.some((v) => typeof v === 'string' && v.includes('fake_secret_value'))).toBe(false)
   })
 
   it('drops blob_url, raw_url, contents_url if present', () => {
