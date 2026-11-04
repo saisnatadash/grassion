@@ -8,7 +8,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing · Grassion</title>
-  <meta name="description" content="Free forever for small teams. Pro at $10/dev/mo (₹599 in India). Business and Enterprise for compliance and self-hosting." />
+  <meta name="description" content="Free for small teams. Pro at $15/dev/mo (₹899 in India). Business and Enterprise for compliance and self-hosting." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
@@ -447,7 +447,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     <div class="eyebrow">Pricing</div>
     <h1>Start free.<br />Scale with your team.</h1>
     <p class="hero-sub">
-      Free forever for small teams. Pro at $10 per active developer per month (₹599 in India).<br />
+      Free for small teams. Pro at $15 per active developer per month (₹899 in India) — or $12/dev/mo on annual.<br />
       14-day trial on Pro · no credit card required · cancel anytime.
     </p>
 
@@ -459,7 +459,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         <div class="plan-name">Free</div>
         <div class="plan-price">$0</div>
         <div class="plan-price-sub">forever</div>
-        <div class="plan-seats">Up to 10 active developers</div>
+        <div class="plan-seats">Up to 5 active developers</div>
         <div class="plan-best">1 repo · always free</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
@@ -478,8 +478,8 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="plan-card featured">
         <div class="plan-popular">Most Popular</div>
         <div class="plan-name">Pro</div>
-        <div class="plan-price">$10</div>
-        <div class="plan-price-sub">per active dev / month<br />₹599 in India · min 5 seats</div>
+        <div class="plan-price">$15</div>
+        <div class="plan-price-sub">per active dev / month<br />₹899 in India · $12/dev annual · min 5 seats</div>
         <div class="plan-seats">All repos · unlimited devs</div>
         <div class="plan-best">14-day trial included</div>
         <div class="plan-divider"></div>
@@ -527,20 +527,22 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <!-- Enterprise -->
       <div class="plan-card">
         <div class="plan-name">Enterprise</div>
-        <div class="plan-price" style="font-size: 20px; padding-top: 8px;">Contact us</div>
-        <div class="plan-price-sub">custom contract</div>
-        <div class="plan-seats">Self-hosted or customer VPC</div>
-        <div class="plan-best">India · EU · global</div>
+        <div class="plan-price" style="font-size: 20px; padding-top: 8px;">From $50K</div>
+        <div class="plan-price-sub">per year · custom contract</div>
+        <div class="plan-seats">200+ developers</div>
+        <div class="plan-best">SOC2 · M&amp;A · AI governance</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
           <li class="inherit">Everything in Business</li>
+          <li>SOC2 / ISO 27001 evidence export — per-change audit trail</li>
+          <li>AI governance controls — documented human review of every AI-assisted commit</li>
+          <li>M&amp;A readiness report — knowledge map and bus-factor analysis</li>
           <li>Self-hosted or customer-VPC deployment</li>
           <li>Bring-your-own LLM endpoint</li>
-          <li>India or EU data hosting</li>
-          <li>Custom contract &amp; SLA</li>
-          <li>Dedicated account manager</li>
+          <li>India or EU data residency</li>
+          <li>Dedicated account manager + 4-hour SLA</li>
         </ul>
-        <a class="plan-cta" href="/contact/">Contact Sales</a>
+        <a class="plan-cta" href="/contact/">Talk to Sales</a>
         <p class="plan-hint">We respond within 24 hours</p>
       </div>
 
@@ -550,7 +552,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     <div class="payment-note">
       <div class="payment-note-icon">PAY</div>
       <p class="payment-note-text">
-        <strong>USD pricing for global teams. ₹599/dev/mo for India-billed accounts.</strong>
+        <strong>USD pricing for global teams. ₹899/dev/mo for India-billed accounts. 20% off on annual plans.</strong>
         Charged via Razorpay. Supports credit/debit cards, UPI, and netbanking.
         Clicking "Start Free Trial" takes you to the dashboard — choose your plan there to go directly to checkout.
         Features activate instantly after payment.
@@ -579,12 +581,17 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
       <details>
         <summary>What is the minimum seat count for Pro?</summary>
-        <p>5 seats minimum. Teams smaller than 5 pay for 5 seats. There is no minimum on the Free plan.</p>
+        <p>5 seats minimum. Teams smaller than 5 pay for 5 seats ($75/month). There is no minimum on the Free plan.</p>
       </details>
 
       <details>
         <summary>How does INR pricing work?</summary>
-        <p>If your Razorpay account is billed in India, the Pro plan is charged at ₹599 per active developer per month instead of $10 USD. The Business flat fee is charged in USD regardless of region. Enterprise pricing is negotiated in the contract.</p>
+        <p>If your Razorpay account is billed in India, the Pro plan is charged at ₹899 per active developer per month instead of $15 USD. The Business flat fee is charged in USD regardless of region. Enterprise pricing is negotiated in the contract.</p>
+      </details>
+
+      <details>
+        <summary>Is there an annual plan discount?</summary>
+        <p>Yes. Pro annual is $12 per active developer per month (20% off monthly), billed upfront for 12 months. Business annual pricing is available on request. Write to <a href="mailto:info@grassion.com">info@grassion.com</a> to switch.</p>
       </details>
 
       <details>
@@ -610,6 +617,16 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <details>
         <summary>What is the compliance evidence export on Business?</summary>
         <p>A monthly PDF and CSV showing, for each change: the file path, the author's understanding answer (from the PR check-run buttons), the covering reviewer, and the evidence events used for routing. Source code and diffs are never included.</p>
+      </details>
+
+      <details>
+        <summary>How does Enterprise pricing work for large teams?</summary>
+        <p>Enterprise is an annual contract starting at $50,000/year for teams of 200+ developers. Pricing is based on team size and the use cases you're solving — SOC2 compliance, AI governance, or M&amp;A readiness each have different scopes. We quote based on a 30-minute discovery call. Write to <a href="mailto:info@grassion.com">info@grassion.com</a> or use the Contact Sales button above.</p>
+      </details>
+
+      <details>
+        <summary>What is "AI governance" on the Enterprise plan?</summary>
+        <p>A documented, auditable record that every AI-assisted commit received human review by a team member with verified coverage of that code area — before it shipped. Banks, fintechs, and healthcare companies use this to satisfy regulators and board-level AI risk committees who want proof that "humans are in the loop."</p>
       </details>
     </div>
 

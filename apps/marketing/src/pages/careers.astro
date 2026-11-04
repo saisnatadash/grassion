@@ -1,0 +1,170 @@
+---
+const API_URL = import.meta.env.PUBLIC_API_URL || 'https://grassion-api.fly.dev'
+const ROLES = ['Full-Stack Engineer', 'Backend Engineer', 'Growth / GTM', 'Design', 'Other']
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Careers · Grassion</title>
+  <meta name="description" content="Join the Grassion team. We're building AI ROI intelligence for engineering teams." />
+  <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --black: #0a0a0a; --white: #ffffff; --dim: rgba(255,255,255,0.62); --dimmer: rgba(255,255,255,0.35); --line: rgba(255,255,255,0.14); }
+    html, body { background: var(--black); color: var(--white); font-family: 'DM Sans', sans-serif; }
+    header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 18px 52px; z-index: 100; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.85); backdrop-filter: blur(16px); }
+    nav { display: flex; gap: 40px; align-items: center; }
+    nav a { font-size: 11px; font-weight: 300; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); text-decoration: none; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: var(--white); }
+    main { padding: 120px 52px 80px; max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: clamp(36px, 4vw, 56px); font-weight: 200; line-height: 1.1; letter-spacing: -0.025em; margin-bottom: 16px; }
+    .hero-sub { font-size: 14px; font-weight: 300; color: var(--dim); margin-bottom: 60px; max-width: 480px; line-height: 1.7; }
+    .eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 400; letter-spacing: 0.28em; text-transform: uppercase; color: var(--dim); margin-bottom: 20px; display: flex; align-items: center; gap: 14px; }
+    .eyebrow::before { content: ''; display: block; width: 36px; height: 1px; background: rgba(255,255,255,0.28); }
+    .form-panel { background: #141414; border: 1px solid var(--line); padding: 48px; max-width: 640px; }
+    .field { margin-bottom: 20px; }
+    .field span { display: block; font-size: 11px; font-weight: 400; letter-spacing: 0.06em; color: rgba(255,255,255,0.68); margin-bottom: 8px; text-transform: uppercase; }
+    .field input, .field textarea, .field select { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.20); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 300; padding: 12px 14px; outline: none; transition: border-color 0.2s; appearance: none; border-radius: 0; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: rgba(255,255,255,0.48); }
+    .field input::placeholder, .field textarea::placeholder { color: rgba(255,255,255,0.30); }
+    .field select option { background: #111; color: #fff; }
+    .field textarea { resize: vertical; min-height: 120px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field-hint { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 5px; }
+    .form-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
+    #careers-status { font-size: 12px; font-weight: 300; color: var(--dim); }
+    .submit-btn { background: var(--white); color: var(--black); border: none; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 13px 24px; transition: opacity 0.2s; }
+    .submit-btn:hover { opacity: 0.87; } .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    footer { border-top: 1px solid var(--line); padding: 20px 52px; display: flex; align-items: center; justify-content: space-between; }
+    footer span { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--dimmer); letter-spacing: 0.08em; }
+    footer a { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--dimmer); letter-spacing: 0.08em; text-decoration: none; transition: color 0.2s; }
+    footer a:hover { color: var(--white); }
+    @media (max-width: 767px) {
+      header { padding: 14px 16px; } nav { gap: 16px; } main { padding: 88px 24px 60px; }
+      h1 { font-size: clamp(28px, 9vw, 40px); } .form-panel { padding: 32px 24px; } .field-row { grid-template-columns: 1fr; }
+      footer { padding: 16px 24px; flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/"><img src="/W+L.png" alt="Grassion" style="height:28px;" onerror="this.style.display='none'" /></a>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/about/">About</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="eyebrow">Join Us</div>
+    <h1>We're a small, focused team.</h1>
+    <p class="hero-sub">
+      Grassion is building the ROI layer for AI coding tools. If you care about developer productivity
+      and want to work on a product that engineering leaders actually use, we'd like to meet you.
+    </p>
+
+    <div class="form-panel">
+      <form id="careers-form" enctype="multipart/form-data">
+        <div class="field-row">
+          <div class="field">
+            <span>Name *</span>
+            <input required name="name" autocomplete="name" maxlength="120" placeholder="Your name" />
+          </div>
+          <div class="field">
+            <span>Email *</span>
+            <input required name="email" type="email" autocomplete="email" placeholder="you@company.com" />
+          </div>
+        </div>
+        <div class="field">
+          <span>Role you're applying for *</span>
+          <select required name="role">
+            <option value="" disabled selected>Select a role…</option>
+            {ROLES.map(r => <option value={r}>{r}</option>)}
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <span>LinkedIn</span>
+            <input name="linkedin_url" type="url" placeholder="https://linkedin.com/in/…" />
+          </div>
+          <div class="field">
+            <span>GitHub / Portfolio</span>
+            <input name="github_url" type="url" placeholder="https://github.com/…" />
+          </div>
+        </div>
+        <div class="field">
+          <span>Tell us about yourself *</span>
+          <textarea required name="message" rows="6" maxlength="5000" placeholder="What you've built, what you care about, why Grassion…"></textarea>
+        </div>
+        <div class="field">
+          <span>Resume (PDF, max 5 MB)</span>
+          <input name="resume" type="file" accept="application/pdf" />
+          <div class="field-hint">Optional. PDF only.</div>
+        </div>
+        <div class="form-footer">
+          <p id="careers-status"></p>
+          <button type="submit" class="submit-btn">Apply</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <span>© 2026 Grassion Intelligence</span>
+    <div style="display:flex; gap:24px;">
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href="mailto:info@grassion.com">info@grassion.com</a>
+    </div>
+  </footer>
+
+  <script is:inline define:vars={{ API_URL }}>
+    const form = document.getElementById('careers-form')
+    const status = document.getElementById('careers-status')
+    if (form && status) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const btn = form.querySelector('button[type="submit"]')
+        btn.disabled = true
+        status.textContent = 'Sending…'
+        status.style.color = 'rgba(255,255,255,0.4)'
+        const data = new FormData(form)
+        try {
+          const res = await fetch(API_URL + '/api/careers', { method: 'POST', body: data })
+          if (res.ok) {
+            status.textContent = "Thanks! We'll review your application and reach out within a week."
+            status.style.color = 'rgba(100,220,140,0.9)'
+            form.reset()
+            if (window._gtrack) window._gtrack('career_apply', { role: data.get('role') })
+          } else {
+            status.textContent = 'Something went wrong. Please email info@grassion.com directly.'
+            status.style.color = 'rgba(255,100,100,0.9)'
+          }
+        } catch (_) {
+          status.textContent = 'Could not connect. Please email info@grassion.com directly.'
+          status.style.color = 'rgba(255,100,100,0.9)'
+        }
+        btn.disabled = false
+      })
+    }
+
+    // First-party tracking
+    ;(function(){
+      var API = API_URL
+      var SID_KEY = 'g_sid'
+      function getSid() { try { var s = sessionStorage.getItem(SID_KEY); if (s) return s } catch(_){} var id = Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2); try { sessionStorage.setItem(SID_KEY,id) } catch(_){} return id }
+      var sid = getSid()
+      function track(name, meta) { try { var payload = JSON.stringify({events:[{session_id:sid,event_name:name,source:'marketing',page:location.pathname,referrer:document.referrer||'',metadata:meta||{}}]}); if(navigator.sendBeacon){navigator.sendBeacon(API+'/api/track',new Blob([payload],{type:'application/json'}))} else {fetch(API+'/api/track',{method:'POST',headers:{'Content-Type':'application/json'},body:payload,keepalive:true}).catch(function(){})} } catch(_){} }
+      track('page_view', { title: document.title })
+      window._gtrack = track
+    })()
+  </script>
+</body>
+</html>

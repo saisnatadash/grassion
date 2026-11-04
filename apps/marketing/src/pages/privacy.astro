@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 
-const lastUpdated = '2026-04-17'
+const lastUpdated = '2026-11-05'
 ---
 
 <Base title="Privacy" description="How Grassion collects, uses, and protects your data.">
@@ -23,7 +23,11 @@ const lastUpdated = '2026-04-17'
         <strong>Account data:</strong> your GitHub login, email (from GitHub OAuth), and team
         membership.
       </li>
-      <li><strong>Usage data:</strong> pages visited, errors, performance (via Sentry/Plausible).</li>
+      <li>
+        <strong>Usage data:</strong> pages visited and interactions (via our own first-party analytics — no
+        third-party trackers, no cookies, no IP addresses stored). We record page path, referrer, and
+        anonymous session ID only. Data stays on our servers and is never sold or shared.
+      </li>
     </ul>
 
     <h2>What we don't collect</h2>
@@ -41,21 +45,63 @@ const lastUpdated = '2026-04-17'
       <li>Provide dashboard features</li>
     </ul>
 
-    <h2>Who we share it with</h2>
-    <ul>
-      <li>
-        <strong>OpenAI</strong> receives anonymized PR titles and outcome signals to generate
-        human-readable summaries. We do not send commit messages, code, or author information.
-      </li>
-      <li><strong>Resend</strong> delivers transactional emails on our behalf.</li>
-      <li><strong>Razorpay</strong> processes payments.</li>
-      <li>We do not sell data to anyone, ever.</li>
-    </ul>
+    <h2>Subprocessors</h2>
+    <p>We use the following third-party processors to operate Grassion:</p>
+    <table>
+      <thead>
+        <tr><th>Subprocessor</th><th>Purpose</th><th>Data sent</th><th>Location</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>OpenAI</strong></td>
+          <td>Generate human-readable summaries of problematic PRs (Pro feature)</td>
+          <td>PR title, line-count delta, and outcome signals (reverted, CI failures, hotfix count). <strong>No diffs, no code, no emails, no author logins.</strong> We use OpenAI's API with zero-data-retention mode — API data is not used to train OpenAI models.</td>
+          <td>US</td>
+        </tr>
+        <tr>
+          <td><strong>Neon</strong></td>
+          <td>Postgres database</td>
+          <td>All customer data</td>
+          <td>US-East</td>
+        </tr>
+        <tr>
+          <td><strong>Resend</strong></td>
+          <td>Transactional email delivery (digest, welcome)</td>
+          <td>Recipient email, email body</td>
+          <td>US</td>
+        </tr>
+        <tr>
+          <td><strong>Zoho Mail</strong></td>
+          <td>Contact form and career application notifications</td>
+          <td>Name, email, message</td>
+          <td>India/EU</td>
+        </tr>
+        <tr>
+          <td><strong>Razorpay</strong></td>
+          <td>Payment processing</td>
+          <td>Billing contact, subscription metadata</td>
+          <td>India</td>
+        </tr>
+        <tr>
+          <td><strong>Supabase</strong></td>
+          <td>Career resume file storage (admin-only access)</td>
+          <td>Uploaded PDF files</td>
+          <td>US-East</td>
+        </tr>
+        <tr>
+          <td><strong>Cloudflare</strong></td>
+          <td>Bot protection (Turnstile) on public forms</td>
+          <td>Anonymized browser signals; no personal data</td>
+          <td>US/EU</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>We do not sell data to anyone, ever. The full list of subprocessors is available on request.</p>
 
     <h2>Your rights</h2>
     <ul>
       <li>Export your data: email <a href="mailto:info@grassion.com">info@grassion.com</a></li>
-      <li>Delete your data: uninstall the GitHub App or email us for full account deletion</li>
+      <li>Delete your data: uninstall the GitHub App — your data is deleted within 24 hours. Or email us for immediate full account deletion.</li>
       <li>Access logs, DPA, security: available on request</li>
     </ul>
 

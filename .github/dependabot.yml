@@ -1,0 +1,43 @@
+version: 2
+updates:
+  # npm / pnpm workspace — covers all apps and packages
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+      drizzle:
+        patterns:
+          - "drizzle-orm"
+          - "drizzle-kit"
+      octokit:
+        patterns:
+          - "@octokit/*"
+      testing:
+        patterns:
+          - "vitest"
+          - "supertest"
+          - "@vitest/*"
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions

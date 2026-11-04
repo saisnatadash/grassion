@@ -18,6 +18,8 @@ import { demoRouter } from './demo.js'
 import { rfgRouter } from './rfg.js'
 import { hcRouter } from './hc.js'
 import { mcpTokensRouter } from './mcp-tokens.js'
+import { trackRouter } from './track.js'
+import { careersRouter } from './careers.js'
 
 export const router = Router()
 
@@ -57,3 +59,5 @@ router.use(demoRouter)
 router.use(rfgRouter)
 router.use(hcRouter)
 router.use(mcpTokensRouter)
+router.use(trackRouter)
+router.use(careersRouter)

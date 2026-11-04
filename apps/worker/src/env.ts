@@ -39,6 +39,11 @@ const schema = z.object({
   WORKER_HEALTH_PORT: z.coerce.number().int().default(8081),
   /** Email address to notify when the circuit breaker trips (optional) */
   ADMIN_ALERT_EMAIL: z.string().email().optional(),
+
+  /** Months before analytics_events rows are deleted (default: 13) */
+  ANALYTICS_RETENTION_MONTHS: z.coerce.number().int().min(1).default(13),
+  /** Months before career_applications are deleted unless status=hired (default: 12) */
+  CAREER_APP_RETENTION_MONTHS: z.coerce.number().int().min(1).default(12),
 })
 
 export type Env = z.infer<typeof schema>

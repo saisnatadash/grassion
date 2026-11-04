@@ -4,6 +4,7 @@ import { teams, referralCodes, referralConversions } from '@grassion/db'
 import { db } from '../db.js'
 import { logger } from '../logger.js'
 import { verifyWebhookSignature, planFromStatus } from '../billing/razorpay.js'
+import { increment } from '../lib/monitoring.js'
 
 const PLAN_BASE_MRR_USD: Record<string, number> = {
   starter: 49,
@@ -48,6 +49,7 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
   const rawBody = req.body as Buffer
   if (!verifyWebhookSignature(rawBody, signature)) {
     logger.error('razorpay webhook signature verification failed')
+    increment('webhook_sig_failure')
     res.status(400).json({ error: 'invalid razorpay signature' })
     return
   }

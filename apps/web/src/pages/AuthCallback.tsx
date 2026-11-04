@@ -6,7 +6,6 @@ export function AuthCallbackPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const token = params.get('token')
     const error = params.get('error')
 
     if (error) {
@@ -14,13 +13,9 @@ export function AuthCallbackPage() {
       return
     }
 
-    if (token) {
-      localStorage.setItem('grassion_token', token)
-      navigate('/dashboard', { replace: true })
-      return
-    }
-
-    navigate('/login', { replace: true })
+    // Session cookie is set server-side during the OAuth redirect.
+    // All API calls use credentials: 'include' to send the httpOnly cookie.
+    navigate('/dashboard', { replace: true })
   }, [navigate])
 
   return (

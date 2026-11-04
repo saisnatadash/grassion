@@ -4,6 +4,7 @@ import { llmUsageLog } from '@grassion/db'
 import { db } from '../db.js'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
+import { increment } from '../lib/monitoring.js'
 
 // gpt-4o-mini blended cost: $0.15/1M input + $0.60/1M output ≈ $0.375/1M
 const COST_PER_TOKEN_USD = 0.375 / 1_000_000
@@ -57,6 +58,7 @@ export async function callOpenAI(params: LlmCallParams): Promise<string | null> 
       .where(and(eq(llmUsageLog.teamId, params.teamId), gte(llmUsageLog.createdAt, dayStart)))
     if (parseFloat(row?.spent ?? '0') >= PER_TEAM_DAILY_CAP_USD) {
       logger.warn({ teamId: params.teamId }, 'llm: team daily cap exceeded')
+      increment('llm_cap_hit')
       throw new LlmCapExceededError(
         'team_daily',
         `Daily AI summary budget reached ($${PER_TEAM_DAILY_CAP_USD}/day). Try again tomorrow.`,
@@ -72,6 +74,7 @@ export async function callOpenAI(params: LlmCallParams): Promise<string | null> 
     .where(gte(llmUsageLog.createdAt, dayStart))
   if (parseFloat(dayRow?.spent ?? '0') >= globalDailyCap) {
     logger.warn({ globalDailyCap }, 'llm: global daily cap exceeded')
+    increment('llm_cap_hit')
     throw new LlmCapExceededError(
       'global_daily',
       'Global daily AI budget reached. Summaries will resume tomorrow.',
@@ -86,6 +89,7 @@ export async function callOpenAI(params: LlmCallParams): Promise<string | null> 
     .where(gte(llmUsageLog.createdAt, monthStart))
   if (parseFloat(monthRow?.spent ?? '0') >= globalMonthlyCap) {
     logger.warn({ globalMonthlyCap }, 'llm: global monthly cap exceeded')
+    increment('llm_cap_hit')
     throw new LlmCapExceededError(
       'global_monthly',
       'Monthly AI budget reached. Summaries will resume next month.',

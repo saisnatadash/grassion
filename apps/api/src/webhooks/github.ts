@@ -3,6 +3,7 @@ import { Webhooks } from '@octokit/webhooks'
 import type { Request, Response } from 'express'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
+import { increment } from '../lib/monitoring.js'
 import { createTeamFromInstallation, deactivateTeam } from '../services/teams.js'
 import { connectRepo, disconnectRepo } from '../services/repos.js'
 import {
@@ -13,8 +14,8 @@ import {
 } from '../services/prs.js'
 import { backfillTeamRepos } from '../services/backfill.js'
 import { db } from '../db.js'
-import { teams, repos, webhookEvents } from '@grassion/db'
-import { eq } from 'drizzle-orm'
+import { teams, repos, webhookEvents, hcPeople } from '@grassion/db'
+import { eq, and } from 'drizzle-orm'
 import { getInstallationOctokit } from '../github.js'
 import { sendRevertAlert } from '../lib/slack.js'
 import { runHcCheckForPr, handleUnderstandingAction, isProPlan } from '../services/hc-check.js'
@@ -164,6 +165,31 @@ function getWebhooks(): Webhooks {
       }
     })
 
+    // Mark departed org members as inactive so coverage loss alerts fire next 8am cron.
+    // Requires the GitHub App to subscribe to the 'organization' webhook event and have
+    // 'members: read' permission.
+    _webhooks.on('organization.member_removed', async ({ payload }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = payload as any
+      const login: string | undefined = p.membership?.user?.login
+      const installationId: number | undefined = p.installation?.id
+      if (!login || !installationId) return
+
+      const [team] = await db
+        .select({ id: teams.id })
+        .from(teams)
+        .where(eq(teams.githubInstallationId, installationId))
+        .limit(1)
+      if (!team) return
+
+      await db
+        .update(hcPeople)
+        .set({ isActive: false, leftAt: new Date() })
+        .where(and(eq(hcPeople.orgId, team.id), eq(hcPeople.githubLogin, login)))
+
+      logger.info({ teamId: team.id, login }, 'hc: marked person inactive after org removal')
+    })
+
     _webhooks.on('check_run.completed', async ({ payload }) => {
       await storeCheckRun(payload.repository.id, payload.check_run)
     })
@@ -231,6 +257,7 @@ export async function handleGithubWebhook(req: Request, res: Response) {
   // Manual HMAC-SHA256 verification with timing-safe comparison.
   if (!verifySignature(rawBody, signature)) {
     logger.warn({ deliveryId }, 'github webhook invalid signature')
+    increment('webhook_sig_failure')
     res.status(401).json({ error: 'invalid_signature' })
     return
   }

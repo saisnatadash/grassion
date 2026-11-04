@@ -84,6 +84,32 @@ After rotating any secret, restart both `grassion-api` and `grassion-worker` app
 
 ---
 
+---
+
+## CRITICAL — Secrets Exposed in Git History
+
+The following secrets were committed in a **now-deleted file** (`setup-railway-complete.bat.txt`)
+at commit `3310c791`. Even though the file no longer exists at HEAD, the values are readable
+by anyone who clones the repository. **Every secret below must be rotated immediately.**
+
+| Secret | Type | Status |
+|--------|------|--------|
+| `GITHUB_APP_PRIVATE_KEY` | RSA private key | **Must rotate** — regenerate in GitHub App settings |
+| `GITHUB_APP_CLIENT_SECRET` | OAuth client secret | **Must rotate** — regenerate in GitHub App settings |
+| `GITHUB_APP_WEBHOOK_SECRET` | HMAC webhook secret | **Must rotate** — update in GitHub App + Fly.io |
+| `JWT_SECRET` | Session signing key | **Must rotate** — `openssl rand -base64 48` → Fly.io |
+| `RAZORPAY_KEY_SECRET` | Payment API secret | **Must rotate** — Razorpay dashboard → Regenerate key pair |
+| `RAZORPAY_WEBHOOK_SECRET` | HMAC webhook secret | **Must rotate** — Razorpay dashboard → Webhooks |
+| `OPENAI_API_KEY` | OpenAI API key | **Must rotate** — platform.openai.com → revoke + create new |
+| `RESEND_API_KEY` | Email API key | **Must rotate** — resend.com → revoke + create new |
+| `ZOHO_SMTP_PASS` | SMTP app password | **Must rotate** — Zoho Mail → App Passwords → revoke + new |
+
+> **After rotating** each secret, also consider rewriting git history (via `git filter-repo`) or
+> making the repository private until all secrets are rotated, to prevent further exposure.
+> See: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository
+
+---
+
 ## After rotation checklist
 
 - [ ] Update the secret in Fly.io (both `api` and `worker` if shared)

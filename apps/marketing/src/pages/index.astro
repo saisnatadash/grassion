@@ -7,8 +7,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grassion · AI Coding ROI Intelligence</title>
-  <meta name="description" content="Grassion tells engineering teams exactly which AI tools are delivering ROI — and which are silently burning budget. Connect GitHub in 5 minutes." />
+  <title>Grassion · Human Coverage for Engineering Teams</title>
+  <meta name="description" content="Grassion maps who understands your codebase — and alerts you before dark code and knowledge gaps become incidents. GitHub App, 5-minute setup." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
@@ -692,36 +692,36 @@
 
       <div class="eyebrow">
         <span class="eyebrow-dot"></span>
-        <span class="eyebrow-text">AI Coding ROI Intelligence</span>
+        <span class="eyebrow-text">Human Coverage · AI ROI</span>
       </div>
 
       <h1>
-        AI writes<br>the code.<br>
-        <em>Grassion writes</em><br>
-        <strong>the verdict.</strong>
+        Know who<br>understands<br>
+        <em>your codebase.</em><br>
+        <strong>Before it matters.</strong>
       </h1>
 
       <p class="sub">
-        The only system that tells engineering leaders exactly which AI tools are creating value — and which are quietly burning your budget.
+        Grassion maps which engineers understand which parts of your code — and alerts you before knowledge gaps become production incidents.
       </p>
 
       <div class="proof">
         <div class="proof-item">
           <div class="proof-icon">01</div>
           <div class="proof-text">
-            <strong>Auto-detect</strong> every AI-assisted PR across your entire repo history
+            <strong>Right reviewer, every PR</strong> — auto-assigned by who actually understands that code
           </div>
         </div>
         <div class="proof-item">
           <div class="proof-icon">02</div>
           <div class="proof-text">
-            <strong>Score quality</strong> — reverts, hotfixes, review cycles, per tool
+            <strong>Dark code alerts</strong> — instant Slack when an area loses all human coverage
           </div>
         </div>
         <div class="proof-item">
           <div class="proof-icon">03</div>
           <div class="proof-text">
-            <strong>Issue a verdict</strong> — ROI positive or spend to eliminate, every week
+            <strong>AI ROI verdict</strong> — which tools add value vs. quietly burn budget, weekly
           </div>
         </div>
       </div>
@@ -744,22 +744,22 @@
     <!-- ── RIGHT: ANIMATED ANALYSIS FEED ── -->
     <div class="right">
 
-      <!-- Live PR analysis feed (THE one animation) -->
+      <!-- Live coverage check run (THE one animation) -->
       <div class="feed-wrap" id="feedWrap">
         <div class="feed-header">
           <span class="live-dot"></span>
-          <span class="feed-repo">acme-corp / platform</span>
-          <span class="feed-tag">ANALYSING</span>
+          <span class="feed-repo">acme-corp / platform · PR #341</span>
+          <span class="feed-tag">COVERAGE CHECK</span>
         </div>
         <div class="feed-rows" id="feedRows">
           <!-- injected by JS -->
         </div>
         <div class="feed-verdict" id="feedVerdict">
-          <div class="verdict-grade" id="verdictGrade">A</div>
+          <div class="verdict-grade" id="verdictGrade">✓</div>
           <div>
-            <div class="verdict-label-top">Monthly verdict</div>
-            <div class="verdict-label-main" id="verdictMain">ROI POSITIVE</div>
-            <div class="verdict-label-sub" id="verdictSub">+$1,840 net value · 23 AI PRs</div>
+            <div class="verdict-label-top">Reviewer routed</div>
+            <div class="verdict-label-main" id="verdictMain">@alice · @bob</div>
+            <div class="verdict-label-sub" id="verdictSub">highest coverage weight for changed files</div>
           </div>
         </div>
       </div>
@@ -767,7 +767,7 @@
       <!-- Quality score bar -->
       <div class="score-strip">
         <div class="score-row">
-          <span class="score-label">Quality score</span>
+          <span class="score-label">Coverage score</span>
           <span class="score-value" id="scoreVal">—</span>
         </div>
         <div class="score-track">
@@ -778,16 +778,16 @@
       <!-- Stats row -->
       <div class="stats">
         <div class="stat" id="s1">
-          <span class="stat-num">85%</span>
-          <span class="stat-label">Teams use AI tools</span>
+          <span class="stat-num">1 in 3</span>
+          <span class="stat-label">PRs reviewed by wrong person</span>
         </div>
         <div class="stat" id="s2">
-          <span class="stat-num">&lt;5%</span>
-          <span class="stat-label">Measure ROI</span>
+          <span class="stat-num">23%</span>
+          <span class="stat-label">Code areas have zero coverage</span>
         </div>
         <div class="stat" id="s3">
           <span class="stat-num">5 min</span>
-          <span class="stat-label">To first verdict</span>
+          <span class="stat-label">GitHub setup</span>
         </div>
       </div>
 
@@ -842,24 +842,22 @@
       if (e.key === 'Enter') document.getElementById('askSend').click();
     });
 
-    /* ── ANALYSIS FEED ANIMATION ── */
+    /* ── COVERAGE CHECK ANIMATION ── */
     var ROWS = [
-      { pr: '#341', source: 'claude-code',  score: 91, tier: 'high' },
-      { pr: '#340', source: 'copilot',       score: 78, tier: 'high' },
-      { pr: '#338', source: 'claude-code',  score: 84, tier: 'high' },
-      { pr: '#337', source: 'copilot',       score: 52, tier: 'mid'  },
-      { pr: '#335', source: 'reverted',      score: 18, tier: 'low'  },
-      { pr: '#334', source: 'claude-code',  score: 88, tier: 'high' },
+      { path: 'src/payments/checkout.ts',  coverage: 94, tier: 'high', label: '3 reviewers' },
+      { path: 'src/auth/middleware.ts',     coverage: 61, tier: 'mid',  label: '1 reviewer'  },
+      { path: 'src/worker/jobs.ts',         coverage: 0,  tier: 'low',  label: 'NO COVERAGE'  },
+      { path: 'src/api/billing.ts',         coverage: 88, tier: 'high', label: '2 reviewers' },
+      { path: 'src/db/migrations.ts',       coverage: 42, tier: 'mid',  label: '1 reviewer'  },
     ];
 
     function buildRow(r) {
       var row = document.createElement('div');
       row.className = 'feed-row';
       row.innerHTML =
-        '<span class="pr-num">' + r.pr + '</span>' +
-        '<span class="pr-source">' + r.source + '</span>' +
-        '<div class="pr-bar-wrap"><div class="pr-bar ' + r.tier + '" style="width:0" data-w="' + r.score + '"></div></div>' +
-        '<span class="pr-score ' + r.tier + '">' + r.score + '</span>';
+        '<span class="pr-source" style="font-size:8px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + r.path + '</span>' +
+        '<div class="pr-bar-wrap"><div class="pr-bar ' + r.tier + '" style="width:0" data-w="' + r.coverage + '"></div></div>' +
+        '<span class="pr-score ' + r.tier + '" style="width:70px;font-size:8px;">' + r.label + '</span>';
       return row;
     }
 
@@ -880,17 +878,17 @@
         setTimeout(function() {
           row.classList.add('visible');
           var bar = row.querySelector('.pr-bar');
-          setTimeout(function() { bar.style.width = r.score + '%'; }, 60);
+          setTimeout(function() { bar.style.width = Math.max(r.coverage, 4) + '%'; }, 60);
         }, 400 + i * 340);
       });
 
-      // score bar after all rows
+      // coverage score
       setTimeout(function() {
-        scoreVal.textContent = '84 / 100';
-        scoreFill.style.width = '84%';
+        scoreVal.textContent = '71 / 100';
+        scoreFill.style.width = '71%';
       }, 400 + ROWS.length * 340 + 200);
 
-      // verdict after score bar
+      // reviewer routing verdict
       setTimeout(function() {
         verdict.classList.add('visible');
       }, 400 + ROWS.length * 340 + 900);
@@ -914,6 +912,20 @@
 
     /* ── WARM UP FLY.IO API ── */
     fetch('https://grassion-api.fly.dev/health', { mode: 'no-cors' }).catch(function(){});
+
+    /* ── FIRST-PARTY ANALYTICS ── */
+    (function(){
+      var API = 'https://grassion-api.fly.dev';
+      var SID_KEY = 'g_sid';
+      function getSid(){try{var s=sessionStorage.getItem(SID_KEY);if(s)return s}catch(_){}var id=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);try{sessionStorage.setItem(SID_KEY,id)}catch(_){}return id}
+      var sid=getSid();
+      function track(name,meta){try{var payload=JSON.stringify({events:[{session_id:sid,event_name:name,source:'marketing',page:location.pathname,referrer:document.referrer||'',metadata:meta||{}}]});if(navigator.sendBeacon){navigator.sendBeacon(API+'/api/track',new Blob([payload],{type:'application/json'}))}else{fetch(API+'/api/track',{method:'POST',headers:{'Content-Type':'application/json'},body:payload,keepalive:true}).catch(function(){})}}catch(_){}}
+      track('page_view',{title:document.title});
+      document.addEventListener('click',function(e){var el=e.target.closest('a,button');if(!el)return;var label=el.getAttribute('data-track')||el.innerText.trim().slice(0,60);track('click',{label:label,tag:el.tagName.toLowerCase()})});
+      var askInput=document.getElementById('askInput');
+      if(askInput){askInput.closest('form')||askInput.addEventListener('keydown',function(e){if(e.key==='Enter'){track('demo_question',{q:askInput.value.trim().slice(0,100)})}})}
+      window._gtrack=track;
+    })();
 
     /* ── REFERRAL TRACKING ── */
     (function() {

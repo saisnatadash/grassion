@@ -1,14 +1,36 @@
+import crypto from 'node:crypto'
 import { Router, type Request, type Response } from 'express'
+import rateLimit from 'express-rate-limit'
 import { eq, sql, and, ilike } from 'drizzle-orm'
 import { teams, users, referralCodes, type NewTeam } from '@grassion/db'
 import { db } from '../db.js'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
-import { createSession, setSessionCookie, clearSessionCookie, requireAuth } from '../auth.js'
+import { createSession, setSessionCookie, clearSessionCookie, requireAuth, deleteSession, SESSION_COOKIE_NAME } from '../auth.js'
 import { upsertUser, slugify, ensureUniqueSlug, storeTeamOAuthToken } from '../services/teams.js'
 import { addDays } from '@grassion/shared'
 import { sendWelcomeEmail } from '../lib/email.js'
 import { logAuditEvent, getIp } from '../services/audit.js'
+
+const OAUTH_STATE_COOKIE = 'grassion_oauth_state'
+
+// 20 login initiations per IP per hour — prevents OAuth redirect abuse.
+const oauthInitLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited' },
+})
+
+// Callback has the same window; GitHub retries are uncommon.
+const oauthCallbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited' },
+})
 
 export const authRouter = Router()
 
@@ -16,33 +38,54 @@ function getCallbackUrl() {
   return `${env().API_URL.replace(/\/$/, '')}/auth/github/callback`
 }
 
-authRouter.get('/auth/github', (req: Request, res: Response) => {
+authRouter.get('/auth/github', oauthInitLimiter, (req: Request, res: Response) => {
   const e = env()
   // Read referral code from ?ref= query param, falling back to grassion_ref cookie
   const ref = (req.query.ref as string | undefined) ?? (req.cookies.grassion_ref as string | undefined) ?? ''
   const force = req.query.force === 'true' || req.query.force === '1'
+  const state = generateState(ref || undefined)
+
+  // Store state in a short-lived cookie for CSRF verification on callback.
+  res.cookie(OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: e.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 10 * 60 * 1000, // 10 minutes — enough for the OAuth round-trip
+    path: '/',
+  })
+
   const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
   githubAuthUrl.searchParams.set('client_id', e.GITHUB_APP_CLIENT_ID)
   githubAuthUrl.searchParams.set('redirect_uri', getCallbackUrl())
-  // `repo` lets the OAuth-token fallback list/read private repos when the
-  // GitHub App isn't installed yet. GitHub App-type client IDs ignore `scope`.
-  githubAuthUrl.searchParams.set('scope', 'read:user user:email repo')
-  githubAuthUrl.searchParams.set('state', generateState(ref || undefined))
+  // Minimum scopes: identity + primary email only.
+  // Repo access comes exclusively from the GitHub App installation, never OAuth tokens.
+  githubAuthUrl.searchParams.set('scope', 'read:user user:email')
+  githubAuthUrl.searchParams.set('state', state)
   // Passing login= empty forces GitHub to show the account chooser / login page
   // instead of silently re-using the existing GitHub session.
   if (force) githubAuthUrl.searchParams.set('login', '')
   res.redirect(githubAuthUrl.toString())
 })
 
-authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
+authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Request, res: Response) => {
   const e = env()
   const appUrl = e.APP_URL.replace(/\/$/, '')
   const errorRedirect = `${appUrl}/login?error=auth_failed`
 
-  // Extract referral code embedded in OAuth state as "nonce:ref"
-  const stateStr = typeof req.query.state === 'string' ? req.query.state : ''
-  const colonIdx = stateStr.indexOf(':')
-  const refCode = colonIdx >= 0 ? stateStr.slice(colonIdx + 1).trim() : ''
+  // ── CSRF: verify state matches the cookie set in /auth/github ──────────────
+  const expectedState = req.cookies?.[OAUTH_STATE_COOKIE] as string | undefined
+  const receivedState = typeof req.query.state === 'string' ? req.query.state : ''
+  // Always clear the state cookie regardless of outcome — prevents replay
+  res.clearCookie(OAUTH_STATE_COOKIE, { path: '/' })
+  if (!expectedState || receivedState !== expectedState) {
+    logger.warn({ ip: req.ip }, 'oauth state mismatch — possible CSRF')
+    res.redirect(`${errorRedirect}&reason=state_mismatch`)
+    return
+  }
+
+  // Extract referral code embedded in verified OAuth state as "nonce:ref"
+  const colonIdx = receivedState.indexOf(':')
+  const refCode = colonIdx >= 0 ? receivedState.slice(colonIdx + 1).trim() : ''
 
   const code = req.query.code
   const errorParam = req.query.error
@@ -85,7 +128,7 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
     }
 
     if (!tokenJson.access_token) {
-      logger.warn({ tokenJson }, 'github oauth token exchange failed')
+      logger.warn({ error: tokenJson.error, error_description: tokenJson.error_description }, 'github oauth token exchange failed')
       res.redirect(`${errorRedirect}&reason=token_exchange`)
       return
     }
@@ -225,14 +268,24 @@ authRouter.get('/auth/github/callback', async (req: Request, res: Response) => {
     })
 
     logger.info({ login: profile.login }, 'github oauth success')
-    res.redirect(`${appUrl}/auth/callback?token=${encodeURIComponent(token)}`)
+    // Session cookie already set above — no token in URL (avoids browser history / log leakage).
+    res.redirect(`${appUrl}/auth/callback?ok=1`)
   } catch (err) {
     logger.error({ err }, 'github oauth callback failed')
     res.redirect(`${errorRedirect}&reason=exception`)
   }
 })
 
-authRouter.post('/auth/logout', (_req: Request, res: Response) => {
+authRouter.post('/auth/logout', async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+  const rawToken = bearerToken ?? req.cookies?.[SESSION_COOKIE_NAME]
+
+  // Revoke server-side so stolen cookies can't be replayed after logout.
+  if (rawToken) {
+    await deleteSession(rawToken)
+  }
+
   clearSessionCookie(res)
   res.json({ ok: true })
 })
@@ -321,6 +374,6 @@ authRouter.get('/auth/me', requireAuth, async (req: Request, res: Response) => {
 })
 
 function generateState(ref?: string): string {
-  const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36)
+  const nonce = crypto.randomBytes(16).toString('hex')
   return ref ? `${nonce}:${ref}` : nonce
 }

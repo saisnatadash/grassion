@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { Router, type Request, type Response } from 'express'
+import rateLimit from 'express-rate-limit'
 import { eq, and, inArray, ilike } from 'drizzle-orm'
 import { teams, hcPeople, hcCodeAreas, hcEvidenceEvents } from '@grassion/db'
 import { db } from '../db.js'
@@ -10,6 +11,15 @@ import { logger } from '../logger.js'
 import { extractAreaPath } from '../jobs/backfillCoverage.js'
 
 export const slackRouter = Router()
+
+// 20 Slack commands per IP per minute — Slack retries 3 times so this is generous.
+const slackCommandLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited' },
+})
 
 // ── Slash command: /grassion who <path|area> ─────────────────────────────────
 
@@ -30,7 +40,7 @@ function verifySlackSignature(rawBody: Buffer, timestamp: string, signature: str
   }
 }
 
-slackRouter.post('/api/slack/commands', async (req: Request, res: Response) => {
+slackRouter.post('/api/slack/commands', slackCommandLimiter, async (req: Request, res: Response) => {
   const timestamp = req.header('x-slack-request-timestamp') ?? ''
   const signature = req.header('x-slack-signature') ?? ''
   const rawBody = req.body as Buffer

@@ -1,15 +1,16 @@
 import { Router, type Request, type Response } from 'express'
-import nodemailer from 'nodemailer'
+import nodemailer, { type Transporter } from 'nodemailer'
 import rateLimit from 'express-rate-limit'
 import { contactSchema } from '@grassion/shared'
 import { contactSubmissions } from '@grassion/db'
 import { db } from '../db.js'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
+import { verifyTurnstile } from '../lib/turnstile.js'
 
-let _transporter: nodemailer.Transporter | undefined
+let _transporter: Transporter | undefined
 
-function transporter(): nodemailer.Transporter {
+function transporter(): Transporter {
   if (!_transporter) {
     const e = env()
     _transporter = nodemailer.createTransport({
@@ -33,7 +34,7 @@ const contactLimiter = rateLimit({
   message: { error: 'rate_limited' },
 })
 
-contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Response) => {
+contactRouter.post('/api/contact', contactLimiter, verifyTurnstile, async (req: Request, res: Response) => {
   const parsed = contactSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ error: 'invalid_input', issues: parsed.error.flatten().fieldErrors })
@@ -48,29 +49,32 @@ contactRouter.post('/api/contact', contactLimiter, async (req: Request, res: Res
   const { name, email, message, topic } = parsed.data
   const e = env()
 
+  // Always save to DB first so the admin panel sees every submission.
   try {
-    await transporter().sendMail({
+    await db.insert(contactSubmissions).values({ name, email, topic, message })
+  } catch (dbErr) {
+    logger.error({ dbErr }, 'contact_submissions insert failed')
+  }
+
+  // Email delivery is best-effort; failure doesn't affect the response.
+  transporter()
+    .sendMail({
       from: e.ZOHO_FROM_ADDRESS ?? e.ZOHO_TO_ADDRESS,
       to: e.ZOHO_TO_ADDRESS,
       replyTo: email,
       subject: `[Grassion Contact] ${topic}: ${name}`,
       text: `From: ${name} <${email}>\nTopic: ${topic}\n\n${message}`,
     })
+    .catch((err: unknown) => logger.error({ err }, 'contact form notification email failed'))
 
-    await transporter().sendMail({
+  transporter()
+    .sendMail({
       from: e.ZOHO_FROM_ADDRESS ?? e.ZOHO_TO_ADDRESS,
       to: email,
       subject: 'Thanks for reaching out to Grassion',
       text: autoReplyText(name),
     })
-  } catch (err) {
-    logger.error({ err }, 'contact form delivery failed — saving to DB')
-    try {
-      await db.insert(contactSubmissions).values({ name, email, topic, message })
-    } catch (dbErr) {
-      logger.error({ dbErr }, 'contact_submissions insert failed')
-    }
-  }
+    .catch((err: unknown) => logger.error({ err }, 'contact form auto-reply failed'))
 
   res.json({ success: true, message: 'Message received' })
 })

@@ -1,0 +1,48 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known false positives — placeholders and test fixtures"
+
+commits = [
+  # setup-railway-complete.bat.txt was deleted; real secrets in here are logged in ROTATE_SECRETS.md
+  # Allow commit hash so the scan focuses on HEAD files
+]
+
+paths = [
+  # .env.example files intentionally contain placeholder shapes (not real values)
+  '''apps/api/.env\.example''',
+  '''apps/worker/.env\.example''',
+  '''apps/mcp/.env\.example''',
+  '''apps/web/.env\.example''',
+  '''.env\.example''',
+  # Specification docs contain placeholder values as examples
+  '''SPEC\.md''',
+  '''SPEC2\.md''',
+  # This guide itself documents secret shapes
+  '''docs/ROTATE_SECRETS\.md''',
+]
+
+regexes = [
+  # Placeholder RSA key blocks in .env.example files
+  '''-----BEGIN RSA PRIVATE KEY-----\\\\n\\.\\.\\.\\\\n-----END RSA PRIVATE KEY-----''',
+  # Test signing secrets in test files (literal fake values)
+  '''test-signing-secret-abc123''',
+  # Common placeholder suffixes in example files
+  '''_here$''',
+  '''change_me''',
+]
+
+[[rules]]
+id = "grassion-test-secret"
+description = "Skip fake secrets in test files"
+path = '''\.test\.(ts|js)$'''
+regex = '''['\"][\w\-]{10,}['\"]'''
+allowlist.regexes = [
+  # test files may contain intentionally fake values
+  '''test[-_]''',
+  '''fake[-_]''',
+  '''mock[-_]''',
+  '''example[-_]''',
+  '''placeholder''',
+]

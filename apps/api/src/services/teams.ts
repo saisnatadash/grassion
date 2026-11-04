@@ -3,6 +3,7 @@ import { teams, users, repos, type NewTeam } from '@grassion/db'
 import { db } from '../db.js'
 import { logger } from '../logger.js'
 import { addDays } from '@grassion/shared'
+import { encryptToken } from '../lib/crypto.js'
 
 export function slugify(input: string): string {
   return input
@@ -64,6 +65,8 @@ export async function createTeamFromInstallation(installation: InstallationLite)
       .set({
         githubInstallationId: installation.id,
         githubAccountType: account.type ?? byLogin[0].githubAccountType,
+        // Clear any pending deletion if the team reinstalls.
+        scheduledDeletionAt: null,
         updatedAt: new Date(),
       })
       .where(eq(teams.id, byLogin[0].id))
@@ -104,18 +107,21 @@ export async function deactivateTeam(installationId: number) {
     .update(repos)
     .set({ isActive: false })
     .where(eq(repos.teamId, team.id))
+  // Schedule deletion 24h from now — aligns with the "data deleted within 24 hours" promise.
+  // The retention job performs the actual DELETE. Clear scheduledDeletionAt if team reinstalls.
+  const scheduledDeletionAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
   await db
     .update(teams)
-    .set({ githubInstallationId: null, updatedAt: new Date() })
+    .set({ githubInstallationId: null, githubOauthToken: null, scheduledDeletionAt, updatedAt: new Date() })
     .where(eq(teams.id, team.id))
-  logger.info({ teamId: team.id }, 'team deactivated')
+  logger.info({ teamId: team.id, scheduledDeletionAt }, 'team deactivated — scheduled for deletion')
 }
 
 /** Persist the signing-in user's GitHub OAuth token — fallback auth for repo listing/connect. */
 export async function storeTeamOAuthToken(teamId: string, accessToken: string) {
   await db
     .update(teams)
-    .set({ githubOauthToken: accessToken, updatedAt: new Date() })
+    .set({ githubOauthToken: encryptToken(accessToken), updatedAt: new Date() })
     .where(eq(teams.id, teamId))
 }
 

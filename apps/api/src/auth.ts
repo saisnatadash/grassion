@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import crypto from 'node:crypto'
 import type { Request, Response, NextFunction } from 'express'
 import { eq, and, gt } from 'drizzle-orm'
-import { sessions, users, teams } from '@grassion/db'
+import { sessions, users, teams, adminAuditLog } from '@grassion/db'
 import { db } from './db.js'
 import { env } from './env.js'
 import { logger } from './logger.js'
@@ -75,7 +75,8 @@ export async function requireActivePlan(req: Request, res: Response, next: NextF
 }
 
 const SESSION_COOKIE = 'grassion_session'
-const SESSION_TTL_DAYS = 7
+const SESSION_TTL_HOURS = 12
+const SESSION_TTL_MS = SESSION_TTL_HOURS * 60 * 60 * 1000
 
 export interface SessionUser {
   userId: string
@@ -98,7 +99,7 @@ export async function createSession(userId: string): Promise<string> {
   const e = env()
   const token = crypto.randomBytes(32).toString('base64url')
   const tokenHash = hashToken(token)
-  const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000)
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
   await db.insert(sessions).values({ userId, tokenHash, expiresAt })
 
   // Embed the team's plan so the frontend can read feature flags without an extra API call.
@@ -111,7 +112,7 @@ export async function createSession(userId: string): Promise<string> {
     .limit(1)
   const plan = teamRow[0]?.plan ?? 'trial'
 
-  return jwt.sign({ t: token, plan }, e.JWT_SECRET, { expiresIn: `${SESSION_TTL_DAYS}d` })
+  return jwt.sign({ t: token, plan }, e.JWT_SECRET, { expiresIn: '12h', algorithm: 'HS256' })
 }
 
 export function setSessionCookie(res: Response, token: string) {
@@ -122,7 +123,7 @@ export function setSessionCookie(res: Response, token: string) {
     // SameSite=None required for cross-origin fetch (app.grassion.com → grassion-api.fly.dev).
     // Lax in dev avoids the Secure requirement on http://localhost.
     sameSite: e.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
+    maxAge: SESSION_TTL_MS,
     path: '/',
   })
 }
@@ -141,7 +142,8 @@ async function readSession(token: string | undefined): Promise<SessionUser | nul
   const e = env()
   let payload: { t: string }
   try {
-    payload = jwt.verify(token, e.JWT_SECRET) as { t: string }
+    // Pin to HS256 — rejects 'none' and prevents algorithm-confusion attacks.
+    payload = jwt.verify(token, e.JWT_SECRET, { algorithms: ['HS256'] }) as { t: string }
   } catch {
     return null
   }
@@ -242,3 +244,93 @@ export async function loadTeamForSession(teamId: string) {
 }
 
 export const SESSION_COOKIE_NAME = SESSION_COOKIE
+
+/** Revoke a session by deleting it from the DB. Silently no-ops on bad/expired tokens. */
+export async function deleteSession(rawToken: string): Promise<void> {
+  const e = env()
+  try {
+    const payload = jwt.verify(rawToken, e.JWT_SECRET, { algorithms: ['HS256'] }) as { t?: string }
+    if (payload?.t) {
+      await db.delete(sessions).where(eq(sessions.tokenHash, hashToken(payload.t)))
+    }
+  } catch {
+    // Invalid or already-expired token — nothing to revoke
+  }
+}
+
+/**
+ * Sliding-window session rotation: when less than half the TTL remains,
+ * issue a new session and revoke the old one. Must run after `attachSession`.
+ */
+export async function autoRotateSession(req: Request, res: Response, next: NextFunction) {
+  const sess = req.session
+  if (!sess) { next(); return }
+
+  const authHeader = req.headers.authorization
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+  const rawToken = bearerToken ?? req.cookies?.[SESSION_COOKIE]
+  if (!rawToken) { next(); return }
+
+  try {
+    const decoded = jwt.decode(rawToken) as { t?: string; exp?: number } | null
+    if (!decoded?.exp || !decoded?.t) { next(); return }
+
+    const msUntilExpiry = decoded.exp * 1000 - Date.now()
+    if (msUntilExpiry > 0 && msUntilExpiry < SESSION_TTL_MS / 2) {
+      const oldHash = hashToken(decoded.t)
+      const newToken = await createSession(sess.userId)
+      setSessionCookie(res, newToken)
+      // Revoke old session async — if this fails the old token expires naturally at its TTL
+      db.delete(sessions).where(eq(sessions.tokenHash, oldHash)).catch((err) =>
+        logger.error({ err }, 'session rotation: revoke old session failed'),
+      )
+    }
+  } catch {
+    // rotation failure is non-fatal
+  }
+  next()
+}
+
+// ── Super-admin (founder) gate ────────────────────────────────────────────────
+// Returns 404 (not 401/403) so non-admins can't enumerate the existence of admin routes.
+// Access is recorded in admin_audit_log before next() is called.
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+  void (async () => {
+    const sess = req.session
+    if (!sess) {
+      res.status(404).json({ error: 'not_found' })
+      return
+    }
+    const idsEnv = env().ADMIN_GITHUB_IDS
+    if (!idsEnv) {
+      logger.warn('ADMIN_GITHUB_IDS not set — all admin routes disabled')
+      res.status(404).json({ error: 'not_found' })
+      return
+    }
+    const allowedIds = new Set(idsEnv.split(',').map((s) => parseInt(s.trim(), 10)).filter(Number.isFinite))
+    try {
+      const [userRow] = await db
+        .select({ githubUserId: users.githubUserId })
+        .from(users)
+        .where(eq(users.id, sess.userId))
+        .limit(1)
+      const githubId = userRow?.githubUserId
+      if (!githubId || !allowedIds.has(githubId)) {
+        res.status(404).json({ error: 'not_found' })
+        return
+      }
+      // Log every admin access — route path only, no query strings with potential secrets.
+      await db.insert(adminAuditLog).values({
+        githubLogin: sess.githubLogin,
+        githubId,
+        method: req.method,
+        route: req.path,
+        requestSummary: null,
+      }).catch((err) => logger.error({ err }, 'admin_audit_log insert failed'))
+      next()
+    } catch (err) {
+      logger.error({ err }, 'requireSuperAdmin DB check failed')
+      res.status(500).json({ error: 'internal_error' })
+    }
+  })()
+}

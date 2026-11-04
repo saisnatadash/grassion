@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+# Grassion pre-commit hook: scan staged files for secrets with gitleaks.
+# Install: cp git_hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Or use: git config core.hooksPath git_hooks
+
+set -e
+
+if command -v gitleaks >/dev/null 2>&1; then
+  GITLEAKS=gitleaks
+elif [ -f "$TEMP/gitleaks_bin/gitleaks.exe" ]; then
+  GITLEAKS="$TEMP/gitleaks_bin/gitleaks.exe"
+elif [ -f "/tmp/gitleaks" ]; then
+  GITLEAKS="/tmp/gitleaks"
+else
+  echo "[pre-commit] gitleaks not found — skipping secret scan."
+  echo "  Install: https://github.com/gitleaks/gitleaks#installing"
+  exit 0
+fi
+
+echo "[pre-commit] Running gitleaks secret scan on staged files..."
+$GITLEAKS protect --staged --config=.gitleaks.toml --redact --no-banner
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "[pre-commit] BLOCKED: gitleaks found potential secrets in staged files."
+  echo "  Review the findings above, remove any secrets, and re-stage."
+  echo "  If this is a false positive, add an allowlist entry to .gitleaks.toml"
+  exit 1
+fi

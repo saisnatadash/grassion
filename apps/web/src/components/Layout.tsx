@@ -4,6 +4,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
   ChevronDown, Menu, X, BarChart2, DollarSign, Settings, LogOut, CreditCard,
   Shield, Activity, GitPullRequest, Bell, CheckCheck, XCircle, Zap, EyeOff,
+  FileBarChart, ShieldCheck,
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
@@ -278,6 +279,8 @@ export function AppLayout() {
     { to: '/health', label: 'Health', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
     { to: '/outcomes', label: 'Outcomes', icon: GitPullRequest, badge: null as number | null },
     { to: '/dark-code', label: 'Dark Code', icon: EyeOff, badge: null as number | null },
+    { to: '/ma-report', label: 'M&A Report', icon: FileBarChart, badge: null as number | null },
+    { to: '/ai-governance', label: 'AI Governance', icon: ShieldCheck, badge: null as number | null },
     { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
   ]
 

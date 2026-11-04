@@ -6,6 +6,7 @@ import { getInstallationOctokit } from '../../github.js'
 import type { Octokit } from '@octokit/rest'
 import { fetchPrPage, fetchPrDetails, sinceDate } from './ingestion.js'
 import { labelPr, type PrSummary } from './labeling.js'
+import { decryptToken } from '../../lib/crypto.js'
 
 async function getOctokit(teamId: string): Promise<Octokit | null> {
   const teamRow = await db.select({ installationId: teams.githubInstallationId, oauthToken: teams.githubOauthToken })
@@ -20,7 +21,7 @@ async function getOctokit(teamId: string): Promise<Octokit | null> {
   }
   if (t.oauthToken) {
     const { Octokit: OctokitCtor } = await import('@octokit/rest')
-    return new OctokitCtor({ auth: t.oauthToken })
+    return new OctokitCtor({ auth: decryptToken(t.oauthToken) })
   }
   return null
 }

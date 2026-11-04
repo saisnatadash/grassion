@@ -9,6 +9,7 @@ import { logger } from '../logger.js'
 import { getInstallationOctokit } from '../github.js'
 import { validateBody } from '../middleware/validate.js'
 import { logAuditEvent, getIp } from '../services/audit.js'
+import { decryptToken } from '../lib/crypto.js'
 
 const connectRepoSchema = z.object({
   repoUrl: z.string().min(1),
@@ -63,7 +64,7 @@ reposRouter.get('/api/repos/available', requireAuth, async (req: Request, res: R
           'https://api.github.com/user/repos?type=all&per_page=100&sort=updated',
           {
             headers: {
-              Authorization: `Bearer ${teamRow.githubOauthToken}`,
+              Authorization: `Bearer ${decryptToken(teamRow.githubOauthToken)}`,
               Accept: 'application/vnd.github+json',
               'User-Agent': 'grassion-app',
               'X-GitHub-Api-Version': '2022-11-28',
@@ -273,7 +274,7 @@ async function teamGhHeaders(teamId: string): Promise<Record<string, string>> {
   }
 
   if (teamRow?.githubOauthToken) {
-    headers['Authorization'] = `Bearer ${teamRow.githubOauthToken}`
+    headers['Authorization'] = `Bearer ${decryptToken(teamRow.githubOauthToken)}`
   }
   return headers
 }

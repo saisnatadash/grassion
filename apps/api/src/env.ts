@@ -67,14 +67,41 @@ const schema = z.object({
   /** Global monthly OpenAI spend cap in USD — callOpenAI blocks all calls once exceeded (default: 50) */
   OPENAI_MONTHLY_CAP_USD: z.coerce.number().min(0).optional(),
 
-  /** Bearer token that protects /api/admin/* endpoints (optional — disabled if unset) */
+  /** Bearer token that protects legacy /api/admin/referrals endpoint (optional) */
   ADMIN_SECRET: z.string().min(1).optional(),
+  /** Comma-separated list of GitHub numeric user IDs granted founder-admin access */
+  ADMIN_GITHUB_IDS: z.string().min(1).optional(),
+
+  /** Supabase project URL (https://<project>.supabase.co) — required for resume storage */
+  SUPABASE_URL: z.string().url().optional(),
+  /** Supabase service-role key — never expose to clients */
+  SUPABASE_SERVICE_KEY: z.string().min(1).optional(),
 
   /** Slack signing secret used to verify slash-command request signatures */
   SLACK_SIGNING_SECRET: z.string().min(1).optional(),
 
+  /**
+   * AES-256-GCM key for encrypting stored OAuth tokens (64 hex chars = 32 bytes).
+   * Generate: `openssl rand -hex 32`
+   * Optional — tokens stored without encryption when unset (migration path).
+   */
+  TOKEN_ENCRYPTION_KEY: z.string().length(64).optional(),
+
+  /**
+   * Cloudflare Turnstile secret key for bot protection on public forms.
+   * When unset, Turnstile verification is skipped (dev-friendly default).
+   * Get it from: https://dash.cloudflare.com -> Turnstile -> Site keys.
+   */
+  CF_TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+
   /** Set to "true" to enable /api/demo/* endpoints regardless of plan */
   DEMO_MODE: z.string().default('false').transform((v) => v === 'true'),
+
+  /**
+   * Sentry DSN for error reporting — optional.
+   * When set, wire Sentry.init() in lib/monitoring.ts to send errors.
+   */
+  SENTRY_DSN: z.string().url().optional(),
 })
 
 export type Env = z.infer<typeof schema>

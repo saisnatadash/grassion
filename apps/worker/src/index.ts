@@ -7,11 +7,12 @@ import { computeWeeklyMetricsForAllTeams } from './metrics.js'
 import { sendDigestsForDueTeams } from './digest-runner.js'
 import { sendEmail } from './emails/send.js'
 import { startOfWeekUtc, addDays } from '@grassion/shared'
-import { closeDb, auditLogs, llmUsageLog, outcomeCheckQueue, webhookEvents, lt, and, isNotNull } from '@grassion/db'
+import { closeDb, auditLogs, llmUsageLog, outcomeCheckQueue, webhookEvents, analyticsEvents, careerApplications, teams, lt, lte, and, isNotNull, ne } from '@grassion/db'
 import { db } from './db.js'
 import { computeBenchmarks } from './benchmarks.js'
 import { sendTrialReminderEmails } from './trial-reminder.js'
 import { sendDarkCodeDigestForAllProTeams } from './dark-code-digest-runner.js'
+import { checkAllTeamsForCoverageLoss } from './coverage-loss-alerts.js'
 
 // ─── Global error safety ────────────────────────────────────────────────────
 
@@ -109,16 +110,33 @@ cron.schedule('0 4 * * 0', async () => {
     const oneYearAgo = new Date(now - 365 * 24 * 60 * 60 * 1000)
     const ninetyDaysAgo = new Date(now - 90 * 24 * 60 * 60 * 1000)
     const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
+    const analyticsRetentionMs = e.ANALYTICS_RETENTION_MONTHS * 30 * 24 * 60 * 60 * 1000
+    const careerRetentionMs = e.CAREER_APP_RETENTION_MONTHS * 30 * 24 * 60 * 60 * 1000
+    const analyticsOlderThan = new Date(now - analyticsRetentionMs)
+    const careerOlderThan = new Date(now - careerRetentionMs)
 
-    const [auditDeleted, llmDeleted, queueDeleted, webhookDeleted] = await Promise.all([
-      db.delete(auditLogs).where(lt(auditLogs.createdAt, oneYearAgo)).returning({ id: auditLogs.id }),
-      db.delete(llmUsageLog).where(lt(llmUsageLog.createdAt, ninetyDaysAgo)).returning({ id: llmUsageLog.id }),
-      db
-        .delete(outcomeCheckQueue)
-        .where(and(isNotNull(outcomeCheckQueue.completedAt), lt(outcomeCheckQueue.completedAt, thirtyDaysAgo)))
-        .returning({ id: outcomeCheckQueue.id }),
-      db.delete(webhookEvents).where(lt(webhookEvents.receivedAt, thirtyDaysAgo)).returning({ id: webhookEvents.id }),
-    ])
+    const [auditDeleted, llmDeleted, queueDeleted, webhookDeleted, analyticsDeleted, careerDeleted, teamsDeleted] =
+      await Promise.all([
+        db.delete(auditLogs).where(lt(auditLogs.createdAt, oneYearAgo)).returning({ id: auditLogs.id }),
+        db.delete(llmUsageLog).where(lt(llmUsageLog.createdAt, ninetyDaysAgo)).returning({ id: llmUsageLog.id }),
+        db
+          .delete(outcomeCheckQueue)
+          .where(and(isNotNull(outcomeCheckQueue.completedAt), lt(outcomeCheckQueue.completedAt, thirtyDaysAgo)))
+          .returning({ id: outcomeCheckQueue.id }),
+        db.delete(webhookEvents).where(lt(webhookEvents.receivedAt, thirtyDaysAgo)).returning({ id: webhookEvents.id }),
+        // Analytics events older than 13 months (configurable).
+        db.delete(analyticsEvents).where(lt(analyticsEvents.occurredAt, analyticsOlderThan)).returning({ id: analyticsEvents.id }),
+        // Career applications older than 12 months unless marked as hired.
+        db
+          .delete(careerApplications)
+          .where(and(lt(careerApplications.createdAt, careerOlderThan), ne(careerApplications.status, 'hired')))
+          .returning({ id: careerApplications.id }),
+        // Teams scheduled for deletion (uninstalled GitHub App, 24h grace period).
+        db
+          .delete(teams)
+          .where(and(isNotNull(teams.scheduledDeletionAt), lte(teams.scheduledDeletionAt, new Date())))
+          .returning({ id: teams.id }),
+      ])
 
     logger.info(
       {
@@ -126,6 +144,9 @@ cron.schedule('0 4 * * 0', async () => {
         llmUsageLog: llmDeleted.length,
         outcomeCheckQueue: queueDeleted.length,
         webhookEvents: webhookDeleted.length,
+        analyticsEvents: analyticsDeleted.length,
+        careerApplications: careerDeleted.length,
+        teamsDeleted: teamsDeleted.length,
       },
       'data retention complete',
     )
@@ -154,6 +175,14 @@ cron.schedule('0 5 * * 1', () => {
 cron.schedule('0 9 * * 1', () => {
   logger.info('cron: dark code digest tick')
   sendDarkCodeDigestForAllProTeams().catch((err) => logger.error({ err }, 'dark code digest failed'))
+}, { timezone: 'UTC' })
+
+// Coverage loss alerts — daily 8am UTC.
+// Detects areas that just lost all active human coverage (member left, weight decayed to 0)
+// and fires Slack + email to team owners/admins. Deduplicates within a 7-day window.
+cron.schedule('0 8 * * *', () => {
+  logger.info('cron: coverage loss check tick')
+  checkAllTeamsForCoverageLoss().catch((err) => logger.error({ err }, 'coverage loss check failed'))
 }, { timezone: 'UTC' })
 
 // ─── Health check HTTP server ────────────────────────────────────────────────

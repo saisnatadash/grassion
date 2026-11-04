@@ -1,0 +1,35 @@
+name: Semgrep
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 4 * * 1'  # Weekly Monday 4am UTC
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - name: Run Semgrep (default rulesets)
+        run: semgrep ci --config=auto --sarif --output=semgrep.sarif
+        env:
+          # Optional: set SEMGREP_APP_TOKEN to enable dashboard and diff-aware scans.
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        continue-on-error: true
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@b7b84b636b4f90c9b31da1bc5f72bfadd5b31410  # v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+        continue-on-error: true

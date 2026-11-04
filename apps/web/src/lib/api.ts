@@ -14,7 +14,6 @@ import type {
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'https://grassion-api.fly.dev'
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('grassion_token')
   const abort = new AbortController()
   const timer = setTimeout(() => abort.abort(), 20_000)
   const res = await fetch(`${API_URL}${path}`, {
@@ -23,12 +22,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...init,
     headers: {
       'content-type': 'application/json',
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(init.headers ?? {}),
     },
   }).finally(() => clearTimeout(timer))
   if (res.status === 401) {
-    localStorage.removeItem('grassion_token')
     throw new ApiError(401, 'unauthorized')
   }
   if (res.status === 402) {
@@ -251,6 +248,53 @@ export interface HistoryRow {
   verdict: string
 }
 
+export interface MaReportResponse {
+  generatedAt: string
+  teamName: string
+  overallHealth: {
+    score: number
+    darkPct: number
+    singleCoveragePct: number
+    wellCoveredPct: number
+    busFactor: number
+  }
+  keyRisks: Array<{
+    personLogin: string
+    aloneCoversCount: number
+    riskLevel: 'HIGH' | 'MEDIUM' | 'LOW'
+    aloneCoversAreas: Array<{ path: string; repoName: string }>
+  }>
+  areaBreakdown: Array<{
+    path: string
+    repoName: string
+    riskLevel: string
+    isCritical: boolean
+    activePeopleLogins: string[]
+  }>
+}
+
+export interface AiGovernanceResponse {
+  period: { from: string; to: string; months: number }
+  summary: {
+    totalAiPrs: number
+    coveredCount: number
+    coveredPct: number
+    uncoveredCount: number
+    avgReviewerWeight: number
+  }
+  entries: Array<{
+    prNumber: number
+    title: string
+    authorLogin: string
+    aiSource: string
+    mergedAt: string | null
+    repoName: string
+    reviewers: string[]
+    hasQualifiedReview: boolean
+    avgReviewerWeight: number
+  }>
+}
+
 export const api = {
   me: () => request<MeResponse>('/auth/me'),
   logout: async () => {
@@ -370,6 +414,10 @@ export const api = {
   hc: {
     deleteAllCoverage: () =>
       request<{ ok: true }>('/api/hc/coverage', { method: 'DELETE' }),
+    maReport: () =>
+      request<MaReportResponse>('/api/hc/ma-report'),
+    aiGovernance: (months: number) =>
+      request<AiGovernanceResponse>(`/api/hc/ai-governance?months=${months}`),
   },
 
   mcpTokens: {
@@ -382,6 +430,60 @@ export const api = {
 
   contact: (body: ContactInput) =>
     request<{ ok: true }>('/api/contact', { method: 'POST', body: JSON.stringify(body) }),
+
+  // ── Admin (founder-only) ──────────────────────────────────────────────────
+  adminMe: () => request<{ isSuperAdmin: boolean }>('/api/admin/me'),
+  adminOverview: () => request<{
+    totalTeams: number; teamsByPlan: Record<string, number>; newTeams7d: number;
+    totalUsers: number; pageViews7d: number; contactNew: number; careersNew: number;
+    llmSpendToday: number; llmSpendMtd: number;
+  }>('/api/admin/overview'),
+  adminFunnel: () => request<{ funnel: Array<{ label: string; count: number }> }>('/api/admin/funnel'),
+  adminTeams: (params: { page?: number; search?: string; limit?: number }) => {
+    const qs = new URLSearchParams()
+    if (params.page) qs.set('page', String(params.page))
+    if (params.search) qs.set('search', params.search)
+    if (params.limit) qs.set('limit', String(params.limit))
+    return request<{ teams: Array<Record<string, unknown>>; total: number; page: number; limit: number }>(`/api/admin/teams?${qs}`)
+  },
+  adminEngagement: (params: { from: string; to: string }) =>
+    request<Record<string, unknown>>(`/api/admin/engagement?from=${params.from}&to=${params.to}`),
+  adminRevenue: () => request<Record<string, unknown>>('/api/admin/revenue'),
+  adminMarketing: (params: { from: string; to: string }) =>
+    request<Record<string, unknown>>(`/api/admin/marketing?from=${params.from}&to=${params.to}`),
+  adminFormsContact: (params: { status?: string; page?: number }) => {
+    const qs = new URLSearchParams()
+    if (params.status) qs.set('status', params.status)
+    if (params.page) qs.set('page', String(params.page))
+    return request<Record<string, unknown>>(`/api/admin/forms/contact?${qs}`)
+  },
+  adminPatchContact: (vars: { id: string; status?: string; notes?: string }) =>
+    request<{ ok: true }>(`/api/admin/forms/contact/${vars.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: vars.status, notes: vars.notes }),
+    }),
+  adminFormsCareers: (params: { status?: string; page?: number }) => {
+    const qs = new URLSearchParams()
+    if (params.status) qs.set('status', params.status)
+    if (params.page) qs.set('page', String(params.page))
+    return request<Record<string, unknown>>(`/api/admin/forms/careers?${qs}`)
+  },
+  adminPatchCareer: (vars: { id: string; status?: string; notes?: string }) =>
+    request<{ ok: true }>(`/api/admin/forms/careers/${vars.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: vars.status, notes: vars.notes }),
+    }),
+  adminCareerResumeUrl: (id: string) =>
+    request<{ url: string }>(`/api/admin/forms/careers/${id}/resume-url`),
+  adminSystem: (params: { from: string }) =>
+    request<Record<string, unknown>>(`/api/admin/system?from=${params.from}`),
+  adminEvents: (params: { from: string; to: string; source?: string; event_name?: string; page?: number }) => {
+    const qs = new URLSearchParams({ from: params.from, to: params.to })
+    if (params.source) qs.set('source', params.source)
+    if (params.event_name) qs.set('event_name', params.event_name)
+    if (params.page) qs.set('page', String(params.page))
+    return request<Record<string, unknown>>(`/api/admin/events?${qs}`)
+  },
 }
 
 export function loginUrl(): string {

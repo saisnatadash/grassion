@@ -12,7 +12,7 @@
   "dependencies": {
     "@grassion/db": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "drizzle-orm": "^0.33.0",
+    "drizzle-orm": "^0.45.4",
     "postgres": "^3.4.3",
     "zod": "^3.22.4"
   },

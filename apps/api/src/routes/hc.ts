@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { Router, type Request, type Response } from 'express'
-import { eq, and, inArray, desc, asc, lt } from 'drizzle-orm'
+import rateLimit from 'express-rate-limit'
+import { eq, and, inArray, desc, asc, lt, isNotNull, gte } from 'drizzle-orm'
 import {
   teams,
   repos,
@@ -14,15 +15,29 @@ import {
   hcUnderstandingAnswers,
   hcBackfillRuns,
   hcCheckRuns,
+  pullRequests,
   type HcEvidenceEvent,
   type HcPerson,
   type HcCodeArea,
 } from '@grassion/db'
 import { db } from '../db.js'
-import { requireAuth, requireRole, isProOrAbove } from '../auth.js'
+import { requireAuth, requireRole, isProOrAbove, isBusinessOrAbove } from '../auth.js'
 import { logger } from '../logger.js'
 
 export const hcRouter = Router()
+
+// Public share-link read: 30 req/min per IP to hamper enumeration.
+const shareReadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited' },
+})
+
+function hashShareToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
 
 // ── Report computation ────────────────────────────────────────────────────────
 
@@ -351,12 +366,13 @@ hcRouter.post('/api/hc/:repoId/share', requireAuth, async (req: Request, res: Re
     .where(and(eq(hcShareTokens.orgId, sess.teamId), eq(hcShareTokens.repoId, repoId)))
 
   const token = crypto.randomBytes(32).toString('base64url')
+  const tokenHash = hashShareToken(token)
   const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
 
   await db.insert(hcShareTokens).values({
     orgId: sess.teamId,
     repoId,
-    token,
+    tokenHash,
     expiresAt,
     createdBy: sess.githubLogin,
   })
@@ -505,7 +521,7 @@ hcRouter.patch('/api/hc/disputes/:disputeId', requireAuth, async (req: Request, 
 
 // GET /api/hc/share/:token — public read-only report via share token
 // No requireAuth — intentionally public.
-hcRouter.get('/api/hc/share/:token', async (req: Request, res: Response) => {
+hcRouter.get('/api/hc/share/:token', shareReadLimiter, async (req: Request, res: Response) => {
   const { token } = req.params as { token: string }
 
   // Clean up expired tokens fire-and-forget — don't block this request on it.
@@ -514,7 +530,7 @@ hcRouter.get('/api/hc/share/:token', async (req: Request, res: Response) => {
   const tokenRows = await db
     .select()
     .from(hcShareTokens)
-    .where(eq(hcShareTokens.token, token))
+    .where(eq(hcShareTokens.tokenHash, hashShareToken(token)))
     .limit(1)
 
   const tokenRow = tokenRows[0]
@@ -580,3 +596,238 @@ hcRouter.delete(
     }
   },
 )
+
+// ── Enterprise: M&A Readiness Report ─────────────────────────────────────────
+// GET /api/hc/ma-report — bus factor, offboarding risk per person, area heat map.
+// Business/Enterprise plan required.
+hcRouter.get('/api/hc/ma-report', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const [teamRow] = await db
+    .select({ plan: teams.plan, name: teams.name })
+    .from(teams)
+    .where(eq(teams.id, sess.teamId))
+    .limit(1)
+  if (!teamRow || !isBusinessOrAbove(teamRow.plan)) {
+    res.status(403).json({ error: 'plan_required', message: 'M&A Readiness Report requires Business or Enterprise.' })
+    return
+  }
+
+  const activeRepos = await db
+    .select({ id: repos.id, name: repos.name })
+    .from(repos)
+    .where(and(eq(repos.teamId, sess.teamId), eq(repos.isActive, true)))
+  if (activeRepos.length === 0) {
+    res.json({ generatedAt: new Date().toISOString(), teamName: teamRow.name, overallHealth: { score: 0, darkPct: 0, singleCoveragePct: 0, wellCoveredPct: 0, busFactor: 0 }, keyRisks: [], areaBreakdown: [] })
+    return
+  }
+  const repoIds = activeRepos.map((r) => r.id)
+
+  const areas = await db
+    .select({ id: hcCodeAreas.id, path: hcCodeAreas.path, isCritical: hcCodeAreas.isCritical, repoId: hcCodeAreas.repoId })
+    .from(hcCodeAreas)
+    .where(and(eq(hcCodeAreas.orgId, sess.teamId), inArray(hcCodeAreas.repoId, repoIds)))
+  if (areas.length === 0) {
+    res.json({ generatedAt: new Date().toISOString(), teamName: teamRow.name, overallHealth: { score: 0, darkPct: 0, singleCoveragePct: 0, wellCoveredPct: 0, busFactor: 0 }, keyRisks: [], areaBreakdown: [] })
+    return
+  }
+  const areaIds = areas.map((a) => a.id)
+
+  const allPeople = await db
+    .select({ id: hcPeople.id, githubLogin: hcPeople.githubLogin, isActive: hcPeople.isActive })
+    .from(hcPeople)
+    .where(eq(hcPeople.orgId, sess.teamId))
+  const activePeopleIds = new Set(allPeople.filter((p) => p.isActive).map((p) => p.id))
+  const peopleById = new Map(allPeople.map((p) => [p.id, p]))
+
+  const events = await db
+    .select({ areaId: hcEvidenceEvents.areaId, personId: hcEvidenceEvents.personId, weight: hcEvidenceEvents.weight })
+    .from(hcEvidenceEvents)
+    .where(and(eq(hcEvidenceEvents.orgId, sess.teamId), inArray(hcEvidenceEvents.areaId, areaIds)))
+
+  // Net weight per area per person
+  const netWeights = new Map<string, Map<string, number>>()
+  for (const ev of events) {
+    let m = netWeights.get(ev.areaId)
+    if (!m) { m = new Map(); netWeights.set(ev.areaId, m) }
+    m.set(ev.personId, (m.get(ev.personId) ?? 0) + ev.weight)
+  }
+
+  // Active people with positive weight per area
+  const areaActivePeople = new Map<string, string[]>()
+  for (const area of areas) {
+    const pMap = netWeights.get(area.id) ?? new Map()
+    const active = [...pMap.entries()].filter(([pid, w]) => w > 0 && activePeopleIds.has(pid)).map(([pid]) => pid)
+    areaActivePeople.set(area.id, active)
+  }
+
+  const darkAreas = areas.filter((a) => (areaActivePeople.get(a.id) ?? []).length === 0)
+  const singleAreas = areas.filter((a) => (areaActivePeople.get(a.id) ?? []).length === 1)
+  const wellAreas = areas.filter((a) => (areaActivePeople.get(a.id) ?? []).length >= 3)
+  const darkPct = Math.round((darkAreas.length / areas.length) * 100)
+  const singleCoveragePct = Math.round((singleAreas.length / areas.length) * 100)
+  const wellCoveredPct = Math.round((wellAreas.length / areas.length) * 100)
+  const coverageScore = Math.max(0, 100 - darkPct * 2 - singleCoveragePct)
+
+  // Per-person: areas where they are the SOLE active reviewer
+  const personUniqueAreas = new Map<string, { path: string; isCritical: boolean }[]>()
+  for (const person of allPeople.filter((p) => p.isActive)) {
+    const unique: { path: string; isCritical: boolean }[] = []
+    for (const area of areas) {
+      const activePeople = areaActivePeople.get(area.id) ?? []
+      if (activePeople.length === 1 && activePeople[0] === person.id) {
+        unique.push({ path: area.path, isCritical: area.isCritical })
+      }
+    }
+    personUniqueAreas.set(person.id, unique)
+  }
+
+  // Bus factor: fewest people whose departure would darken >25% of currently covered areas
+  const coveredAreas = areas.filter((a) => (areaActivePeople.get(a.id) ?? []).length > 0)
+  const threshold = Math.ceil(coveredAreas.length * 0.25)
+  const sortedByImpact = [...personUniqueAreas.entries()]
+    .filter(([, u]) => u.length > 0)
+    .sort((a, b) => b[1].length - a[1].length)
+  let busFactor = 0, cumulative = 0
+  for (const [, u] of sortedByImpact) {
+    cumulative += u.length; busFactor++
+    if (cumulative >= threshold) break
+  }
+  if (busFactor === 0) busFactor = sortedByImpact.length === 0 ? (coveredAreas.length > 0 ? 999 : 0) : 1
+
+  const keyRisks = [...personUniqueAreas.entries()]
+    .filter(([, u]) => u.length > 0)
+    .map(([personId, unique]) => {
+      const p = peopleById.get(personId)!
+      const criticalCount = unique.filter((a) => a.isCritical).length
+      return {
+        personLogin: p.githubLogin,
+        aloneCoversCount: unique.length,
+        aloneCoversAreas: unique.slice(0, 20),
+        riskLevel: (criticalCount > 0 ? 'HIGH' : unique.length >= 3 ? 'MEDIUM' : 'LOW') as 'HIGH' | 'MEDIUM' | 'LOW',
+      }
+    })
+    .sort((a, b) => ({ HIGH: 0, MEDIUM: 1, LOW: 2 }[a.riskLevel] - { HIGH: 0, MEDIUM: 1, LOW: 2 }[b.riskLevel] || b.aloneCoversCount - a.aloneCoversCount))
+
+  const repoNameById = new Map(activeRepos.map((r) => [r.id, r.name]))
+  const areaBreakdown = areas.map((area) => {
+    const activePeopleLogins = (areaActivePeople.get(area.id) ?? []).map((pid) => peopleById.get(pid)?.githubLogin ?? '?')
+    return {
+      path: area.path,
+      repoName: repoNameById.get(area.repoId) ?? '',
+      isCritical: area.isCritical,
+      activePeopleCount: activePeopleLogins.length,
+      activePeopleLogins,
+      riskLevel: activePeopleLogins.length === 0 ? 'DARK' : activePeopleLogins.length === 1 ? 'FRAGILE' : activePeopleLogins.length >= 3 ? 'HEALTHY' : 'AT_RISK',
+    }
+  })
+    .sort((a, b) => (({ DARK: 0, FRAGILE: 1, AT_RISK: 2, HEALTHY: 3 } as Record<string, number>)[a.riskLevel] ?? 99) - (({ DARK: 0, FRAGILE: 1, AT_RISK: 2, HEALTHY: 3 } as Record<string, number>)[b.riskLevel] ?? 99))
+    .slice(0, 150)
+
+  res.json({
+    generatedAt: new Date().toISOString(),
+    teamName: teamRow.name,
+    overallHealth: { score: coverageScore, darkPct, singleCoveragePct, wellCoveredPct, busFactor },
+    keyRisks,
+    areaBreakdown,
+  })
+})
+
+// ── Enterprise: AI Governance Audit ──────────────────────────────────────────
+// GET /api/hc/ai-governance?months=3 — documented human review record for AI-assisted PRs.
+// Business/Enterprise plan required.
+hcRouter.get('/api/hc/ai-governance', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const [teamRow] = await db
+    .select({ plan: teams.plan, name: teams.name })
+    .from(teams)
+    .where(eq(teams.id, sess.teamId))
+    .limit(1)
+  if (!teamRow || !isBusinessOrAbove(teamRow.plan)) {
+    res.status(403).json({ error: 'plan_required', message: 'AI Governance Audit requires Business or Enterprise.' })
+    return
+  }
+
+  const months = Math.min(12, Math.max(1, parseInt((req.query as Record<string, string>).months ?? '3', 10)))
+  const since = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000)
+
+  const aiPrs = await db
+    .select({ id: pullRequests.id, prNumber: pullRequests.githubPrNumber, title: pullRequests.title, authorLogin: pullRequests.authorLogin, aiSource: pullRequests.aiSource, mergedAt: pullRequests.mergedAt, repoId: pullRequests.repoId })
+    .from(pullRequests)
+    .where(and(eq(pullRequests.teamId, sess.teamId), isNotNull(pullRequests.aiSource), isNotNull(pullRequests.mergedAt), gte(pullRequests.mergedAt, since)))
+    .orderBy(desc(pullRequests.mergedAt))
+    .limit(500)
+
+  if (aiPrs.length === 0) {
+    res.json({ period: { from: since.toISOString(), to: new Date().toISOString(), months }, summary: { totalAiPrs: 0, coveredCount: 0, coveredPct: 100, uncoveredCount: 0, avgReviewerWeight: 0 }, entries: [] })
+    return
+  }
+
+  const prNumbers = aiPrs.map((pr) => pr.prNumber)
+  const repoIds = [...new Set(aiPrs.map((pr) => pr.repoId))]
+
+  const teamPeople = await db
+    .select({ id: hcPeople.id, githubLogin: hcPeople.githubLogin })
+    .from(hcPeople)
+    .where(eq(hcPeople.orgId, sess.teamId))
+  const personLoginById = new Map(teamPeople.map((p) => [p.id, p.githubLogin]))
+
+  const answers = await db
+    .select({ prNumber: hcUnderstandingAnswers.prNumber, personId: hcUnderstandingAnswers.personId, answer: hcUnderstandingAnswers.answer })
+    .from(hcUnderstandingAnswers)
+    .where(and(eq(hcUnderstandingAnswers.orgId, sess.teamId), inArray(hcUnderstandingAnswers.prNumber, prNumbers)))
+
+  const reviewEvidence = await db
+    .select({ prNumber: hcEvidenceEvents.prNumber, personId: hcEvidenceEvents.personId, weight: hcEvidenceEvents.weight, type: hcEvidenceEvents.type })
+    .from(hcEvidenceEvents)
+    .where(and(eq(hcEvidenceEvents.orgId, sess.teamId), inArray(hcEvidenceEvents.prNumber, prNumbers)))
+
+  const repoRows = await db
+    .select({ id: repos.id, name: repos.name })
+    .from(repos)
+    .where(inArray(repos.id, repoIds))
+  const repoNameById = new Map(repoRows.map((r) => [r.id, r.name]))
+
+  const answersByPr = new Map<number, typeof answers>()
+  for (const a of answers) {
+    if (!answersByPr.has(a.prNumber)) answersByPr.set(a.prNumber, [])
+    answersByPr.get(a.prNumber)!.push(a)
+  }
+  const evidenceByPr = new Map<number, typeof reviewEvidence>()
+  for (const e of reviewEvidence) {
+    if (!e.prNumber) continue
+    if (!evidenceByPr.has(e.prNumber)) evidenceByPr.set(e.prNumber, [])
+    evidenceByPr.get(e.prNumber)!.push(e)
+  }
+
+  const entries = aiPrs.map((pr) => {
+    const prAnswers = answersByPr.get(pr.prNumber) ?? []
+    const prEvidence = evidenceByPr.get(pr.prNumber) ?? []
+    const qualifiedLogins = prAnswers.filter((a) => a.answer === 'understand' || a.answer === 'partly').map((a) => personLoginById.get(a.personId) ?? '?')
+    const evidenceLogins = [...new Map(prEvidence.filter((e) => e.type === 'substantive_review' && e.weight > 0).map((e) => [e.personId, personLoginById.get(e.personId) ?? '?'])).values()]
+    const reviewers = [...new Set([...qualifiedLogins, ...evidenceLogins])]
+    const hasQualifiedReview = reviewers.length > 0
+    const avgWeight = prEvidence.length > 0 ? Math.round((prEvidence.reduce((s, e) => s + e.weight, 0) / prEvidence.length) * 100) / 100 : 0
+    return {
+      prNumber: pr.prNumber,
+      title: pr.title,
+      authorLogin: pr.authorLogin ?? '',
+      aiSource: pr.aiSource ?? 'unknown',
+      mergedAt: pr.mergedAt?.toISOString() ?? '',
+      repoName: repoNameById.get(pr.repoId) ?? '',
+      reviewers,
+      hasQualifiedReview,
+      avgReviewerWeight: avgWeight,
+    }
+  })
+
+  const coveredCount = entries.filter((e) => e.hasQualifiedReview).length
+  const coveredPct = Math.round((coveredCount / aiPrs.length) * 100)
+  const weights = entries.map((e) => e.avgReviewerWeight).filter((w) => w > 0)
+  const avgReviewerWeight = weights.length > 0 ? Math.round(weights.reduce((s, w) => s + w, 0) / weights.length * 100) / 100 : 0
+
+  res.json({
+    period: { from: since.toISOString(), to: new Date().toISOString(), months },
+    summary: { totalAiPrs: aiPrs.length, coveredCount, coveredPct, uncoveredCount: aiPrs.length - coveredCount, avgReviewerWeight },
+    entries,
+  })
+})

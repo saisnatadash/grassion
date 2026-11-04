@@ -1,0 +1,88 @@
+---
+import Base from '../../layouts/Base.astro'
+const title = 'Responsible Disclosure Policy'
+const description = 'How to report a security vulnerability in Grassion.'
+---
+
+<Base {title} {description}>
+  <main class="max-w-3xl mx-auto px-6 py-20 text-gray-200">
+    <h1 class="text-3xl font-bold text-white mb-2">Responsible Disclosure Policy</h1>
+    <p class="text-sm text-gray-500 mb-10">Last updated: 2026-11-05</p>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">Our commitment</h2>
+      <p class="text-gray-400 leading-relaxed">
+        Grassion takes the security of our systems and our customers' data seriously. If you have
+        discovered a security vulnerability, we appreciate your help in disclosing it to us in a
+        responsible manner.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">How to report</h2>
+      <p class="text-gray-400 leading-relaxed mb-4">
+        Email your findings to
+        <a href="mailto:security@grassion.com" class="text-green-400 hover:underline">
+          security@grassion.com
+        </a>.
+        Please include:
+      </p>
+      <ul class="list-disc list-inside text-gray-400 space-y-1 ml-2">
+        <li>A description of the vulnerability and its potential impact</li>
+        <li>Steps to reproduce (proof-of-concept or screenshots if available)</li>
+        <li>Any relevant URLs or affected components</li>
+        <li>Your contact details (optional — we can respond anonymously)</li>
+      </ul>
+      <p class="text-gray-400 leading-relaxed mt-4">
+        If you believe the report is sensitive, please encrypt it with our PGP key (available on
+        request).
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">What to expect</h2>
+      <ul class="list-disc list-inside text-gray-400 space-y-2 ml-2">
+        <li>Acknowledgement of your report within <strong class="text-white">2 business days</strong>.</li>
+        <li>An initial assessment and severity classification within <strong class="text-white">5 business days</strong>.</li>
+        <li>Regular status updates while we work on a fix.</li>
+        <li>Credit in the fix announcement (if you would like it).</li>
+      </ul>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">Scope</h2>
+      <p class="text-gray-400 leading-relaxed mb-3">In scope:</p>
+      <ul class="list-disc list-inside text-gray-400 space-y-1 ml-2 mb-4">
+        <li>api.grassion.com</li>
+        <li>app.grassion.com</li>
+        <li>grassion.com</li>
+        <li>The Grassion GitHub App</li>
+      </ul>
+      <p class="text-gray-400 leading-relaxed mb-3">Out of scope:</p>
+      <ul class="list-disc list-inside text-gray-400 space-y-1 ml-2">
+        <li>Denial-of-service attacks</li>
+        <li>Social engineering of Grassion employees</li>
+        <li>Physical security</li>
+        <li>Vulnerabilities in third-party services we depend on (report those upstream)</li>
+      </ul>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">Safe harbour</h2>
+      <p class="text-gray-400 leading-relaxed">
+        We will not take legal action against researchers who act in good faith under this policy,
+        provided they avoid accessing data beyond what is needed to demonstrate the vulnerability,
+        do not degrade our service, and report to us without disclosing the issue publicly until a
+        fix is in place.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold text-white mb-3">PGP key</h2>
+      <p class="text-gray-400 leading-relaxed">
+        A PGP public key for <code class="text-green-400">security@grassion.com</code> is available
+        on request. Email us and we will reply with the key.
+      </p>
+    </section>
+  </main>
+</Base>

@@ -79,6 +79,10 @@ export const teams = pgTable('teams', {
   industry: text('industry'),
   demoMode: boolean('demo_mode').default(false),
 
+  // Set when the GitHub App is uninstalled; cleared if the team reinstalls.
+  // The retention job deletes the team (and all cascaded data) when this passes.
+  scheduledDeletionAt: timestamp('scheduled_deletion_at'),
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -416,14 +420,91 @@ export const savingsEvents = pgTable(
 )
 
 // ============ CONTACT SUBMISSIONS ============
-export const contactSubmissions = pgTable('contact_submissions', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  topic: text('topic').notNull(),
-  message: text('message').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+export const contactSubmissions = pgTable(
+  'contact_submissions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+    topic: text('topic').notNull(),
+    message: text('message').notNull(),
+    // 'new' | 'replied' | 'closed'
+    status: text('status').notNull().default('new'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    statusIdx: index('contact_submissions_status_idx').on(t.status, t.createdAt),
+  }),
+)
+
+// ============ CAREER APPLICATIONS ============
+export const careerApplications = pgTable(
+  'career_applications',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+    role: text('role').notNull(),
+    linkedinUrl: text('linkedin_url'),
+    githubUrl: text('github_url'),
+    portfolioUrl: text('portfolio_url'),
+    message: text('message').notNull(),
+    // path inside the 'career-resumes' Supabase bucket (never the raw file)
+    resumePath: text('resume_path'),
+    // 'new' | 'reviewing' | 'interview' | 'rejected' | 'hired'
+    status: text('status').notNull().default('new'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    statusIdx: index('career_apps_status_created_idx').on(t.status, t.createdAt),
+  }),
+)
+
+// ============ ANALYTICS EVENTS ============
+// First-party tracking — no IP stored; bot-filtered at ingest.
+// session_id is a random UUID generated client-side per browser tab (sessionStorage).
+export const analyticsEvents = pgTable(
+  'analytics_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    sessionId: text('session_id').notNull(),
+    eventName: text('event_name').notNull(),
+    source: text('source').notNull(), // 'marketing' | 'app'
+    page: text('page').notNull(),
+    referrer: text('referrer'),
+    teamId: uuid('team_id').references(() => teams.id, { onDelete: 'set null' }),
+    metadata: jsonb('metadata').default({}),
+    occurredAt: timestamp('occurred_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    sourceOccurredIdx: index('analytics_events_source_occurred_idx').on(t.source, t.occurredAt),
+    sessionIdx: index('analytics_events_session_idx').on(t.sessionId),
+    pageIdx: index('analytics_events_page_idx').on(t.source, t.page, t.occurredAt),
+    nameIdx: index('analytics_events_name_idx').on(t.eventName, t.occurredAt),
+  }),
+)
+
+// ============ ADMIN AUDIT LOG ============
+// Records every request to /api/admin/* by a superadmin.
+// Never stores secrets, tokens, or token hashes.
+export const adminAuditLog = pgTable(
+  'admin_audit_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    githubLogin: text('github_login').notNull(),
+    githubId: integer('github_id').notNull(),
+    method: text('method').notNull(),
+    route: text('route').notNull(),
+    requestSummary: text('request_summary'),
+    occurredAt: timestamp('occurred_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    occurredIdx: index('admin_audit_occurred_idx').on(t.occurredAt),
+    loginIdx: index('admin_audit_login_idx').on(t.githubLogin, t.occurredAt),
+  }),
+)
 
 // ============ WEEKLY SNAPSHOTS ============
 // Permanent record of each calendar week's metrics — never deleted or overwritten.
@@ -947,13 +1028,13 @@ export const hcShareTokens = pgTable(
     repoId: uuid('repo_id')
       .references(() => repos.id, { onDelete: 'cascade' })
       .notNull(),
-    token: text('token').notNull(),
+    tokenHash: text('token_hash').notNull(),
     expiresAt: timestamp('expires_at').notNull(),
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => ({
-    tokenIdx: uniqueIndex('hc_share_tokens_token_idx').on(t.token),
+    tokenHashIdx: uniqueIndex('hc_share_tokens_token_hash_idx').on(t.tokenHash),
     expiresIdx: index('hc_share_tokens_expires_idx').on(t.expiresAt),
   }),
 )
@@ -1014,6 +1095,12 @@ export type LlmUsageLogRow = typeof llmUsageLog.$inferSelect
 export type NewLlmUsageLogRow = typeof llmUsageLog.$inferInsert
 export type ContactSubmission = typeof contactSubmissions.$inferSelect
 export type NewContactSubmission = typeof contactSubmissions.$inferInsert
+export type CareerApplication = typeof careerApplications.$inferSelect
+export type NewCareerApplication = typeof careerApplications.$inferInsert
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect
+export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert
+export type AdminAuditLogRow = typeof adminAuditLog.$inferSelect
+export type NewAdminAuditLogRow = typeof adminAuditLog.$inferInsert
 export type SavingsEvent = typeof savingsEvents.$inferSelect
 export type NewSavingsEvent = typeof savingsEvents.$inferInsert
 export type WeeklySnapshot = typeof weeklySnapshots.$inferSelect
@@ -1106,6 +1193,7 @@ export const mcpApiTokens = pgTable(
     name: text('name').notNull(),
     createdBy: text('created_by').notNull(),
     lastUsedAt: timestamp('last_used_at'),
+    expiresAt: timestamp('expires_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => ({

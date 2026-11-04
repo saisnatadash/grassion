@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
@@ -12,12 +15,14 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
         with:
           version: 9.7.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
         with:
           node-version: 20
           cache: pnpm
@@ -28,8 +33,10 @@ jobs:
   deploy-api:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
           fetch-depth: 2
       - name: Check if API-related files changed
@@ -40,7 +47,7 @@ jobs:
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@98172f70657cb3e15db199af139be99bd3e61200  # master
         if: steps.api_changed.outputs.changed == 'true'
       - run: flyctl deploy --config fly.api.toml --remote-only
         if: steps.api_changed.outputs.changed == 'true'
@@ -50,8 +57,10 @@ jobs:
   deploy-worker:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
           fetch-depth: 2
       - name: Check if worker-related files changed
@@ -62,7 +71,7 @@ jobs:
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@98172f70657cb3e15db199af139be99bd3e61200  # master
         if: steps.worker_changed.outputs.changed == 'true'
       - run: flyctl deploy --config fly.worker.toml --remote-only
         if: steps.worker_changed.outputs.changed == 'true'
@@ -72,23 +81,25 @@ jobs:
   deploy-web:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
         with:
           version: 9.7.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile=false
       - run: pnpm --filter @grassion/web build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://grassion-api.fly.dev' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
       - name: Package and deploy web to Vercel
         working-directory: apps/web
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://grassion-api.fly.dev' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: |
           npx vercel build --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
           npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
@@ -96,8 +107,10 @@ jobs:
   deploy-marketing:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
       - name: Deploy marketing to Vercel
         working-directory: apps/marketing
         run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}

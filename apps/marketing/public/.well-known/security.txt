@@ -1,0 +1,5 @@
+Contact: mailto:security@grassion.com
+Expires: 2027-11-05T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://grassion.com/.well-known/security.txt
+Policy: https://grassion.com/security/disclosure

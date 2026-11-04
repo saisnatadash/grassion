@@ -43,6 +43,35 @@ const og = ogImage ?? '/og.png'
       <slot />
     </main>
     <Footer />
+    <script is:inline>
+      // Grassion first-party analytics — no IP, no cookies, no third-party data.
+      ;(function () {
+        var API = 'https://grassion-api.fly.dev'
+        var SID_KEY = 'g_sid'
+        function getSid() {
+          try { var s = sessionStorage.getItem(SID_KEY); if (s) return s } catch (_) {}
+          var id = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+          try { sessionStorage.setItem(SID_KEY, id) } catch (_) {}
+          return id
+        }
+        var sid = getSid()
+        function track(name, meta) {
+          try {
+            var payload = JSON.stringify({ events: [{ session_id: sid, event_name: name, source: 'marketing', page: location.pathname, referrer: document.referrer || '', metadata: meta || {} }] })
+            if (navigator.sendBeacon) { navigator.sendBeacon(API + '/api/track', new Blob([payload], { type: 'application/json' })) }
+            else { fetch(API + '/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(function(){}) }
+          } catch (_) {}
+        }
+        track('page_view', { title: document.title })
+        document.addEventListener('click', function(e) {
+          var el = e.target && e.target.closest && e.target.closest('a, button')
+          if (!el) return
+          var label = el.getAttribute('data-track') || (el.innerText || '').trim().slice(0, 60)
+          track('click', { label: label, tag: el.tagName.toLowerCase() })
+        })
+        window._gtrack = track
+      })()
+    </script>
     <script>
       ;(function () {
         // Capture ?ref= from URL and store in cookie (30 days, readable by JS)

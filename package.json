@@ -26,5 +26,16 @@
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@9.7.0"
+  "packageManager": "pnpm@9.7.0",
+  "pnpm": {
+    "overrides": {
+      "proxy-addr": ">=2.0.8",
+      "axios": ">=1.15.2",
+      "devalue": ">=5.8.1",
+      "tinypool": ">=2.1.2",
+      "body-parser": ">=1.20.9",
+      "follow-redirects": ">=1.16.2",
+      "fast-uri": ">=3.1.6"
+    }
+  }
 }
