@@ -7,7 +7,7 @@
  * or persisted.
  */
 
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, or, isNull, lt } from 'drizzle-orm'
 import {
   repos,
   hcPeople,
@@ -70,7 +70,7 @@ async function collectAllPrs(
       owner,
       repo: repoName,
       state: 'closed',
-      sort: 'updated',
+      sort: 'created', // created-desc is monotonically ordered; 'updated' breaks merged_at cutoff
       direction: 'desc',
       per_page: 100,
       page,
@@ -193,10 +193,16 @@ async function upsertArea(
     .limit(1)
 
   if (rows[0]) {
+    // Only advance lastChangedAt — never regress it for out-of-order processing.
     await db
       .update(hcCodeAreas)
       .set({ lastChangedAt: changedAt })
-      .where(eq(hcCodeAreas.id, rows[0].id))
+      .where(
+        and(
+          eq(hcCodeAreas.id, rows[0].id),
+          or(isNull(hcCodeAreas.lastChangedAt), lt(hcCodeAreas.lastChangedAt, changedAt)),
+        ),
+      )
     return rows[0].id
   }
 

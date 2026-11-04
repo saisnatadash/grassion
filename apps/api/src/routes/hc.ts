@@ -315,10 +315,20 @@ hcRouter.post(
   },
 )
 
-// POST /api/hc/:repoId/share — create a 14-day share token
+// POST /api/hc/:repoId/share — create a 14-day share token (Pro plan required)
 hcRouter.post('/api/hc/:repoId/share', requireAuth, async (req: Request, res: Response) => {
   const sess = req.session!
   const { repoId } = req.params as { repoId: string }
+
+  const [teamRow] = await db
+    .select({ plan: teams.plan })
+    .from(teams)
+    .where(eq(teams.id, sess.teamId))
+    .limit(1)
+  if (!isProOrAbove(teamRow?.plan ?? '')) {
+    res.status(403).json({ error: 'plan_required', message: 'Share links require a Pro plan.' })
+    return
+  }
 
   const repoRow = await db
     .select({ id: repos.id })
@@ -509,12 +519,30 @@ hcRouter.get('/api/hc/share/:token', async (req: Request, res: Response) => {
     return
   }
 
+  const [shareTeamRow] = await db
+    .select({ plan: teams.plan })
+    .from(teams)
+    .where(eq(teams.id, tokenRow.orgId))
+    .limit(1)
+
   const report = await buildReport(tokenRow.orgId, tokenRow.repoId)
   if (!report) {
     res.status(404).json({ error: 'repo_not_found' })
     return
   }
 
+  // Apply the same plan-gate as the authenticated endpoint.
+  const sharePlan = shareTeamRow?.plan ?? 'free'
+  const payload = isProOrAbove(sharePlan)
+    ? { ...report, expiresAt: tokenRow.expiresAt.toISOString() }
+    : {
+        ...report,
+        fragileAndDark: report.fragileAndDark.slice(0, 3),
+        blurredCount: Math.max(0, report.fragileAndDark.length - 3),
+        offboarding: [],
+        expiresAt: tokenRow.expiresAt.toISOString(),
+      }
+
   // Do NOT echo the token back — it's already in the URL.
-  res.json({ ...report, expiresAt: tokenRow.expiresAt.toISOString() })
+  res.json(payload)
 })

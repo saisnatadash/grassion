@@ -1,9 +1,9 @@
 import crypto from 'node:crypto'
 import { Router, type Request, type Response } from 'express'
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and, inArray, ilike } from 'drizzle-orm'
 import { teams, hcPeople, hcCodeAreas, hcEvidenceEvents } from '@grassion/db'
 import { db } from '../db.js'
-import { requireAuth } from '../auth.js'
+import { requireAuth, isProOrAbove } from '../auth.js'
 import { sendSlackTest } from '../lib/slack.js'
 import { env } from '../env.js'
 import { logger } from '../logger.js'
@@ -16,8 +16,11 @@ export const slackRouter = Router()
 function verifySlackSignature(rawBody: Buffer, timestamp: string, signature: string): boolean {
   const secret = env().SLACK_SIGNING_SECRET
   if (!secret) return false
+  // Reject missing or non-numeric timestamps (parseInt NaN would silently pass the > 300 check)
+  const ts = Number(timestamp)
+  if (!timestamp || !isFinite(ts)) return false
   // Reject requests older than 5 minutes
-  if (Math.abs(Date.now() / 1000 - parseInt(timestamp, 10)) > 300) return false
+  if (Math.abs(Date.now() / 1000 - ts) > 300) return false
   const sigBase = `v0:${timestamp}:${rawBody.toString('utf8')}`
   const expected = `v0=${crypto.createHmac('sha256', secret).update(sigBase).digest('hex')}`
   try {
@@ -41,6 +44,7 @@ slackRouter.post('/api/slack/commands', async (req: Request, res: Response) => {
   const params = new URLSearchParams(rawBody.toString('utf8'))
   const command = params.get('command') ?? ''
   const text = (params.get('text') ?? '').trim()
+  const slackTeamId = params.get('team_id') ?? ''
   const teamDomain = params.get('team_domain') ?? ''
 
   if (command !== '/grassion') {
@@ -63,16 +67,43 @@ slackRouter.post('/api/slack/commands', async (req: Request, res: Response) => {
   const areaPath = extractAreaPath(query)
 
   try {
-    // Find team by Slack domain or fall back to first team matching webhook
-    const allTeams = await db.select({ id: teams.id, plan: teams.plan }).from(teams).limit(50)
-    const proTeams = allTeams.filter((t) => t.plan === 'team' || t.plan === 'business')
-    if (proTeams.length === 0) {
-      res.json({ response_type: 'ephemeral', text: 'No Pro team found.' })
+    // Scope to a single team — first by stored slackTeamId, then by domain heuristic.
+    // Cross-org exposure: never return data across multiple teams.
+    let orgId: string | null = null
+
+    if (slackTeamId) {
+      const byId = await db
+        .select({ id: teams.id, plan: teams.plan, slackTeamId: teams.slackTeamId, githubAccountLogin: teams.githubAccountLogin })
+        .from(teams)
+        .where(eq(teams.slackTeamId, slackTeamId))
+        .limit(1)
+      if (byId[0] && isProOrAbove(byId[0].plan)) {
+        orgId = byId[0].id
+      } else if (!byId[0] && teamDomain) {
+        // Auto-associate on first use: match Slack domain against GitHub org login (heuristic for orgs using the same name).
+        const byDomain = await db
+          .select({ id: teams.id, plan: teams.plan })
+          .from(teams)
+          .where(ilike(teams.githubAccountLogin, teamDomain))
+          .limit(2) // fetch 2 to detect ambiguity
+        if (byDomain.length === 1 && isProOrAbove(byDomain[0]!.plan)) {
+          orgId = byDomain[0]!.id
+          // Persist association so future requests use the exact match.
+          await db.update(teams).set({ slackTeamId }).where(eq(teams.id, orgId))
+        }
+      }
+    }
+
+    if (!orgId) {
+      res.json({
+        response_type: 'ephemeral',
+        text: 'No Pro team found for this Slack workspace. Connect Grassion in Settings → Integrations.',
+      })
       return
     }
 
-    // Look for the area across all Pro teams' repos
-    const orgIds = proTeams.map((t) => t.id)
+    // All queries scoped to the single resolved orgId.
+    const orgIds = [orgId]
     const areas = await db
       .select()
       .from(hcCodeAreas)

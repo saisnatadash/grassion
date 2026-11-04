@@ -60,6 +60,8 @@ export const teams = pgTable('teams', {
   trialReminderSentAt: timestamp('trial_reminder_sent_at'),
 
   slackWebhookUrl: text('slack_webhook_url'),
+  // Slack workspace ID from Slack OAuth — used to scope /grassion slash commands to a single team.
+  slackTeamId: text('slack_team_id'),
 
   // Human Coverage check-run settings (Pro plan only)
   hcCheckRunEnabled: boolean('hc_check_run_enabled').default(false).notNull(),

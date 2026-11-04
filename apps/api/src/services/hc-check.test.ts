@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 // ── isProPlan — tested inline to avoid DB initialization ────────────────────
 
+// Mirrors the canonical isProOrAbove from auth.ts (re-exported as isProPlan in hc-check.ts).
 function isProPlan(plan: string): boolean {
   return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
 }

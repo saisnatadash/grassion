@@ -7,7 +7,7 @@
  * Privacy rule: only filename is read from PR files — patch is never accessed.
  */
 
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and, inArray, sql, desc } from 'drizzle-orm'
 import {
   teams,
   repos,
@@ -22,13 +22,12 @@ import { db } from '../db.js'
 import { getInstallationOctokit } from '../github.js'
 import { extractAreaPath } from '../jobs/backfillCoverage.js'
 import { logger } from '../logger.js'
+import { isProOrAbove } from '../auth.js'
+
+// Re-export for webhook handler which imported it from here.
+export { isProOrAbove as isProPlan }
 
 type OctokitInstance = Awaited<ReturnType<typeof getInstallationOctokit>>
-
-export function isProPlan(plan: string): boolean {
-  // Accepts new tier names (pro, business, enterprise) and legacy names (team, growth).
-  return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
-}
 
 // ── Coverage lookup ────────────────────────────────────────────────────────────
 
@@ -320,15 +319,22 @@ export async function handleUnderstandingAction(params: {
 
   if (answer !== 'ai_wrote_it') return
 
-  // Request one extra reviewer for AI-wrote-it clicks
+  // Request the highest-coverage active person who isn't the author.
   const repoRow = await db.select().from(repos).where(eq(repos.id, repoId)).limit(1)
   const repo = repoRow[0]
   if (!repo) return
 
+  // Rank by total coverage weight in this org so we pick someone who actually knows the codebase.
   const candidates = await db
-    .select({ githubLogin: hcPeople.githubLogin })
+    .select({
+      githubLogin: hcPeople.githubLogin,
+      totalWeight: sql<number>`sum(${hcEvidenceEvents.weight})`,
+    })
     .from(hcPeople)
+    .innerJoin(hcEvidenceEvents, eq(hcEvidenceEvents.personId, hcPeople.id))
     .where(and(eq(hcPeople.orgId, orgId), eq(hcPeople.isActive, true)))
+    .groupBy(hcPeople.id, hcPeople.githubLogin)
+    .orderBy(desc(sql<number>`sum(${hcEvidenceEvents.weight})`))
     .limit(20)
 
   const extra = candidates
