@@ -1067,6 +1067,9 @@ function MembersSection() {
 /* ── DANGER ZONE ── */
 function DangerZone() {
   const qc = useQueryClient()
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function signOut() {
     await api.logout()
@@ -1076,12 +1079,53 @@ function DangerZone() {
     window.location.href = 'https://grassion.com'
   }
 
+  async function deleteCoverageData() {
+    if (!deleteConfirm) { setDeleteConfirm(true); return }
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await api.hc.deleteAllCoverage()
+      qc.invalidateQueries()
+      setDeleteConfirm(false)
+    } catch {
+      setDeleteError('Delete failed — please try again.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div>
       <SectionHeading>Danger zone</SectionHeading>
       <Card>
-        <CardContent className="py-5">
+        <CardContent className="py-5 flex flex-col gap-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium text-white">Delete coverage data</div>
+              <div className="text-xs text-[#888888] mt-0.5">
+                Permanently removes all Human Coverage data for your team — people, code areas, evidence, check runs, and share links.
+                This cannot be undone.
+              </div>
+              {deleteError && <div className="text-xs text-red-400 mt-1">{deleteError}</div>}
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={deleteCoverageData}
+              disabled={deleting}
+              className="flex items-center gap-2 shrink-0"
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleteConfirm ? (deleting ? 'Deleting…' : 'Confirm delete') : 'Delete coverage data'}
+            </Button>
+          </div>
+          {deleteConfirm && !deleting && (
+            <div className="text-xs text-yellow-400 -mt-2">
+              Click again to confirm. This will permanently erase all coverage history.{' '}
+              <button className="underline" onClick={() => setDeleteConfirm(false)}>Cancel</button>
+            </div>
+          )}
+          <div className="border-t border-[#222222] pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="text-sm font-medium text-white">Sign out</div>
               <div className="text-xs text-[#888888] mt-0.5">Sign out of your Grassion account on this device.</div>
@@ -1090,7 +1134,7 @@ function DangerZone() {
               variant="destructive"
               size="sm"
               onClick={signOut}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 shrink-0"
             >
               <LogOut className="h-4 w-4" />
               Sign out

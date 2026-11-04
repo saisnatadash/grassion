@@ -393,14 +393,18 @@ export function AppLayout() {
                       {planLabel}
                     </div>
                   </div>
-                  {/* Upgrade nudge: show for non-Business plans */}
-                  {team.plan !== 'business' && team.plan !== 'admin' && (
+                  {/* Upgrade nudge: show for plans below Business */}
+                  {team.plan !== 'business' && team.plan !== 'admin' && team.plan !== 'enterprise' && (
                     <button
                       onClick={() => { navigate('/billing'); setDropdownOpen(false) }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-green-400 hover:bg-green-500/10 transition-colors"
                     >
                       <Zap className="h-3.5 w-3.5" />
-                      {team.plan === 'starter' ? 'Upgrade to Growth' : team.plan === 'team' ? 'Upgrade to Business' : 'Upgrade plan'}
+                      {team.plan === 'free' || team.plan === 'trial'
+                        ? 'Upgrade to Pro'
+                        : (team.plan === 'pro' || team.plan === 'starter' || team.plan === 'growth' || team.plan === 'team')
+                        ? 'Upgrade to Business'
+                        : 'Upgrade plan'}
                     </button>
                   )}
                   <DropItem icon={Settings} label="Settings" onClick={() => { navigate('/settings'); setDropdownOpen(false) }} />

@@ -10,12 +10,16 @@ import {
   hcFailures,
   hcShareTokens,
   hcEvidenceDisputes,
+  hcCoverageSnapshots,
+  hcUnderstandingAnswers,
+  hcBackfillRuns,
+  hcCheckRuns,
   type HcEvidenceEvent,
   type HcPerson,
   type HcCodeArea,
 } from '@grassion/db'
 import { db } from '../db.js'
-import { requireAuth, isProOrAbove } from '../auth.js'
+import { requireAuth, requireRole, isProOrAbove } from '../auth.js'
 import { logger } from '../logger.js'
 
 export const hcRouter = Router()
@@ -546,3 +550,33 @@ hcRouter.get('/api/hc/share/:token', async (req: Request, res: Response) => {
   // Do NOT echo the token back — it's already in the URL.
   res.json(payload)
 })
+
+// DELETE /api/hc/coverage — wipe all HC data for the team (GDPR / privacy)
+// Requires owner role. Deletes all 8 HC tables scoped to orgId.
+hcRouter.delete(
+  '/api/hc/coverage',
+  requireAuth,
+  requireRole('owner'),
+  async (req: Request, res: Response) => {
+    const orgId = req.session!.teamId
+    try {
+      await db.transaction(async (tx) => {
+        await tx.delete(hcEvidenceDisputes).where(eq(hcEvidenceDisputes.orgId, orgId))
+        await tx.delete(hcCheckRuns).where(eq(hcCheckRuns.orgId, orgId))
+        await tx.delete(hcUnderstandingAnswers).where(eq(hcUnderstandingAnswers.orgId, orgId))
+        await tx.delete(hcCoverageSnapshots).where(eq(hcCoverageSnapshots.orgId, orgId))
+        await tx.delete(hcEvidenceEvents).where(eq(hcEvidenceEvents.orgId, orgId))
+        await tx.delete(hcCodeAreas).where(eq(hcCodeAreas.orgId, orgId))
+        await tx.delete(hcPeople).where(eq(hcPeople.orgId, orgId))
+        await tx.delete(hcBackfillRuns).where(eq(hcBackfillRuns.orgId, orgId))
+        await tx.delete(hcShareTokens).where(eq(hcShareTokens.orgId, orgId))
+        await tx.delete(hcFailures).where(eq(hcFailures.orgId, orgId))
+      })
+      logger.info({ orgId }, 'hc coverage data deleted by owner')
+      res.json({ ok: true })
+    } catch (err) {
+      logger.error({ err, orgId }, 'hc coverage delete failed')
+      res.status(500).json({ error: 'internal_error' })
+    }
+  },
+)

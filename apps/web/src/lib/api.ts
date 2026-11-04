@@ -355,6 +355,11 @@ export const api = {
     subscription: () => request<SubscriptionDto>('/api/billing/subscription'),
   },
 
+  hc: {
+    deleteAllCoverage: () =>
+      request<{ ok: true }>('/api/hc/coverage', { method: 'DELETE' }),
+  },
+
   contact: (body: ContactInput) =>
     request<{ ok: true }>('/api/contact', { method: 'POST', body: JSON.stringify(body) }),
 }
