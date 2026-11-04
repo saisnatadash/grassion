@@ -3,21 +3,21 @@ import type { Plan } from '@grassion/shared'
 import { api } from './api.js'
 import { decodePlanFromToken } from './utils.js'
 
-export function isPaidPlan(plan: Plan | string | null | undefined): boolean {
+const PRO_PLANS = ['pro', 'starter', 'growth', 'team', 'business', 'enterprise', 'admin']
+const BUSINESS_PLANS = ['business', 'enterprise', 'admin']
+
+export function isProPlan(plan: Plan | string | null | undefined): boolean {
   if (!plan) return false
-  // Any plan except 'trial' is considered paid — covers 'starter', 'team',
-  // 'business', and any custom value set directly in the DB (e.g. 'pro').
-  return plan !== 'trial'
+  return PRO_PLANS.includes(plan)
 }
 
-// 'starter' is the base paid plan — MVP gives it full access.
-// 'pro' and 'admin' are custom DB values that also map to highest tier.
-const TEAM_PLANS = ['starter', 'team', 'business', 'pro', 'admin']
-const BUSINESS_PLANS = ['starter', 'team', 'business', 'pro', 'admin']
+export function isPaidPlan(plan: Plan | string | null | undefined): boolean {
+  return isProPlan(plan)
+}
 
+// Legacy aliases kept for existing call-sites.
 export function isTeamPlan(plan: Plan | string | null | undefined): boolean {
-  if (!plan) return false
-  return TEAM_PLANS.includes(plan)
+  return isProPlan(plan)
 }
 
 export function isBusinessPlan(plan: Plan | string | null | undefined): boolean {
@@ -28,7 +28,9 @@ export function isBusinessPlan(plan: Plan | string | null | undefined): boolean 
 export interface UsePlanResult {
   plan: Plan | null
   isPaid: boolean
+  isPro: boolean
   isTrial: boolean
+  isFree: boolean
   isTeam: boolean
   isBusiness: boolean
   isLoading: boolean
@@ -49,8 +51,10 @@ export function usePlan(): UsePlanResult {
 
   return {
     plan,
+    isPro: isProPlan(plan),
     isPaid: isPaidPlan(plan),
-    isTrial: plan === 'trial' || plan === null,
+    isFree: plan === 'free' || plan === null,
+    isTrial: plan === 'trial',
     isTeam: isTeamPlan(plan),
     isBusiness: isBusinessPlan(plan),
     isLoading: team.isLoading && me.isLoading && !jwtPlan,

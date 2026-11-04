@@ -76,6 +76,9 @@ export function SettingsPage() {
       <SlackSection />
       <ReposSection />
       <MembersSection />
+      <HcSettingsSection />
+      <PrivacyControlsSection />
+      <McpTokensSection />
       <DangerZone />
     </div>
   )
@@ -1065,6 +1068,221 @@ function MembersSection() {
 }
 
 /* ── DANGER ZONE ── */
+/* ── HC SETTINGS ── */
+function HcSettingsSection() {
+  const qc = useQueryClient()
+  const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const team = teamQ.data
+  const [toast, setToast] = useState<'saved' | 'error' | null>(null)
+
+  function patch(fields: Record<string, boolean | number>) {
+    api.team.update(fields).then(() => {
+      qc.invalidateQueries({ queryKey: ['team'] })
+      setToast('saved')
+      setTimeout(() => setToast(null), 2000)
+    }).catch(() => {
+      setToast('error')
+      setTimeout(() => setToast(null), 3000)
+    })
+  }
+
+  if (!team) return null
+
+  return (
+    <div>
+      <SectionHeading>Human Coverage check runs</SectionHeading>
+      <Card>
+        <CardContent className="py-1 flex flex-col divide-y divide-[#1e1e1e]">
+          <Toggle
+            label="Enable PR check run"
+            description="Post a Grassion coverage check on every PR open / synchronize event (Pro+)."
+            checked={team.hcCheckRunEnabled}
+            onChange={(v) => patch({ hcCheckRunEnabled: v })}
+          />
+          <Toggle
+            label="Block on critical dark areas"
+            description="Set check conclusion to action_required when a critical area has no coverage."
+            checked={team.hcBlockOnCritical}
+            onChange={(v) => { if (team.hcCheckRunEnabled) patch({ hcBlockOnCritical: v }) }}
+          />
+          <div className="flex items-center justify-between gap-4 py-3">
+            <div>
+              <div className="text-sm font-medium text-white">Max reviewer requests per PR</div>
+              <div className="text-xs text-[#888888] mt-0.5">How many reviewers Grassion can auto-request (0 = off, max 5).</div>
+            </div>
+            <select
+              className="bg-[#1e1e1e] border border-[#333] text-white text-sm rounded px-2 py-1"
+              value={team.hcMaxReviewRequests}
+              onChange={(e) => patch({ hcMaxReviewRequests: Number(e.target.value) })}
+            >
+              {[0, 1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
+        </CardContent>
+        {toast && (
+          <div className={cn('px-5 pb-3 text-xs font-medium', toast === 'saved' ? 'text-green-400' : 'text-red-400')}>
+            {toast === 'saved' ? 'Saved.' : 'Save failed — try again.'}
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
+
+/* ── PRIVACY CONTROLS ── */
+function PrivacyControlsSection() {
+  const qc = useQueryClient()
+  const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const team = teamQ.data
+  const [toast, setToast] = useState<'saved' | 'error' | null>(null)
+
+  function patch(fields: Record<string, boolean>) {
+    api.team.update(fields).then(() => {
+      qc.invalidateQueries({ queryKey: ['team'] })
+      setToast('saved')
+      setTimeout(() => setToast(null), 2000)
+    }).catch(() => {
+      setToast('error')
+      setTimeout(() => setToast(null), 3000)
+    })
+  }
+
+  if (!team) return null
+
+  return (
+    <div>
+      <SectionHeading>Privacy controls</SectionHeading>
+      <Card>
+        <CardContent className="py-1 flex flex-col divide-y divide-[#1e1e1e]">
+          <Toggle
+            label="Team-only mode"
+            description="Store only team and area aggregates — no per-person evidence (for EU customers / GDPR)."
+            checked={team.teamOnlyMode}
+            onChange={(v) => patch({ teamOnlyMode: v })}
+          />
+          <Toggle
+            label="Per-developer metrics"
+            description="Show seat waste and adoption metrics broken down per developer (admin-only view)."
+            checked={team.perDevMetricsEnabled}
+            onChange={(v) => patch({ perDevMetricsEnabled: v })}
+          />
+        </CardContent>
+        {toast && (
+          <div className={cn('px-5 pb-3 text-xs font-medium', toast === 'saved' ? 'text-green-400' : 'text-red-400')}>
+            {toast === 'saved' ? 'Saved.' : 'Save failed — try again.'}
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
+
+/* ── MCP TOKENS ── */
+function McpTokensSection() {
+  const qc = useQueryClient()
+  const { isPro } = usePlan()
+  const tokensQ = useQuery({ queryKey: ['mcp-tokens'], queryFn: api.mcpTokens.list, enabled: isPro })
+  const [newName, setNewName] = useState('')
+  const [revealed, setRevealed] = useState<{ id: string; token: string } | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function create() {
+    if (!newName.trim()) return
+    setCreating(true)
+    setErr(null)
+    try {
+      const result = await api.mcpTokens.create(newName.trim())
+      setRevealed({ id: result.id, token: result.token })
+      setNewName('')
+      qc.invalidateQueries({ queryKey: ['mcp-tokens'] })
+    } catch {
+      setErr('Failed to create token.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function revoke(id: string) {
+    await api.mcpTokens.revoke(id)
+    if (revealed?.id === id) setRevealed(null)
+    qc.invalidateQueries({ queryKey: ['mcp-tokens'] })
+  }
+
+  return (
+    <div>
+      <SectionHeading>MCP server tokens</SectionHeading>
+      <Card>
+        <CardContent className="py-5 flex flex-col gap-4">
+          {!isPro && (
+            <div className="text-sm text-[#888888]">MCP server access requires a Pro plan.</div>
+          )}
+          {isPro && (
+            <>
+              <div className="text-xs text-[#888888]">
+                Use these tokens to authenticate the Grassion MCP server with your coding agent (Cursor, Claude Code, etc.).
+                Tokens are shown only once at creation.
+              </div>
+              {revealed && (
+                <div className="bg-[#0f1f0f] border border-green-900 rounded p-3 flex flex-col gap-1">
+                  <div className="text-xs text-green-400 font-semibold">Token created — copy it now, it won't be shown again.</div>
+                  <code className="text-xs font-mono text-green-300 break-all select-all">{revealed.token}</code>
+                  <button className="text-[10px] text-green-500 underline text-left w-fit mt-1" onClick={() => { void navigator.clipboard.writeText(revealed.token) }}>
+                    Copy to clipboard
+                  </button>
+                </div>
+              )}
+              {(tokensQ.data ?? []).length > 0 && (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-[#555]">
+                      <th className="text-left py-1 font-medium">Name</th>
+                      <th className="text-left py-1 font-medium">Created</th>
+                      <th className="text-left py-1 font-medium">Last used</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(tokensQ.data ?? []).map((t) => (
+                      <tr key={t.id} className="border-t border-[#1e1e1e]">
+                        <td className="py-2 text-white font-medium">{t.name}</td>
+                        <td className="py-2 text-[#888]">{new Date(t.createdAt).toLocaleDateString()}</td>
+                        <td className="py-2 text-[#888]">{t.lastUsedAt ? new Date(t.lastUsedAt).toLocaleDateString() : 'Never'}</td>
+                        <td className="py-2 text-right">
+                          <button
+                            className="text-red-400 hover:text-red-300 text-xs"
+                            onClick={() => void revoke(t.id)}
+                          >
+                            Revoke
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <div className="flex gap-2 items-center border-t border-[#1e1e1e] pt-3">
+                <Input
+                  className="flex-1 h-8 text-sm"
+                  placeholder="Token name (e.g. cursor-laptop)"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void create() }}
+                  maxLength={80}
+                />
+                <Button size="sm" onClick={create} disabled={creating || !newName.trim()}>
+                  {creating ? 'Creating…' : 'Create'}
+                </Button>
+              </div>
+              {err && <div className="text-xs text-red-400">{err}</div>}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 function DangerZone() {
   const qc = useQueryClient()
   const [deleteConfirm, setDeleteConfirm] = useState(false)

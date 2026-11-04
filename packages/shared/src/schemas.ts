@@ -15,6 +15,11 @@ export const updateTeamSchema = z.object({
   benchmarkingOptIn: z.boolean().optional(),
   teamSizeRange: z.enum(TEAM_SIZE_RANGES).nullable().optional(),
   industry: z.enum(INDUSTRIES).nullable().optional(),
+  hcCheckRunEnabled: z.boolean().optional(),
+  hcBlockOnCritical: z.boolean().optional(),
+  hcMaxReviewRequests: z.number().int().min(0).max(5).optional(),
+  teamOnlyMode: z.boolean().optional(),
+  perDevMetricsEnabled: z.boolean().optional(),
 })
 
 export const checkoutSchema = z.object({

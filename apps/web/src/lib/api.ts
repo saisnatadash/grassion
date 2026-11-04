@@ -75,6 +75,18 @@ export interface SavingsHistoryResponse {
   monthlyHistory: Array<{ month: string; wasteUsd: number }>
 }
 
+export interface McpTokenDto {
+  id: string
+  name: string
+  createdBy: string
+  createdAt: string
+  lastUsedAt: string | null
+}
+
+export interface McpTokenCreated extends McpTokenDto {
+  token: string
+}
+
 export interface OutcomesToolRow {
   tool: string
   prCount: number
@@ -358,6 +370,14 @@ export const api = {
   hc: {
     deleteAllCoverage: () =>
       request<{ ok: true }>('/api/hc/coverage', { method: 'DELETE' }),
+  },
+
+  mcpTokens: {
+    list: () => request<McpTokenDto[]>('/api/mcp-tokens'),
+    create: (name: string) =>
+      request<McpTokenCreated>('/api/mcp-tokens', { method: 'POST', body: JSON.stringify({ name }) }),
+    revoke: (id: string) =>
+      request<{ ok: true }>(`/api/mcp-tokens/${id}`, { method: 'DELETE' }),
   },
 
   contact: (body: ContactInput) =>

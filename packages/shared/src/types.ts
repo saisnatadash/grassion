@@ -75,6 +75,11 @@ export interface MeResponse {
     teamSizeRange: string | null
     industry: string | null
     demoMode: boolean
+    hcCheckRunEnabled: boolean
+    hcBlockOnCritical: boolean
+    hcMaxReviewRequests: number
+    teamOnlyMode: boolean
+    perDevMetricsEnabled: boolean
   }
 }
 

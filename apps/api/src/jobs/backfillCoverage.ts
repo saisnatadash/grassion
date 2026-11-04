@@ -66,18 +66,35 @@ async function collectAllPrs(
   let page = 1
 
   while (true) {
-    const res = await octokit.pulls.list({
-      owner,
-      repo: repoName,
-      state: 'closed',
-      sort: 'created', // created-desc is monotonically ordered; 'updated' breaks merged_at cutoff
-      direction: 'desc',
-      per_page: 100,
-      page,
-    })
+    let res: Awaited<ReturnType<typeof octokit.pulls.list>>
+    // Retry on 429 / secondary rate-limit with exponential backoff (max 3 attempts).
+    let retries = 0
+    while (true) {
+      try {
+        res = await octokit.pulls.list({
+          owner,
+          repo: repoName,
+          state: 'closed',
+          sort: 'created', // created-desc is monotonically ordered; 'updated' breaks merged_at cutoff
+          direction: 'desc',
+          per_page: 100,
+          page,
+        })
+        break
+      } catch (err: unknown) {
+        const status = (err as { status?: number }).status
+        if ((status === 429 || status === 403) && retries < 3) {
+          const delay = Math.pow(2, retries) * 2000 // 2s, 4s, 8s
+          retries++
+          await sleep(delay)
+          continue
+        }
+        throw err
+      }
+    }
 
     let hitCutoff = false
-    for (const pr of res.data) {
+    for (const pr of res!.data) {
       if (!pr.merged_at) continue
       if (new Date(pr.merged_at) < since) {
         hitCutoff = true
@@ -100,7 +117,7 @@ async function collectAllPrs(
       })
     }
 
-    if (hitCutoff || res.data.length < 100) break
+    if (hitCutoff || res!.data.length < 100) break
     page++
     await sleep(100)
   }

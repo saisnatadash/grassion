@@ -22,6 +22,9 @@ teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => 
         slackWebhookUrl: teams.slackWebhookUrl, perSeatCostUsd: teams.perSeatCostUsd,
         toolSeatCosts: teams.toolSeatCosts, benchmarkingOptIn: teams.benchmarkingOptIn,
         teamSizeRange: teams.teamSizeRange, industry: teams.industry, demoMode: teams.demoMode,
+        hcCheckRunEnabled: teams.hcCheckRunEnabled, hcBlockOnCritical: teams.hcBlockOnCritical,
+        hcMaxReviewRequests: teams.hcMaxReviewRequests, teamOnlyMode: teams.teamOnlyMode,
+        perDevMetricsEnabled: teams.perDevMetricsEnabled,
       })
       .from(teams).where(eq(teams.id, sess.teamId)).limit(1)
     if (!row[0]) {
@@ -49,6 +52,11 @@ teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => 
       teamSizeRange: t.teamSizeRange ?? null,
       industry: t.industry ?? null,
       demoMode: t.demoMode ?? false,
+      hcCheckRunEnabled: t.hcCheckRunEnabled ?? false,
+      hcBlockOnCritical: t.hcBlockOnCritical ?? false,
+      hcMaxReviewRequests: t.hcMaxReviewRequests ?? 2,
+      teamOnlyMode: t.teamOnlyMode ?? false,
+      perDevMetricsEnabled: t.perDevMetricsEnabled ?? false,
     })
   } catch (err) {
     logger.error({ err }, 'team get failed')

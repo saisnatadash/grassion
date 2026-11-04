@@ -154,16 +154,22 @@ export async function runHcCheckForPr(input: HcCheckInput): Promise<void> {
       set: { checkRunId: String(checkRunId), headSha, conclusion: null },
     })
 
-  // Get PR files — PRIVACY: filename only, patch never accessed
+  // Get PR files — PRIVACY: filename only, patch never accessed. Paginate up to 300 files.
   let filenames: string[]
   try {
-    const { data: files } = await octokit.pulls.listFiles({
-      owner,
-      repo: repoName,
-      pull_number: prNumber,
-      per_page: 100,
-    })
-    filenames = files.map((f) => f.filename) // filename only — patch field intentionally ignored
+    const collected: string[] = []
+    for (let filePage = 1; filePage <= 3; filePage++) {
+      const { data: files } = await octokit.pulls.listFiles({
+        owner,
+        repo: repoName,
+        pull_number: prNumber,
+        per_page: 100,
+        page: filePage,
+      })
+      for (const f of files) collected.push(f.filename) // filename only — patch field intentionally ignored
+      if (files.length < 100) break
+    }
+    filenames = collected
   } catch (err) {
     logger.error({ err, prNumber }, 'hc-check: failed to list PR files')
     await finishCheckRun(octokit, owner, repoName, checkRunId, 'neutral', '⚠️ Could not fetch PR files.', [])
