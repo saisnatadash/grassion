@@ -6,5 +6,5 @@
     "noEmit": false,
     "skipLibCheck": true
   },
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "src/__test-stubs__"]
 }
