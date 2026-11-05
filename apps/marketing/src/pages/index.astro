@@ -248,211 +248,130 @@
       pointer-events: none;
     }
 
-    /* ── ANALYSIS FEED ──────────────────────── */
-    .feed-wrap {
-      width: 340px;
-      background: rgba(255,255,255,0.025);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      overflow: hidden;
-      font-family: 'DM Mono', monospace;
+    /* ── CUBE SCENE ─────────────────────────── */
+    .scene-wrap {
       position: relative;
-      z-index: 2;
-    }
-
-    .feed-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,0.02);
-    }
-
-    .live-dot {
-      width: 6px; height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-      box-shadow: 0 0 6px var(--green);
-      animation: pulse 2s ease-in-out infinite;
+      width: 360px;
+      height: 360px;
       flex-shrink: 0;
     }
 
-    .feed-repo {
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: rgba(255,255,255,0.45);
-      flex: 1;
+    .scene {
+      position: relative;
+      width: 360px; height: 360px;
+      perspective: 1100px;
     }
 
-    .feed-tag {
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      color: rgba(34,197,94,0.7);
-      border: 1px solid rgba(34,197,94,0.2);
-      padding: 2px 8px;
-      border-radius: 3px;
+    .ring {
+      position: absolute; inset: 0;
+      border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
+      transform-style: preserve-3d;
+      animation: spinRing 20s linear infinite;
     }
 
-    .feed-rows {
-      padding: 12px 0;
-      min-height: 160px;
+    .ring::after {
+      content: ''; position: absolute;
+      top: 50%; left: -5px; width: 10px; height: 10px;
+      background: var(--white); border-radius: 50%;
+      transform: translateY(-50%);
+      box-shadow: 0 0 16px 4px rgba(255,255,255,0.28);
     }
 
-    .feed-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 7px 16px;
-      opacity: 0;
-      transform: translateX(-6px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
+    .ring-2 { inset: 50px; border-color: rgba(255,255,255,0.06); animation: spinRing 13s linear infinite reverse; }
+    .ring-3 { inset: 100px; border-color: rgba(255,255,255,0.04); animation: spinRing 8s linear infinite; }
+
+    @keyframes spinRing {
+      from { transform: rotateX(70deg) rotateZ(0deg); }
+      to   { transform: rotateX(70deg) rotateZ(360deg); }
     }
 
-    .feed-row.visible {
-      opacity: 1;
-      transform: translateX(0);
+    .cube-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+    .cube {
+      width: 90px; height: 90px;
+      position: relative; transform-style: preserve-3d;
+      animation: spinCube 11s ease-in-out infinite;
     }
 
-    .pr-num {
-      font-size: 9px;
-      color: rgba(255,255,255,0.3);
-      width: 32px;
-      flex-shrink: 0;
+    @keyframes spinCube {
+      0%   { transform: rotateX(12deg) rotateY(0deg); }
+      25%  { transform: rotateX(12deg) rotateY(90deg); }
+      50%  { transform: rotateX(12deg) rotateY(180deg); }
+      75%  { transform: rotateX(12deg) rotateY(270deg); }
+      100% { transform: rotateX(12deg) rotateY(360deg); }
     }
 
-    .pr-source {
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      flex: 1;
-      color: rgba(255,255,255,0.55);
+    .face {
+      position: absolute; width: 90px; height: 90px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.03);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      font-weight: 500; letter-spacing: 0.18em; color: rgba(255,255,255,0.38);
     }
 
-    .pr-bar-wrap {
-      width: 64px;
-      height: 3px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 2px;
-      overflow: hidden;
-      flex-shrink: 0;
+    .face-front  { transform: translateZ(45px); }
+    .face-back   { transform: rotateY(180deg) translateZ(45px); }
+    .face-left   { transform: rotateY(-90deg) translateZ(45px); }
+    .face-right  { transform: rotateY(90deg) translateZ(45px); }
+    .face-top    { transform: rotateX(90deg) translateZ(45px); }
+    .face-bottom { transform: rotateX(-90deg) translateZ(45px); }
+
+    /* ── FLOATING CARDS ─────────────────────── */
+    .verdict-card {
+      position: absolute;
+      top: 24px; right: -8px;
+      background: rgba(10,10,10,0.9);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-family: 'DM Mono', monospace;
+      z-index: 10;
+      backdrop-filter: blur(12px);
     }
 
-    .pr-bar {
-      height: 100%;
-      border-radius: 2px;
-      width: 0;
-      transition: width 0.6s ease;
-    }
-
-    .pr-bar.high { background: var(--green); }
-    .pr-bar.mid  { background: var(--yellow); }
-    .pr-bar.low  { background: var(--red); }
-
-    .pr-score {
-      font-size: 9px;
-      width: 26px;
-      text-align: right;
-      flex-shrink: 0;
-    }
-
-    .pr-score.high { color: rgba(34,197,94,0.8); }
-    .pr-score.mid  { color: rgba(234,179,8,0.8); }
-    .pr-score.low  { color: rgba(239,68,68,0.7); }
-
-    /* ── VERDICT STRIP ──────────────────────── */
-    .feed-verdict {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      border-top: 1px solid var(--line);
-      opacity: 0;
-      transform: translateY(4px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    .feed-verdict.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .verdict-grade {
-      width: 36px; height: 36px;
-      border-radius: 6px;
-      background: rgba(34,197,94,0.12);
-      border: 1px solid rgba(34,197,94,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--green);
-      flex-shrink: 0;
-    }
-
-    .verdict-label-top {
+    .verdict-label {
       font-size: 8px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.35);
-      margin-bottom: 3px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 4px;
     }
 
-    .verdict-label-main {
+    .verdict-value {
       font-size: 13px;
       font-weight: 500;
       color: var(--white);
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
     }
 
-    .verdict-label-sub {
-      font-size: 9px;
-      color: rgba(34,197,94,0.7);
-      margin-top: 2px;
-    }
-
-    /* ── SCORE BAR ──────────────────────────── */
-    .score-strip {
-      width: 340px;
-      margin-top: 16px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .score-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
-    }
-
-    .score-label {
+    .waste-card {
+      position: absolute;
+      bottom: 24px; left: -8px;
+      background: rgba(10,10,10,0.9);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 8px;
+      padding: 10px 16px;
       font-family: 'DM Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.14em;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+
+    .waste-label {
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
       color: rgba(255,255,255,0.3);
+      margin-bottom: 4px;
     }
 
-    .score-value {
-      font-family: 'DM Mono', monospace;
-      font-size: 9px;
-      color: rgba(255,255,255,0.45);
+    .waste-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(239,68,68,0.9);
+      letter-spacing: 0.03em;
     }
 
-    .score-track {
-      height: 2px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .score-fill {
-      height: 100%;
-      background: linear-gradient(90deg, rgba(34,197,94,0.4), rgba(34,197,94,0.8));
-      border-radius: 2px;
-      width: 0;
-      transition: width 1.2s ease;
-    }
 
     /* ── STATS ──────────────────────────────── */
     .stats {
@@ -658,7 +577,7 @@
         align-items: center;
       }
 
-      .feed-wrap, .score-strip { width: 100%; max-width: 340px; }
+      .scene-wrap { transform: scale(0.78); transform-origin: top center; margin-bottom: -60px; }
 
       .stats { margin-top: 24px; }
       .stat { padding: 16px 0; }
@@ -709,19 +628,19 @@
         <div class="proof-item">
           <div class="proof-icon">01</div>
           <div class="proof-text">
-            <strong>Right reviewer, every PR</strong> — auto-assigned by who actually understands that code
+            <strong>Right reviewer, every PR:</strong> auto-assigned by who actually understands that code
           </div>
         </div>
         <div class="proof-item">
           <div class="proof-icon">02</div>
           <div class="proof-text">
-            <strong>Dark code alerts</strong> — instant Slack when an area loses all human coverage
+            <strong>Dark code alerts:</strong> instant Slack when an area loses all human coverage
           </div>
         </div>
         <div class="proof-item">
           <div class="proof-icon">03</div>
           <div class="proof-text">
-            <strong>AI ROI verdict</strong> — which tools add value vs. quietly burn budget, weekly
+            <strong>AI ROI verdict:</strong> which tools add value vs. quietly burn budget, weekly
           </div>
         </div>
       </div>
@@ -741,54 +660,40 @@
 
     </div>
 
-    <!-- ── RIGHT: ANIMATED ANALYSIS FEED ── -->
+    <!-- ── RIGHT: CUBE ANIMATION ── -->
     <div class="right">
 
-      <!-- Live coverage check run (THE one animation) -->
-      <div class="feed-wrap" id="feedWrap">
-        <div class="feed-header">
-          <span class="live-dot"></span>
-          <span class="feed-repo">acme-corp / platform · PR #341</span>
-          <span class="feed-tag">COVERAGE CHECK</span>
+      <div class="scene-wrap">
+        <div class="verdict-card">
+          <div class="verdict-label">This month</div>
+          <div class="verdict-value">NET POSITIVE +$1,220</div>
         </div>
-        <div class="feed-rows" id="feedRows">
-          <!-- injected by JS -->
-        </div>
-        <div class="feed-verdict" id="feedVerdict">
-          <div class="verdict-grade" id="verdictGrade">✓</div>
-          <div>
-            <div class="verdict-label-top">Reviewer routed</div>
-            <div class="verdict-label-main" id="verdictMain">@alice · @bob</div>
-            <div class="verdict-label-sub" id="verdictSub">highest coverage weight for changed files</div>
+        <div class="scene">
+          <div class="ring"></div>
+          <div class="ring ring-2"></div>
+          <div class="ring ring-3"></div>
+          <div class="cube-wrap">
+            <div class="cube">
+              <div class="face face-front">ROI</div>
+              <div class="face face-back">DATA</div>
+              <div class="face face-left">TRACK</div>
+              <div class="face face-right">SIGNAL</div>
+              <div class="face face-top"></div>
+              <div class="face face-bottom"></div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Quality score bar -->
-      <div class="score-strip">
-        <div class="score-row">
-          <span class="score-label">Coverage score</span>
-          <span class="score-value" id="scoreVal">—</span>
-        </div>
-        <div class="score-track">
-          <div class="score-fill" id="scoreFill"></div>
+        <div class="waste-card">
+          <div class="waste-label">Unused seats found</div>
+          <div class="waste-value">8 seats · $152/mo wasted</div>
         </div>
       </div>
 
       <!-- Stats row -->
       <div class="stats">
-        <div class="stat" id="s1">
-          <span class="stat-num">1 in 3</span>
-          <span class="stat-label">PRs reviewed by wrong person</span>
-        </div>
-        <div class="stat" id="s2">
-          <span class="stat-num">23%</span>
-          <span class="stat-label">Code areas have zero coverage</span>
-        </div>
-        <div class="stat" id="s3">
-          <span class="stat-num">5 min</span>
-          <span class="stat-label">GitHub setup</span>
-        </div>
+        <div class="stat" id="s1"><span class="stat-num">85%</span><span class="stat-label">Devs use AI tools</span></div>
+        <div class="stat" id="s2"><span class="stat-num">0%</span><span class="stat-label">Have ROI visibility</span></div>
+        <div class="stat" id="s3"><span class="stat-num">5 min</span><span class="stat-label">To first insight</span></div>
       </div>
 
     </div>
@@ -842,61 +747,6 @@
       if (e.key === 'Enter') document.getElementById('askSend').click();
     });
 
-    /* ── COVERAGE CHECK ANIMATION ── */
-    var ROWS = [
-      { path: 'src/payments/checkout.ts',  coverage: 94, tier: 'high', label: '3 reviewers' },
-      { path: 'src/auth/middleware.ts',     coverage: 61, tier: 'mid',  label: '1 reviewer'  },
-      { path: 'src/worker/jobs.ts',         coverage: 0,  tier: 'low',  label: 'NO COVERAGE'  },
-      { path: 'src/api/billing.ts',         coverage: 88, tier: 'high', label: '2 reviewers' },
-      { path: 'src/db/migrations.ts',       coverage: 42, tier: 'mid',  label: '1 reviewer'  },
-    ];
-
-    function buildRow(r) {
-      var row = document.createElement('div');
-      row.className = 'feed-row';
-      row.innerHTML =
-        '<span class="pr-source" style="font-size:8px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + r.path + '</span>' +
-        '<div class="pr-bar-wrap"><div class="pr-bar ' + r.tier + '" style="width:0" data-w="' + r.coverage + '"></div></div>' +
-        '<span class="pr-score ' + r.tier + '" style="width:70px;font-size:8px;">' + r.label + '</span>';
-      return row;
-    }
-
-    function runFeed() {
-      var container = document.getElementById('feedRows');
-      var verdict   = document.getElementById('feedVerdict');
-      var scoreFill = document.getElementById('scoreFill');
-      var scoreVal  = document.getElementById('scoreVal');
-
-      container.innerHTML = '';
-      verdict.classList.remove('visible');
-      scoreFill.style.width = '0';
-      scoreVal.textContent = '—';
-
-      ROWS.forEach(function(r, i) {
-        var row = buildRow(r);
-        container.appendChild(row);
-        setTimeout(function() {
-          row.classList.add('visible');
-          var bar = row.querySelector('.pr-bar');
-          setTimeout(function() { bar.style.width = Math.max(r.coverage, 4) + '%'; }, 60);
-        }, 400 + i * 340);
-      });
-
-      // coverage score
-      setTimeout(function() {
-        scoreVal.textContent = '71 / 100';
-        scoreFill.style.width = '71%';
-      }, 400 + ROWS.length * 340 + 200);
-
-      // reviewer routing verdict
-      setTimeout(function() {
-        verdict.classList.add('visible');
-      }, 400 + ROWS.length * 340 + 900);
-
-      // loop
-      setTimeout(runFeed, 400 + ROWS.length * 340 + 4200);
-    }
-
     /* ── STATS ENTRANCE ── */
     window.addEventListener('load', function() {
       ['s1','s2','s3'].forEach(function(id, i) {
@@ -905,9 +755,6 @@
           if (el) { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }
         }, 600 + i * 160);
       });
-
-      // start feed after a short pause
-      setTimeout(runFeed, 500);
     });
 
     /* ── WARM UP FLY.IO API ── */
