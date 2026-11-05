@@ -172,11 +172,13 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
     let userRow = existingUser[0]
 
     if (!userRow) {
+      let _signupStep = 'start'
       try {
         // Prefer a team that already owns an App installation (created by the
         // installation webhook) over a bare sign-in team with the same login.
         // Select only stable columns — avoids "column does not exist" if a
         // schema migration hasn't been applied yet on this DB instance.
+        _signupStep = 'teamSelect'
         const teamMatch = await db
           .select({
             id: teams.id,
@@ -189,6 +191,7 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
 
         let teamId: string
         if (!teamMatch[0]) {
+          _signupStep = 'slugGen'
           const slug = await ensureUniqueSlug(slugify(profile.login))
           const insert: NewTeam = {
             name: `${profile.login}'s Team`,
@@ -198,14 +201,18 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
             plan: 'trial',
             trialEndsAt: addDays(new Date(), 14),
           }
-          const [newTeam] = await db.insert(teams).values(insert).returning()
+          _signupStep = 'teamInsert'
+          // Narrow RETURNING to only id — avoids "column does not exist" if
+          // schema migrations are behind (same defence as the SELECT above).
+          const [newTeam] = await db.insert(teams).values(insert).returning({ id: teams.id })
           teamId = newTeam!.id
 
           // Apply referral code if one was passed through the OAuth state
           if (refCode) {
+            _signupStep = 'refCode'
             const refRow = (
               await db
-                .select()
+                .select({ id: referralCodes.id, code: referralCodes.code })
                 .from(referralCodes)
                 .where(and(ilike(referralCodes.code, refCode), eq(referralCodes.isActive, true)))
                 .limit(1)
@@ -222,6 +229,7 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
           teamId = teamMatch[0].id
         }
 
+        _signupStep = 'upsertUser'
         userRow = await upsertUser({
           teamId,
           githubUserId: profile.id,
@@ -233,8 +241,8 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err)
         const errCode = (err as { code?: string }).code
-        logger.error({ err, errMsg, errCode, login: profile.login }, 'team auto-creation failed during oauth callback')
-        res.redirect(`${errorRedirect}&reason=team_create`)
+        logger.error({ err, errMsg, errCode, step: _signupStep, login: profile.login }, 'team auto-creation failed during oauth callback')
+        res.redirect(`${errorRedirect}&reason=team_create&step=${_signupStep}`)
         return
       }
 
