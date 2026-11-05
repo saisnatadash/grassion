@@ -175,8 +175,13 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
       try {
         // Prefer a team that already owns an App installation (created by the
         // installation webhook) over a bare sign-in team with the same login.
+        // Select only stable columns — avoids "column does not exist" if a
+        // schema migration hasn't been applied yet on this DB instance.
         const teamMatch = await db
-          .select()
+          .select({
+            id: teams.id,
+            githubInstallationId: teams.githubInstallationId,
+          })
           .from(teams)
           .where(eq(teams.githubAccountLogin, profile.login))
           .orderBy(sql`${teams.githubInstallationId} IS NULL`)
@@ -226,7 +231,9 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
           role: 'owner',
         })
       } catch (err) {
-        logger.error({ err, login: profile.login }, 'team auto-creation failed during oauth callback')
+        const errMsg = err instanceof Error ? err.message : String(err)
+        const errCode = (err as { code?: string }).code
+        logger.error({ err, errMsg, errCode, login: profile.login }, 'team auto-creation failed during oauth callback')
         res.redirect(`${errorRedirect}&reason=team_create`)
         return
       }

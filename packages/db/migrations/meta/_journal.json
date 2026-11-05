@@ -127,6 +127,104 @@
       "when": 1760486400000,
       "tag": "0018_trial_reminder_sent_at",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1760572800000,
+      "tag": "0019_repeat_failure_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1760659200000,
+      "tag": "0020_human_coverage",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1760745600000,
+      "tag": "0021_hc_share_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1760832000000,
+      "tag": "0022_hc_hooks",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1760918400000,
+      "tag": "0023_plan_tiers",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1761004800000,
+      "tag": "0024_slack_team_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1761091200000,
+      "tag": "0025_llm_usage_v2",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1761177600000,
+      "tag": "0026_fix_off_hours_hotfix",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1761264000000,
+      "tag": "0027_analytics_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1761350400000,
+      "tag": "0028_contact_careers",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1761436800000,
+      "tag": "0029_admin_audit_log",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1761523200000,
+      "tag": "0030_hc_share_token_hash",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1761609600000,
+      "tag": "0031_mcp_token_expiry",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1761696000000,
+      "tag": "0032_team_scheduled_deletion",
+      "breakpoints": true
     }
   ]
 }
