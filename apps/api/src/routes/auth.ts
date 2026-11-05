@@ -242,7 +242,10 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
         const errMsg = err instanceof Error ? err.message : String(err)
         const errCode = (err as { code?: string }).code
         logger.error({ err, errMsg, errCode, step: _signupStep, login: profile.login }, 'team auto-creation failed during oauth callback')
-        res.redirect(`${errorRedirect}&reason=team_create&step=${_signupStep}`)
+        // Encode a safe excerpt of the error (letters/numbers only) so it appears
+        // in the browser URL for diagnosis — stripped of any user data or SQL values.
+        const safeErr = encodeURIComponent(errMsg.replace(/[^a-zA-Z0-9_ ]/g, ' ').slice(0, 80))
+        res.redirect(`${errorRedirect}&reason=team_create&step=${_signupStep}&emsg=${safeErr}`)
         return
       }
 
