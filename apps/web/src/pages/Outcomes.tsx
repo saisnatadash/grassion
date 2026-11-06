@@ -199,6 +199,12 @@ export function OutcomesPage() {
           <AlertTriangle className="mx-auto h-8 w-8 text-[#444] mb-3" />
           {(error as { status?: number } | null)?.status === 402 ? (
             <p className="text-[#666] text-sm">Your free trial has ended. <a href="/billing" className="text-white underline">Upgrade</a> to view outcomes.</p>
+          ) : (error as { status?: number } | null)?.status === 403 ? (
+            <>
+              <p className="text-white text-sm font-medium mb-1">Pro plan required</p>
+              <p className="text-[#666] text-sm mb-4">Post-merge outcome tracking is available on Pro and above.</p>
+              <a href="/billing" className="inline-block px-5 py-2.5 bg-white text-black text-xs font-mono uppercase tracking-widest rounded hover:opacity-85 transition-opacity">Upgrade to Pro</a>
+            </>
           ) : (
             <p className="text-[#666] text-sm">Could not load outcomes. Try again later.</p>
           )}

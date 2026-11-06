@@ -567,3 +567,30 @@ adminRouter.get('/api/admin/events', requireAuth, requireSuperAdmin, async (req:
     res.status(500).json({ error: 'internal_error' })
   }
 })
+
+const VALID_PLANS = ['trial', 'free', 'pro', 'team', 'growth', 'business', 'enterprise', 'admin'] as const
+
+adminRouter.patch('/api/admin/teams/:teamId/plan', requireAuth, requireSuperAdmin, async (req: Request, res: Response) => {
+  const { teamId } = req.params as { teamId: string }
+  const { plan } = req.body as { plan?: string }
+  if (!plan || !(VALID_PLANS as readonly string[]).includes(plan)) {
+    res.status(400).json({ error: 'invalid_plan', valid: VALID_PLANS })
+    return
+  }
+  try {
+    const [updated] = await db
+      .update(teams)
+      .set({ plan, updatedAt: new Date() })
+      .where(eq(teams.id, teamId))
+      .returning({ id: teams.id, plan: teams.plan })
+    if (!updated) {
+      res.status(404).json({ error: 'team_not_found' })
+      return
+    }
+    logger.info({ teamId, plan, by: req.session!.githubLogin }, 'admin: plan override')
+    res.json({ ok: true, teamId: updated.id, plan: updated.plan })
+  } catch (err) {
+    logger.error({ err }, 'admin plan override failed')
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
