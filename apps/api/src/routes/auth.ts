@@ -34,8 +34,20 @@ const oauthCallbackLimiter = rateLimit({
 
 export const authRouter = Router()
 
-function getCallbackUrl() {
-  return `${env().API_URL.replace(/\/$/, '')}/auth/github/callback`
+// Derive the OAuth callback URL from the actual incoming Host header so the
+// URL always matches the domain the browser navigated to.  This prevents
+// state_mismatch caused by the API_URL env var pointing to a different hostname
+// than what the client used (e.g. grassion-api.fly.dev vs api.grassion.com).
+function getCallbackUrl(req: Request): string {
+  const e = env()
+  if (e.NODE_ENV !== 'production') {
+    return `${e.API_URL.replace(/\/$/, '')}/auth/github/callback`
+  }
+  const host =
+    (req.headers['x-forwarded-host'] as string | undefined) ||
+    req.headers.host ||
+    new URL(e.API_URL).host
+  return `https://${host}/auth/github/callback`
 }
 
 authRouter.get('/auth/github', oauthInitLimiter, (req: Request, res: Response) => {
@@ -56,7 +68,7 @@ authRouter.get('/auth/github', oauthInitLimiter, (req: Request, res: Response) =
 
   const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
   githubAuthUrl.searchParams.set('client_id', e.GITHUB_APP_CLIENT_ID)
-  githubAuthUrl.searchParams.set('redirect_uri', getCallbackUrl())
+  githubAuthUrl.searchParams.set('redirect_uri', getCallbackUrl(req))
   // Minimum scopes: identity + primary email only.
   // Repo access comes exclusively from the GitHub App installation, never OAuth tokens.
   githubAuthUrl.searchParams.set('scope', 'read:user user:email')
@@ -112,7 +124,7 @@ authRouter.get('/auth/github/callback', oauthCallbackLimiter, async (req: Reques
         client_id: e.GITHUB_APP_CLIENT_ID,
         client_secret: e.GITHUB_APP_CLIENT_SECRET,
         code,
-        redirect_uri: getCallbackUrl(),
+        redirect_uri: getCallbackUrl(req),
       }),
     })
     clearTimeout(abortTimer)
