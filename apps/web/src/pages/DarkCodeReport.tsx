@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle, User, Download, Share2, CheckCircle, XCircle,
   ExternalLink, EyeOff, Moon, Users, TrendingDown, Copy, Check,
@@ -10,7 +10,8 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend,
 } from 'recharts'
-import { api, installUrl } from '../lib/api.js'
+import { api } from '../lib/api.js'
+import { useInstallPopup } from '../lib/install-popup.js'
 import { cn } from '../lib/utils.js'
 import { Spinner, Badge } from '../components/ui.js'
 
@@ -752,7 +753,7 @@ export function DarkCodeReportView({
 
 export function DarkCodeReportPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const navigate = useNavigate()
+  const openInstall = useInstallPopup()
   const repoId = searchParams.get('repo') ?? ''
 
   const reposQuery = useQuery({
@@ -809,15 +810,14 @@ export function DarkCodeReportPage() {
           <p className="text-sm font-medium text-white mb-1">No repositories connected</p>
           <p className="text-xs text-[#555] max-w-xs mx-auto">Install the Grassion GitHub App and choose which repos to track.</p>
         </div>
-        <a
-          href={installUrl()}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          type="button"
+          onClick={openInstall}
           className="inline-flex items-center gap-2 text-xs px-4 py-2 rounded-lg bg-white text-black font-semibold hover:opacity-85 transition-opacity"
         >
           Install GitHub App &amp; choose repos
           <ExternalLink className="h-3 w-3" />
-        </a>
+        </button>
       </div>
     )
   }

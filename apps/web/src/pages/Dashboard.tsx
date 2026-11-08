@@ -14,7 +14,8 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { api, installUrl, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow, type OutcomesResponse, type HealthResponse, type ToolComparisonRow } from '../lib/api.js'
+import { api, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow, type OutcomesResponse, type HealthResponse, type ToolComparisonRow } from '../lib/api.js'
+import { useInstallPopup } from '../lib/install-popup.js'
 import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -59,11 +60,12 @@ function OnboardingProgressBar({
   totalMergedPrs: number
   hasVerdict: boolean
 }) {
+  const openInstall = useInstallPopup()
   const steps = [
-    { label: 'Sign in', done: true, action: null },
-    { label: 'Connect a repo', done: hasRepos, action: hasRepos ? null : installUrl() },
-    { label: totalMergedPrs > 0 && totalMergedPrs < 5 ? `Merge 5 PRs (${totalMergedPrs}/5)` : 'Merge 5 PRs', done: totalMergedPrs >= 5, action: null },
-    { label: 'Get ROI verdict', done: hasVerdict, action: null },
+    { label: 'Sign in', done: true, onClick: null as null | (() => void) },
+    { label: 'Connect a repo', done: hasRepos, onClick: hasRepos ? null : openInstall },
+    { label: totalMergedPrs > 0 && totalMergedPrs < 5 ? `Merge 5 PRs (${totalMergedPrs}/5)` : 'Merge 5 PRs', done: totalMergedPrs >= 5, onClick: null },
+    { label: 'Get ROI verdict', done: hasVerdict, onClick: null },
   ]
   const allDone = steps.every((s) => s.done)
   if (allDone) {
@@ -75,32 +77,30 @@ function OnboardingProgressBar({
     <div className="rounded-xl border border-[#222] bg-[#111] px-5 py-4">
       <p className="mb-3 text-xs font-medium uppercase tracking-wider text-[#555]">Getting started</p>
       <div className="flex flex-wrap items-center gap-2">
-        {steps.map((step, i) => {
-          const chip = (
-            <div className={cn(
-              'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
-              step.done
-                ? 'border-green-500/30 bg-green-500/10 text-green-400'
-                : step.action
-                  ? 'border-[#444] bg-[#0a0a0a] text-[#888] hover:border-white/30 hover:text-white cursor-pointer'
-                  : 'border-[#333] bg-[#0a0a0a] text-[#555]',
-            )}>
+        {steps.map((step, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={step.onClick ?? undefined}
+              disabled={!step.onClick && !step.done}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
+                step.done
+                  ? 'border-green-500/30 bg-green-500/10 text-green-400 cursor-default'
+                  : step.onClick
+                    ? 'border-[#444] bg-[#0a0a0a] text-[#888] hover:border-white/30 hover:text-white cursor-pointer'
+                    : 'border-[#333] bg-[#0a0a0a] text-[#555] cursor-default',
+              )}
+            >
               {step.done
                 ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
                 : <div className="h-3.5 w-3.5 flex-shrink-0 rounded-full border border-[#444]" />}
               {step.label}
-              {!step.done && step.action && <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />}
-            </div>
-          )
-          return (
-            <div key={i} className="flex items-center gap-2">
-              {!step.done && step.action ? (
-                <a href={step.action} target="_blank" rel="noreferrer">{chip}</a>
-              ) : chip}
-              {i < steps.length - 1 && <ArrowRight className="h-3 w-3 flex-shrink-0 text-[#444]" />}
-            </div>
-          )
-        })}
+              {!step.done && step.onClick && <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />}
+            </button>
+            {i < steps.length - 1 && <ArrowRight className="h-3 w-3 flex-shrink-0 text-[#444]" />}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -109,6 +109,7 @@ function OnboardingProgressBar({
 /* ── PAGE ── */
 export function DashboardPage() {
   const qc = useQueryClient()
+  const openInstall = useInstallPopup()
   const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary, retry: false })
   const weekly = useQuery({ queryKey: ['metrics', 'weekly'], queryFn: api.metrics.weekly })
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
@@ -239,15 +240,14 @@ export function DashboardPage() {
           <p className="text-sm text-[#666] max-w-sm mb-6">
             Connect your first GitHub repository to start tracking your team's AI coding ROI.
           </p>
-          <a
-            href={installUrl()}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={openInstall}
             className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-green-400 transition-colors"
           >
             Connect a Repo
             <ExternalLink className="h-4 w-4" />
-          </a>
+          </button>
         </div>
       </div>
     )

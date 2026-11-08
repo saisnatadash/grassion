@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2, Bell, Search, GitBranch } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { api, installUrl } from '../lib/api.js'
+import { useInstallPopup } from '../lib/install-popup.js'
 import { usePlan } from '../lib/plan.js'
 import {
   Alert,
@@ -626,6 +627,7 @@ const REPO_LIMITS: Record<string, number> = {
 function ReposSection() {
   const qc = useQueryClient()
   const { plan } = usePlan()
+  const openInstall = useInstallPopup()
   const reposQuery = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
 
   const repoLimit = REPO_LIMITS[plan ?? 'trial'] ?? 1
@@ -661,16 +663,15 @@ function ReposSection() {
               <p className="text-xs text-[#555555] mt-1">{repoCount}/{repoLimit} repos on {plan ?? 'trial'} plan</p>
             )}
           </div>
-          <a
-            href={installUrl()}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={openInstall}
             className="inline-flex items-center gap-1.5 text-xs text-[#888888] hover:text-white transition-colors"
           >
             <Github className="h-3.5 w-3.5" />
             Install GitHub App
             <ExternalLink className="h-3 w-3" />
-          </a>
+          </button>
         </CardHeader>
         <CardContent>
           {reposQuery.isLoading ? (
@@ -682,16 +683,15 @@ function ReposSection() {
               <p className="text-xs text-[#555] mb-4 max-w-xs mx-auto">
                 Install the Grassion GitHub App on your org or personal account, then choose which repositories to track.
               </p>
-              <a
-                href={installUrl()}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={openInstall}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black text-xs font-semibold hover:opacity-85 transition-opacity"
               >
                 <Github className="h-3.5 w-3.5" />
                 Install GitHub App &amp; choose repos
                 <ExternalLink className="h-3 w-3" />
-              </a>
+              </button>
             </div>
           ) : (
             <ul className="divide-y divide-[#1a1a1a]">
