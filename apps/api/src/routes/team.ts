@@ -6,6 +6,7 @@ import { requireAuth, requireRole } from '../auth.js'
 import { logger } from '../logger.js'
 import { updateTeamSchema, updateTeamSettingsSchema } from '@grassion/shared'
 import { logAuditEvent, getIp } from '../services/audit.js'
+import { sendTestEmail, sendWeeklyDigestEmail } from '../lib/email.js'
 
 export const teamRouter = Router()
 
@@ -208,3 +209,49 @@ teamRouter.delete(
     }
   },
 )
+
+// Send a test digest email to the requesting user to verify email is configured
+teamRouter.post('/api/team/send-test-digest', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  try {
+    const userRow = (
+      await db.select({ email: users.email, githubLogin: users.githubLogin }).from(users).where(eq(users.id, sess.userId)).limit(1)
+    )[0]
+    if (!userRow?.email) {
+      res.status(400).json({ error: 'no_email', message: 'No email address on your account.' })
+      return
+    }
+
+    // Try Resend first (simple test email), fall back to Zoho SMTP demo digest
+    let sent = false
+    try {
+      await sendTestEmail(userRow.email, userRow.githubLogin)
+      sent = true
+    } catch (e1) {
+      logger.warn({ err: e1 }, 'sendTestEmail via Resend failed, trying Zoho SMTP')
+    }
+
+    if (!sent) {
+      await sendWeeklyDigestEmail(userRow.email, {
+        teamName: userRow.githubLogin,
+        weekStart: new Date(),
+        totalPrs: 12,
+        aiPrs: 7,
+        netDollar: 340,
+        verdict: 'net_positive',
+        speedDeltaPercent: 18,
+        totalSeats: 3,
+        activeSeats: 2,
+        monthlyWaste: 19,
+        inactiveUsers: [],
+        problemPrs: [],
+        dashboardUrl: 'https://app.grassion.com/dashboard',
+      })
+    }
+
+    res.json({ ok: true, sentTo: userRow.email })
+  } catch (err) {
+    logger.error({ err }, 'send-test-digest failed')
+    res.status(500).json({ error: 'send_failed', message: 'Email delivery failed. Check RESEND_API_KEY or Zoho SMTP settings on the API server.' })
+  }
+})

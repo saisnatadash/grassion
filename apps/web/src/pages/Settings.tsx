@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2, Bell, Search, GitBranch } from 'lucide-react'
+import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2, Bell, Search, GitBranch, Copy, Check, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { api, installUrl } from '../lib/api.js'
+import { api } from '../lib/api.js'
 import { useInstallPopup } from '../lib/install-popup.js'
 import { usePlan } from '../lib/plan.js'
 import {
@@ -88,6 +88,7 @@ export function SettingsPage() {
 /* ── GITHUB CONNECTION ── */
 function GitHubSection() {
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
+  const openInstall = useInstallPopup()
 
   return (
     <Card>
@@ -122,15 +123,14 @@ function GitHubSection() {
                 </div>
               </div>
             </div>
-            <a
-              href={installUrl()}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={openInstall}
               className="inline-flex items-center gap-1.5 text-xs text-[#888888] hover:text-white transition-colors"
             >
               Configure GitHub App
               <ExternalLink className="h-3 w-3" />
-            </a>
+            </button>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-sm text-[#888888]">
@@ -140,6 +140,125 @@ function GitHubSection() {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+/* ── AI DETECTION TABLE with copy buttons ── */
+function CopySignal({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    void navigator.clipboard.writeText(value).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="group relative flex w-full items-start gap-2 rounded-md bg-[#0a0a0a] border border-[#222] px-3 py-2 text-left hover:border-[#444] transition-colors"
+      title="Click to copy"
+    >
+      <code className="flex-1 text-xs text-[#cccccc] font-mono break-all leading-relaxed">{value}</code>
+      <span className="flex-shrink-0 mt-0.5">
+        {copied
+          ? <Check className="h-3 w-3 text-green-400" />
+          : <Copy className="h-3 w-3 text-[#444] group-hover:text-[#888] transition-colors" />}
+      </span>
+    </button>
+  )
+}
+
+function AiDetectionTable() {
+  return (
+    <div className="divide-y divide-[#1a1a1a]">
+      {AI_TOOLS.map((tool) => (
+        <div key={tool.id} className="py-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-white">{tool.label}</div>
+            <Badge tone="green">Live</Badge>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Tag className="h-3 w-3 text-[#555555]" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Label</span>
+              </div>
+              <CopySignal value={tool.label_signal} />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <MessageSquare className="h-3 w-3 text-[#555555]" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Trailer</span>
+              </div>
+              <CopySignal value={tool.trailer_signal} />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Hash className="h-3 w-3 text-[#555555]" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Body</span>
+              </div>
+              <CopySignal value={tool.body_signal} />
+            </div>
+          </div>
+        </div>
+      ))}
+      <p className="pt-3 text-xs text-[#555555]">
+        Detection is automatic — no config needed. Add a PR label or git trailer to your AI-assisted PRs for the most accurate tracking.
+      </p>
+    </div>
+  )
+}
+
+/* ── TEST DIGEST BUTTON ── */
+function TestDigestButton() {
+  const me = useQuery({ queryKey: ['me'], queryFn: api.me })
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [msg, setMsg] = useState('')
+
+  async function send() {
+    setState('sending')
+    try {
+      const r = await api.team.sendTestDigest()
+      setState('sent')
+      setMsg(`Test email sent to ${r.sentTo}`)
+    } catch (err) {
+      setState('error')
+      setMsg((err as { message?: string }).message ?? 'Send failed — check API email config')
+    }
+    setTimeout(() => setState('idle'), 5000)
+  }
+
+  const email = me.data?.user.email
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-3 border-t border-[#1a1a1a]">
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-[#888]">
+          Test your email delivery.{' '}
+          {email ? (
+            <span>Sends to <span className="text-white font-mono">{email}</span></span>
+          ) : (
+            <span className="text-[#555]">No email on account — add one via GitHub profile.</span>
+          )}
+        </p>
+        {state !== 'idle' && (
+          <p className={cn('text-xs mt-1 font-medium', state === 'sent' ? 'text-green-400' : state === 'error' ? 'text-red-400' : 'text-[#888]')}>
+            {state === 'sending' ? 'Sending…' : msg}
+          </p>
+        )}
+      </div>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={send}
+        disabled={state === 'sending' || !email}
+        className="flex items-center gap-2 shrink-0"
+      >
+        <Mail className="h-3.5 w-3.5" />
+        {state === 'sending' ? 'Sending…' : 'Send test email'}
+      </Button>
+    </div>
   )
 }
 
@@ -242,7 +361,7 @@ function TeamSettings() {
         </CardHeader>
         <CardContent>
           <p className="text-xs text-[#888888] mb-4">
-            Grassion checks three signals in priority order on every merged PR. The first match wins.
+            Grassion checks three signals in priority order on every merged PR. The first match wins. Click any signal to copy it.
           </p>
           <div className="flex items-start gap-6 mb-5 flex-wrap">
             <div className="flex items-center gap-2 text-xs text-[#888888]">
@@ -258,42 +377,7 @@ function TeamSettings() {
               <span><span className="text-white font-medium">3. Body Regex</span> — fallback pattern match</span>
             </div>
           </div>
-          <div className="divide-y divide-[#1a1a1a]">
-            {AI_TOOLS.map((tool) => (
-              <div key={tool.id} className="py-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium text-white">{tool.label}</div>
-                  <Badge tone="gray">Auto-detected</Badge>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="rounded-md bg-[#0a0a0a] border border-[#222] px-3 py-2">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Tag className="h-3 w-3 text-[#555555]" />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Label</span>
-                    </div>
-                    <code className="text-xs text-[#cccccc] font-mono">{tool.label_signal}</code>
-                  </div>
-                  <div className="rounded-md bg-[#0a0a0a] border border-[#222] px-3 py-2">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <MessageSquare className="h-3 w-3 text-[#555555]" />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Trailer</span>
-                    </div>
-                    <code className="text-xs text-[#cccccc] font-mono break-all">{tool.trailer_signal}</code>
-                  </div>
-                  <div className="rounded-md bg-[#0a0a0a] border border-[#222] px-3 py-2">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Hash className="h-3 w-3 text-[#555555]" />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#555555]">Body</span>
-                    </div>
-                    <code className="text-xs text-[#cccccc] font-mono">{tool.body_signal}</code>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="mt-4 text-xs text-[#555555]">
-            To ensure accurate detection, add a label or git trailer to your AI-assisted PRs. No configuration required — detection is automatic once the signal is present.
-          </p>
+          <AiDetectionTable />
         </CardContent>
       </Card>
 
@@ -302,15 +386,15 @@ function TeamSettings() {
         <CardHeader>
           <CardTitle>Notifications</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Toggle
             checked={form.emailDigestEnabled}
             onChange={(v) => setForm({ ...form, emailDigestEnabled: v })}
             label="Weekly email digest"
-            description="Receive a weekly ROI summary every Monday morning"
+            description="Receive a weekly ROI summary delivered to your GitHub email"
           />
           {form.emailDigestEnabled && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 pl-0 pt-2 border-t border-[#1a1a1a]">
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[#1a1a1a]">
               <div>
                 <label className="block text-xs text-[#888888] mb-1.5">Digest day</label>
                 <select
@@ -335,6 +419,7 @@ function TeamSettings() {
               </div>
             </div>
           )}
+          <TestDigestButton />
         </CardContent>
       </Card>
 

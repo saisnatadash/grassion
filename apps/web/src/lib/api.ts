@@ -314,6 +314,8 @@ export const api = {
         '/api/team/settings',
         { method: 'PATCH', body: JSON.stringify(body) },
       ),
+    sendTestDigest: () =>
+      request<{ ok: true; sentTo: string }>('/api/team/send-test-digest', { method: 'POST' }),
   },
 
   repos: {
