@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Github, CheckCircle2, XCircle, ExternalLink, LogOut, Lock, Tag, MessageSquare, Hash, RefreshCw, Trash2, Bell, Search, GitBranch } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { api } from '../lib/api.js'
+import { api, installUrl } from '../lib/api.js'
 import { usePlan } from '../lib/plan.js'
 import {
   Alert,
@@ -122,12 +122,12 @@ function GitHubSection() {
               </div>
             </div>
             <a
-              href="https://github.com/settings/installations"
+              href={installUrl()}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-[#888888] hover:text-white transition-colors"
             >
-              Manage GitHub App
+              Configure GitHub App
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
@@ -662,13 +662,13 @@ function ReposSection() {
             )}
           </div>
           <a
-            href="https://github.com/apps/grassion"
+            href={installUrl()}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-[#888888] hover:text-white transition-colors"
           >
             <Github className="h-3.5 w-3.5" />
-            GitHub App
+            Install GitHub App
             <ExternalLink className="h-3 w-3" />
           </a>
         </CardHeader>
@@ -676,8 +676,22 @@ function ReposSection() {
           {reposQuery.isLoading ? (
             <Spinner />
           ) : reposQuery.data && reposQuery.data.length === 0 ? (
-            <div className="py-4 text-sm text-[#555555]">
-              No repositories connected yet.
+            <div className="rounded-xl border border-dashed border-[#2a2a2a] bg-[#0d0d0d] p-6 text-center">
+              <Github className="mx-auto h-8 w-8 text-[#333] mb-3" />
+              <p className="text-sm font-medium text-white mb-1">No repositories connected yet</p>
+              <p className="text-xs text-[#555] mb-4 max-w-xs mx-auto">
+                Install the Grassion GitHub App on your org or personal account, then choose which repositories to track.
+              </p>
+              <a
+                href={installUrl()}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black text-xs font-semibold hover:opacity-85 transition-opacity"
+              >
+                <Github className="h-3.5 w-3.5" />
+                Install GitHub App &amp; choose repos
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           ) : (
             <ul className="divide-y divide-[#1a1a1a]">

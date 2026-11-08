@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { api, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow, type OutcomesResponse, type HealthResponse, type ToolComparisonRow } from '../lib/api.js'
+import { api, installUrl, type SavingsHistoryResponse, type JourneyResponse, type HistoryRow, type OutcomesResponse, type HealthResponse, type ToolComparisonRow } from '../lib/api.js'
 import { formatUsd, cn, planDisplayLabel } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
 import { verdictLabel, verdictEmoji, type Verdict } from '@grassion/shared'
@@ -60,10 +60,10 @@ function OnboardingProgressBar({
   hasVerdict: boolean
 }) {
   const steps = [
-    { label: 'Sign in', done: true },
-    { label: 'Connect a repo', done: hasRepos },
-    { label: totalMergedPrs > 0 && totalMergedPrs < 5 ? `Merge 5 PRs (${totalMergedPrs}/5)` : 'Merge 5 PRs', done: totalMergedPrs >= 5 },
-    { label: 'Get ROI verdict', done: hasVerdict },
+    { label: 'Sign in', done: true, action: null },
+    { label: 'Connect a repo', done: hasRepos, action: hasRepos ? null : installUrl() },
+    { label: totalMergedPrs > 0 && totalMergedPrs < 5 ? `Merge 5 PRs (${totalMergedPrs}/5)` : 'Merge 5 PRs', done: totalMergedPrs >= 5, action: null },
+    { label: 'Get ROI verdict', done: hasVerdict, action: null },
   ]
   const allDone = steps.every((s) => s.done)
   if (allDone) {
@@ -75,22 +75,32 @@ function OnboardingProgressBar({
     <div className="rounded-xl border border-[#222] bg-[#111] px-5 py-4">
       <p className="mb-3 text-xs font-medium uppercase tracking-wider text-[#555]">Getting started</p>
       <div className="flex flex-wrap items-center gap-2">
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-center gap-2">
+        {steps.map((step, i) => {
+          const chip = (
             <div className={cn(
-              'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium',
+              'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
               step.done
                 ? 'border-green-500/30 bg-green-500/10 text-green-400'
-                : 'border-[#333] bg-[#0a0a0a] text-[#555]',
+                : step.action
+                  ? 'border-[#444] bg-[#0a0a0a] text-[#888] hover:border-white/30 hover:text-white cursor-pointer'
+                  : 'border-[#333] bg-[#0a0a0a] text-[#555]',
             )}>
               {step.done
                 ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
                 : <div className="h-3.5 w-3.5 flex-shrink-0 rounded-full border border-[#444]" />}
               {step.label}
+              {!step.done && step.action && <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />}
             </div>
-            {i < steps.length - 1 && <ArrowRight className="h-3 w-3 flex-shrink-0 text-[#444]" />}
-          </div>
-        ))}
+          )
+          return (
+            <div key={i} className="flex items-center gap-2">
+              {!step.done && step.action ? (
+                <a href={step.action} target="_blank" rel="noreferrer">{chip}</a>
+              ) : chip}
+              {i < steps.length - 1 && <ArrowRight className="h-3 w-3 flex-shrink-0 text-[#444]" />}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

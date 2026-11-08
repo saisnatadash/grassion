@@ -10,7 +10,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend,
 } from 'recharts'
-import { api } from '../lib/api.js'
+import { api, installUrl } from '../lib/api.js'
 import { cn } from '../lib/utils.js'
 import { Spinner, Badge } from '../components/ui.js'
 
@@ -803,15 +803,21 @@ export function DarkCodeReportPage() {
 
   if (repoList.length === 0) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center px-4">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center px-4">
         <EyeOff className="h-8 w-8 text-[#333]" />
-        <p className="text-sm text-[#555]">Connect a repo to see the Dark Code Report.</p>
-        <button
-          onClick={() => navigate('/settings')}
-          className="text-xs px-4 py-2 rounded-lg border border-[#333] text-[#888] hover:text-white hover:border-[#555] transition-colors"
+        <div>
+          <p className="text-sm font-medium text-white mb-1">No repositories connected</p>
+          <p className="text-xs text-[#555] max-w-xs mx-auto">Install the Grassion GitHub App and choose which repos to track.</p>
+        </div>
+        <a
+          href={installUrl()}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-xs px-4 py-2 rounded-lg bg-white text-black font-semibold hover:opacity-85 transition-opacity"
         >
-          Connect a repo
-        </button>
+          Install GitHub App &amp; choose repos
+          <ExternalLink className="h-3 w-3" />
+        </a>
       </div>
     )
   }
