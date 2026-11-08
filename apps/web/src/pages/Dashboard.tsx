@@ -239,13 +239,15 @@ export function DashboardPage() {
           <p className="text-sm text-[#666] max-w-sm mb-6">
             Connect your first GitHub repository to start tracking your team's AI coding ROI.
           </p>
-          <Link
-            to="/settings"
+          <a
+            href={installUrl()}
+            target="_blank"
+            rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-green-400 transition-colors"
           >
             Connect a Repo
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+            <ExternalLink className="h-4 w-4" />
+          </a>
         </div>
       </div>
     )
