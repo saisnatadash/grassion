@@ -1,17 +1,24 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { installUrl } from './api.js'
 
-// Opens the GitHub App installation flow in a small centred popup.
-// Polls every 800ms; when the user finishes and the popup closes, we
-// invalidate the repos/team queries so the dashboard refreshes automatically.
+// Opens the GitHub App installation flow in a centred popup.
+// After the popup closes:
+//  - Invalidates repos/team immediately
+//  - Keeps polling every 2 s for up to 30 s so the webhook has time to fire
+//    and repos appear without a manual page refresh.
+// Returns { open, syncing } — syncing=true while the post-close poll is running.
 export function useInstallPopup() {
   const qc = useQueryClient()
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const closeTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
-  return useCallback(() => {
-    // Clear any stale timer from a previous attempt
-    if (timer.current) clearInterval(timer.current)
+  const open = useCallback(() => {
+    // Clear stale timers from a previous attempt
+    if (closeTimer.current) { clearInterval(closeTimer.current); closeTimer.current = null }
+    if (pollTimer.current) { clearInterval(pollTimer.current); pollTimer.current = null }
+    setSyncing(false)
 
     const w = 1024, h = 720
     const left = Math.round(window.screenX + (window.outerWidth - w) / 2)
@@ -24,22 +31,42 @@ export function useInstallPopup() {
     )
 
     if (!popup) {
-      // Blocked by browser — fall back to new tab; user refreshes manually
+      // Popup blocked — open in new tab, user will refresh manually
       window.open(installUrl(), '_blank', 'noopener,noreferrer')
       return
     }
 
     popup.focus()
 
-    timer.current = setInterval(() => {
+    // Poll until popup closes
+    closeTimer.current = setInterval(() => {
       if (!popup.closed) return
-      clearInterval(timer.current!)
-      timer.current = null
-      // Refresh everything that might have changed after installation
+      clearInterval(closeTimer.current!)
+      closeTimer.current = null
+
+      // Immediate refresh
       void qc.invalidateQueries({ queryKey: ['repos'] })
       void qc.invalidateQueries({ queryKey: ['me'] })
       void qc.invalidateQueries({ queryKey: ['team'] })
       void qc.invalidateQueries({ queryKey: ['metrics'] })
+
+      // Keep polling for 30 s — the GitHub webhook fires async and may take
+      // a few seconds to reach the API, process, and write repos to the DB.
+      setSyncing(true)
+      let attempts = 0
+      pollTimer.current = setInterval(() => {
+        attempts++
+        void qc.invalidateQueries({ queryKey: ['repos'] })
+        void qc.invalidateQueries({ queryKey: ['team'] })
+        void qc.invalidateQueries({ queryKey: ['me'] })
+        if (attempts >= 15) {   // 15 × 2 s = 30 s
+          clearInterval(pollTimer.current!)
+          pollTimer.current = null
+          setSyncing(false)
+        }
+      }, 2000)
     }, 800)
   }, [qc])
+
+  return { open, syncing }
 }

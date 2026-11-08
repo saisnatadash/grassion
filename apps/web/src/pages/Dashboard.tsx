@@ -60,7 +60,7 @@ function OnboardingProgressBar({
   totalMergedPrs: number
   hasVerdict: boolean
 }) {
-  const openInstall = useInstallPopup()
+  const { open: openInstall } = useInstallPopup()
   const steps = [
     { label: 'Sign in', done: true, onClick: null as null | (() => void) },
     { label: 'Connect a repo', done: hasRepos, onClick: hasRepos ? null : openInstall },
@@ -109,7 +109,7 @@ function OnboardingProgressBar({
 /* ── PAGE ── */
 export function DashboardPage() {
   const qc = useQueryClient()
-  const openInstall = useInstallPopup()
+  const { open: openInstall, syncing: installSyncing } = useInstallPopup()
   const summary = useQuery({ queryKey: ['metrics', 'summary'], queryFn: api.metrics.summary, retry: false })
   const weekly = useQuery({ queryKey: ['metrics', 'weekly'], queryFn: api.metrics.weekly })
   const problemPrs = useQuery({ queryKey: ['prs', 'problem'], queryFn: api.prs.problem })
@@ -240,14 +240,24 @@ export function DashboardPage() {
           <p className="text-sm text-[#666] max-w-sm mb-6">
             Connect your first GitHub repository to start tracking your team's AI coding ROI.
           </p>
-          <button
-            type="button"
-            onClick={openInstall}
-            className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-green-400 transition-colors"
-          >
-            Connect a Repo
-            <ExternalLink className="h-4 w-4" />
-          </button>
+          {installSyncing ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 rounded-lg border border-[#333] bg-[#111] px-5 py-2.5 text-sm text-[#888]">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#333] border-t-white flex-shrink-0" />
+                Syncing repositories from GitHub…
+              </div>
+              <p className="text-xs text-[#555]">This may take up to 30 seconds. The page will update automatically.</p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={openInstall}
+              className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-green-400 transition-colors"
+            >
+              Connect a Repo
+              <ExternalLink className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
     )

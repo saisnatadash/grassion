@@ -88,7 +88,7 @@ export function SettingsPage() {
 /* ── GITHUB CONNECTION ── */
 function GitHubSection() {
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
-  const openInstall = useInstallPopup()
+  const { open: openInstall } = useInstallPopup()
 
   return (
     <Card>
@@ -712,7 +712,7 @@ const REPO_LIMITS: Record<string, number> = {
 function ReposSection() {
   const qc = useQueryClient()
   const { plan } = usePlan()
-  const openInstall = useInstallPopup()
+  const { open: openInstall } = useInstallPopup()
   const reposQuery = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
 
   const repoLimit = REPO_LIMITS[plan ?? 'trial'] ?? 1

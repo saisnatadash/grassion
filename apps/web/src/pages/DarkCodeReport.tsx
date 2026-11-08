@@ -753,7 +753,7 @@ export function DarkCodeReportView({
 
 export function DarkCodeReportPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const openInstall = useInstallPopup()
+  const { open: openInstall } = useInstallPopup()
   const repoId = searchParams.get('repo') ?? ''
 
   const reposQuery = useQuery({
