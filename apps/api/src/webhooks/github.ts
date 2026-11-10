@@ -262,23 +262,21 @@ export async function handleGithubWebhook(req: Request, res: Response) {
     return
   }
 
-  // Idempotency: try to claim this delivery ID. If another request already
-  // processed it (GitHub retry), return 200 immediately without re-processing.
-  const inserted = await db
-    .insert(webhookEvents)
-    .values({ githubDeliveryId: deliveryId })
-    .onConflictDoNothing()
-    .returning({ id: webhookEvents.id })
-
-  if (inserted.length === 0) {
-    // Duplicate delivery — already processed.
-    res.status(200).json({ ok: true, duplicate: true })
-    return
-  }
-
   const payload = rawBody.toString('utf8')
 
   try {
+    // Re-do the idempotency check inside the try/catch so a missing table
+    // or DB error surfaces as a 400 instead of bubbling to the 500 handler.
+    const inserted2 = await db
+      .insert(webhookEvents)
+      .values({ githubDeliveryId: deliveryId })
+      .onConflictDoNothing()
+      .returning({ id: webhookEvents.id })
+    if (inserted2.length === 0) {
+      res.status(200).json({ ok: true, duplicate: true })
+      return
+    }
+
     await getWebhooks().verifyAndReceive({ id: deliveryId, name: name as never, signature, payload })
     await db
       .update(webhookEvents)
@@ -287,6 +285,6 @@ export async function handleGithubWebhook(req: Request, res: Response) {
     res.status(202).json({ ok: true })
   } catch (err) {
     logger.error({ err, deliveryId }, 'github webhook processing failed')
-    res.status(400).json({ error: 'webhook_processing_failed' })
+    res.status(500).json({ error: 'webhook_processing_failed' })
   }
 }
