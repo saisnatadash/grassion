@@ -143,12 +143,12 @@ export function OnboardingPage() {
                 monthlyAiSpendUsd: spend,
                 avgDevHourlyRateUsd: rate,
               } as never)
-              navigate('/dashboard')
+              navigate('/')
             }}
           >
             {update.isPending ? 'Saving…' : 'Go to Dashboard'}
           </Button>
-          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+          <Button variant="ghost" onClick={() => navigate('/')}>
             Skip
           </Button>
         </div>

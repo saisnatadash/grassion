@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
+import { WelcomeModal } from './WelcomeModal.js'
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'https://api.grassion.com'
 
@@ -467,6 +468,9 @@ export function AppLayout() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <Outlet />
       </main>
+
+      {/* First-visit welcome overlay */}
+      <WelcomeModal />
     </div>
   )
 }
