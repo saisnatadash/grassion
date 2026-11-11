@@ -289,28 +289,38 @@ async function syncHistoricalPrs(
   owner: string,
   repoName: string,
 ): Promise<number> {
-  // Authenticated where possible: 100 PRs × 2 calls = 200 requests, which
-  // blows the 60 req/hr unauthenticated limit.
   const ghHeaders = await teamGhHeaders(teamId)
+  const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) // 12 months ago
 
-  // Fetch last 100 closed PRs
-  let ghPrs: GhPr[] = []
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repoName}/pulls?state=closed&per_page=100&sort=updated`,
-      { headers: ghHeaders },
-    )
-    if (!res.ok) {
-      logger.warn({ status: res.status, owner, repoName }, 'github pulls fetch failed during sync')
-      return 0
+  // Paginate newest-first; stop when we hit PRs older than the cutoff.
+  const merged: GhPr[] = []
+  let page = 1
+  outer: while (true) {
+    let page_prs: GhPr[] = []
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${owner}/${repoName}/pulls?state=closed&per_page=100&sort=updated&direction=desc&page=${page}`,
+        { headers: ghHeaders },
+      )
+      if (!res.ok) {
+        logger.warn({ status: res.status, owner, repoName, page }, 'github pulls fetch failed during sync')
+        break
+      }
+      page_prs = (await res.json()) as GhPr[]
+    } catch (err) {
+      logger.error({ err, page }, 'github pulls fetch threw during sync')
+      break
     }
-    ghPrs = (await res.json()) as GhPr[]
-  } catch (err) {
-    logger.error({ err }, 'github pulls fetch threw during sync')
-    return 0
+    if (page_prs.length === 0) break
+    for (const pr of page_prs) {
+      if (!pr.merged_at) continue
+      if (new Date(pr.merged_at) < cutoff) break outer
+      merged.push(pr)
+    }
+    if (page_prs.length < 100) break
+    page++
   }
 
-  const merged = ghPrs.filter((p) => !!p.merged_at)
   if (merged.length === 0) return 0
 
   // Deep detection for each PR (commits + files + reviews in parallel per PR)
