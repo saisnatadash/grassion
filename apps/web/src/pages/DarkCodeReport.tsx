@@ -767,10 +767,18 @@ export function DarkCodeReportPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { open: openInstall } = useInstallPopup()
   const repoId = searchParams.get('repo') ?? ''
+  const qc = useQueryClient()
 
   const reposQuery = useQuery({
     queryKey: ['repos'],
     queryFn: api.repos.list,
+  })
+
+  const syncMutation = useMutation({
+    mutationFn: (id: string) => api.repos.sync(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['hc-report'] })
+    },
   })
 
   const repoList = reposQuery.data ?? []
@@ -864,15 +872,30 @@ export function DarkCodeReportPage() {
           <div>
             <p className="text-sm font-semibold text-white mb-1">No Human Coverage data yet</p>
             <p className="text-sm text-[#666]">
-              Data appears automatically as your team merges pull requests.
-              Once a few PRs are in, Grassion maps who understands which files.
+              Import your existing pull requests to see who understands which files.
             </p>
           </div>
+          {activeRepoId && (
+            <button
+              type="button"
+              disabled={syncMutation.isPending}
+              onClick={() => syncMutation.mutate(activeRepoId)}
+              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:opacity-85 disabled:opacity-50 transition-opacity"
+            >
+              {syncMutation.isPending ? (
+                <><Spinner /><span>Importing…</span></>
+              ) : syncMutation.isSuccess ? (
+                <span>Import started — data will appear in a few minutes</span>
+              ) : (
+                <span>Import last 12 months of PRs</span>
+              )}
+            </button>
+          )}
           <div className="w-full rounded-xl border border-[#222] bg-[#111] p-4 text-left space-y-2.5">
             <p className="text-xs font-semibold text-[#888] uppercase tracking-wider">What to do next</p>
-            <NextStep n={1} text="Ask your team to merge their next PR — Grassion picks it up automatically via webhook" done={false} />
+            <NextStep n={1} text="Click 'Import' above to pull in your historical PRs — or wait for new PRs to be merged" done={false} />
             <NextStep n={2} text="Add an AI label (copilot, cursor) to AI-assisted PRs so we can track AI ROI" done={false} />
-            <NextStep n={3} text="Come back after a few PRs — your first report will be ready" done={false} />
+            <NextStep n={3} text="Check back in a few minutes — your first report will be ready" done={false} />
           </div>
         </div>
       )}

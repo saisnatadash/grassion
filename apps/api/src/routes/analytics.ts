@@ -103,7 +103,7 @@ analyticsRouter.get('/api/analytics/seat-waste', requireAuth, async (req: Reques
           SELECT ${pullRequests.aiSource}
           FROM ${pullRequests}
           WHERE ${pullRequests.authorLogin} = ${users.githubLogin}
-            AND ${pullRequests.teamId} = ${users.teamId}
+            AND ${pullRequests.teamId} = ${sql`${teamId}::uuid`}
             AND ${pullRequests.aiSource} IS NOT NULL
           GROUP BY ${pullRequests.aiSource}
           ORDER BY COUNT(*) DESC

@@ -14,6 +14,7 @@ import { env } from '../env.js'
 import { createTeamFromInstallation } from '../services/teams.js'
 import { connectRepo } from '../services/repos.js'
 import { backfillTeamRepos } from '../services/backfill.js'
+import { backfillCoverageForRepo } from '../jobs/backfillCoverage.js'
 
 const connectRepoSchema = z.object({
   repoUrl: z.string().min(1),
@@ -775,6 +776,19 @@ reposRouter.post(
       const prsSynced = await syncHistoricalPrs(sess.teamId, repo.id, repo.owner, repo.name)
       await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
       logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
+
+      // After PR import, kick off the HC backfill so the Overview page populates.
+      const [teamRow] = await db
+        .select({ githubInstallationId: teams.githubInstallationId })
+        .from(teams)
+        .where(eq(teams.id, sess.teamId))
+        .limit(1)
+      if (teamRow?.githubInstallationId) {
+        backfillCoverageForRepo(repo.id, sess.teamId, teamRow.githubInstallationId).catch((err: unknown) =>
+          logger.error({ err, repoId: id }, 'hc backfill after sync failed'),
+        )
+      }
+
       res.json({ ok: true, prsSynced })
     } catch (err) {
       logger.error({ err }, 'repo sync failed')
