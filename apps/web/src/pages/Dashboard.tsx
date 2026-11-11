@@ -238,7 +238,7 @@ export function DashboardPage() {
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">Welcome to Grassion</h2>
           <p className="text-sm text-[#666] max-w-sm mb-6">
-            Connect your first GitHub repository to start tracking your team's AI coding ROI.
+            Connect a repository to see which code your team still understands.
           </p>
           {installSyncing ? (
             <div className="flex flex-col items-center gap-3">

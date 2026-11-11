@@ -10,7 +10,6 @@ import { BillingPage } from './pages/Billing.js'
 import { OnboardingPage } from './pages/Onboarding.js'
 import { SpendIntelligencePage } from './pages/SpendIntelligence.js'
 import { HealthPage } from './pages/Health.js'
-import { OutcomesPage } from './pages/Outcomes.js'
 import { SecurityPage } from './pages/Security.js'
 import { AuthCallbackPage } from './pages/AuthCallback.js'
 import { NotFoundPage } from './pages/NotFound.js'
@@ -18,6 +17,7 @@ import { DarkCodeReportPage } from './pages/DarkCodeReport.js'
 import { DarkCodeReportShared } from './pages/DarkCodeReportShared.js'
 import { MaReportPage } from './pages/MaReport.js'
 import { AiGovernancePage } from './pages/AiGovernance.js'
+import { ReportsLayout } from './pages/Reports.js'
 import { AdminLayout } from './pages/AdminLayout.js'
 import { AdminOverview } from './pages/AdminOverview.js'
 import { AdminFunnel } from './pages/AdminFunnel.js'
@@ -59,23 +59,31 @@ export function App() {
       <AppInit />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/install" element={<InstallPage />} />
           <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/spend-intelligence" element={<SpendIntelligencePage />} />
-            <Route path="/seat-waste" element={<Navigate to="/spend-intelligence" replace />} />
-            <Route path="/health" element={<HealthPage />} />
-            <Route path="/outcomes" element={<OutcomesPage />} />
-            <Route path="/security" element={<SecurityPage />} />
+            {/* New 4-tab navigation */}
+            <Route path="/" element={<DarkCodeReportPage />} />
+            <Route path="/code-map" element={<HealthPage />} />
+            <Route path="/reports" element={<ReportsLayout />}>
+              <Route path="ai-impact" element={<SpendIntelligencePage />} />
+              <Route path="governance" element={<AiGovernancePage />} />
+              <Route path="ma" element={<MaReportPage />} />
+            </Route>
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="/dark-code" element={<DarkCodeReportPage />} />
-            <Route path="/ma-report" element={<MaReportPage />} />
-            <Route path="/ai-governance" element={<AiGovernancePage />} />
+            <Route path="/security" element={<SecurityPage />} />
+            {/* Legacy redirects — keep old bookmarks and links working */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dark-code" element={<Navigate to="/" replace />} />
+            <Route path="/health" element={<Navigate to="/code-map" replace />} />
+            <Route path="/spend-intelligence" element={<Navigate to="/reports/ai-impact" replace />} />
+            <Route path="/seat-waste" element={<Navigate to="/reports/ai-impact" replace />} />
+            <Route path="/outcomes" element={<Navigate to="/reports/ai-impact" replace />} />
+            <Route path="/ai-governance" element={<Navigate to="/reports/governance" replace />} />
+            <Route path="/ma-report" element={<Navigate to="/reports/ma" replace />} />
           </Route>
           <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
           <Route element={<AdminLayout />}>

@@ -488,6 +488,10 @@ export const api = {
   },
 }
 
+export const github = {
+  sync: () => request<{ ok: boolean; reposSynced: number; installationId?: number; message?: string }>('/api/github/sync', { method: 'POST' }),
+}
+
 export function loginUrl(): string {
   return `${API_URL}/auth/github`
 }

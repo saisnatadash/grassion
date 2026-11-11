@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { installUrl } from './api.js'
+import { installUrl, github } from './api.js'
 
 // Opens the GitHub App installation flow in a centred popup.
 // After the popup closes:
@@ -44,21 +44,26 @@ export function useInstallPopup() {
       clearInterval(closeTimer.current!)
       closeTimer.current = null
 
-      // Immediate refresh
-      void qc.invalidateQueries({ queryKey: ['repos'] })
-      void qc.invalidateQueries({ queryKey: ['me'] })
-      void qc.invalidateQueries({ queryKey: ['team'] })
-      void qc.invalidateQueries({ queryKey: ['metrics'] })
-
-      // Keep polling for 30 s — the GitHub webhook fires async and may take
-      // a few seconds to reach the API, process, and write repos to the DB.
       setSyncing(true)
+
+      // Actively sync repos via API (bypasses webhook) then keep polling to
+      // catch repos the webhook may have already written.
+      void github.sync().then(() => {
+        void qc.invalidateQueries({ queryKey: ['repos'] })
+        void qc.invalidateQueries({ queryKey: ['me'] })
+        void qc.invalidateQueries({ queryKey: ['team'] })
+        void qc.invalidateQueries({ queryKey: ['metrics'] })
+      }).catch(() => {
+        // sync failed — still invalidate so the UI reflects current DB state
+        void qc.invalidateQueries({ queryKey: ['repos'] })
+      })
+
+      // Keep polling for 30 s to pick up any async webhook writes too
       let attempts = 0
       pollTimer.current = setInterval(() => {
         attempts++
         void qc.invalidateQueries({ queryKey: ['repos'] })
         void qc.invalidateQueries({ queryKey: ['team'] })
-        void qc.invalidateQueries({ queryKey: ['me'] })
         if (attempts >= 15) {   // 15 × 2 s = 30 s
           clearInterval(pollTimer.current!)
           pollTimer.current = null

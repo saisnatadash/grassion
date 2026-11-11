@@ -10,6 +10,10 @@ import { getInstallationOctokit } from '../github.js'
 import { validateBody } from '../middleware/validate.js'
 import { logAuditEvent, getIp } from '../services/audit.js'
 import { decryptToken } from '../lib/crypto.js'
+import { env } from '../env.js'
+import { createTeamFromInstallation } from '../services/teams.js'
+import { connectRepo } from '../services/repos.js'
+import { backfillTeamRepos } from '../services/backfill.js'
 
 const connectRepoSchema = z.object({
   repoUrl: z.string().min(1),
@@ -768,3 +772,103 @@ reposRouter.post(
     }
   },
 )
+
+/**
+ * POST /api/github/sync
+ * Called from the frontend after the GitHub App install popup closes.
+ * Uses the user's stored OAuth token to discover the Grassion installation,
+ * links it to the team (bypassing the webhook), and connects all repos.
+ * This is the reliable fallback when the installation.created webhook fails.
+ */
+reposRouter.post('/api/github/sync', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  try {
+    const [teamRow] = await db
+      .select({
+        id: teams.id,
+        githubOauthToken: teams.githubOauthToken,
+        githubInstallationId: teams.githubInstallationId,
+      })
+      .from(teams)
+      .where(eq(teams.id, sess.teamId))
+      .limit(1)
+
+    if (!teamRow) {
+      res.status(404).json({ error: 'team_not_found' })
+      return
+    }
+
+    const e = env()
+    const appId = Number(e.GITHUB_APP_ID)
+    let installationId = teamRow.githubInstallationId
+
+    // If we don't know the installation yet, discover it via the user's OAuth token
+    if (!installationId && teamRow.githubOauthToken) {
+      try {
+        const oauthToken = decryptToken(teamRow.githubOauthToken)
+        const ghRes = await fetch('https://api.github.com/user/installations?per_page=100', {
+          headers: {
+            Authorization: `Bearer ${oauthToken}`,
+            Accept: 'application/vnd.github+json',
+            'User-Agent': 'grassion-app',
+            'X-GitHub-Api-Version': '2022-11-28',
+          },
+        })
+        if (ghRes.ok) {
+          const data = await ghRes.json() as {
+            installations: Array<{ id: number; app_id: number; account: { login: string; slug?: string; name?: string | null; type?: string; id: number } }>
+          }
+          const grassionInstall = data.installations.find((i) => i.app_id === appId)
+          if (grassionInstall) {
+            const linked = await createTeamFromInstallation({
+              id: grassionInstall.id,
+              account: grassionInstall.account,
+            })
+            if (linked) installationId = grassionInstall.id
+          }
+        } else {
+          logger.warn({ status: ghRes.status }, 'github/sync: user/installations returned non-200')
+        }
+      } catch (err) {
+        logger.warn({ err }, 'github/sync: failed to list user installations via OAuth token')
+      }
+    }
+
+    if (!installationId) {
+      res.json({ ok: true, reposSynced: 0, message: 'GitHub App not yet installed — install it first' })
+      return
+    }
+
+    // Fetch all repos for this installation using the App token
+    let ghRepos: Array<{ id: number; name: string; full_name: string; default_branch: string; private: boolean }> = []
+    try {
+      const octokit = await getInstallationOctokit(installationId)
+      const { data: installData } = await (octokit as unknown as {
+        request: (path: string, opts: { per_page: number }) => Promise<{ data: { repositories: typeof ghRepos } }>
+      }).request('GET /installation/repositories', { per_page: 100 })
+      ghRepos = installData.repositories
+    } catch (err) {
+      logger.error({ err, installationId }, 'github/sync: installation repositories API failed')
+      res.status(500).json({ error: 'installation_api_failed' })
+      return
+    }
+
+    let reposSynced = 0
+    for (const repo of ghRepos) {
+      await connectRepo(teamRow.id, repo)
+      reposSynced++
+    }
+
+    if (reposSynced > 0) {
+      backfillTeamRepos(teamRow.id, installationId).catch((err: unknown) =>
+        logger.error({ err, teamId: teamRow.id }, 'github/sync backfill error'),
+      )
+    }
+
+    logger.info({ teamId: teamRow.id, reposSynced, installationId }, 'github/sync completed')
+    res.json({ ok: true, reposSynced, installationId })
+  } catch (err) {
+    logger.error({ err }, 'github/sync failed')
+    res.status(500).json({ error: 'sync_failed' })
+  }
+})
