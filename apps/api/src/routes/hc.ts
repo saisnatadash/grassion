@@ -239,35 +239,40 @@ hcRouter.get('/api/hc/:repoId/report', requireAuth, async (req: Request, res: Re
   const sess = req.session!
   const { repoId } = req.params as { repoId: string }
 
-  const [teamRow] = await db
-    .select({ plan: teams.plan })
-    .from(teams)
-    .where(eq(teams.id, sess.teamId))
-    .limit(1)
+  try {
+    const [teamRow] = await db
+      .select({ plan: teams.plan })
+      .from(teams)
+      .where(eq(teams.id, sess.teamId))
+      .limit(1)
 
-  const plan = teamRow?.plan ?? 'free'
-  const isPro = isProOrAbove(plan)
+    const plan = teamRow?.plan ?? 'free'
+    const isPro = isProOrAbove(plan)
 
-  const report = await buildReport(sess.teamId, repoId)
-  if (!report) {
-    res.status(404).json({ error: 'repo_not_found' })
-    return
+    const report = await buildReport(sess.teamId, repoId)
+    if (!report) {
+      res.status(404).json({ error: 'repo_not_found' })
+      return
+    }
+
+    // Free plan: blur all but the top 3 fragile-and-dark areas; hide offboarding view.
+    if (!isPro) {
+      const FREE_VISIBLE = 3
+      const blurredCount = Math.max(0, report.fragileAndDark.length - FREE_VISIBLE)
+      return res.json({
+        ...report,
+        fragileAndDark: report.fragileAndDark.slice(0, FREE_VISIBLE),
+        blurredCount,
+        offboarding: [],
+        planGate: blurredCount > 0 ? 'Upgrade to Pro to see all fragile areas.' : null,
+      })
+    }
+
+    res.json(report)
+  } catch (err) {
+    logger.error({ err, repoId, teamId: sess.teamId }, 'hc report build failed')
+    res.status(404).json({ error: 'no_data_yet' })
   }
-
-  // Free plan: blur all but the top 3 fragile-and-dark areas; hide offboarding view.
-  if (!isPro) {
-    const FREE_VISIBLE = 3
-    const blurredCount = Math.max(0, report.fragileAndDark.length - FREE_VISIBLE)
-    return res.json({
-      ...report,
-      fragileAndDark: report.fragileAndDark.slice(0, FREE_VISIBLE),
-      blurredCount,
-      offboarding: [],
-      planGate: blurredCount > 0 ? 'Upgrade to Pro to see all fragile areas.' : null,
-    })
-  }
-
-  res.json(report)
 })
 
 // POST /api/hc/:repoId/failures/:failureId/verdict

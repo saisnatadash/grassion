@@ -137,6 +137,18 @@ function EmptyState({ message }: { message: string }) {
   return <p className="text-sm text-[#555] py-6 text-center">{message}</p>
 }
 
+function NextStep({ n, text, done }: { n: number; text: string; done: boolean }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className={cn(
+        'flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold mt-0.5',
+        done ? 'bg-green-500/20 text-green-400' : 'bg-[#222] text-[#555]',
+      )}>{done ? '✓' : n}</span>
+      <p className="text-xs text-[#888]">{text}</p>
+    </div>
+  )
+}
+
 // ── Fragile & Dark section ────────────────────────────────────────────────────
 
 function FragileAndDark({
@@ -845,18 +857,23 @@ export function DarkCodeReportPage() {
       )}
 
       {(report.isError || (!report.isLoading && !report.data)) && (
-        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-4 text-center">
-          <EyeOff className="h-8 w-8 text-[#333]" />
-          <p className="text-sm text-[#555]">
-            {(report.error as { status?: number } | null)?.status === 404
-              ? 'No data yet — the backfill hasn\'t run for this repo.'
-              : 'Failed to load report. Try refreshing.'}
-          </p>
-          {(report.error as { status?: number } | null)?.status === 404 && (
-            <p className="text-xs text-[#444]">
-              Trigger a backfill from the Settings page to populate Human Coverage data.
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-4 text-center max-w-md mx-auto">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
+            <Moon className="h-6 w-6 text-[#555]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white mb-1">No Human Coverage data yet</p>
+            <p className="text-sm text-[#666]">
+              Data appears automatically as your team merges pull requests.
+              Once a few PRs are in, Grassion maps who understands which files.
             </p>
-          )}
+          </div>
+          <div className="w-full rounded-xl border border-[#222] bg-[#111] p-4 text-left space-y-2.5">
+            <p className="text-xs font-semibold text-[#888] uppercase tracking-wider">What to do next</p>
+            <NextStep n={1} text="Ask your team to merge their next PR — Grassion picks it up automatically via webhook" done={false} />
+            <NextStep n={2} text="Add an AI label (copilot, cursor) to AI-assisted PRs so we can track AI ROI" done={false} />
+            <NextStep n={3} text="Come back after a few PRs — your first report will be ready" done={false} />
+          </div>
         </div>
       )}
 

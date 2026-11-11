@@ -76,7 +76,7 @@ export function App() {
             <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/security" element={<SecurityPage />} />
             {/* Legacy redirects — keep old bookmarks and links working */}
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/dark-code" element={<Navigate to="/" replace />} />
             <Route path="/health" element={<Navigate to="/code-map" replace />} />
             <Route path="/spend-intelligence" element={<Navigate to="/reports/ai-impact" replace />} />
