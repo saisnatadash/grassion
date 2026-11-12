@@ -774,10 +774,14 @@ export function DarkCodeReportPage() {
     queryFn: api.repos.list,
   })
 
+  const [polling, setPolling] = useState(false)
+
   const syncMutation = useMutation({
     mutationFn: (id: string) => api.repos.sync(id),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['hc-report'] })
+      // Sync now returns immediately; data populates in the background.
+      // Poll every 15 seconds so the page auto-refreshes when ready.
+      setPolling(true)
     },
   })
 
@@ -808,7 +812,14 @@ export function DarkCodeReportPage() {
       if (status === 404) return false
       return failCount < 2
     },
+    // While the background sync+backfill is running, poll every 15s.
+    refetchInterval: polling ? 15_000 : false,
   })
+
+  // Stop polling once we have data
+  useEffect(() => {
+    if (polling && report.data) setPolling(false)
+  }, [polling, report.data])
 
   function handleRepoChange(id: string) {
     setSearchParams({ repo: id }, { replace: true })

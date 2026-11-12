@@ -765,38 +765,38 @@ reposRouter.post(
       res.status(400).json({ error: 'missing_id' })
       return
     }
-    try {
-      const existing = await db
-        .select({ id: repos.id, owner: repos.owner, name: repos.name })
-        .from(repos)
-        .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
-        .limit(1)
-      const repo = existing[0]
-      if (!repo) {
-        res.status(404).json({ error: 'not_found' })
-        return
-      }
-      const prsSynced = await syncHistoricalPrs(sess.teamId, repo.id, repo.owner, repo.name)
-      await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
-      logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
-
-      // After PR import, kick off the HC backfill so the Overview page populates.
-      const [teamRow] = await db
-        .select({ githubInstallationId: teams.githubInstallationId })
-        .from(teams)
-        .where(eq(teams.id, sess.teamId))
-        .limit(1)
-      if (teamRow?.githubInstallationId) {
-        backfillCoverageForRepo(repo.id, sess.teamId, teamRow.githubInstallationId).catch((err: unknown) =>
-          logger.error({ err, repoId: id }, 'hc backfill after sync failed'),
-        )
-      }
-
-      res.json({ ok: true, prsSynced })
-    } catch (err) {
-      logger.error({ err }, 'repo sync failed')
-      res.status(500).json({ error: 'internal_error' })
+    // Look up repo and team first (fast DB query) so we can 404 early.
+    const existing = await db
+      .select({ id: repos.id, owner: repos.owner, name: repos.name })
+      .from(repos)
+      .where(and(eq(repos.id, id), eq(repos.teamId, sess.teamId)))
+      .limit(1)
+    const repo = existing[0]
+    if (!repo) {
+      res.status(404).json({ error: 'not_found' })
+      return
     }
+    const [teamRow] = await db
+      .select({ githubInstallationId: teams.githubInstallationId })
+      .from(teams)
+      .where(eq(teams.id, sess.teamId))
+      .limit(1)
+
+    // Respond immediately — the actual sync + backfill run in the background.
+    // Waiting for the sync would exceed the client's 20-second abort timeout
+    // for repos with many PRs.
+    res.json({ ok: true, started: true })
+
+    // Fire-and-forget: sync PRs then trigger HC backfill
+    syncHistoricalPrs(sess.teamId, repo.id, repo.owner, repo.name)
+      .then(async (prsSynced) => {
+        await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
+        logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
+        if (teamRow?.githubInstallationId) {
+          await backfillCoverageForRepo(repo.id, sess.teamId, teamRow.githubInstallationId)
+        }
+      })
+      .catch((err: unknown) => logger.error({ err, repoId: id }, 'repo sync/backfill failed'))
   },
 )
 

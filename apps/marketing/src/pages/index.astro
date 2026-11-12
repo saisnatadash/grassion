@@ -152,43 +152,26 @@
       margin-bottom: 28px;
     }
 
-    /* ── PROOF POINTS ───────────────────────── */
-    .proof {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-bottom: 40px;
-    }
-
-    .proof-item {
+    /* ── RISK LINE ──────────────────────────── */
+    .risk-line {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+      margin-bottom: 36px;
     }
 
-    .proof-icon {
-      width: 28px; height: 28px;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .risk-line-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
       flex-shrink: 0;
+    }
+
+    .risk-line-text {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
-      color: rgba(255,255,255,0.5);
-    }
-
-    .proof-text {
-      font-size: 13px;
-      font-weight: 300;
-      color: rgba(255,255,255,0.6);
-      line-height: 1.5;
-    }
-
-    .proof-text strong {
-      font-weight: 400;
-      color: rgba(255,255,255,0.9);
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.08em;
     }
 
     /* ── CTA ────────────────────────────────── */
@@ -234,9 +217,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       overflow: hidden;
-      gap: 0;
+      padding: 56px 40px 0;
     }
 
     /* Subtle radial glow behind the feed */
@@ -252,14 +235,15 @@
     /* ── CUBE SCENE ─────────────────────────── */
     .scene-wrap {
       position: relative;
-      width: 360px;
-      height: 360px;
+      width: 320px;
+      height: 320px;
       flex-shrink: 0;
+      margin: 0 auto;
     }
 
     .scene {
       position: relative;
-      width: 360px; height: 360px;
+      width: 320px; height: 320px;
       perspective: 1100px;
     }
 
@@ -278,8 +262,8 @@
       box-shadow: 0 0 16px 4px rgba(255,255,255,0.28);
     }
 
-    .ring-2 { inset: 50px; border-color: rgba(255,255,255,0.06); animation: spinRing 13s linear infinite reverse; }
-    .ring-3 { inset: 100px; border-color: rgba(255,255,255,0.04); animation: spinRing 8s linear infinite; }
+    .ring-2 { inset: 44px; border-color: rgba(255,255,255,0.06); animation: spinRing 13s linear infinite reverse; }
+    .ring-3 { inset: 88px; border-color: rgba(255,255,255,0.04); animation: spinRing 8s linear infinite; }
 
     @keyframes spinRing {
       from { transform: rotateX(70deg) rotateZ(0deg); }
@@ -321,14 +305,15 @@
     /* ── FLOATING CARDS ─────────────────────── */
     .verdict-card {
       position: absolute;
-      top: 24px; right: -8px;
-      background: rgba(10,10,10,0.9);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px;
-      padding: 10px 16px;
+      top: 16px; right: -20px;
+      background: rgba(8,8,8,0.95);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 10px;
+      padding: 12px 18px;
       font-family: 'DM Mono', monospace;
       z-index: 10;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
+      min-width: 200px;
     }
 
     .verdict-label {
@@ -336,26 +321,35 @@
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: rgba(255,255,255,0.3);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .verdict-value {
-      font-size: 13px;
+      font-size: 22px;
       font-weight: 500;
       color: var(--white);
-      letter-spacing: 0.03em;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .verdict-sub {
+      font-size: 10px;
+      color: var(--green);
+      letter-spacing: 0.06em;
     }
 
     .waste-card {
       position: absolute;
-      bottom: 24px; left: -8px;
-      background: rgba(10,10,10,0.9);
-      border: 1px solid rgba(239,68,68,0.2);
-      border-radius: 8px;
-      padding: 10px 16px;
+      bottom: 16px; left: -20px;
+      background: rgba(8,8,8,0.95);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 10px;
+      padding: 12px 18px;
       font-family: 'DM Mono', monospace;
       z-index: 10;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
+      min-width: 200px;
     }
 
     .waste-label {
@@ -363,15 +357,26 @@
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: rgba(255,255,255,0.3);
+      margin-bottom: 6px;
+    }
+
+    .waste-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.8);
       margin-bottom: 4px;
     }
 
     .waste-value {
-      font-size: 13px;
-      font-weight: 500;
-      color: rgba(239,68,68,0.9);
-      letter-spacing: 0.03em;
+      font-size: 11px;
+      color: rgba(239,68,68,0.85);
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    .waste-dot { width: 5px; height: 5px; background: rgba(239,68,68,0.9); border-radius: 50%; flex-shrink: 0; }
 
 
     /* ── STATS ──────────────────────────────── */
@@ -379,7 +384,7 @@
       display: flex;
       border-top: 1px solid var(--line);
       width: 100%;
-      margin-top: auto;
+      margin-top: 32px;
     }
 
     .stat {
@@ -576,11 +581,13 @@
       .right {
         padding: 40px 24px 0;
         align-items: center;
+        justify-content: flex-start;
+        gap: 0;
       }
 
-      .scene-wrap { transform: scale(0.78); transform-origin: top center; margin-bottom: -60px; }
+      .scene-wrap { transform: scale(0.78); transform-origin: top center; margin-bottom: -40px; }
 
-      .stats { margin-top: 24px; }
+      .stats { margin-top: 16px; }
       .stat { padding: 16px 0; }
 
       footer {
@@ -621,41 +628,25 @@
         <strong>what breaks?</strong>
       </h1>
 
+      <p class="sub">
+        Every team has that one person who understands too much. Grassion shows you who it is, what they own alone, and how exposed you are right now.
+      </p>
+
+      <div class="risk-line">
+        <span class="risk-line-dot"></span>
+        <span class="risk-line-text">We read PR history, never your code. Install in 5 minutes.</span>
+      </div>
+
       <div class="cta-row">
         <a class="github-btn" href="https://grassion-api.fly.dev/auth/github?force=true">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
           </svg>
-          See your key-person risk free
+          Find your exposure, free
         </a>
         <div class="cta-meta">
-          14-day free trial<br>
-          No credit card · 5 min setup
-        </div>
-      </div>
-
-      <p class="sub">
-        Grassion shows which parts of your codebase only one person understands, and what happens when they leave. We never store your code.
-      </p>
-
-      <div class="proof">
-        <div class="proof-item">
-          <div class="proof-icon">01</div>
-          <div class="proof-text">
-            <strong>Departure Impact:</strong> pick any engineer, see exactly which critical areas only they can maintain
-          </div>
-        </div>
-        <div class="proof-item">
-          <div class="proof-icon">02</div>
-          <div class="proof-text">
-            <strong>PR warnings:</strong> every PR touching a single-owner area gets a reviewer suggestion, automatically
-          </div>
-        </div>
-        <div class="proof-item">
-          <div class="proof-icon">03</div>
-          <div class="proof-text">
-            <strong>Continuity trend:</strong> track your Key-Person Exposure % weekly and drive it down over time
-          </div>
+          Free 14-day trial<br>
+          No credit card required
         </div>
       </div>
 
@@ -667,7 +658,8 @@
       <div class="scene-wrap">
         <div class="verdict-card">
           <div class="verdict-label">Key-person exposure</div>
-          <div class="verdict-value">34% at risk · trending down</div>
+          <div class="verdict-value">34%</div>
+          <div class="verdict-sub">↓ trending down this month</div>
         </div>
         <div class="scene">
           <div class="ring"></div>
@@ -685,16 +677,17 @@
           </div>
         </div>
         <div class="waste-card">
-          <div class="waste-label">If Priya leaves</div>
-          <div class="waste-value">12 areas · no backup owner</div>
+          <div class="waste-label">Departure simulation</div>
+          <div class="waste-name">If Priya leaves</div>
+          <div class="waste-value"><span class="waste-dot"></span>12 areas with no backup owner</div>
         </div>
       </div>
 
       <!-- Stats row -->
       <div class="stats">
-        <div class="stat" id="s1"><span class="stat-num">1 in 3</span><span class="stat-label">Critical areas have one owner</span></div>
-        <div class="stat" id="s2"><span class="stat-num">12 wks</span><span class="stat-label">Avg knowledge gap recovery</span></div>
-        <div class="stat" id="s3"><span class="stat-num">5 min</span><span class="stat-label">To first risk report</span></div>
+        <div class="stat" id="s1"><span class="stat-num">1 in 3</span><span class="stat-label">Critical areas, one owner</span></div>
+        <div class="stat" id="s2"><span class="stat-num">12 wks</span><span class="stat-label">Avg to close knowledge gap</span></div>
+        <div class="stat" id="s3"><span class="stat-num">5 min</span><span class="stat-label">To your first risk report</span></div>
       </div>
 
     </div>
