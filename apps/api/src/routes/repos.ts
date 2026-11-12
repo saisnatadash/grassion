@@ -293,14 +293,16 @@ async function syncHistoricalPrs(
   const ghHeaders = await teamGhHeaders(teamId)
   const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) // 12 months ago
 
-  // Paginate newest-first; stop when we hit PRs older than the cutoff.
+  // Paginate by creation date (newest first). Sort by 'created' so the cutoff
+  // check on created_at is reliable — sort by 'updated' caused false early exits
+  // when a stale PR received a recent comment.
   const merged: GhPr[] = []
   let page = 1
-  outer: while (true) {
+  while (true) {
     let page_prs: GhPr[] = []
     try {
       const res = await fetch(
-        `https://api.github.com/repos/${owner}/${repoName}/pulls?state=closed&per_page=100&sort=updated&direction=desc&page=${page}`,
+        `https://api.github.com/repos/${owner}/${repoName}/pulls?state=closed&per_page=100&sort=created&direction=desc&page=${page}`,
         { headers: ghHeaders },
       )
       if (!res.ok) {
@@ -313,12 +315,13 @@ async function syncHistoricalPrs(
       break
     }
     if (page_prs.length === 0) break
+    let hitCutoff = false
     for (const pr of page_prs) {
+      if (new Date(pr.created_at) < cutoff) { hitCutoff = true; break }
       if (!pr.merged_at) continue
-      if (new Date(pr.merged_at) < cutoff) break outer
       merged.push(pr)
     }
-    if (page_prs.length < 100) break
+    if (hitCutoff || page_prs.length < 100) break
     page++
   }
 
