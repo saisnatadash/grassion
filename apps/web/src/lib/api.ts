@@ -94,7 +94,7 @@ export interface OutcomesToolRow {
   avgChangesRequested: number
   qualityScore: number
   estimatedMonthlySpend: number
-  verdict: 'high_quality' | 'average' | 'low_quality'
+  verdict: 'high_quality' | 'average' | 'low_quality' | 'insufficient_data'
 }
 
 export interface OutcomesResponse {
@@ -104,7 +104,7 @@ export interface OutcomesResponse {
   hotfixRate: number
   avgReviewChangesRequested: number
   aiPrQualityScore: number
-  verdict: 'high_quality' | 'average' | 'low_quality'
+  verdict: 'high_quality' | 'average' | 'low_quality' | 'insufficient_data'
   toolBreakdown: OutcomesToolRow[]
 }
 
@@ -295,6 +295,104 @@ export interface AiGovernanceResponse {
   }>
 }
 
+export interface AttestationEntry {
+  id: string
+  personLogin: string
+  answer: string
+  note: string | null
+  createdAt: string
+  rowHash: string
+}
+
+export interface ReceiptResponse {
+  pr: {
+    number: number
+    title: string
+    authorLogin: string | null
+    mergedAt: string | null
+    additions: number
+    deletions: number
+    changedFiles: number
+    reviewCount: number
+    aiSource: string | null
+    aiDetectionMethod: string | null
+    aiConfidence: number
+    repoOwner: string
+    repoName: string
+  }
+  checkRun: { conclusion: string | null; headSha: string } | null
+  attestations: AttestationEntry[]
+  chainValid: boolean
+  chainRowCount: number
+  firstTamperedAt: string | null
+}
+
+export interface ReceiptListItem {
+  prNumber: number
+  title: string
+  authorLogin: string | null
+  mergedAt: string | null
+  aiSource: string | null
+  aiConfidence: number
+  reviewCount: number
+  attestationCount: number
+  checkConclusion: string | null
+  isAiHeavy: boolean
+  hasAttestation: boolean
+  noReview: boolean
+}
+
+export interface ReceiptsListResponse {
+  items: ReceiptListItem[]
+  total: number
+  repo: { owner: string; name: string }
+}
+
+export interface TrendPoint {
+  month: string
+  totalPrs: number
+  aiHeavyPrs: number
+  aiHeavyPct: number
+  attestedPrs: number
+  attestedPct: number
+  unreviewed: number
+}
+
+export interface AuditExportEntry {
+  prNumber: number
+  title: string
+  authorLogin: string | null
+  mergedAt: string | null
+  additions: number
+  deletions: number
+  reviewCount: number
+  aiSource: string | null
+  aiConfidence: number
+  aiDetectionMethod: string | null
+  isAiHeavy: boolean
+  checkConclusion: string | null
+  attestations: Array<{ prNumber: number; personLogin: string; answer: string; createdAt: string }>
+  hasAttestation: boolean
+  noReview: boolean
+}
+
+export interface AuditExportResponse {
+  generatedAt: string
+  repo: { owner: string; name: string }
+  period: { from: string; to: string }
+  summary: {
+    totalPrs: number
+    aiHeavyPrs: number
+    aiHeavyPct: number
+    attestedPrs: number
+    attestedPct: number
+    exceptions: number
+    complianceLabel: string
+  }
+  entries: AuditExportEntry[]
+  sample: AuditExportEntry[]
+}
+
 export const api = {
   me: () => request<MeResponse>('/auth/me'),
   logout: async () => {
@@ -306,6 +404,11 @@ export const api = {
     get: () => request<MeResponse['team']>('/api/team'),
     update: (body: Partial<MeResponse['team']>) =>
       request<{ ok: true }>('/api/team', { method: 'PATCH', body: JSON.stringify(body) }),
+    inviteLink: () => request<{ url: string; expiresIn: string }>('/api/team/invite-link'),
+    join: (token: string) =>
+      request<{ ok: true; joined: boolean; reason?: string; teamName?: string }>('/api/team/join', {
+        method: 'POST', body: JSON.stringify({ token }),
+      }),
     members: () => request<MemberDto[]>('/api/team/members'),
     removeMember: (id: string) =>
       request<{ ok: true }>(`/api/team/members/${id}`, { method: 'DELETE' }),
@@ -420,6 +523,30 @@ export const api = {
       request<MaReportResponse>('/api/hc/ma-report'),
     aiGovernance: (months: number) =>
       request<AiGovernanceResponse>(`/api/hc/ai-governance?months=${months}`),
+    receipt: (repoId: string, prNumber: number) =>
+      request<ReceiptResponse>(`/api/hc/${repoId}/receipt/${prNumber}`),
+    receipts: (repoId: string, params?: { aiHeavy?: boolean; noAttestation?: boolean; noReview?: boolean; limit?: number }) => {
+      const qs = new URLSearchParams()
+      if (params?.aiHeavy) qs.set('aiHeavy', 'true')
+      if (params?.noAttestation) qs.set('noAttestation', 'true')
+      if (params?.noReview) qs.set('noReview', 'true')
+      if (params?.limit) qs.set('limit', String(params.limit))
+      return request<ReceiptsListResponse>(`/api/hc/${repoId}/receipts?${qs}`)
+    },
+    verifyChain: (repoId: string, prNumber: number) =>
+      request<{ valid: boolean; rowCount: number; firstTamperedAt?: string }>(`/api/hc/${repoId}/attestation/${prNumber}/verify`),
+    trend: (repoId: string, months?: number) =>
+      request<TrendPoint[]>(`/api/hc/${repoId}/trend${months ? `?months=${months}` : ''}`),
+    auditExport: (repoId: string, params?: { from?: string; to?: string }) => {
+      const qs = new URLSearchParams()
+      if (params?.from) qs.set('from', params.from)
+      if (params?.to) qs.set('to', params.to)
+      return request<AuditExportResponse>(`/api/hc/${repoId}/audit-export?${qs}`)
+    },
+    backfillStatus: (repoId: string) =>
+      request<{ status: string; statusDetail?: string | null; progressPct?: number; prsFetched?: number; error?: string | null }>(`/api/hc/${repoId}/backfill-status`),
+    report: (repoId: string) =>
+      request<import('../pages/DarkCodeReport.js').DarkCodeReportData>(`/api/hc/${repoId}/report`),
   },
 
   mcpTokens: {

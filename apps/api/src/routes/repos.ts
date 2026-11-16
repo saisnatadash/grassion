@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { eq, and, sql } from 'drizzle-orm'
-import { repos, pullRequests, teams } from '@grassion/db'
+import { repos, pullRequests, teams, hcBackfillRuns } from '@grassion/db'
 import { db } from '../db.js'
 import { requireAuth, requireRole } from '../auth.js'
 import { repoToggleSchema } from '@grassion/shared'
@@ -777,7 +777,10 @@ reposRouter.post(
       return
     }
     const [teamRow] = await db
-      .select({ githubInstallationId: teams.githubInstallationId })
+      .select({
+        githubInstallationId: teams.githubInstallationId,
+        githubOauthToken: teams.githubOauthToken,
+      })
       .from(teams)
       .where(eq(teams.id, sess.teamId))
       .limit(1)
@@ -792,8 +795,56 @@ reposRouter.post(
       .then(async (prsSynced) => {
         await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
         logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
-        if (teamRow?.githubInstallationId) {
-          await backfillCoverageForRepo(repo.id, sess.teamId, teamRow.githubInstallationId)
+
+        let installationId = teamRow?.githubInstallationId ?? null
+
+        // If no installation ID cached, try to discover it via the user's OAuth token —
+        // the installation.created webhook may have been missed on first install.
+        if (!installationId && teamRow?.githubOauthToken) {
+          try {
+            const oauthToken = decryptToken(teamRow.githubOauthToken)
+            const appId = Number(env().GITHUB_APP_ID)
+            const ghRes = await fetch('https://api.github.com/user/installations?per_page=100', {
+              headers: {
+                Authorization: `Bearer ${oauthToken}`,
+                Accept: 'application/vnd.github+json',
+                'User-Agent': 'grassion-app',
+                'X-GitHub-Api-Version': '2022-11-28',
+              },
+            })
+            if (ghRes.ok) {
+              const data = await ghRes.json() as {
+                installations: Array<{ id: number; app_id: number; account: { login: string; slug?: string; name?: string | null; type?: string; id: number } }>
+              }
+              const grassionInstall = data.installations.find((i) => i.app_id === appId)
+              if (grassionInstall) {
+                const linked = await createTeamFromInstallation({
+                  id: grassionInstall.id,
+                  account: grassionInstall.account,
+                })
+                if (linked) installationId = grassionInstall.id
+                logger.info({ installationId: grassionInstall.id }, 'sync: discovered installation via OAuth token')
+              }
+            }
+          } catch (err) {
+            logger.warn({ err }, 'sync: failed to discover installation via OAuth token')
+          }
+        }
+
+        if (installationId) {
+          await backfillCoverageForRepo(repo.id, sess.teamId, installationId)
+        } else {
+          // Record a failed run so the UI surfaces a clear error instead of staying stuck on "none".
+          await db.insert(hcBackfillRuns).values({
+            orgId: sess.teamId,
+            repoId: repo.id,
+            status: 'failed',
+            error: 'GitHub App not installed — install it to import coverage data',
+            statusDetail: 'GitHub App not installed',
+            sinceDate: new Date(),
+            startedAt: new Date(),
+          })
+          logger.warn({ teamId: sess.teamId, repoId: id }, 'sync: no GitHub App installation found, cannot run backfill')
         }
       })
       .catch((err: unknown) => logger.error({ err, repoId: id }, 'repo sync/backfill failed'))

@@ -1,15 +1,18 @@
 import { useCallback, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { installUrl, github } from './api.js'
+import { installUrl, github, api } from './api.js'
 
 // Opens the GitHub App installation flow in a centred popup.
 // After the popup closes:
-//  - Invalidates repos/team immediately
-//  - Keeps polling every 2 s for up to 30 s so the webhook has time to fire
-//    and repos appear without a manual page refresh.
-// Returns { open, syncing } — syncing=true while the post-close poll is running.
+//  - Calls /api/github/sync to register the installation (bypasses webhook)
+//  - Auto-syncs each connected repo so PR data loads immediately
+//  - Navigates to the Code Map (/) page so the user sees their data
+//  - Keeps polling every 2 s for up to 30 s so late webhook writes are picked up
+// Returns { open, syncing } — syncing=true while the post-close work is running.
 export function useInstallPopup() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const closeTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const [syncing, setSyncing] = useState(false)
@@ -46,17 +49,35 @@ export function useInstallPopup() {
 
       setSyncing(true)
 
-      // Actively sync repos via API (bypasses webhook) then keep polling to
-      // catch repos the webhook may have already written.
-      void github.sync().then(() => {
-        void qc.invalidateQueries({ queryKey: ['repos'] })
-        void qc.invalidateQueries({ queryKey: ['me'] })
-        void qc.invalidateQueries({ queryKey: ['team'] })
-        void qc.invalidateQueries({ queryKey: ['metrics'] })
-      }).catch(() => {
-        // sync failed — still invalidate so the UI reflects current DB state
-        void qc.invalidateQueries({ queryKey: ['repos'] })
-      })
+      // 1. Register the installation (bypass webhook), then auto-trigger PR sync
+      //    for every connected repo so data loads without the user having to
+      //    manually click Import on Code Map.
+      void github.sync()
+        .then(async (result) => {
+          void qc.invalidateQueries({ queryKey: ['repos'] })
+          void qc.invalidateQueries({ queryKey: ['me'] })
+          void qc.invalidateQueries({ queryKey: ['team'] })
+          void qc.invalidateQueries({ queryKey: ['metrics'] })
+
+          if (result.ok) {
+            // Kick off historical PR sync + HC backfill for every repo.
+            // Fire-and-forget — the Code Map page will show progress.
+            try {
+              const repos = await api.repos.list()
+              for (const repo of repos) {
+                await api.repos.sync(repo.id).catch(() => {/* per-repo errors are non-fatal */})
+              }
+            } catch {
+              // If listing fails (e.g. no repos yet), just continue
+            }
+          }
+
+          // Navigate to the overview so the user sees their data loading
+          navigate('/', { replace: false })
+        })
+        .catch(() => {
+          void qc.invalidateQueries({ queryKey: ['repos'] })
+        })
 
       // Keep polling for 30 s to pick up any async webhook writes too
       let attempts = 0
@@ -64,6 +85,7 @@ export function useInstallPopup() {
         attempts++
         void qc.invalidateQueries({ queryKey: ['repos'] })
         void qc.invalidateQueries({ queryKey: ['team'] })
+        void qc.invalidateQueries({ queryKey: ['metrics'] })
         if (attempts >= 15) {   // 15 × 2 s = 30 s
           clearInterval(pollTimer.current!)
           pollTimer.current = null
@@ -71,7 +93,7 @@ export function useInstallPopup() {
         }
       }, 2000)
     }, 800)
-  }, [qc])
+  }, [qc, navigate])
 
   return { open, syncing }
 }

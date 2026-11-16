@@ -1008,6 +1008,8 @@ export const hcBackfillRuns = pgTable(
     prsFetched: integer('prs_fetched').default(0).notNull(),
     evidenceCreated: integer('evidence_created').default(0).notNull(),
     error: text('error'),
+    statusDetail: text('status_detail'),
+    progressPct: integer('progress_pct').default(0).notNull(),
     startedAt: timestamp('started_at'),
     completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -1238,3 +1240,36 @@ export type McpApiToken = typeof mcpApiTokens.$inferSelect
 export type NewMcpApiToken = typeof mcpApiTokens.$inferInsert
 export type HcEvidenceDispute = typeof hcEvidenceDisputes.$inferSelect
 export type NewHcEvidenceDispute = typeof hcEvidenceDisputes.$inferInsert
+
+// ============ HC ATTESTATION LOG ============
+// Append-only log of reviewer self-assessments from GitHub check-run buttons.
+// Every click creates a NEW row (never update/upsert) so the full history is preserved.
+// prev_hash + row_hash form a SHA-256 chain per (org_id, pr_number).
+export const hcAttestationLog = pgTable(
+  'hc_attestation_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id')
+      .references(() => teams.id, { onDelete: 'cascade' })
+      .notNull(),
+    repoId: uuid('repo_id')
+      .references(() => repos.id, { onDelete: 'cascade' })
+      .notNull(),
+    prNumber: integer('pr_number').notNull(),
+    personId: uuid('person_id')
+      .references(() => hcPeople.id, { onDelete: 'cascade' })
+      .notNull(),
+    answer: text('answer').notNull(),   // understand | partly | ai_wrote_it
+    note: text('note'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    prevHash: text('prev_hash').notNull().default(''),
+    rowHash: text('row_hash').notNull(),
+  },
+  (t) => ({
+    orgPrIdx: index('hc_attestation_log_org_pr_idx').on(t.orgId, t.prNumber, t.createdAt),
+    repoPrIdx: index('hc_attestation_log_repo_pr_idx').on(t.repoId, t.prNumber),
+  }),
+)
+
+export type HcAttestationLog = typeof hcAttestationLog.$inferSelect
+export type NewHcAttestationLog = typeof hcAttestationLog.$inferInsert

@@ -549,10 +549,15 @@ analyticsRouter.get('/api/analytics/health', requireAuth, async (req: Request, r
 })
 
 function calcQualityScore(revertFraction: number, hotfixFraction: number, avgChanges: number): number {
-  return Math.max(0, Math.min(100, Math.round(100 - revertFraction * 40 - hotfixFraction * 30 - avgChanges * 10)))
+  // Revert penalty is 60 pts max (was 40) so a 33% revert rate → score ~80→~60
+  return Math.max(0, Math.min(100, Math.round(100 - revertFraction * 60 - hotfixFraction * 30 - avgChanges * 10)))
 }
 
-function qualityVerdict(score: number): 'high_quality' | 'average' | 'low_quality' {
+function qualityVerdict(score: number, prCount?: number, revertRate?: number): 'high_quality' | 'average' | 'low_quality' | 'insufficient_data' {
+  // Need at least 5 PRs before giving a verdict
+  if (prCount !== undefined && prCount < 5) return 'insufficient_data'
+  // Any revert rate above 15% is never high quality regardless of score
+  if (revertRate !== undefined && revertRate > 15) return 'low_quality'
   return score >= 75 ? 'high_quality' : score >= 50 ? 'average' : 'low_quality'
 }
 
@@ -623,18 +628,19 @@ analyticsRouter.get('/api/analytics/outcomes', requireAuth, async (req: Request,
           avgChangesRequested: Math.round(r.avgChanges * 10) / 10,
           qualityScore: score,
           estimatedMonthlySpend: totalAiPrs > 0 ? Math.round((r.prCount / totalAiPrs) * monthlyAiSpendUsd) : 0,
-          verdict: qualityVerdict(score),
+          verdict: qualityVerdict(score, r.prCount, Math.round(rf * 100)),
         }
       })
 
+    const globalRevertRate = Math.round(revertFraction * 100)
     res.json({
       totalAiPrs,
       revertedAiPrs,
-      revertRate: Math.round(revertFraction * 100),
+      revertRate: globalRevertRate,
       hotfixRate: Math.round(hotfixFraction * 100),
       avgReviewChangesRequested: Math.round(avgChangesRequested * 10) / 10,
       aiPrQualityScore,
-      verdict: qualityVerdict(aiPrQualityScore),
+      verdict: qualityVerdict(aiPrQualityScore, totalAiPrs, globalRevertRate),
       toolBreakdown,
     })
   } catch (err) {

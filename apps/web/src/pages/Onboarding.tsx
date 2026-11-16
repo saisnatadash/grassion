@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { api, installUrl } from '../lib/api.js'
+import { api } from '../lib/api.js'
+import { useInstallPopup } from '../lib/install-popup.js'
 import { Button, Card, CardContent, CardHeader, CardTitle, Spinner } from '../components/ui.js'
 import { cn } from '../lib/utils.js'
 
@@ -17,6 +18,7 @@ export function OnboardingPage() {
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const qc = useQueryClient()
+  const { open: openInstall, syncing: installSyncing } = useInstallPopup()
   const update = useMutation({
     mutationFn: api.team.update,
     onSuccess: () => {
@@ -43,14 +45,17 @@ export function OnboardingPage() {
       {/* Step 1: Install GitHub App */}
       <Step n={1} active={step === 1} done={step > 1} title="Install the GitHub App">
         {installed ? (
-          <p className="text-sm text-green-700">✓ Installed.</p>
+          <p className="text-sm text-green-700">GitHub App installed.</p>
         ) : (
-          <a href={installUrl()} target="_blank" rel="noreferrer">
-            <Button>Install on GitHub</Button>
-          </a>
+          <Button onClick={openInstall} disabled={installSyncing}>
+            {installSyncing ? 'Connecting…' : 'Install on GitHub'}
+          </Button>
+        )}
+        {installSyncing && (
+          <p className="mt-2 text-xs text-neutral-500">Syncing your repositories — this takes a moment…</p>
         )}
         <div className="mt-3">
-          <Button variant="secondary" size="sm" disabled={!installed} onClick={() => setStep(2)}>
+          <Button variant="secondary" size="sm" disabled={!installed && !installSyncing} onClick={() => setStep(2)}>
             Next
           </Button>
         </div>

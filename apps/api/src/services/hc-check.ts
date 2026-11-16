@@ -15,7 +15,6 @@ import {
   hcCodeAreas,
   hcEvidenceEvents,
   hcFailures,
-  hcUnderstandingAnswers,
   hcCheckRuns,
 } from '@grassion/db'
 import { db } from '../db.js'
@@ -23,6 +22,7 @@ import { getInstallationOctokit } from '../github.js'
 import { extractAreaPath } from '../jobs/backfillCoverage.js'
 import { logger } from '../logger.js'
 import { isProOrAbove } from '../auth.js'
+import { appendAttestation } from './attestation.js'
 
 // Re-export for webhook handler which imported it from here.
 export { isProOrAbove as isProPlan }
@@ -315,13 +315,10 @@ export async function handleUnderstandingAction(params: {
 
   const personId = personRows[0].id
 
-  await db
-    .insert(hcUnderstandingAnswers)
-    .values({ orgId, prNumber, personId, answer })
-    .onConflictDoUpdate({
-      target: [hcUnderstandingAnswers.personId, hcUnderstandingAnswers.prNumber],
-      set: { answer },
-    })
+  // Every click appends a new row to the hash-chained attestation log.
+  // Multiple clicks from the same person are allowed and all stored (full history).
+  await appendAttestation({ orgId, repoId, prNumber, personId, answer })
+    .catch((err) => logger.error({ err, prNumber, senderLogin }, 'appendAttestation failed'))
 
   if (answer !== 'ai_wrote_it') return
 

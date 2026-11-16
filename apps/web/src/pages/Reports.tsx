@@ -4,7 +4,7 @@ import { cn } from '../lib/utils.js'
 const TABS = [
   { to: '/reports/ai-impact', label: 'AI Impact' },
   { to: '/reports/governance', label: 'AI Governance' },
-  { to: '/reports/ma', label: 'M&A Report' },
+  { to: '/reports/audit-export', label: 'Audit Export' },
 ]
 
 export function ReportsLayout() {

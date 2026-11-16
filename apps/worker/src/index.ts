@@ -13,6 +13,7 @@ import { computeBenchmarks } from './benchmarks.js'
 import { sendTrialReminderEmails } from './trial-reminder.js'
 import { sendDarkCodeDigestForAllProTeams } from './dark-code-digest-runner.js'
 import { checkAllTeamsForCoverageLoss } from './coverage-loss-alerts.js'
+import { sendWeeklyExceptionsForAllProTeams } from './exceptions-runner.js'
 
 // ─── Global error safety ────────────────────────────────────────────────────
 
@@ -183,6 +184,13 @@ cron.schedule('0 9 * * 1', () => {
 cron.schedule('0 8 * * *', () => {
   logger.info('cron: coverage loss check tick')
   checkAllTeamsForCoverageLoss().catch((err) => logger.error({ err }, 'coverage loss check failed'))
+}, { timezone: 'UTC' })
+
+// Weekly PR exceptions — Monday 8am UTC (before dark code digest at 9am).
+// Emails and Slack-notifies Pro teams about PRs merged without review or attestation.
+cron.schedule('0 8 * * 1', () => {
+  logger.info('cron: weekly exceptions tick')
+  sendWeeklyExceptionsForAllProTeams().catch((err) => logger.error({ err }, 'weekly exceptions failed'))
 }, { timezone: 'UTC' })
 
 // ─── Health check HTTP server ────────────────────────────────────────────────

@@ -13,9 +13,17 @@ export function AuthCallbackPage() {
       return
     }
 
-    // Session cookie is set server-side during the OAuth redirect.
-    // All API calls use credentials: 'include' to send the httpOnly cookie.
-    navigate('/dashboard', { replace: true })
+    // Session cookie is set server-side. Fetch /auth/me to decide where to send
+    // the user: first-time users (no GitHub App installed) go to onboarding,
+    // returning users go straight to the dashboard.
+    fetch('/auth/me', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        const hasInstall = !!(me as { team?: { githubInstallationId?: number | null } } | null)
+          ?.team?.githubInstallationId
+        navigate(hasInstall ? '/' : '/onboarding', { replace: true })
+      })
+      .catch(() => navigate('/', { replace: true }))
   }, [navigate])
 
   return (
@@ -31,7 +39,7 @@ export function AuthCallbackPage() {
         fontFamily: 'Inter, sans-serif',
       }}
     >
-      Signing you in...
+      Signing you in…
     </div>
   )
 }

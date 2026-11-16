@@ -77,6 +77,7 @@ export function SettingsPage() {
       <SlackSection />
       <ReposSection />
       <MembersSection />
+      <InviteSection />
       <HcSettingsSection />
       <PrivacyControlsSection />
       <McpTokensSection />
@@ -1166,7 +1167,56 @@ function MembersSection() {
   )
 }
 
-/* ── DANGER ZONE ── */
+/* ── INVITE SECTION ── */
+function InviteSection() {
+  const me = useQuery({ queryKey: ['me'], queryFn: api.me })
+  const role = me.data?.user.role
+  const invite = useQuery({
+    queryKey: ['invite-link'],
+    queryFn: api.team.inviteLink,
+    enabled: role === 'owner' || role === 'admin',
+  })
+  const [copied, setCopied] = useState(false)
+
+  if (role !== 'owner' && role !== 'admin') return null
+
+  function copy() {
+    if (!invite.data?.url) return
+    navigator.clipboard.writeText(invite.data.url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Invite team members</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-[#555] mb-4">Share this link with teammates. It expires in 7 days. Anyone who opens it will be added to your team after signing in with GitHub.</p>
+        {invite.isLoading ? (
+          <Spinner />
+        ) : invite.data ? (
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={invite.data.url}
+              className="flex-1 min-w-0 bg-[#111] border border-[#2a2a2a] rounded px-3 py-2 text-xs text-[#888] font-mono truncate focus:outline-none"
+            />
+            <Button size="sm" variant="secondary" onClick={copy} className="flex items-center gap-1.5 flex-shrink-0">
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+        ) : (
+          <p className="text-xs text-[#444]">Could not generate invite link.</p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 /* ── HC SETTINGS ── */
 function HcSettingsSection() {
   const qc = useQueryClient()

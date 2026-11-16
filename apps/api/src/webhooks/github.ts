@@ -59,6 +59,12 @@ function getWebhooks(): Webhooks {
       for (const repo of payload.repositories_added ?? []) {
         await connectRepo(team.id, repo)
       }
+      // Kick off backfill for the newly added repos (fire and forget)
+      if ((payload.repositories_added ?? []).length > 0) {
+        backfillTeamRepos(team.id, installation.id).catch((err) =>
+          logger.error({ err, teamId: team.id }, 'backfill error on repo add'),
+        )
+      }
     })
 
     _webhooks.on('installation_repositories.removed', async ({ payload }) => {

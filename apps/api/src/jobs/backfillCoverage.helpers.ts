@@ -5,14 +5,49 @@
 
 // ── Evidence weights ──────────────────────────────────────────────────────────
 
+/**
+ * Minimum decayed evidence score for a person to count as a "qualified knower"
+ * of an area. Used for Key-Person Exposure % calculation only — the existing
+ * single-person-area display uses weight > 0.
+ * Keep as a named constant so the threshold can be tuned after backtest.
+ */
+export const MIN_EVIDENCE = 1.0
+
 export const EVIDENCE_WEIGHTS: Record<string, number> = {
   incident_fix: 3.0,
-  successful_edit: 1.0,
+  successful_edit: 1.0,         // PR author (normal merged PR, not reverted)
+  review_with_comment: 0.6,     // APPROVED/CHANGES_REQUESTED review with non-empty body
+  approval_only: 0.15,          // APPROVED review with no comment body
+  // Legacy type for existing DB rows — kept so old evidence is not silently dropped
   substantive_review: 0.7,
   answered_question: 0.5,
   understanding_click: 0.3,
   explain_back: 0.5,
   large_ai_change_unreviewed: -0.5,
+}
+
+// ── Recency decay ─────────────────────────────────────────────────────────────
+
+/**
+ * 90-day half-life decay. Applied at query time — stored weights are never changed.
+ * Evidence from today returns 1.0; evidence from 90 days ago returns 0.5; 180d → 0.25.
+ */
+export function decayFactor(eventDate: Date): number {
+  const daysSince = (Date.now() - eventDate.getTime()) / 86_400_000
+  return Math.pow(0.5, daysSince / 90)
+}
+
+// ── Path boost ────────────────────────────────────────────────────────────────
+
+/**
+ * Matches on path SEGMENTS only — "auth/" matches, but "author/" does not.
+ * Boosts high-value areas 1.5x for the Key-Person Exposure weight calculation.
+ */
+const PATH_BOOST_SEGMENTS =
+  /(?:^|\/)(?:auth|payments?|billing|checkout|migrations?|infra|security|secrets|deploy)(?:\/|$|\.[^/]*$)/i
+
+export function pathBoostFactor(filePath: string): number {
+  return PATH_BOOST_SEGMENTS.test(filePath) ? 1.5 : 1.0
 }
 
 // ── Area path extraction ──────────────────────────────────────────────────────

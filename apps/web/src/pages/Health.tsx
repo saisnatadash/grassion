@@ -35,12 +35,20 @@ function fmtWeek(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
 }
 
-function verdictLabel(v: 'high_quality' | 'average' | 'low_quality'): string {
-  return v === 'high_quality' ? 'Strong ROI' : v === 'average' ? 'Medium ROI' : 'Low ROI'
+type Verdict = 'high_quality' | 'average' | 'low_quality' | 'insufficient_data'
+
+function verdictLabel(v: Verdict): string {
+  if (v === 'high_quality') return 'Strong ROI'
+  if (v === 'average') return 'Medium ROI'
+  if (v === 'insufficient_data') return 'Too few PRs'
+  return 'Low ROI'
 }
 
-function verdictTone(v: 'high_quality' | 'average' | 'low_quality'): 'green' | 'yellow' | 'red' {
-  return v === 'high_quality' ? 'green' : v === 'average' ? 'yellow' : 'red'
+function verdictTone(v: Verdict): 'green' | 'yellow' | 'red' | 'gray' {
+  if (v === 'high_quality') return 'green'
+  if (v === 'average') return 'yellow'
+  if (v === 'insufficient_data') return 'gray'
+  return 'red'
 }
 
 /* ── PAGE ── */

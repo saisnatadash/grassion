@@ -3,7 +3,7 @@ import { Link, NavLink, Navigate, Outlet, useNavigate, useLocation } from 'react
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
   ChevronDown, Menu, X, BarChart2, Settings, LogOut, CreditCard,
-  Shield, Activity, Bell, CheckCheck, XCircle, Zap, EyeOff,
+  Shield, Activity, Bell, CheckCheck, XCircle, Zap, EyeOff, FileText,
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
@@ -195,7 +195,7 @@ export function AppLayout() {
     Number(localStorage.getItem('spend_badge_seen') ?? 0),
   )
   useEffect(() => {
-    if (location.pathname === '/spend-intelligence') {
+    if (location.pathname.startsWith('/reports')) {
       localStorage.setItem('spend_badge_seen', String(inactiveCount))
       setSpendBadgeSeen(inactiveCount)
     }
@@ -274,8 +274,9 @@ export function AppLayout() {
   }
 
   const navLinks = [
-    { to: '/', label: 'Overview', icon: EyeOff, badge: null as number | null },
-    { to: '/code-map', label: 'Code Map', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
+    { to: '/', label: 'AI Code Risk', icon: EyeOff, badge: null as number | null, end: true },
+    { to: '/code-map', label: 'Review Map', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
+    { to: '/receipts', label: 'Receipts', icon: FileText, badge: null as number | null },
     { to: '/reports', label: 'Reports', icon: BarChart2, badge: spendBadge },
     { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
   ]
@@ -301,10 +302,11 @@ export function AppLayout() {
 
           {/* Center: Nav links (desktop) */}
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map(({ to, label, badge }) => (
+            {navLinks.map(({ to, label, badge, end }) => (
               <NavLink
                 key={to}
                 to={to}
+                end={end}
                 className={({ isActive }) =>
                   cn(
                     'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
@@ -428,10 +430,11 @@ export function AppLayout() {
         {/* Mobile nav */}
         {mobileOpen && (
           <div className="md:hidden border-t border-[#222222] bg-[#111111] px-4 pb-4 pt-2">
-            {navLinks.map(({ to, label, icon: Icon, badge }) => (
+            {navLinks.map(({ to, label, icon: Icon, badge, end }) => (
               <NavLink
                 key={to}
                 to={to}
+                end={end}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
                   cn(

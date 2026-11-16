@@ -12,12 +12,17 @@ import { SpendIntelligencePage } from './pages/SpendIntelligence.js'
 import { HealthPage } from './pages/Health.js'
 import { SecurityPage } from './pages/Security.js'
 import { AuthCallbackPage } from './pages/AuthCallback.js'
+import AuthInstalled from './pages/AuthInstalled.js'
+import JoinPage from './pages/Join.js'
 import { NotFoundPage } from './pages/NotFound.js'
 import { DarkCodeReportPage } from './pages/DarkCodeReport.js'
 import { DarkCodeReportShared } from './pages/DarkCodeReportShared.js'
 import { MaReportPage } from './pages/MaReport.js'
 import { AiGovernancePage } from './pages/AiGovernance.js'
 import { ReportsLayout } from './pages/Reports.js'
+import { ReceiptsListPage } from './pages/ReceiptsList.js'
+import { ReceiptDetailPage } from './pages/ReceiptDetail.js'
+import { AuditExportPage } from './pages/AuditExport.js'
 import { AdminLayout } from './pages/AdminLayout.js'
 import { AdminOverview } from './pages/AdminOverview.js'
 import { AdminFunnel } from './pages/AdminFunnel.js'
@@ -61,6 +66,8 @@ export function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/auth/installed" element={<AuthInstalled />} />
+          <Route path="/join/:token" element={<JoinPage />} />
           <Route path="/install" element={<InstallPage />} />
           <Route element={<AppLayout />}>
             {/* New 4-tab navigation */}
@@ -69,8 +76,11 @@ export function App() {
             <Route path="/reports" element={<ReportsLayout />}>
               <Route path="ai-impact" element={<SpendIntelligencePage />} />
               <Route path="governance" element={<AiGovernancePage />} />
+              <Route path="audit-export" element={<AuditExportPage />} />
               <Route path="ma" element={<MaReportPage />} />
             </Route>
+            <Route path="/receipts" element={<ReceiptsListPage />} />
+            <Route path="/receipts/:prNumber" element={<ReceiptDetailPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />

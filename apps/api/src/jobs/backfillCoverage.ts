@@ -22,6 +22,7 @@ import { detectAI } from '../services/ai-detection.js'
 import { logger } from '../logger.js'
 import {
   EVIDENCE_WEIGHTS,
+  MIN_EVIDENCE,
   extractAreaPath,
   isRevertTitle,
   isHotfixTitle,
@@ -61,13 +62,13 @@ async function collectAllPrs(
   owner: string,
   repoName: string,
   since: Date,
+  onWaiting?: (detail: string) => Promise<void>,
 ): Promise<ScannedPr[]> {
   const all: ScannedPr[] = []
   let page = 1
 
   while (true) {
     let res: Awaited<ReturnType<typeof octokit.pulls.list>>
-    // Retry on 429 / secondary rate-limit with exponential backoff (max 3 attempts).
     let retries = 0
     while (true) {
       try {
@@ -75,7 +76,7 @@ async function collectAllPrs(
           owner,
           repo: repoName,
           state: 'closed',
-          sort: 'created', // created-desc is monotonically ordered; 'updated' breaks merged_at cutoff
+          sort: 'created',
           direction: 'desc',
           per_page: 100,
           page,
@@ -84,9 +85,12 @@ async function collectAllPrs(
       } catch (err: unknown) {
         const status = (err as { status?: number }).status
         if ((status === 429 || status === 403) && retries < 3) {
-          const delay = Math.pow(2, retries) * 2000 // 2s, 4s, 8s
+          const delaySec = Math.pow(2, retries) * 2 // 2s, 4s, 8s
           retries++
-          await sleep(delay)
+          if (onWaiting) {
+            await onWaiting(`Waiting for GitHub rate limit, resuming in ${delaySec}s...`)
+          }
+          await sleep(delaySec * 1000)
           continue
         }
         throw err
@@ -133,6 +137,7 @@ interface PrDetail {
     user: { login: string; id: number } | null
     state: string
     submitted_at: string | null
+    body: string | null
   }>
   /** ISO timestamps of commits on this PR. */
   commitTimestamps: string[]
@@ -158,6 +163,7 @@ async function fetchPrDetail(
     user: r.user ? { login: r.user.login, id: r.user.id } : null,
     state: r.state,
     submitted_at: r.submitted_at ?? null,
+    body: r.body ?? null,
   }))
 
   const commits = commitsRes.data
@@ -300,13 +306,18 @@ async function classifyEvidence(
   })
   const isAiPr = aiResult.source !== null
 
-  // Reviewers whose CHANGES_REQUESTED review was followed by a new commit
-  const reviewerSubstantive = new Set<string>()
+  // Classify reviewers: substantive (comment/CHANGES_REQUESTED) vs approval-only
+  const reviewerWithComment = new Set<string>()
+  const reviewerApprovalOnly = new Set<string>()
   for (const review of detail.reviews) {
-    if (!review.user || review.state !== 'CHANGES_REQUESTED' || !review.submitted_at) continue
-    const reviewedAt = new Date(review.submitted_at)
-    if (detail.commitTimestamps.some((ts) => new Date(ts) > reviewedAt)) {
-      reviewerSubstantive.add(review.user.login)
+    if (!review.user) continue
+    const login = review.user.login
+    const hasBody = typeof review.body === 'string' && review.body.trim().length > 0
+    if (review.state === 'CHANGES_REQUESTED' || (review.state === 'APPROVED' && hasBody) || (review.state === 'COMMENTED' && hasBody)) {
+      reviewerWithComment.add(login)
+      reviewerApprovalOnly.delete(login) // upgrade from approval-only if it was set
+    } else if (review.state === 'APPROVED' && !reviewerWithComment.has(login)) {
+      reviewerApprovalOnly.add(login)
     }
   }
 
@@ -336,8 +347,7 @@ async function classifyEvidence(
     if (
       isAiPr &&
       pr.additions >= LARGE_AI_PR_ADDITIONS_THRESHOLD &&
-      !reviewerSubstantive.size &&
-      !detail.reviews.some((r) => r.state === 'CHANGES_REQUESTED')
+      !reviewerWithComment.size
     ) {
       specs.push({
         personId,
@@ -349,14 +359,26 @@ async function classifyEvidence(
       })
     }
 
-    // Reviewer evidence — substantive reviews only
-    for (const reviewerLogin of reviewerSubstantive) {
+    // Reviewer evidence — review_with_comment or approval_only
+    for (const reviewerLogin of reviewerWithComment) {
       if (reviewerLogin === authorLogin) continue
       const reviewerPersonId = await upsertPerson(orgId, reviewerLogin, null)
       specs.push({
         personId: reviewerPersonId,
         areaId,
-        type: 'substantive_review',
+        type: 'review_with_comment',
+        occurredAt: mergedAt,
+        sourceUrl: pr.html_url,
+        prNumber: pr.number,
+      })
+    }
+    for (const reviewerLogin of reviewerApprovalOnly) {
+      if (reviewerLogin === authorLogin) continue
+      const reviewerPersonId = await upsertPerson(orgId, reviewerLogin, null)
+      specs.push({
+        personId: reviewerPersonId,
+        areaId,
+        type: 'approval_only',
         occurredAt: mergedAt,
         sourceUrl: pr.html_url,
         prNumber: pr.number,
@@ -381,6 +403,60 @@ async function classifyEvidence(
   }
 
   return specs
+}
+
+// ── Knower distribution logger ────────────────────────────────────────────────
+
+async function logKnowerDistribution(orgId: string, repoId: string, runId: string): Promise<void> {
+  // Count distinct knowers per area using raw decayed score >= MIN_EVIDENCE.
+  // This is a rough approximation using stored weights only (no decay) so it runs
+  // at backfill time without full query-time decay — good enough for threshold validation.
+  const rows = await db
+    .select({ areaId: hcEvidenceEvents.areaId, personId: hcEvidenceEvents.personId })
+    .from(hcEvidenceEvents)
+    .where(and(eq(hcEvidenceEvents.orgId, orgId)))
+
+  // Aggregate weight per (area, person)
+  const weightMap = new Map<string, Map<string, number>>()
+  for (const row of rows) {
+    const perPerson = weightMap.get(row.areaId) ?? new Map<string, number>()
+    weightMap.set(row.areaId, perPerson)
+  }
+
+  const areaRows = await db
+    .select({ id: hcCodeAreas.id })
+    .from(hcCodeAreas)
+    .where(and(eq(hcCodeAreas.orgId, orgId), eq(hcCodeAreas.repoId, repoId)))
+
+  const areaIds = new Set(areaRows.map((r) => r.id))
+
+  const evRows = await db
+    .select({ areaId: hcEvidenceEvents.areaId, personId: hcEvidenceEvents.personId, weight: hcEvidenceEvents.weight })
+    .from(hcEvidenceEvents)
+    .where(eq(hcEvidenceEvents.orgId, orgId))
+
+  const scores = new Map<string, Map<string, number>>()
+  for (const ev of evRows) {
+    if (!areaIds.has(ev.areaId)) continue
+    const perPerson = scores.get(ev.areaId) ?? new Map<string, number>()
+    perPerson.set(ev.personId, (perPerson.get(ev.personId) ?? 0) + ev.weight)
+    scores.set(ev.areaId, perPerson)
+  }
+
+  const dist = { zero: 0, one: 0, two: 0, threeOrMore: 0 }
+  for (const areaId of areaIds) {
+    const perPerson = scores.get(areaId)
+    const knowers = perPerson ? [...perPerson.values()].filter((w) => w >= MIN_EVIDENCE).length : 0
+    if (knowers === 0) dist.zero++
+    else if (knowers === 1) dist.one++
+    else if (knowers === 2) dist.two++
+    else dist.threeOrMore++
+  }
+
+  logger.info(
+    { runId, repoId, minEvidence: MIN_EVIDENCE, dist },
+    'hc-backfill: knower distribution (validate MIN_EVIDENCE before locking)',
+  )
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
@@ -437,10 +513,29 @@ export async function backfillCoverageForRepo(
 
   const octokit = await getInstallationOctokit(installationId)
 
+  async function setStatus(detail: string, pct: number) {
+    await db
+      .update(hcBackfillRuns)
+      .set({ statusDetail: detail, progressPct: pct })
+      .where(eq(hcBackfillRuns.id, runId))
+  }
+
+
   try {
     // Phase 1 is always re-run on resume (~10 API calls); it builds the revert maps.
     logger.info({ runId }, 'hc-backfill: phase 1 — collecting PR metadata')
-    const allPrs = await collectAllPrs(octokit, repo.owner, repo.name, since)
+    await setStatus('Fetching pull request list...', 0)
+
+    const allPrs = await collectAllPrs(
+      octokit,
+      repo.owner,
+      repo.name,
+      since,
+      async (detail) => {
+        await setStatus(detail, 0)
+        logger.warn({ runId, detail }, 'hc-backfill: github rate limit — waiting')
+      },
+    )
     const maps = buildRevertMaps(allPrs)
     const mergedPrs = allPrs.filter((p) => p.merged_at !== null)
 
@@ -453,6 +548,7 @@ export async function backfillCoverageForRepo(
       .update(hcBackfillRuns)
       .set({ prsFetched: mergedPrs.length })
       .where(eq(hcBackfillRuns.id, runId))
+    await setStatus('Calculating coverage from pull requests...', 10)
 
     // Phase 2: process per-page, checkpointing after each batch.
     const PAGE_SIZE = 20
@@ -465,7 +561,13 @@ export async function backfillCoverageForRepo(
         let detail: PrDetail
         try {
           detail = await fetchPrDetail(octokit, repo.owner, repo.name, pr.number)
-        } catch (err) {
+        } catch (err: unknown) {
+          const status = (err as { status?: number }).status
+          if (status === 429 || status === 403) {
+            const pct = 10 + Math.round((pageIdx / Math.max(1, Math.ceil(mergedPrs.length / PAGE_SIZE))) * 90)
+            await setStatus('Waiting for GitHub rate limit, resuming automatically...', pct)
+            await sleep(5000)
+          }
           logger.warn({ err, prNumber: pr.number }, 'hc-backfill: failed to fetch PR detail, skipping')
           continue
         }
@@ -485,14 +587,20 @@ export async function backfillCoverageForRepo(
           if (inserted) evidenceCount++
         }
 
-        // ~3 sequential calls per PR at ~300 ms apart ≈ 10 calls/sec ≈ 600/min — safe under 5 000/hr cap.
         await sleep(300)
       }
+
+      const totalPages = Math.max(1, Math.ceil(mergedPrs.length / PAGE_SIZE))
+      const pct = 10 + Math.round(((pageIdx + 1) / totalPages) * 90)
 
       await db
         .update(hcBackfillRuns)
         .set({ lastProcessedPage: pageIdx + 1, evidenceCreated: evidenceCount })
         .where(eq(hcBackfillRuns.id, runId))
+      await setStatus(
+        `Processed ${Math.min((pageIdx + 1) * PAGE_SIZE, mergedPrs.length)} of ${mergedPrs.length} PRs...`,
+        pct,
+      )
 
       logger.info(
         { runId, page: pageIdx + 1, prsDone: Math.min((pageIdx + 1) * PAGE_SIZE, mergedPrs.length) },
@@ -500,9 +608,12 @@ export async function backfillCoverageForRepo(
       )
     }
 
+    // Log knower distribution so we can validate MIN_EVIDENCE threshold before launch.
+    await logKnowerDistribution(orgId, repoId, runId)
+
     await db
       .update(hcBackfillRuns)
-      .set({ status: 'complete', completedAt: new Date(), evidenceCreated: evidenceCount })
+      .set({ status: 'complete', completedAt: new Date(), evidenceCreated: evidenceCount, statusDetail: 'Coverage ready', progressPct: 100 })
       .where(eq(hcBackfillRuns.id, runId))
 
     logger.info({ runId, evidenceCount }, 'hc-backfill: complete')
@@ -511,7 +622,7 @@ export async function backfillCoverageForRepo(
     const message = err instanceof Error ? err.message : String(err)
     await db
       .update(hcBackfillRuns)
-      .set({ status: 'failed', error: message })
+      .set({ status: 'failed', error: message, statusDetail: `Failed: ${message}` })
       .where(eq(hcBackfillRuns.id, runId))
     logger.error({ err, runId }, 'hc-backfill: failed')
     throw err

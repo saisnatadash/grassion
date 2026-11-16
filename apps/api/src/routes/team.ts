@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken'
 import { Router, type Request, type Response } from 'express'
 import { eq, and } from 'drizzle-orm'
 import { teams, users, referralCodes } from '@grassion/db'
@@ -7,6 +8,7 @@ import { logger } from '../logger.js'
 import { updateTeamSchema, updateTeamSettingsSchema } from '@grassion/shared'
 import { logAuditEvent, getIp } from '../services/audit.js'
 import { sendTestEmail, sendWeeklyDigestEmail } from '../lib/email.js'
+import { env } from '../env.js'
 
 export const teamRouter = Router()
 
@@ -254,4 +256,50 @@ teamRouter.post('/api/team/send-test-digest', requireAuth, async (req: Request, 
     logger.error({ err }, 'send-test-digest failed')
     res.status(500).json({ error: 'send_failed', message: 'Email delivery failed. Check RESEND_API_KEY or Zoho SMTP settings on the API server.' })
   }
+})
+
+// Generate a 7-day signed invite link for the team (owner/admin only).
+teamRouter.get('/api/team/invite-link', requireAuth, requireRole('owner', 'admin'), async (req: Request, res: Response) => {
+  const sess = req.session!
+  const e = env()
+  const token = jwt.sign(
+    { teamId: sess.teamId, type: 'team_invite' },
+    e.JWT_SECRET,
+    { expiresIn: '7d', algorithm: 'HS256' },
+  )
+  res.json({ url: `${e.APP_URL}/join/${token}`, expiresIn: '7 days' })
+})
+
+// Join a team via invite token (new members call this after signing in).
+teamRouter.post('/api/team/join', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const { token } = req.body as { token?: string }
+  if (!token) { res.status(400).json({ error: 'token_required' }); return }
+
+  let payload: { teamId: string; type: string }
+  try {
+    payload = jwt.verify(token, env().JWT_SECRET, { algorithms: ['HS256'] }) as { teamId: string; type: string }
+  } catch {
+    res.status(400).json({ error: 'invalid_or_expired_token' })
+    return
+  }
+  if (payload.type !== 'team_invite') {
+    res.status(400).json({ error: 'invalid_token_type' })
+    return
+  }
+  // Already a member of this team.
+  if (sess.teamId === payload.teamId) {
+    res.json({ ok: true, joined: false, reason: 'already_member' })
+    return
+  }
+  // Verify the target team exists.
+  const [targetTeam] = await db.select({ id: teams.id, name: teams.name }).from(teams).where(eq(teams.id, payload.teamId)).limit(1)
+  if (!targetTeam) {
+    res.status(404).json({ error: 'team_not_found' })
+    return
+  }
+  // Move user to the invited team (teamId is re-read from DB on every request, so no session re-issue needed).
+  await db.update(users).set({ teamId: payload.teamId, role: 'member' }).where(eq(users.id, sess.userId))
+  logger.info({ userId: sess.userId, teamId: payload.teamId }, 'user joined team via invite')
+  res.json({ ok: true, joined: true, teamName: targetTeam.name })
 })

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -7,10 +7,10 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend,
 } from 'recharts'
-import { api } from '../lib/api.js'
+import { api, type TrendPoint } from '../lib/api.js'
 import { useInstallPopup } from '../lib/install-popup.js'
 import { cn } from '../lib/utils.js'
 import { Spinner, Badge } from '../components/ui.js'
@@ -32,7 +32,7 @@ interface AreaRow {
   isCritical: boolean
 }
 
-interface TrendPoint {
+interface HeadlineTrendPoint {
   month: string
   aiRisk: number
   humanCoverage: number
@@ -44,7 +44,7 @@ export interface DarkCodeReportData {
     totalAreas: number
     darkAreas: number
     darkPct: number
-    trend: TrendPoint[]
+    trend: HeadlineTrendPoint[]
   }
   fragileAndDark: Array<{ failure: FailureRow; areas: AreaRow[] }>
   singlePersonAreas: Array<{
@@ -642,7 +642,7 @@ export function DarkCodeReportView({
 
         {/* Print-only header */}
         <div className="hidden print:block mb-4">
-          <h1 className="text-2xl font-bold text-black">Dark Code Report — {repo.owner}/{repo.name}</h1>
+          <h1 className="text-2xl font-bold text-black">Dark Code Report: {repo.owner}/{repo.name}</h1>
           <p className="text-sm text-gray-500 mt-1">Generated {new Date().toLocaleDateString()}</p>
         </div>
 
@@ -720,7 +720,7 @@ export function DarkCodeReportView({
             color="text-[#888]"
           />
           {!hasMonthData ? (
-            <EmptyState message="No data yet — run the backfill to populate this chart." />
+            <EmptyState message="No data yet. Run the backfill to populate this chart." />
           ) : (
             <div style={{ height: 180 }} data-testid="dark-by-month-chart">
               <ResponsiveContainer width="100%" height="100%">
@@ -761,6 +761,213 @@ export function DarkCodeReportView({
   )
 }
 
+// ── Backfill status types ─────────────────────────────────────────────────────
+
+interface BackfillStatus {
+  status: 'none' | 'running' | 'complete' | 'failed'
+  statusDetail?: string | null
+  progressPct?: number | null
+  prsFetched?: number | null
+  error?: string | null
+}
+
+// ── Onboarding screen ────────────────────────────────────────────────────────
+
+interface OnboardingScreenProps {
+  repoName: string | null
+  repoOwner: string | null
+  activeRepoId: string
+  backfillStatus: BackfillStatus | undefined
+  syncPending: boolean
+  onImport: () => void
+}
+
+function OnboardingStep({ n, label, done, active }: { n: number; label: string; done: boolean; active: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className={cn(
+        'flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold',
+        done ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+          : active ? 'bg-white/10 text-white border border-white/20'
+          : 'bg-[#1a1a1a] text-[#444] border border-[#333]',
+      )}>
+        {done ? '✓' : n}
+      </span>
+      <p className={cn('text-sm', done ? 'text-[#888]' : active ? 'text-white font-medium' : 'text-[#555]')}>{label}</p>
+    </div>
+  )
+}
+
+function OnboardingScreen({ repoName, repoOwner, activeRepoId, backfillStatus: bs, syncPending, onImport }: OnboardingScreenProps) {
+  const isRunning = bs?.status === 'running'
+  const isFailed = bs?.status === 'failed'
+  const pct = bs?.progressPct ?? 0
+  const detail = bs?.statusDetail
+
+  if (isRunning) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-4">
+        <div className="w-full max-w-sm space-y-5">
+          <div className="text-center space-y-1">
+            <p className="text-white font-semibold text-base">Building your knowledge map</p>
+            <p className="text-[#555] text-sm">This usually takes 2 to 5 minutes</p>
+          </div>
+          <div className="rounded-xl border border-[#2a2a2a] bg-[#111] p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Spinner className="h-3 w-3 flex-shrink-0" />
+              <p className="text-xs text-[#aaa] font-medium">{detail ?? 'Analyzing pull requests…'}</p>
+            </div>
+            {pct > 0 && (
+              <div className="space-y-1.5">
+                <div className="h-1.5 rounded-full bg-[#1f1f1f] overflow-hidden">
+                  <div
+                    className="h-full bg-white/40 rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-[#555] text-right">{pct}%</p>
+              </div>
+            )}
+          </div>
+          <p className="text-center text-xs text-[#444]">
+            Running in the background. You can leave this page and come back.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-[70vh] flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm space-y-6">
+
+        {/* Header */}
+        <div className="text-center space-y-1.5">
+          <p className="text-white font-semibold text-lg">Set up your knowledge map</p>
+          <p className="text-[#555] text-sm">
+            See who truly understands every part of your codebase
+          </p>
+        </div>
+
+        {/* Step checklist */}
+        <div className="rounded-xl border border-[#222] bg-[#0d0d0d] p-5 space-y-3.5">
+          <OnboardingStep n={1} label="GitHub App installed" done={true} active={false} />
+          <OnboardingStep
+            n={2}
+            label={repoOwner && repoName ? `Repo connected: ${repoOwner}/${repoName}` : 'Repository connected'}
+            done={true}
+            active={false}
+          />
+          <OnboardingStep n={3} label="Import 12 months of PR history" done={false} active={true} />
+        </div>
+
+        {/* Error state */}
+        {isFailed && (
+          <div className="rounded-xl border border-red-900/40 bg-red-950/10 p-3">
+            <p className="text-xs font-medium text-red-400 mb-0.5">Last import failed</p>
+            {bs?.error && <p className="text-xs text-red-300/60 font-mono break-all">{bs.error}</p>}
+          </div>
+        )}
+
+        {/* Import CTA */}
+        {activeRepoId && (
+          <button
+            type="button"
+            disabled={syncPending}
+            onClick={onImport}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black hover:opacity-85 disabled:opacity-50 transition-opacity"
+          >
+            {syncPending ? (
+              <><Spinner className="h-3.5 w-3.5 border-black/30 border-t-black" /><span>Starting import…</span></>
+            ) : isFailed ? (
+              <span>Retry import</span>
+            ) : (
+              <span>Import last 12 months of PRs</span>
+            )}
+          </button>
+        )}
+
+        {/* What you'll unlock */}
+        <div className="space-y-2">
+          <p className="text-[10px] font-semibold text-[#444] uppercase tracking-wider px-1">After import you will see</p>
+          <div className="rounded-xl border border-[#1a1a1a] bg-[#0d0d0d] divide-y divide-[#1a1a1a]">
+            {[
+              { icon: Users, title: 'Knowledge map', desc: 'Who understands each file area' },
+              { icon: User, title: 'Single-person risks', desc: 'Code only one developer knows' },
+              { icon: TrendingDown, title: 'AI coverage gaps', desc: 'AI-written code with no human review' },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="flex items-start gap-3 p-3.5">
+                <Icon className="h-3.5 w-3.5 text-[#555] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-[#999]">{title}</p>
+                  <p className="text-xs text-[#555]">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-[#333]">
+          Add a <span className="text-[#555]">copilot</span> or <span className="text-[#555]">cursor</span> label to AI-assisted PRs to track AI ROI
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── Merge Receipt trend section ───────────────────────────────────────────────
+
+function TrendSection({ repoId }: { repoId: string }) {
+  const trend = useQuery({
+    queryKey: ['hc-trend', repoId],
+    queryFn: () => api.hc.trend(repoId, 6),
+    enabled: !!repoId,
+    staleTime: 5 * 60_000,
+  })
+
+  if (trend.isLoading) return null
+  const data = trend.data
+  if (!data || data.length === 0 || data.every((d) => d.totalPrs === 0)) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-6">
+        <div className="rounded-xl border border-[#1a1a1a] bg-[#0d0d0d] px-5 py-4">
+          <p className="text-xs font-semibold text-[#555] uppercase tracking-wide mb-1">Merge Receipt Trend</p>
+          <p className="text-sm text-[#444]">No data yet — will populate as PRs are merged.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const chartData = data.map((d) => ({
+    month: d.month.slice(5),   // "2026-11" → "11"
+    'AI-heavy %': d.aiHeavyPct,
+    'Attested %': d.attestedPct,
+    'Unreviewed': d.unreviewed,
+  }))
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-6">
+      <div className="rounded-xl border border-[#1a1a1a] bg-[#0d0d0d] p-5">
+        <p className="text-xs font-semibold text-[#555] uppercase tracking-wide mb-4">Merge Receipt Trend (6 months)</p>
+        <ResponsiveContainer width="100%" height={160}>
+          <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+            <XAxis dataKey="month" tick={{ fill: '#555', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#555', fontSize: 10 }} axisLine={false} tickLine={false} width={28} unit="%" />
+            <Tooltip
+              contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: 8, fontSize: 11 }}
+              labelStyle={{ color: '#888' }}
+            />
+            <Legend wrapperStyle={{ fontSize: 10, color: '#555' }} />
+            <Line type="monotone" dataKey="AI-heavy %" stroke="#4f8ef7" strokeWidth={1.5} dot={false} />
+            <Line type="monotone" dataKey="Attested %" stroke="#22c55e" strokeWidth={1.5} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
+
 // ── Authenticated Dark Code Report page ───────────────────────────────────────
 
 export function DarkCodeReportPage() {
@@ -778,11 +985,7 @@ export function DarkCodeReportPage() {
 
   const syncMutation = useMutation({
     mutationFn: (id: string) => api.repos.sync(id),
-    onSuccess: () => {
-      // Sync now returns immediately; data populates in the background.
-      // Poll every 15 seconds so the page auto-refreshes when ready.
-      setPolling(true)
-    },
+    onSuccess: () => setPolling(true),
   })
 
   const repoList = reposQuery.data ?? []
@@ -812,14 +1015,49 @@ export function DarkCodeReportPage() {
       if (status === 404) return false
       return failCount < 2
     },
-    // While the background sync+backfill is running, poll every 15s.
-    refetchInterval: polling ? 15_000 : false,
+    refetchInterval: polling ? 5_000 : false,
   })
 
-  // Stop polling once we have data
+  // Stop polling once report has actual area data
   useEffect(() => {
-    if (polling && report.data) setPolling(false)
+    if (polling && (report.data?.headline.totalAreas ?? 0) > 0) setPolling(false)
   }, [polling, report.data])
+
+  // Poll backfill status — always enabled when a repo is selected so we catch
+  // in-progress runs even after a page refresh. Polls every 5s while running.
+  const backfillStatus = useQuery({
+    queryKey: ['backfill-status', activeRepoId],
+    queryFn: (): Promise<BackfillStatus> =>
+      authedFetch(`/api/hc/${activeRepoId}/backfill-status`).then((r) => {
+        if (!r.ok) return { status: 'none' } as BackfillStatus
+        return r.json() as Promise<BackfillStatus>
+      }),
+    enabled: !!activeRepoId && !(report.data?.headline.totalAreas),
+    refetchInterval: (query) => {
+      const data = query.state.data
+      return data?.status === 'running' ? 5_000 : false
+    },
+  })
+
+  // Drive report polling from backfill status
+  useEffect(() => {
+    if (backfillStatus.data?.status === 'running' && !polling) setPolling(true)
+    if (backfillStatus.data?.status === 'complete' && !(report.data?.headline.totalAreas)) {
+      void qc.invalidateQueries({ queryKey: ['hc-report', activeRepoId] })
+    }
+  }, [backfillStatus.data?.status, activeRepoId, polling, report.data, qc])
+
+  // Auto-trigger sync when page loads with no data and no backfill running yet.
+  // Fires once per mount so the user never has to click Import manually.
+  const autoTriggered = useRef(false)
+  useEffect(() => {
+    if (autoTriggered.current || !activeRepoId) return
+    if (!backfillStatus.isFetched) return
+    if (backfillStatus.data?.status !== 'none') return
+    if ((report.data?.headline.totalAreas ?? 0) > 0) return
+    autoTriggered.current = true
+    syncMutation.mutate(activeRepoId)
+  }, [activeRepoId, backfillStatus.isFetched, backfillStatus.data?.status, report.data, syncMutation])
 
   function handleRepoChange(id: string) {
     setSearchParams({ repo: id }, { replace: true })
@@ -875,48 +1113,26 @@ export function DarkCodeReportPage() {
         </div>
       )}
 
-      {(report.isError || (!report.isLoading && !report.data)) && (
-        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-4 text-center max-w-md mx-auto">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
-            <Moon className="h-6 w-6 text-[#555]" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white mb-1">No Human Coverage data yet</p>
-            <p className="text-sm text-[#666]">
-              Import your existing pull requests to see who understands which files.
-            </p>
-          </div>
-          {activeRepoId && (
-            <button
-              type="button"
-              disabled={syncMutation.isPending}
-              onClick={() => syncMutation.mutate(activeRepoId)}
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:opacity-85 disabled:opacity-50 transition-opacity"
-            >
-              {syncMutation.isPending ? (
-                <><Spinner /><span>Importing…</span></>
-              ) : syncMutation.isSuccess ? (
-                <span>Import started — data will appear in a few minutes</span>
-              ) : (
-                <span>Import last 12 months of PRs</span>
-              )}
-            </button>
-          )}
-          <div className="w-full rounded-xl border border-[#222] bg-[#111] p-4 text-left space-y-2.5">
-            <p className="text-xs font-semibold text-[#888] uppercase tracking-wider">What to do next</p>
-            <NextStep n={1} text="Click 'Import' above to pull in your historical PRs — or wait for new PRs to be merged" done={false} />
-            <NextStep n={2} text="Add an AI label (copilot, cursor) to AI-assisted PRs so we can track AI ROI" done={false} />
-            <NextStep n={3} text="Check back in a few minutes — your first report will be ready" done={false} />
-          </div>
-        </div>
+      {(report.isError || (!report.isLoading && !(report.data?.headline.totalAreas))) && (
+        <OnboardingScreen
+          repoName={typedRepos.find(r => r.id === activeRepoId)?.name ?? null}
+          repoOwner={typedRepos.find(r => r.id === activeRepoId)?.owner ?? null}
+          activeRepoId={activeRepoId}
+          backfillStatus={backfillStatus.data ?? (syncMutation.isPending ? { status: 'running' } : undefined)}
+          syncPending={syncMutation.isPending}
+          onImport={() => activeRepoId && syncMutation.mutate(activeRepoId)}
+        />
       )}
 
-      {report.data && (
-        <DarkCodeReportView
-          data={report.data}
-          repoId={activeRepoId}
-          readOnly={false}
-        />
+      {report.data && report.data.headline.totalAreas > 0 && (
+        <>
+          <DarkCodeReportView
+            data={report.data}
+            repoId={activeRepoId}
+            readOnly={false}
+          />
+          <TrendSection repoId={activeRepoId} />
+        </>
       )}
     </div>
   )

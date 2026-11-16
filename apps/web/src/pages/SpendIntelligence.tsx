@@ -27,15 +27,19 @@ function toolDisplayName(key: string): string {
   return TOOL_DISPLAY_NAMES[key] ?? key
 }
 
-function verdictLabel(v: 'high_quality' | 'average' | 'low_quality'): string {
+type Verdict = 'high_quality' | 'average' | 'low_quality' | 'insufficient_data'
+
+function verdictLabel(v: Verdict): string {
   if (v === 'high_quality') return 'Strong ROI'
   if (v === 'average') return 'Medium ROI'
+  if (v === 'insufficient_data') return 'Too few PRs'
   return 'Low ROI'
 }
 
-function verdictTone(v: 'high_quality' | 'average' | 'low_quality'): 'green' | 'yellow' | 'red' {
+function verdictTone(v: Verdict): 'green' | 'yellow' | 'red' | 'gray' {
   if (v === 'high_quality') return 'green'
   if (v === 'average') return 'yellow'
+  if (v === 'insufficient_data') return 'gray'
   return 'red'
 }
 
