@@ -60,12 +60,15 @@ export function useInstallPopup() {
           void qc.invalidateQueries({ queryKey: ['metrics'] })
 
           if (result.ok) {
-            // Kick off historical PR sync + HC backfill for every repo.
-            // Fire-and-forget — the Code Map page will show progress.
+            // Auto-enable all repos and kick off historical PR sync.
+            // First-time users should never need to visit Settings just to toggle repos on.
             try {
               const repos = await api.repos.list()
               for (const repo of repos) {
-                await api.repos.sync(repo.id).catch(() => {/* per-repo errors are non-fatal */})
+                if (!repo.isActive) {
+                  await api.repos.toggle(repo.id, true).catch(() => {})
+                }
+                await api.repos.sync(repo.id).catch(() => {})
               }
             } catch {
               // If listing fails (e.g. no repos yet), just continue

@@ -116,10 +116,8 @@ export function OverviewPage() {
             />
             <SetupStep
               done={activeRepos.length > 0}
-              label="Enable at least one repository"
-              hint="Toggle repos on in Settings so Grassion can analyze them."
-              linkTo="/settings"
-              linkLabel="Enable repos"
+              label="Repositories connected"
+              hint="Repos are enabled automatically after you install the GitHub App."
             />
             <SetupStep
               done={spendSet}

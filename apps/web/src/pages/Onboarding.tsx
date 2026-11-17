@@ -159,19 +159,19 @@ export function OnboardingPage() {
       </StepCard>
 
       {/* Step 3 — Repos */}
-      <StepCard n={3} active={step === 3} done={step > 3} title="Enable repositories">
-        <p className="text-sm text-[#888] mb-3">
-          We found <strong className="text-white">{repoCount}</strong> repo{repoCount === 1 ? '' : 's'} from your GitHub App install.
-          Once you enable a repo, Grassion backfills the last 12 months of PR history automatically.
-        </p>
+      <StepCard n={3} active={step === 3} done={step > 3} title="Repositories connected">
         {repoCount === 0 ? (
-          <p className="text-sm text-yellow-400">
-            No repos found yet. Make sure the GitHub App has access to at least one repository.
+          <p className="text-sm text-yellow-400 mb-4">
+            No repositories found yet. Go back and make sure the GitHub App was installed on at least one repo.
           </p>
         ) : (
-          <p className="text-xs text-[#555] mb-4">
-            You can enable specific repos in <a href="/settings" className="text-blue-400 hover:underline">Settings</a>. You can always add or remove repos later.
-          </p>
+          <div className="mb-4">
+            <p className="text-sm text-[#888]">
+              <span className="text-white font-medium">{repoCount} repo{repoCount === 1 ? '' : 's'}</span> connected.
+              Grassion has automatically enabled {repoCount === 1 ? 'it' : 'them'} and will backfill the last 12 months of PR history in the background.
+            </p>
+            <p className="text-xs text-[#555] mt-2">No action needed here. You can add or remove repos later from Settings.</p>
+          </div>
         )}
         <Button variant="secondary" size="sm" onClick={() => setStep(4)}>
           Continue
