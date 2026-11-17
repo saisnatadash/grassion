@@ -39,6 +39,7 @@ export function ReceiptsHomePage() {
   const exceptionsOnly = searchParams.get('exceptions') === 'true'
 
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
+  const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoIdParam = searchParams.get('repo')
   const repoId = repoIdParam ?? repos.data?.[0]?.id ?? ''
@@ -54,8 +55,9 @@ export function ReceiptsHomePage() {
   const team = me.data?.team
   const installed = !!team?.githubInstallationId
   const activeRepos = (repos.data ?? []).filter((r) => r.isActive)
-  const checkRunOn = team?.hcCheckRunEnabled ?? false
-  const teamSized = !!(team?.teamSizeRange)
+  // hcCheckRunEnabled only comes back from GET /api/team, not GET /auth/me
+  const checkRunOn = teamQ.data?.hcCheckRunEnabled ?? false
+  const teamSized = !!(teamQ.data?.teamSizeRange ?? team?.teamSizeRange)
   const setupComplete = installed && activeRepos.length > 0 && checkRunOn && teamSized
 
   // Exceptions: PRs merged without review
@@ -92,7 +94,7 @@ export function ReceiptsHomePage() {
     setSearchParams(next)
   }
 
-  if (me.isLoading || repos.isLoading) {
+  if (me.isLoading || repos.isLoading || teamQ.isLoading) {
     return <div className="flex justify-center p-12"><Spinner /></div>
   }
 
