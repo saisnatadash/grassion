@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
-  EyeOff, Activity, FileText, BarChart2, Settings, ArrowRight,
+  EyeOff, Download, FileText, Settings, ArrowRight,
   CheckCircle, AlertTriangle, Circle, Zap,
 } from 'lucide-react'
 import { api } from '../lib/api.js'
@@ -49,25 +49,17 @@ export function OverviewPage() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
-  const seatWaste = useQuery({
-    queryKey: ['analytics', 'seat-waste'],
-    queryFn: api.analytics.seatWaste,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
 
   const team = me.data?.team
   const user = me.data?.user
   const installed = !!team?.githubInstallationId
   const activeRepos = (repos.data ?? []).filter((r) => r.isActive)
-  const spendSet = (team?.monthlyAiSpendUsd ?? 0) > 0
-  const setupComplete = installed && activeRepos.length > 0 && spendSet
+  const setupComplete = installed && activeRepos.length > 0
 
   const healthScore = health.data?.healthScore ?? null
   const riskLevel = health.data?.riskLevel ?? 'low'
   const totalAiPrs = health.data?.totalAiPrs ?? 0
-  const inactiveSeats = seatWaste.data?.inactiveUsers.length ?? 0
   const hasHealthData = totalAiPrs > 0
 
   const riskTone = riskLevel === 'high' ? 'text-red-400' : riskLevel === 'medium' ? 'text-yellow-400' : 'text-green-400'
@@ -119,13 +111,6 @@ export function OverviewPage() {
               label="Repositories connected"
               hint="Repos are enabled automatically after you install the GitHub App."
             />
-            <SetupStep
-              done={spendSet}
-              label="Set your monthly AI tool spend"
-              hint="Needed to calculate ROI. Even a rough number works."
-              linkTo="/settings"
-              linkLabel="Set spend"
-            />
             {setupComplete && (
               <p className="text-xs text-green-500 pt-1">
                 All set. Backfill runs automatically — your 12-month history will appear within a few minutes.
@@ -172,18 +157,8 @@ export function OverviewPage() {
         </div>
 
         <div className="rounded-xl border border-[#222] bg-[#111] p-4">
-          <div className="text-xs text-[#555] uppercase tracking-widest mb-2">Inactive Seats</div>
-          {seatWaste.isLoading ? (
-            <div className="h-8 w-10 bg-[#1a1a1a] rounded animate-pulse" />
-          ) : (
-            <div className={cn(
-              'text-3xl font-bold tabular-nums',
-              inactiveSeats > 0 ? 'text-yellow-400' : 'text-white',
-            )}>{inactiveSeats}</div>
-          )}
-          {inactiveSeats > 0 && (
-            <div className="text-xs text-[#555] mt-1">devs not using AI</div>
-          )}
+          <div className="text-xs text-[#555] uppercase tracking-widest mb-2">Repos Connected</div>
+          <div className="text-3xl font-bold tabular-nums text-white">{activeRepos.length}</div>
         </div>
       </div>
 
@@ -192,7 +167,7 @@ export function OverviewPage() {
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 flex items-center gap-3">
           <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
           <span className="text-sm text-red-200">
-            High risk signals detected. <Link to="/code-map" className="underline hover:text-white">View Review Map</Link> for details.
+            High risk signals detected. <Link to="/risk-map" className="underline hover:text-white">View Risk Map</Link> for details.
           </span>
         </div>
       )}
@@ -200,34 +175,27 @@ export function OverviewPage() {
       {/* Quick nav cards */}
       <div>
         <h2 className="text-xs font-medium text-[#555] uppercase tracking-widest mb-3">Explore</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             {
-              to: '/dark-code',
-              icon: EyeOff,
-              label: 'AI Code Risk',
-              desc: 'Dark areas, fragile code, 12-month coverage map',
-              color: 'text-purple-400',
-            },
-            {
-              to: '/code-map',
-              icon: Activity,
-              label: 'Review Map',
-              desc: 'Health score, developer performance, risk signals',
+              to: '/',
+              icon: FileText,
+              label: 'Merge Receipts',
+              desc: 'Proof a human reviewed every AI-written change',
               color: 'text-blue-400',
             },
             {
-              to: '/receipts',
-              icon: FileText,
-              label: 'Merge Receipts',
-              desc: 'Per-PR accountability records and attestation log',
-              color: 'text-green-400',
+              to: '/risk-map',
+              icon: EyeOff,
+              label: 'Risk Map',
+              desc: 'Dark areas, fragile code, single-reviewer paths',
+              color: 'text-purple-400',
             },
             {
-              to: '/reports',
-              icon: BarChart2,
-              label: 'Reports',
-              desc: 'AI ROI, governance, audit export',
+              to: '/audit-export',
+              icon: Download,
+              label: 'Audit Export',
+              desc: 'Date-range CSV or PDF for compliance evidence',
               color: 'text-yellow-400',
             },
           ].map(({ to, icon: Icon, label, desc, color }) => (
@@ -263,8 +231,8 @@ export function OverviewPage() {
                 'Who reviewed each AI-heavy change and when',
                 'Code areas with zero human coverage (dark areas)',
                 'PRs merged without review or attestation',
-                'Weekly ROI verdict: hours saved vs rework cost',
-                'Health score trend over the last 12 weeks',
+                'Monthly trend: AI-heavy % vs attested %',
+                'Tamper-evident audit log with SHA-256 hash chain',
               ].map((item) => (
                 <div key={item} className="flex items-start gap-2">
                   <span className="text-green-500 flex-shrink-0 mt-0.5">+</span>

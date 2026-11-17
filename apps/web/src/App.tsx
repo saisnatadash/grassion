@@ -24,6 +24,8 @@ import { ReceiptsListPage } from './pages/ReceiptsList.js'
 import { ReceiptDetailPage } from './pages/ReceiptDetail.js'
 import { AuditExportPage } from './pages/AuditExport.js'
 import { OverviewPage } from './pages/Overview.js'
+import { ReceiptsHomePage } from './pages/ReceiptsHome.js'
+import { RiskMapPage } from './pages/RiskMap.js'
 import { AdminLayout } from './pages/AdminLayout.js'
 import { AdminOverview } from './pages/AdminOverview.js'
 import { AdminFunnel } from './pages/AdminFunnel.js'
@@ -71,8 +73,19 @@ export function App() {
           <Route path="/join/:token" element={<JoinPage />} />
           <Route path="/install" element={<InstallPage />} />
           <Route element={<AppLayout />}>
-            {/* New 4-tab navigation */}
-            <Route path="/" element={<OverviewPage />} />
+            {/* Primary 4-tab navigation */}
+            <Route path="/" element={<ReceiptsHomePage />} />
+            <Route path="/risk-map" element={<RiskMapPage />} />
+            <Route path="/audit-export" element={<AuditExportPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            {/* Receipt detail — opened from the Receipts home */}
+            <Route path="/receipts/:prNumber" element={<ReceiptDetailPage />} />
+            {/* Supporting pages */}
+            <Route path="/billing" element={<BillingPage />} />
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/security" element={<SecurityPage />} />
+            {/* Legacy / hidden pages — still reachable, not in nav */}
+            <Route path="/overview" element={<OverviewPage />} />
             <Route path="/dark-code" element={<DarkCodeReportPage />} />
             <Route path="/code-map" element={<HealthPage />} />
             <Route path="/reports" element={<ReportsLayout />}>
@@ -81,20 +94,15 @@ export function App() {
               <Route path="audit-export" element={<AuditExportPage />} />
               <Route path="ma" element={<MaReportPage />} />
             </Route>
-            <Route path="/receipts" element={<ReceiptsListPage />} />
-            <Route path="/receipts/:prNumber" element={<ReceiptDetailPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/billing" element={<BillingPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="/security" element={<SecurityPage />} />
-            {/* Legacy redirects — keep old bookmarks and links working */}
+            {/* Redirects — old URLs kept working */}
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
-            <Route path="/health" element={<Navigate to="/code-map" replace />} />
-            <Route path="/spend-intelligence" element={<Navigate to="/reports/ai-impact" replace />} />
-            <Route path="/seat-waste" element={<Navigate to="/reports/ai-impact" replace />} />
-            <Route path="/outcomes" element={<Navigate to="/reports/ai-impact" replace />} />
-            <Route path="/ai-governance" element={<Navigate to="/reports/governance" replace />} />
-            <Route path="/ma-report" element={<Navigate to="/reports/ma" replace />} />
+            <Route path="/receipts" element={<Navigate to="/" replace />} />
+            <Route path="/health" element={<Navigate to="/risk-map" replace />} />
+            <Route path="/spend-intelligence" element={<Navigate to="/audit-export" replace />} />
+            <Route path="/seat-waste" element={<Navigate to="/" replace />} />
+            <Route path="/outcomes" element={<Navigate to="/" replace />} />
+            <Route path="/ai-governance" element={<Navigate to="/audit-export" replace />} />
+            <Route path="/ma-report" element={<Navigate to="/" replace />} />
           </Route>
           <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
           <Route element={<AdminLayout />}>

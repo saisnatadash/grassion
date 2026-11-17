@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
-  ChevronDown, Menu, X, BarChart2, Settings, LogOut, CreditCard,
-  Shield, Activity, Bell, CheckCheck, XCircle, Zap, EyeOff, FileText, LayoutDashboard,
+  ChevronDown, Menu, X, Download, Settings, LogOut, CreditCard,
+  Shield, Bell, CheckCheck, XCircle, Zap, EyeOff, FileText,
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
@@ -158,12 +158,6 @@ export function AppLayout() {
   const location = useLocation()
   const qc = useQueryClient()
   const me = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
-  const seatWaste = useQuery({
-    queryKey: ['analytics', 'seat-waste'],
-    queryFn: api.analytics.seatWaste,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  })
   const health = useQuery({
     queryKey: ['analytics', 'health'],
     queryFn: api.analytics.health,
@@ -186,21 +180,9 @@ export function AppLayout() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
 
-  const inactiveCount = seatWaste.data?.inactiveUsers.length ?? 0
   const isHighRisk = health.data?.riskLevel === 'high'
   const notifications = notifQuery.data ?? []
   const unreadCount = notifications.filter((n) => !n.readAt).length
-
-  const [spendBadgeSeen, setSpendBadgeSeen] = useState(() =>
-    Number(localStorage.getItem('spend_badge_seen') ?? 0),
-  )
-  useEffect(() => {
-    if (location.pathname.startsWith('/reports')) {
-      localStorage.setItem('spend_badge_seen', String(inactiveCount))
-      setSpendBadgeSeen(inactiveCount)
-    }
-  }, [location.pathname, inactiveCount])
-  const spendBadge = inactiveCount > spendBadgeSeen ? inactiveCount : null
 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -274,12 +256,10 @@ export function AppLayout() {
   }
 
   const navLinks = [
-    { to: '/', label: 'Overview', icon: LayoutDashboard, badge: null as number | null, end: true },
-    { to: '/dark-code', label: 'AI Code Risk', icon: EyeOff, badge: null as number | null, end: false },
-    { to: '/code-map', label: 'Review Map', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
-    { to: '/receipts', label: 'Receipts', icon: FileText, badge: null as number | null },
-    { to: '/reports', label: 'Reports', icon: BarChart2, badge: spendBadge },
-    { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null },
+    { to: '/', label: 'Receipts', icon: FileText, badge: null as number | null, end: true },
+    { to: '/risk-map', label: 'Risk Map', icon: EyeOff, badge: isHighRisk ? 1 : null as number | null, end: false },
+    { to: '/audit-export', label: 'Audit Export', icon: Download, badge: null as number | null, end: false },
+    { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null, end: false },
   ]
 
   const isTrial = team.plan === 'trial'
