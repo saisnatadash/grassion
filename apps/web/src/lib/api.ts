@@ -624,5 +624,6 @@ export function loginUrl(): string {
 }
 
 export function installUrl(slug = 'grassion'): string {
-  return `https://github.com/apps/${slug}/installations/new`
+  const redirect = encodeURIComponent(`${window.location.origin}/auth/installed`)
+  return `https://github.com/apps/${slug}/installations/new?redirect_uri=${redirect}`
 }
