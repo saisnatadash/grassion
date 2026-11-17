@@ -25,7 +25,7 @@ export function AdminLayout() {
   })
 
   useEffect(() => {
-    if (!isLoading && (isError || !data?.isSuperAdmin)) navigate('/dashboard', { replace: true })
+    if (!isLoading && (isError || !data?.isSuperAdmin)) navigate('/', { replace: true })
   }, [isLoading, isError, data, navigate])
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Spinner /></div>

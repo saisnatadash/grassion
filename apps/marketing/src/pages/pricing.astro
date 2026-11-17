@@ -8,7 +8,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing · Grassion</title>
-  <meta name="description" content="Free for small teams. Pro at $15/dev/mo (₹899 in India). Business and Enterprise for compliance and self-hosting." />
+  <meta name="description" content="Free for small teams. Pro at $10/dev/mo (₹599 in India). Business and Enterprise for compliance and self-hosting." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
@@ -447,7 +447,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     <div class="eyebrow">Pricing</div>
     <h1>Start free.<br />Scale with your team.</h1>
     <p class="hero-sub">
-      Free for small teams. Pro at $15 per active developer per month (₹899 in India) — or $12/dev/mo on annual.<br />
+      Free for small teams. Pro at $10 per active developer per month (₹599 in India) — or $8/dev/mo on annual.<br />
       14-day trial on Pro · no credit card required · cancel anytime.
     </p>
 
@@ -463,11 +463,12 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         <div class="plan-best">1 repo · always free</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li>AI-PR detection via label, git trailer &amp; body regex</li>
-          <li>Weekly ROI verdict: Net Positive / Neutral / Negative</li>
-          <li>Codebase health score</li>
-          <li>Weekly email digest</li>
-          <li>Dark Code Report — monthly refresh, top 3 fragile areas</li>
+          <li>Merge Receipts — full list with AI source, reviewer and attestation</li>
+          <li>Trend chart: AI-heavy % vs attested % over 6 months</li>
+          <li>Exceptions: PRs merged without review flagged instantly</li>
+          <li>Audit Export — date-range CSV or PDF</li>
+          <li>Risk Map — top 3 fragile &amp; dark areas</li>
+          <li>GitHub check run on every PR</li>
           <li>GitHub App · 5-minute setup</li>
         </ul>
         <a class="plan-cta" href={`${APP_URL}/login`}>Get Started Free</a>
@@ -478,25 +479,24 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="plan-card featured">
         <div class="plan-popular">Most Popular</div>
         <div class="plan-name">Pro</div>
-        <div class="plan-price">$15</div>
-        <div class="plan-price-sub">per active dev / month<br />₹899 in India · $12/dev annual · min 5 seats</div>
+        <div class="plan-price">$10</div>
+        <div class="plan-price-sub">per active dev / month<br />₹599 in India · $8/dev annual · min 5 seats</div>
         <div class="plan-seats">All repos · unlimited devs</div>
         <div class="plan-best">14-day trial included</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
           <li class="inherit">Everything in Free</li>
-          <li>All repos monitored, no limit</li>
-          <li>Daily Dark Code Report — full fragile-and-dark list</li>
-          <li>PR coverage check + reviewer routing + understanding buttons</li>
+          <li>All repos · no limit</li>
+          <li>Risk Map — full fragile &amp; dark area list (unlimited)</li>
+          <li>Offboarding view — areas losing their last reviewer</li>
+          <li>Block PR merge on critical dark areas</li>
+          <li>Failure verdict: confirm or dismiss a fragile-area failure</li>
+          <li>Share a report via public link</li>
           <li>Slack /grassion who &lt;path&gt;</li>
           <li>MCP server for AI coding agents</li>
-          <li>Monday coverage email digest</li>
-          <li>Offboarding view — areas losing their last person</li>
-          <li>Failure confirmation</li>
-          <li>Problem PR alerts with AI root-cause summaries</li>
-          <li>Seat waste analysis + tool comparison (Copilot / Cursor / Claude Code)</li>
-          <li>Outcomes tracking: reverts, hotfixes, review cycles</li>
-          <li>Slack weekly digest + instant alerts</li>
+          <li>Weekly dark-code digest email</li>
+          <li>AI root-cause summaries on problem PRs</li>
+          <li>PR outcome tracking: reverts, hotfixes, review cycles</li>
         </ul>
         <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
         <p class="plan-hint">14-day trial · no card required</p>
@@ -552,7 +552,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     <div class="payment-note">
       <div class="payment-note-icon">PAY</div>
       <p class="payment-note-text">
-        <strong>USD pricing for global teams. ₹899/dev/mo for India-billed accounts. 20% off on annual plans.</strong>
+        <strong>USD pricing for global teams. ₹599/dev/mo for India-billed accounts. 20% off on annual plans.</strong>
         Charged via Razorpay. Supports credit/debit cards, UPI, and netbanking.
         Clicking "Start Free Trial" takes you to the dashboard — choose your plan there to go directly to checkout.
         Features activate instantly after payment.
@@ -581,17 +581,17 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
       <details>
         <summary>What is the minimum seat count for Pro?</summary>
-        <p>5 seats minimum. Teams smaller than 5 pay for 5 seats ($75/month). There is no minimum on the Free plan.</p>
+        <p>5 seats minimum. Teams smaller than 5 pay for 5 seats ($50/month). There is no minimum on the Free plan.</p>
       </details>
 
       <details>
         <summary>How does INR pricing work?</summary>
-        <p>If your Razorpay account is billed in India, the Pro plan is charged at ₹899 per active developer per month instead of $15 USD. The Business flat fee is charged in USD regardless of region. Enterprise pricing is negotiated in the contract.</p>
+        <p>If your Razorpay account is billed in India, the Pro plan is charged at ₹599 per active developer per month instead of $10 USD. The Business flat fee is charged in USD regardless of region. Enterprise pricing is negotiated in the contract.</p>
       </details>
 
       <details>
         <summary>Is there an annual plan discount?</summary>
-        <p>Yes. Pro annual is $12 per active developer per month (20% off monthly), billed upfront for 12 months. Business annual pricing is available on request. Write to <a href="mailto:info@grassion.com">info@grassion.com</a> to switch.</p>
+        <p>Yes. Pro annual is $8 per active developer per month (20% off monthly), billed upfront for 12 months. Business annual pricing is available on request. Write to <a href="mailto:info@grassion.com">info@grassion.com</a> to switch.</p>
       </details>
 
       <details>
