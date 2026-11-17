@@ -39,7 +39,7 @@ export function ReceiptsHomePage() {
   const exceptionsOnly = searchParams.get('exceptions') === 'true'
 
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
-  const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get, staleTime: 30_000 })
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoIdParam = searchParams.get('repo')
   const repoId = repoIdParam ?? repos.data?.[0]?.id ?? ''
@@ -53,7 +53,8 @@ export function ReceiptsHomePage() {
   })
 
   const team = me.data?.team
-  const installed = !!team?.githubInstallationId
+  // githubInstallationId is in both /auth/me and /api/team; prefer teamQ (fresher after install)
+  const installed = !!(teamQ.data?.githubInstallationId ?? team?.githubInstallationId)
   const activeRepos = (repos.data ?? []).filter((r) => r.isActive)
   // hcCheckRunEnabled only comes back from GET /api/team, not GET /auth/me
   const checkRunOn = teamQ.data?.hcCheckRunEnabled ?? false
@@ -76,7 +77,7 @@ export function ReceiptsHomePage() {
     staleTime: 5 * 60 * 1000,
   })
 
-  // Full receipts list
+  // Full receipts list — polls every 8 s while set up but no data yet (backfill in progress)
   const listQ = useQuery({
     queryKey: ['receipts', repoId, aiHeavy, noAttestation, noReview || exceptionsOnly],
     queryFn: () => api.hc.receipts(repoId, {
@@ -85,6 +86,10 @@ export function ReceiptsHomePage() {
       noReview: noReview || exceptionsOnly,
     }),
     enabled: !!repoId,
+    refetchInterval: (query) => {
+      const isEmpty = !query.state.data || query.state.data.items.length === 0
+      return setupComplete && isEmpty ? 8_000 : false
+    },
   })
 
   function toggle(key: string, value: boolean) {
@@ -94,7 +99,7 @@ export function ReceiptsHomePage() {
     setSearchParams(next)
   }
 
-  if (me.isLoading || repos.isLoading || teamQ.isLoading) {
+  if (me.isLoading || repos.isLoading) {
     return <div className="flex justify-center p-12"><Spinner /></div>
   }
 
@@ -330,8 +335,27 @@ export function ReceiptsHomePage() {
             <div className="flex justify-center p-8"><Spinner /></div>
           ) : listItems.length === 0 ? (
             <div className="text-center py-16 text-[#666]">
-              <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
-              <p>{listQ.data ? 'No PRs match the current filters.' : 'No merged PRs found yet.'}</p>
+              {setupComplete && !listQ.data ? (
+                <>
+                  <Spinner />
+                  <p className="mt-3 text-sm">Syncing your PR history — this takes a minute or two.</p>
+                </>
+              ) : listQ.data && (aiHeavy || noAttestation || noReview || exceptionsOnly) ? (
+                <>
+                  <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
+                  <p>No PRs match the current filters.</p>
+                </>
+              ) : setupComplete ? (
+                <>
+                  <Spinner />
+                  <p className="mt-3 text-sm">Syncing your PR history — this takes a minute or two.</p>
+                </>
+              ) : (
+                <>
+                  <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
+                  <p>No merged PRs found yet.</p>
+                </>
+              )}
             </div>
           ) : (
             <div className="rounded-xl border border-[#222] overflow-hidden">
