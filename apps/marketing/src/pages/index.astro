@@ -8,7 +8,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grassion · Prove AI code had human review. Per PR. Forever.</title>
-  <meta name="description" content="Grassion gives every PR a permanent accountability record: who wrote it, how much was AI-generated, who reviewed it, and what they checked. Audit-ready for SOC 2, SEBI and RBI. GitHub App, 5-minute setup." />
+  <meta name="description" content="Grassion gives every PR a permanent accountability record: who wrote it, how much was AI-generated, who reviewed it, and what they checked. Supports change-management evidence for SOC 2, SEBI CSCRF and RBI IT governance. GitHub App, 5-minute setup." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
@@ -554,7 +554,7 @@
           <div class="feature-icon a">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           </div>
-          <span><strong>Compliance export:</strong> one-click audit report for SOC 2, SEBI digital lending, or RBI IT framework</span>
+          <span><strong>Compliance export:</strong> supports change-management evidence for SOC 2, SEBI CSCRF and RBI IT governance</span>
         </div>
       </div>
 
@@ -563,7 +563,7 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
           </svg>
-          Get your free audit map
+          Get your free AI review report
         </a>
         <div class="cta-meta">
           Free 14-day trial<br>No credit card required
@@ -582,7 +582,7 @@
 
           <div class="dash-card">
             <div class="example-badge">Example</div>
-            <div class="card-label">Human coverage</div>
+            <div class="card-label">AI Review Coverage</div>
             <div class="card-value" style="color:var(--white)">62%</div>
             <div class="card-sub down">↑ 9pt vs last month</div>
             <div class="cov-bars">
@@ -630,11 +630,27 @@
 
         </div>
 
-        <!-- Row 2: knowledge map heatmap -->
+        <!-- Row 2: Weekly exceptions -->
         <div class="map-card">
           <div class="example-badge">Example</div>
-          <div class="card-label">Knowledge map / src/</div>
-          <div class="map-grid" id="mapGrid"></div>
+          <div class="card-label">This week · AI-heavy PRs merged without review</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:9px;">
+              <span style="color:rgba(239,68,68,0.7);min-width:40px">#PR-312</span>
+              <span style="color:rgba(255,255,255,0.28);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">feat: auth token refresh logic</span>
+              <span style="color:rgba(239,68,68,0.5)">78% AI</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:9px;">
+              <span style="color:rgba(239,68,68,0.7);min-width:40px">#PR-308</span>
+              <span style="color:rgba(255,255,255,0.28);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">fix: payment webhook handler</span>
+              <span style="color:rgba(239,68,68,0.5)">91% AI</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:9px;">
+              <span style="color:rgba(245,158,11,0.7);min-width:40px">#PR-301</span>
+              <span style="color:rgba(255,255,255,0.28);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">refactor: db schema migrations</span>
+              <span style="color:rgba(245,158,11,0.5)">54% AI</span>
+            </div>
+          </div>
         </div>
 
         <!-- Row 3: Compliance status -->
@@ -643,9 +659,9 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <div class="roi-text">
-            <div class="roi-label">Compliance audit trail</div>
+            <div class="roi-label">Compliance audit trail &nbsp;·&nbsp; <span style="color:rgba(255,255,255,0.18);font-size:7px;letter-spacing:0.1em;text-transform:uppercase">Example</span></div>
             <div class="roi-value">847 PRs with verified human reviewer records</div>
-            <div class="roi-sub" style="color:rgba(34,197,94,0.65)">SOC 2 · SEBI digital lending · RBI IT framework</div>
+            <div class="roi-sub" style="color:rgba(34,197,94,0.65)">SOC 2 · SEBI CSCRF · RBI IT governance</div>
           </div>
         </div>
 
@@ -688,7 +704,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <div class="how-title">Every PR gets a Merge Receipt</div>
-        <p class="how-desc">AI written %, reviewer identity, review depth, files touched. All stored permanently. Export as audit evidence for SOC 2, SEBI digital lending guidelines, or RBI IT framework reviews.</p>
+        <p class="how-desc">AI written %, reviewer identity, review depth, files touched. All stored permanently. Export as change-management evidence supporting SOC 2, SEBI CSCRF and RBI IT governance requirements.</p>
       </div>
     </div>
     <div class="privacy-strip">

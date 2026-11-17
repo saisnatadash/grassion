@@ -7,7 +7,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About · Grassion</title>
-  <meta name="description" content="Grassion's mission: make AI coding ROI visible and actionable for every engineering team." />
+  <meta name="description" content="Grassion records who reviewed every AI-written PR — a permanent, tamper-evident Merge Receipt that proves human oversight without storing a single line of your code." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
@@ -394,50 +394,53 @@
     <!-- HERO -->
     <section class="hero">
       <div class="eyebrow">Who We Are</div>
-      <h1>Built to answer one<br>question: <em>is AI paying off?</em></h1>
+      <h1>AI writes the code.<br><em>Who's making sure</em><br>a human reviewed it?</h1>
       <div class="hero-body">
         <p>
-          Every engineering team in 2026 is spending real money on AI coding tools.
-          Most have no way to know if it's working. Grassion changes that.
+          Across engineering teams in 2026, AI tools write the majority of new code.
+          Most teams merge that code without a process to verify that a qualified human
+          actually understood it before it shipped. When something goes wrong — a security
+          incident, an audit, a revert — there is no record.
         </p>
         <p>
-          We read GitHub metadata: commits, PRs, reverts, CI signals, and turn it into
-          a single, honest verdict: Net Positive, Neutral, or Negative. No code ever leaves
-          your servers. No agents. No prompts on your codebase.
+          Grassion gives every merged pull request a <strong>Merge Receipt</strong>: who authored it,
+          what percentage was AI-generated, who reviewed it, and when. The receipt is
+          permanent, tamper-evident, and exportable as change-management evidence for
+          SOC 2, SEBI CSCRF and RBI IT governance requirements.
         </p>
       </div>
     </section>
 
-    <!-- UPCOMING FEATURES -->
+    <!-- WHAT GRASSION RECORDS -->
     <section class="features-section">
-      <div class="section-label">What's Coming</div>
+      <div class="section-label">What Grassion Records</div>
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-num">01</div>
-          <div class="feature-title">Slack & Email Alerts</div>
+          <div class="feature-title">AI authorship per PR</div>
           <p class="feature-desc">
-            Get notified the moment ROI dips below your threshold. Real-time signals,
-            not week-old reports.
+            Grassion detects which PRs were AI-generated using PR labels, commit trailers,
+            and body patterns — in that priority order. Each PR gets an AI confidence score
+            and the tool name when identifiable.
           </p>
-          <span class="coming-soon">Q3 2026</span>
         </div>
         <div class="feature-card">
           <div class="feature-num">02</div>
-          <div class="feature-title">Team Benchmarking</div>
+          <div class="feature-title">Human reviewer evidence</div>
           <p class="feature-desc">
-            Compare ROI across squads, repos, and AI tools side-by-side. Know where
-            AI is winning and where it's creating drag.
+            For every merged PR, Grassion records who reviewed it, how many reviewers
+            approved, and whether a reviewer attested they understood the AI-generated
+            changes. This becomes the accountability record.
           </p>
-          <span class="coming-soon">Q3 2026</span>
         </div>
         <div class="feature-card">
           <div class="feature-num">03</div>
-          <div class="feature-title">Custom Detection Rules</div>
+          <div class="feature-title">Privacy: metadata only</div>
           <p class="feature-desc">
-            Define your own AI label patterns and commit trailer formats. Grassion adapts
-            to your team's conventions, not the other way around.
+            Grassion reads PR metadata via GitHub's API: file paths, reviewer names,
+            merge dates, and change counts. We never read or store source code, diffs,
+            or commit content. Your intellectual property stays on your servers, always.
           </p>
-          <span class="coming-soon">Q4 2026</span>
         </div>
       </div>
     </section>
