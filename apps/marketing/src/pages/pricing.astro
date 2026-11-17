@@ -8,7 +8,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing · Grassion</title>
-  <meta name="description" content="Free for small teams. Pro at $10/dev/mo (₹599 in India). Business and Enterprise for compliance and self-hosting." />
+  <meta name="description" content="Free for small teams. Team at $99/month flat for up to 25 developers (₹4,999 in India). Growth for larger teams." />
   <link rel="icon" type="image/png" href="/Grassion%20single%20logo%20(1).png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,300&display=swap" rel="stylesheet" />
@@ -447,8 +447,8 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     <div class="eyebrow">Pricing</div>
     <h1>Start free.<br />Scale with your team.</h1>
     <p class="hero-sub">
-      Free for small teams. Pro at $10 per active developer per month (₹599 in India) — or $8/dev/mo on annual.<br />
-      14-day trial on Pro · no credit card required · cancel anytime.
+      Free for small teams. Team at $99/month flat for up to 25 developers.<br />
+      14-day trial on Team · no credit card required · cancel anytime.
     </p>
 
     <!-- PLAN CARDS -->
@@ -463,10 +463,9 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         <div class="plan-best">1 repo · always free</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li>Merge Receipts — full list with AI source, reviewer and attestation</li>
+          <li>Merge Receipts — last 30 days with AI source, reviewer and attestation</li>
           <li>Trend chart: AI-heavy % vs attested % over 6 months</li>
           <li>Exceptions: PRs merged without review flagged instantly</li>
-          <li>Audit Export — date-range CSV or PDF</li>
           <li>Risk Map — top 3 fragile &amp; dark areas</li>
           <li>GitHub check run on every PR</li>
           <li>GitHub App · 5-minute setup</li>
@@ -475,84 +474,87 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         <p class="plan-hint">No credit card · no time limit</p>
       </div>
 
-      <!-- Pro (featured) -->
+      <!-- Team (featured) -->
       <div class="plan-card featured">
         <div class="plan-popular">Most Popular</div>
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">$10</div>
-        <div class="plan-price-sub">per active dev / month<br />₹599 in India · $8/dev annual · min 5 seats</div>
-        <div class="plan-seats">All repos · unlimited devs</div>
-        <div class="plan-best">14-day trial included</div>
+        <div class="plan-name">Team</div>
+        <div class="plan-price">$99</div>
+        <div class="plan-price-sub">flat / month · up to 25 developers<br />₹4,999 in India · 14-day trial</div>
+        <div class="plan-seats">All repos · full history</div>
+        <div class="plan-best">Everything you need for compliance</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
           <li class="inherit">Everything in Free</li>
           <li>All repos · no limit</li>
-          <li>Risk Map — full fragile &amp; dark area list (unlimited)</li>
-          <li>Offboarding view — areas losing their last reviewer</li>
-          <li>Block PR merge on critical dark areas</li>
-          <li>Failure verdict: confirm or dismiss a fragile-area failure</li>
+          <li>Full receipt history — unlimited date range</li>
+          <li>Audit Export — date-range CSV or PDF</li>
+          <li>Full Risk Map — unlimited fragile &amp; dark area list</li>
           <li>Share a report via public link</li>
           <li>Slack /grassion who &lt;path&gt;</li>
           <li>MCP server for AI coding agents</li>
           <li>Weekly dark-code digest email</li>
           <li>AI root-cause summaries on problem PRs</li>
-          <li>PR outcome tracking: reverts, hotfixes, review cycles</li>
         </ul>
         <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
         <p class="plan-hint">14-day trial · no card required</p>
       </div>
 
-      <!-- Business -->
+      <!-- Growth -->
       <div class="plan-card">
-        <div class="plan-name">Business</div>
-        <div class="plan-price" style="font-size:22px; padding-top:6px;">$1,500</div>
-        <div class="plan-price-sub">flat / month + Pro seats</div>
-        <div class="plan-seats">Everything in Pro</div>
-        <div class="plan-best">Compliance + security tier</div>
+        <div class="plan-name">Growth</div>
+        <div class="plan-price">$8</div>
+        <div class="plan-price-sub">per developer / month above 25<br />Team plan base included</div>
+        <div class="plan-seats">25+ developer teams</div>
+        <div class="plan-best">Block merges on critical areas</div>
         <div class="plan-divider"></div>
         <ul class="plan-features">
-          <li class="inherit">Everything in Pro</li>
-          <li>Critical-path settings + optional explain-back question</li>
-          <li>Compliance evidence export — CSV &amp; PDF per month</li>
-          <li>SSO (SAML / OIDC)</li>
-          <li>Audit log</li>
-          <li>Custom data retention policy</li>
-          <li>Security overview dashboard</li>
-          <li>24-hour support SLA</li>
+          <li class="inherit">Everything in Team</li>
+          <li>Block PR merge on critical dark areas</li>
+          <li>Per-repo review rules</li>
+          <li>Scales with your team size</li>
         </ul>
-        <a class="plan-cta" href={`${APP_URL}/login`}>Start Free Trial</a>
-        <p class="plan-hint">14-day trial · no card required</p>
-      </div>
-
-      <!-- Enterprise -->
-      <div class="plan-card">
-        <div class="plan-name">Enterprise</div>
-        <div class="plan-price" style="font-size: 20px; padding-top: 8px;">From $50K</div>
-        <div class="plan-price-sub">per year · custom contract</div>
-        <div class="plan-seats">200+ developers</div>
-        <div class="plan-best">SOC2 · M&amp;A · AI governance</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li class="inherit">Everything in Business</li>
-          <li>SOC2 / ISO 27001 evidence export — per-change audit trail</li>
-          <li>AI governance controls — documented human review of every AI-assisted commit</li>
-          <li>M&amp;A readiness report — knowledge map and bus-factor analysis</li>
-          <li>Self-hosted or customer-VPC deployment</li>
-          <li>Bring-your-own LLM endpoint</li>
-          <li>India or EU data residency</li>
-          <li>Dedicated account manager + 4-hour SLA</li>
-        </ul>
-        <a class="plan-cta" href="/contact/">Talk to Sales</a>
+        <a class="plan-cta" href="/contact/">Talk to Us</a>
         <p class="plan-hint">We respond within 24 hours</p>
       </div>
 
+      <!-- Audit Pack -->
+      <div class="plan-card">
+        <div class="plan-name">Audit Pack</div>
+        <div class="plan-price">$500</div>
+        <div class="plan-price-sub">one-time purchase<br />no subscription required</div>
+        <div class="plan-seats">Any team · any plan</div>
+        <div class="plan-best">Already in an audit?</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>One historical audit export for any date range</li>
+          <li>Full CSV + PDF with Merge Receipt evidence</li>
+          <li>AI source, reviewer, attestation per PR</li>
+          <li>SHA-256 hash chain for tamper evidence</li>
+          <li>Use it once · no recurring charge</li>
+        </ul>
+        <a class="plan-cta" href="/contact/">Purchase Audit Pack</a>
+        <p class="plan-hint">Write to us to arrange payment</p>
+      </div>
+
+    </div>
+
+    <!-- ENTERPRISE ROW -->
+    <div class="payment-note" style="margin-bottom: 32px;">
+      <div class="payment-note-icon" style="font-size:8px; letter-spacing:0.04em;">ENT</div>
+      <p class="payment-note-text">
+        <strong>Need Business or Enterprise?</strong>
+        SSO, custom data retention, self-hosted deployment, dedicated SLA, SOC2 &amp; AI governance evidence — write to
+        <a href="mailto:info@grassion.com" style="color:var(--white);">info@grassion.com</a> or
+        <a href="/contact/" style="color:var(--white);">use the contact form</a>.
+        We respond within 24 hours.
+      </p>
     </div>
 
     <!-- PAYMENT NOTE -->
     <div class="payment-note">
       <div class="payment-note-icon">PAY</div>
       <p class="payment-note-text">
-        <strong>USD pricing for global teams. ₹599/dev/mo for India-billed accounts. 20% off on annual plans.</strong>
+        <strong>Team is $99/month flat for up to 25 developers. ₹4,999/month for India-billed accounts.</strong>
         Charged via Razorpay. Supports credit/debit cards, UPI, and netbanking.
         Clicking "Start Free Trial" takes you to the dashboard — choose your plan there to go directly to checkout.
         Features activate instantly after payment.
@@ -565,7 +567,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="privacy-grid">
         <div class="privacy-item">Managers see coverage by area and team. Per-person evidence is visible to that person and used for routing only — no per-person ranking or export anywhere.</div>
         <div class="privacy-item"><strong>Team-only mode</strong> (org setting): store only area and team aggregates, no per-person data. Available for EU customers on any plan.</div>
-        <div class="privacy-item">Per-developer metrics (seat waste per developer, adoption by member) are admin-only and off by default. Enable in Settings.</div>
+        <div class="privacy-item">Per-developer metrics (adoption by member) are admin-only and off by default. Enable in Settings.</div>
         <div class="privacy-item">Data deletion from Settings removes all coverage data within 24 hours — including backups.</div>
       </div>
     </div>
@@ -575,28 +577,28 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       <div class="faq-label">Billing FAQ</div>
 
       <details>
-        <summary>How does "per active developer" billing work?</summary>
-        <p>An "active developer" is a GitHub user who opened or reviewed a pull request in the current billing month. Developers who were inactive that month are not counted. You're billed for the peak active count during the cycle.</p>
+        <summary>What is included in the Team plan?</summary>
+        <p>Team is $99/month flat for up to 25 active developers. It includes all repos, full receipt history, Audit Export (CSV + PDF), full Risk Map, Slack /grassion who, MCP tokens, weekly digest emails, and AI root-cause summaries. It is the right plan for most engineering teams doing compliance or AI governance work.</p>
       </details>
 
       <details>
-        <summary>What is the minimum seat count for Pro?</summary>
-        <p>5 seats minimum. Teams smaller than 5 pay for 5 seats ($50/month). There is no minimum on the Free plan.</p>
+        <summary>How does Team plan pricing work for INR?</summary>
+        <p>If your Razorpay account is billed in India, the Team plan is ₹4,999/month flat for up to 25 developers. Growth overage pricing in INR is available on request — write to <a href="mailto:info@grassion.com">info@grassion.com</a>.</p>
       </details>
 
       <details>
-        <summary>How does INR pricing work?</summary>
-        <p>If your Razorpay account is billed in India, the Pro plan is charged at ₹599 per active developer per month instead of $10 USD. The Business flat fee is charged in USD regardless of region. Enterprise pricing is negotiated in the contract.</p>
+        <summary>What counts as an "active developer" on the Growth plan?</summary>
+        <p>A GitHub user who opened or reviewed a pull request in the current billing month. Developers inactive that month are not counted. Growth charges $8/developer/month only for developers beyond your first 25 — the base Team plan covers those 25.</p>
       </details>
 
       <details>
         <summary>Is there an annual plan discount?</summary>
-        <p>Yes. Pro annual is $8 per active developer per month (20% off monthly), billed upfront for 12 months. Business annual pricing is available on request. Write to <a href="mailto:info@grassion.com">info@grassion.com</a> to switch.</p>
+        <p>Annual pricing is available on request. Write to <a href="mailto:info@grassion.com">info@grassion.com</a> to arrange annual billing.</p>
       </details>
 
       <details>
         <summary>Which payment methods are supported?</summary>
-        <p>Credit/debit cards (domestic and international), UPI, and netbanking via Razorpay. Annual invoicing available on Business and Enterprise plans.</p>
+        <p>Credit/debit cards (domestic and international), UPI, and netbanking via Razorpay. Annual invoicing available on request.</p>
       </details>
 
       <details>
@@ -615,18 +617,13 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
       </details>
 
       <details>
-        <summary>What is the compliance evidence export on Business?</summary>
-        <p>A monthly PDF and CSV showing, for each change: the file path, the author's understanding answer (from the PR check-run buttons), the covering reviewer, and the evidence events used for routing. Source code and diffs are never included.</p>
+        <summary>What does the Audit Pack include?</summary>
+        <p>A one-time historical audit export for a date range you specify. The export contains, for each merged PR: AI source and confidence, reviewer names, attestation answers, check run conclusion, and a SHA-256 hash for tamper evidence. Source code and diffs are never included. No subscription required — it is a single $500 purchase.</p>
       </details>
 
       <details>
-        <summary>How does Enterprise pricing work for large teams?</summary>
-        <p>Enterprise is an annual contract starting at $50,000/year for teams of 200+ developers. Pricing is based on team size and the use cases you're solving — SOC2 compliance, AI governance, or M&amp;A readiness each have different scopes. We quote based on a 30-minute discovery call. Write to <a href="mailto:info@grassion.com">info@grassion.com</a> or use the Contact Sales button above.</p>
-      </details>
-
-      <details>
-        <summary>What is "AI governance" on the Enterprise plan?</summary>
-        <p>A documented, auditable record that every AI-assisted commit received human review by a team member with verified coverage of that code area — before it shipped. Banks, fintechs, and healthcare companies use this to satisfy regulators and board-level AI risk committees who want proof that "humans are in the loop."</p>
+        <summary>What does Free plan limit to 30 days?</summary>
+        <p>On the Free plan, the Merge Receipts list and receipt detail only show PRs merged in the last 30 days. Audit Export is not available. Upgrading to Team unlocks full history and date-range exports immediately.</p>
       </details>
     </div>
 

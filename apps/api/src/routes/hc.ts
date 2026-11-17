@@ -1036,6 +1036,10 @@ hcRouter.get('/api/hc/:repoId/receipts', requireAuth, async (req: Request, res: 
 
   const limit = Math.min(100, Math.max(1, parseInt(q.limit ?? '50', 10)))
 
+  const [teamForReceipts] = await db.select({ plan: teams.plan }).from(teams).where(eq(teams.id, sess.teamId)).limit(1)
+  const isTeamPlan = isProOrAbove(teamForReceipts?.plan ?? '')
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
   // All merged PRs for this repo
   const prs = await db
     .select({
@@ -1049,7 +1053,12 @@ hcRouter.get('/api/hc/:repoId/receipts', requireAuth, async (req: Request, res: 
       aiConfidence: pullRequests.aiConfidence,
     })
     .from(pullRequests)
-    .where(and(eq(pullRequests.repoId, repoId), eq(pullRequests.teamId, sess.teamId), isNotNull(pullRequests.mergedAt)))
+    .where(and(
+      eq(pullRequests.repoId, repoId),
+      eq(pullRequests.teamId, sess.teamId),
+      isNotNull(pullRequests.mergedAt),
+      ...(isTeamPlan ? [] : [gte(pullRequests.mergedAt, thirtyDaysAgo)]),
+    ))
     .orderBy(desc(pullRequests.mergedAt))
     .limit(limit)
 
@@ -1198,7 +1207,7 @@ hcRouter.get('/api/hc/:repoId/audit-export', requireAuth, async (req: Request, r
 
   const [teamRow] = await db.select({ plan: teams.plan }).from(teams).where(eq(teams.id, sess.teamId)).limit(1)
   if (!isProOrAbove(teamRow?.plan ?? '')) {
-    res.status(403).json({ error: 'plan_required', message: 'Audit export requires Pro or above.' })
+    res.status(403).json({ error: 'plan_required', message: 'Audit export requires Team plan or above.' })
     return
   }
 

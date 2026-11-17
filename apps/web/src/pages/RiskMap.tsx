@@ -39,12 +39,11 @@ export function RiskMapPage() {
   const headline = data?.headline
   const fragileAndDark = data?.fragileAndDark ?? []
   const singlePersonAreas = data?.singlePersonAreas ?? []
-  const offboarding = data?.offboarding ?? []
 
   const TABS: { id: Tab; label: string; count: number }[] = [
     { id: 'dark', label: 'Dark areas', count: headline?.darkAreas ?? 0 },
     { id: 'fragile', label: 'Fragile & risky', count: fragileAndDark.length },
-    { id: 'single', label: 'Single-reviewer', count: singlePersonAreas.length + offboarding.length },
+    { id: 'single', label: 'Single-reviewer', count: singlePersonAreas.length },
   ]
 
   return (
@@ -80,7 +79,7 @@ export function RiskMapPage() {
           </div>
           <div className="rounded-xl border border-[#222] bg-[#111] p-4">
             <div className="text-xs text-[#555] uppercase tracking-widest mb-2">At-risk paths</div>
-            <div className="text-2xl font-bold text-white">{singlePersonAreas.length + offboarding.length}</div>
+            <div className="text-2xl font-bold text-white">{singlePersonAreas.length}</div>
           </div>
         </div>
       )}
@@ -123,7 +122,7 @@ export function RiskMapPage() {
 
       {/* Tab: Single-reviewer */}
       {tab === 'single' && (
-        <SingleTab singlePersonAreas={singlePersonAreas} offboarding={offboarding} />
+        <SingleTab singlePersonAreas={singlePersonAreas} />
       )}
     </div>
   )
@@ -234,53 +233,14 @@ function FragileTab({ fragileAndDark }: { fragileAndDark: DarkCodeReportData['fr
 
 function SingleTab({
   singlePersonAreas,
-  offboarding,
 }: {
   singlePersonAreas: DarkCodeReportData['singlePersonAreas']
-  offboarding: DarkCodeReportData['offboarding']
 }) {
-  if (singlePersonAreas.length === 0 && offboarding.length === 0) {
+  if (singlePersonAreas.length === 0) {
     return <EmptyState icon={<Users />} text="No single-reviewer areas found." />
   }
   return (
     <div className="space-y-6">
-      {offboarding.length > 0 && (
-        <div>
-          <h3 className="text-xs text-[#555] uppercase tracking-widest mb-3 flex items-center gap-2">
-            <Moon className="h-3.5 w-3.5 text-red-400" /> Offboarding risk — sole owner left
-          </h3>
-          <div className="rounded-xl border border-[#222] overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-[#141414] text-[#555] text-xs uppercase tracking-wide">
-                <tr>
-                  <th className="text-left px-4 py-3">Path</th>
-                  <th className="text-left px-4 py-3">Last owner</th>
-                  <th className="text-left px-4 py-3 hidden sm:table-cell">Critical</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1a1a1a]">
-                {offboarding.map((o) => (
-                  <tr key={o.areaId} className="bg-red-950/5">
-                    <td className="px-4 py-3">
-                      <code className="text-xs font-mono text-[#aaa]">{o.path}</code>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 text-sm text-[#888]">
-                        <User className="h-3.5 w-3.5" />
-                        @{o.lastPerson.githubLogin}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      {o.isCritical && <Badge className="bg-red-900/30 text-red-400 border-red-700/30 text-[10px]">critical</Badge>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {singlePersonAreas.length > 0 && (
         <div>
           <h3 className="text-xs text-[#555] uppercase tracking-widest mb-3 flex items-center gap-2">

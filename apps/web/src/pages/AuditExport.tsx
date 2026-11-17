@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download, Shield, FileText, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Download, Shield, FileText, AlertTriangle, CheckCircle, Lock } from 'lucide-react'
 import { api, type AuditExportEntry } from '../lib/api.js'
 import { Spinner, Badge, Button } from '../components/ui.js'
 import { cn } from '../lib/utils.js'
+import { usePlan } from '../lib/plan.js'
 
 function isoToDateInput(iso: string) {
   return iso.slice(0, 10)
@@ -49,6 +50,7 @@ export function AuditExportPage() {
   const [from, setFrom] = useState(isoToDateInput(ninetyDaysAgo.toISOString()))
   const [to, setTo] = useState(isoToDateInput(now.toISOString()))
   const printRef = useRef<HTMLDivElement>(null)
+  const { isFree, isLoading: planLoading } = usePlan()
 
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoId = repos.data?.[0]?.id ?? ''
@@ -56,7 +58,7 @@ export function AuditExportPage() {
   const exportQ = useQuery({
     queryKey: ['audit-export', repoId, from, to],
     queryFn: () => api.hc.auditExport(repoId, { from: `${from}T00:00:00Z`, to: `${to}T23:59:59Z` }),
-    enabled: !!repoId,
+    enabled: !!repoId && !isFree,
   })
 
   const data = exportQ.data
@@ -71,12 +73,42 @@ export function AuditExportPage() {
     window.print()
   }
 
-  if (repos.isLoading) return <div className="flex justify-center p-12"><Spinner /></div>
+  if (repos.isLoading || planLoading) return <div className="flex justify-center p-12"><Spinner /></div>
   if (!repoId) {
     return (
       <div className="text-center py-16 text-[#666]">
         <Shield className="mx-auto mb-4 w-10 h-10 opacity-30" />
         <p>Connect a repo to generate an audit export.</p>
+      </div>
+    )
+  }
+
+  if (isFree) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-white flex items-center gap-2">
+            <Shield className="w-6 h-6 text-[#4f8ef7]" />
+            Audit Export
+          </h1>
+          <p className="mt-1 text-sm text-[#888]">Merge Receipt audit log for compliance and change-management evidence</p>
+        </div>
+        <div className="rounded-xl border border-[#333] bg-[#111] p-8 text-center space-y-4">
+          <Lock className="mx-auto w-10 h-10 text-[#555]" />
+          <h2 className="text-lg font-semibold text-white">Team plan required</h2>
+          <p className="text-sm text-[#888] max-w-md mx-auto">
+            Audit Export is included in the Team plan. Export date-range CSVs and PDFs for compliance evidence, SOC 2, or change-management audits.
+          </p>
+          <a
+            href="https://grassion.com/pricing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 transition-colors"
+          >
+            Upgrade to Team — $99/mo
+          </a>
+          <p className="text-xs text-[#555]">Up to 25 developers · All repos · Full receipt history</p>
+        </div>
       </div>
     )
   }
