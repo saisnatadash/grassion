@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Shield, AlertTriangle, CheckCircle, ChevronRight, Filter,
-  Circle, GitPullRequest, Zap, Users, TrendingUp,
+  Circle, GitPullRequest, Zap, TrendingUp,
 } from 'lucide-react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -12,41 +12,6 @@ import { api, type TrendPoint } from '../lib/api.js'
 import { useInstallPopup } from '../lib/install-popup.js'
 import { Spinner, Badge, Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui.js'
 import { cn } from '../lib/utils.js'
-
-// ── Setup checklist ──────────────────────────────────────────────────────────
-
-function SetupItem({
-  done, label, hint, linkTo, linkLabel, action,
-}: {
-  done: boolean
-  label: string
-  hint: string
-  linkTo?: string
-  linkLabel?: string
-  action?: () => void
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      {done
-        ? <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-        : <Circle className="h-5 w-5 text-[#444] flex-shrink-0 mt-0.5" />}
-      <div className="flex-1 min-w-0">
-        <div className={cn('text-sm font-medium', done ? 'text-[#555] line-through' : 'text-white')}>{label}</div>
-        {!done && (
-          <div className="text-xs text-[#555] mt-0.5">
-            {hint}
-            {action && linkLabel && (
-              <button onClick={action} className="ml-1.5 text-blue-400 hover:text-blue-300 underline">{linkLabel}</button>
-            )}
-            {linkTo && linkLabel && !action && (
-              <Link to={linkTo} className="ml-1.5 text-blue-400 hover:text-blue-300 underline">{linkLabel}</Link>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,6 +31,7 @@ export function ReceiptsHomePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { open: openInstall, syncing: installSyncing } = useInstallPopup()
+  const qc = useQueryClient()
 
   const aiHeavy = searchParams.get('aiHeavy') === 'true'
   const noAttestation = searchParams.get('noAttestation') === 'true'
@@ -76,6 +42,14 @@ export function ReceiptsHomePage() {
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoIdParam = searchParams.get('repo')
   const repoId = repoIdParam ?? repos.data?.[0]?.id ?? ''
+
+  const updateTeam = useMutation({
+    mutationFn: api.team.update,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['me'] })
+      void qc.invalidateQueries({ queryKey: ['team'] })
+    },
+  })
 
   const team = me.data?.team
   const installed = !!team?.githubInstallationId
@@ -155,35 +129,106 @@ export function ReceiptsHomePage() {
               Get started
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <SetupItem
-              done={installed}
-              label="Install the GitHub App"
-              hint="Grants read access to your PR history."
-              action={!installed ? openInstall : undefined}
-              linkLabel={installSyncing ? 'Connecting…' : 'Install on GitHub'}
-            />
-            <SetupItem
-              done={activeRepos.length > 0}
-              label="Repositories connected"
-              hint="Done automatically after install. Check Settings if repos are missing."
-              linkTo="/settings"
-              linkLabel="Settings"
-            />
-            <SetupItem
-              done={checkRunOn}
-              label="Turn on Merge Receipts check runs"
-              hint="Posts a check run on every PR so reviewers can attest."
-              linkTo="/settings"
-              linkLabel="Enable in Settings"
-            />
-            <SetupItem
-              done={teamSized}
-              label="Configure your team"
-              hint="Tell us your team size so reports are meaningful."
-              linkTo="/settings"
-              linkLabel="Go to Settings"
-            />
+          <CardContent className="space-y-5">
+
+            {/* Step 1: Install */}
+            <div className="flex items-start gap-3">
+              {installed
+                ? <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                : <Circle className="h-5 w-5 text-[#444] flex-shrink-0 mt-0.5" />}
+              <div className="flex-1 min-w-0">
+                <div className={cn('text-sm font-medium', installed ? 'text-[#555] line-through' : 'text-white')}>
+                  Install the GitHub App
+                </div>
+                {!installed && (
+                  <div className="mt-2">
+                    <p className="text-xs text-[#555] mb-2">Grants read-only access to your PR history. Never writes code.</p>
+                    <Button size="sm" onClick={openInstall} disabled={installSyncing}>
+                      {installSyncing ? 'Connecting…' : 'Install on GitHub'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Step 2: Repos */}
+            <div className="flex items-start gap-3">
+              {activeRepos.length > 0
+                ? <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                : <Circle className="h-5 w-5 text-[#444] flex-shrink-0 mt-0.5" />}
+              <div className="flex-1 min-w-0">
+                <div className={cn('text-sm font-medium', activeRepos.length > 0 ? 'text-[#555] line-through' : 'text-white')}>
+                  Repositories connected
+                </div>
+                {activeRepos.length === 0 && installed && (
+                  <p className="text-xs text-[#555] mt-1">
+                    Done automatically after install. If nothing appears, reinstall the GitHub App and grant access to at least one repo.
+                  </p>
+                )}
+                {activeRepos.length === 0 && !installed && (
+                  <p className="text-xs text-[#444] mt-1">Complete step 1 first.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Step 3: Check runs — inline toggle */}
+            <div className="flex items-start gap-3">
+              {checkRunOn
+                ? <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                : <Circle className="h-5 w-5 text-[#444] flex-shrink-0 mt-0.5" />}
+              <div className="flex-1 min-w-0">
+                <div className={cn('text-sm font-medium', checkRunOn ? 'text-[#555] line-through' : 'text-white')}>
+                  Turn on Merge Receipts check runs
+                </div>
+                {!checkRunOn && (
+                  <div className="mt-2">
+                    <p className="text-xs text-[#555] mb-2">Posts a status check on every PR so reviewers can attest they understood the AI-written code.</p>
+                    <Button
+                      size="sm"
+                      disabled={updateTeam.isPending}
+                      onClick={() => updateTeam.mutate({ hcCheckRunEnabled: true } as never)}
+                    >
+                      {updateTeam.isPending ? 'Enabling…' : 'Enable check runs'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Step 4: Team size — inline selector */}
+            <div className="flex items-start gap-3">
+              {teamSized
+                ? <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                : <Circle className="h-5 w-5 text-[#444] flex-shrink-0 mt-0.5" />}
+              <div className="flex-1 min-w-0">
+                <div className={cn('text-sm font-medium', teamSized ? 'text-[#555] line-through' : 'text-white')}>
+                  Tell us your team size
+                </div>
+                {!teamSized && (
+                  <div className="mt-2">
+                    <p className="text-xs text-[#555] mb-2">How many developers use AI coding tools on your team?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: '1–10 devs', value: '10' },
+                        { label: '11–30 devs', value: '30' },
+                        { label: '31–75 devs', value: '75' },
+                        { label: '75+ devs', value: '100' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          disabled={updateTeam.isPending}
+                          onClick={() => updateTeam.mutate({ teamSizeRange: opt.value } as never)}
+                          className="rounded-lg border border-[#333] px-3 py-2 text-sm text-white hover:border-[#555] hover:bg-white/5 transition-colors disabled:opacity-50"
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
           </CardContent>
         </Card>
       )}
