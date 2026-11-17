@@ -53,13 +53,15 @@ export function ReceiptsHomePage() {
   })
 
   const team = me.data?.team
-  // githubInstallationId is in both /auth/me and /api/team; prefer teamQ (fresher after install)
-  const installed = !!(teamQ.data?.githubInstallationId ?? team?.githubInstallationId)
   const activeRepos = (repos.data ?? []).filter((r) => r.isActive)
+  // If repos are connected the app is installed — repos existing proves it even if the
+  // teams.githubInstallationId column isn't set yet (race with webhook).
+  const installed = !!(teamQ.data?.githubInstallationId ?? team?.githubInstallationId) || activeRepos.length > 0
   // hcCheckRunEnabled only comes back from GET /api/team, not GET /auth/me
   const checkRunOn = teamQ.data?.hcCheckRunEnabled ?? false
   const teamSized = !!(teamQ.data?.teamSizeRange ?? team?.teamSizeRange)
-  const setupComplete = installed && activeRepos.length > 0 && checkRunOn && teamSized
+  // Data starts loading as soon as repos are connected; setupComplete just hides the checklist
+  const setupComplete = activeRepos.length > 0 && teamSized
 
   // Exceptions: PRs merged without review
   const exceptionsQ = useQuery({
@@ -88,7 +90,7 @@ export function ReceiptsHomePage() {
     enabled: !!repoId,
     refetchInterval: (query) => {
       const isEmpty = !query.state.data || query.state.data.items.length === 0
-      return setupComplete && isEmpty ? 8_000 : false
+      return activeRepos.length > 0 && isEmpty ? 8_000 : false
     },
   })
 
@@ -216,10 +218,10 @@ export function ReceiptsHomePage() {
                     <p className="text-xs text-[#555] mb-2">How many developers use AI coding tools on your team?</p>
                     <div className="flex flex-wrap gap-2">
                       {[
-                        { label: '1–10 devs', value: '10' },
-                        { label: '11–30 devs', value: '30' },
-                        { label: '31–75 devs', value: '75' },
-                        { label: '75+ devs', value: '100' },
+                        { label: '1–15 devs', value: '1-15' },
+                        { label: '16–50 devs', value: '16-50' },
+                        { label: '51–150 devs', value: '51-150' },
+                        { label: '151–500 devs', value: '151-500' },
                       ].map((opt) => (
                         <button
                           key={opt.value}
@@ -335,25 +337,20 @@ export function ReceiptsHomePage() {
             <div className="flex justify-center p-8"><Spinner /></div>
           ) : listItems.length === 0 ? (
             <div className="text-center py-16 text-[#666]">
-              {setupComplete && !listQ.data ? (
-                <>
-                  <Spinner />
-                  <p className="mt-3 text-sm">Syncing your PR history — this takes a minute or two.</p>
-                </>
-              ) : listQ.data && (aiHeavy || noAttestation || noReview || exceptionsOnly) ? (
+              {aiHeavy || noAttestation || noReview || exceptionsOnly ? (
                 <>
                   <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
                   <p>No PRs match the current filters.</p>
                 </>
-              ) : setupComplete ? (
+              ) : activeRepos.length > 0 ? (
                 <>
                   <Spinner />
-                  <p className="mt-3 text-sm">Syncing your PR history — this takes a minute or two.</p>
+                  <p className="mt-3 text-sm">Syncing your 12-month PR history — usually takes 1–2 minutes.</p>
                 </>
               ) : (
                 <>
                   <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
-                  <p>No merged PRs found yet.</p>
+                  <p>Connect a repo to see Merge Receipts.</p>
                 </>
               )}
             </div>
