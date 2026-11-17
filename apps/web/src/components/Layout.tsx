@@ -3,7 +3,7 @@ import { Link, NavLink, Navigate, Outlet, useNavigate, useLocation } from 'react
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
   ChevronDown, Menu, X, BarChart2, Settings, LogOut, CreditCard,
-  Shield, Activity, Bell, CheckCheck, XCircle, Zap, EyeOff, FileText,
+  Shield, Activity, Bell, CheckCheck, XCircle, Zap, EyeOff, FileText, LayoutDashboard,
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
 import { cn, planDisplayLabel } from '../lib/utils.js'
@@ -274,7 +274,8 @@ export function AppLayout() {
   }
 
   const navLinks = [
-    { to: '/', label: 'AI Code Risk', icon: EyeOff, badge: null as number | null, end: true },
+    { to: '/', label: 'Overview', icon: LayoutDashboard, badge: null as number | null, end: true },
+    { to: '/dark-code', label: 'AI Code Risk', icon: EyeOff, badge: null as number | null, end: false },
     { to: '/code-map', label: 'Review Map', icon: Activity, badge: isHighRisk ? 1 : null as number | null },
     { to: '/receipts', label: 'Receipts', icon: FileText, badge: null as number | null },
     { to: '/reports', label: 'Reports', icon: BarChart2, badge: spendBadge },

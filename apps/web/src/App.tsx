@@ -23,6 +23,7 @@ import { ReportsLayout } from './pages/Reports.js'
 import { ReceiptsListPage } from './pages/ReceiptsList.js'
 import { ReceiptDetailPage } from './pages/ReceiptDetail.js'
 import { AuditExportPage } from './pages/AuditExport.js'
+import { OverviewPage } from './pages/Overview.js'
 import { AdminLayout } from './pages/AdminLayout.js'
 import { AdminOverview } from './pages/AdminOverview.js'
 import { AdminFunnel } from './pages/AdminFunnel.js'
@@ -71,7 +72,8 @@ export function App() {
           <Route path="/install" element={<InstallPage />} />
           <Route element={<AppLayout />}>
             {/* New 4-tab navigation */}
-            <Route path="/" element={<DarkCodeReportPage />} />
+            <Route path="/" element={<OverviewPage />} />
+            <Route path="/dark-code" element={<DarkCodeReportPage />} />
             <Route path="/code-map" element={<HealthPage />} />
             <Route path="/reports" element={<ReportsLayout />}>
               <Route path="ai-impact" element={<SpendIntelligencePage />} />
@@ -87,7 +89,6 @@ export function App() {
             <Route path="/security" element={<SecurityPage />} />
             {/* Legacy redirects — keep old bookmarks and links working */}
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
-            <Route path="/dark-code" element={<Navigate to="/" replace />} />
             <Route path="/health" element={<Navigate to="/code-map" replace />} />
             <Route path="/spend-intelligence" element={<Navigate to="/reports/ai-impact" replace />} />
             <Route path="/seat-waste" element={<Navigate to="/reports/ai-impact" replace />} />
