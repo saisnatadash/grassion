@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Shield, AlertTriangle, CheckCircle, ChevronRight, Filter,
-  Circle, GitPullRequest, Zap, TrendingUp,
+  Circle, GitPullRequest, Zap, TrendingUp, RefreshCw,
 } from 'lucide-react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -40,7 +40,17 @@ export function ReceiptsHomePage() {
 
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get, staleTime: 30_000 })
-  const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
+  // Poll repos every 10s until the active repo shows lastSyncedAt — fires after the background sync finishes
+  const repos = useQuery({
+    queryKey: ['repos'],
+    queryFn: api.repos.list,
+    refetchInterval: (query) => {
+      const r = query.state.data
+      if (!r || r.length === 0) return 10_000
+      const hasUnsyncedActiveRepo = r.filter((x) => x.isActive).some((x) => !x.lastSyncedAt)
+      return hasUnsyncedActiveRepo ? 10_000 : false
+    },
+  })
   const repoIdParam = searchParams.get('repo')
   const repoId = repoIdParam ?? repos.data?.[0]?.id ?? ''
 
@@ -49,6 +59,14 @@ export function ReceiptsHomePage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['me'] })
       void qc.invalidateQueries({ queryKey: ['team'] })
+    },
+  })
+
+  const syncRepo = useMutation({
+    mutationFn: (id: string) => api.repos.sync(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['repos'] })
+      void qc.invalidateQueries({ queryKey: ['receipts'] })
     },
   })
 
@@ -62,6 +80,10 @@ export function ReceiptsHomePage() {
   const teamSized = !!(teamQ.data?.teamSizeRange ?? team?.teamSizeRange)
   // Data starts loading as soon as repos are connected; setupComplete just hides the checklist
   const setupComplete = activeRepos.length > 0 && teamSized
+
+  // Track sync status for the active repo — used to show spinner vs "no PRs" state
+  const currentRepo = repos.data?.find((r) => r.id === repoId) ?? repos.data?.[0]
+  const syncDone = currentRepo?.lastSyncedAt !== null && currentRepo?.lastSyncedAt !== undefined
 
   // Exceptions: PRs merged without review
   const exceptionsQ = useQuery({
@@ -79,7 +101,7 @@ export function ReceiptsHomePage() {
     staleTime: 5 * 60 * 1000,
   })
 
-  // Full receipts list — polls every 8 s while set up but no data yet (backfill in progress)
+  // Full receipts list — polls every 8 s while sync is still running (lastSyncedAt = null)
   const listQ = useQuery({
     queryKey: ['receipts', repoId, aiHeavy, noAttestation, noReview || exceptionsOnly],
     queryFn: () => api.hc.receipts(repoId, {
@@ -88,10 +110,7 @@ export function ReceiptsHomePage() {
       noReview: noReview || exceptionsOnly,
     }),
     enabled: !!repoId,
-    refetchInterval: (query) => {
-      const isEmpty = !query.state.data || query.state.data.items.length === 0
-      return activeRepos.length > 0 && isEmpty ? 8_000 : false
-    },
+    refetchInterval: activeRepos.length > 0 && !syncDone ? 8_000 : false,
   })
 
   function toggle(key: string, value: boolean) {
@@ -118,15 +137,28 @@ export function ReceiptsHomePage() {
     <div className="space-y-6">
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-white flex items-center gap-2">
-          <FileText className="w-6 h-6 text-[#4f8ef7]" />
-          Merge Receipts
-        </h1>
-        <p className="mt-1 text-sm text-[#888]">
-          Proof a human reviewed your AI-written code
-          {repo ? ` · ${repo.owner}/${repo.name}` : ''}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-white flex items-center gap-2">
+            <FileText className="w-6 h-6 text-[#4f8ef7]" />
+            Merge Receipts
+          </h1>
+          <p className="mt-1 text-sm text-[#888]">
+            Proof a human reviewed your AI-written code
+            {repo ? ` · ${repo.owner}/${repo.name}` : ''}
+          </p>
+        </div>
+        {repoId && (
+          <button
+            className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-[#333] px-3 py-1.5 text-xs text-[#666] hover:text-[#aaa] hover:border-[#555] transition-colors disabled:opacity-40"
+            disabled={syncRepo.isPending}
+            onClick={() => syncRepo.mutate(repoId)}
+            title="Re-import the last 12 months of merged PRs"
+          >
+            <RefreshCw className={cn('w-3.5 h-3.5', syncRepo.isPending && 'animate-spin')} />
+            {syncRepo.isPending ? 'Syncing…' : 'Re-sync'}
+          </button>
+        )}
       </div>
 
       {/* Get Started — hidden once all 4 steps done */}
@@ -342,10 +374,24 @@ export function ReceiptsHomePage() {
                   <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
                   <p>No PRs match the current filters.</p>
                 </>
-              ) : activeRepos.length > 0 ? (
+              ) : activeRepos.length > 0 && !syncDone ? (
                 <>
                   <Spinner />
                   <p className="mt-3 text-sm">Syncing your 12-month PR history — usually takes 1–2 minutes.</p>
+                </>
+              ) : activeRepos.length > 0 && syncDone ? (
+                <>
+                  <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
+                  <p className="text-sm">No merged PRs found in the past 12 months.</p>
+                  <p className="text-xs text-[#555] mt-1">Create and merge a PR, then re-sync below.</p>
+                  <button
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#333] px-4 py-2 text-sm text-[#aaa] hover:text-white hover:border-[#555] transition-colors disabled:opacity-50"
+                    disabled={syncRepo.isPending}
+                    onClick={() => { if (repoId) syncRepo.mutate(repoId) }}
+                  >
+                    <RefreshCw className={cn('w-4 h-4', syncRepo.isPending && 'animate-spin')} />
+                    {syncRepo.isPending ? 'Syncing…' : 'Re-sync now'}
+                  </button>
                 </>
               ) : (
                 <>
