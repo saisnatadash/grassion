@@ -102,7 +102,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
     /* ── PLAN GRID ──────────────────────────── */
     .plans-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 1px;
       background: var(--line);
       border: 1px solid var(--line);
@@ -409,7 +409,7 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
 
     /* ── MOBILE ─────────────────────────────── */
     @media (max-width: 1023px) {
-      .plans-grid { grid-template-columns: repeat(2, 1fr); }
+      .plans-grid { grid-template-columns: 1fr; }
       .privacy-grid { grid-template-columns: 1fr; }
     }
 
@@ -517,37 +517,6 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         <p class="plan-hint">We respond within 24 hours</p>
       </div>
 
-      <!-- Audit Pack -->
-      <div class="plan-card">
-        <div class="plan-name">Audit Pack</div>
-        <div class="plan-price">$500</div>
-        <div class="plan-price-sub">one-time purchase<br />no subscription required</div>
-        <div class="plan-seats">Any team · any plan</div>
-        <div class="plan-best">Already in an audit?</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li>One historical audit export for any date range</li>
-          <li>Full CSV + PDF with Merge Receipt evidence</li>
-          <li>AI source, reviewer, attestation per PR</li>
-          <li>SHA-256 hash chain for tamper evidence</li>
-          <li>Use it once · no recurring charge</li>
-        </ul>
-        <a class="plan-cta" href="/contact/">Purchase Audit Pack</a>
-        <p class="plan-hint">Write to us to arrange payment</p>
-      </div>
-
-    </div>
-
-    <!-- ENTERPRISE ROW -->
-    <div class="payment-note" style="margin-bottom: 32px;">
-      <div class="payment-note-icon" style="font-size:8px; letter-spacing:0.04em;">ENT</div>
-      <p class="payment-note-text">
-        <strong>Need Business or Enterprise?</strong>
-        SSO, custom data retention, self-hosted deployment, dedicated SLA, SOC2 &amp; AI governance evidence — write to
-        <a href="mailto:info@grassion.com" style="color:var(--white);">info@grassion.com</a> or
-        <a href="/contact/" style="color:var(--white);">use the contact form</a>.
-        We respond within 24 hours.
-      </p>
     </div>
 
     <!-- PAYMENT NOTE -->
@@ -558,6 +527,10 @@ const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.grassion.com'
         Charged via Razorpay. Supports credit/debit cards, UPI, and netbanking.
         Clicking "Start Free Trial" takes you to the dashboard — choose your plan there to go directly to checkout.
         Features activate instantly after payment.
+        Already in a compliance audit and need a one-time historical export?
+        <a href="/contact/" style="color:var(--white);">Write to us</a> about the $500 Audit Pack.
+        Need Business or Enterprise (SSO, self-hosted, SLA)?
+        <a href="/contact/" style="color:var(--white);">Contact us</a> — we respond within 24 hours.
       </p>
     </div>
 
