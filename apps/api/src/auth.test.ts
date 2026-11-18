@@ -5,7 +5,7 @@ import { checkPlanGate, isProOrAbove, isBusinessOrAbove } from './auth.js'
 
 describe('isProOrAbove', () => {
   it('free → false', () => expect(isProOrAbove('free')).toBe(false))
-  it('trial → false', () => expect(isProOrAbove('trial')).toBe(false))
+  it('trial → true (trial gets Pro access)', () => expect(isProOrAbove('trial')).toBe(true))
   it('pro → true', () => expect(isProOrAbove('pro')).toBe(true))
   it('growth → true', () => expect(isProOrAbove('growth')).toBe(true))
   it('team → true', () => expect(isProOrAbove('team')).toBe(true))
@@ -31,8 +31,8 @@ describe('checkPlanGate — pro routes (pr-outcomes, pr-decay, hc/*, mcp-tokens)
     expect(checkPlanGate('free', 'pro')).toBe(false)
   })
 
-  it('trial team → gate returns false (would produce 403)', () => {
-    expect(checkPlanGate('trial', 'pro')).toBe(false)
+  it('trial team → gate returns true (trial gets Pro access)', () => {
+    expect(checkPlanGate('trial', 'pro')).toBe(true)
   })
 
   it('pro team → gate returns true (access allowed)', () => {
