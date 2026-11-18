@@ -415,8 +415,9 @@ async function syncHistoricalPrs(
         },
       })
   } catch (err) {
-    logger.error({ err }, 'pr bulk insert failed during sync')
-    return { synced: 0, apiError: 'Database insert failed' }
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.error({ err, msg }, 'pr bulk insert failed during sync')
+    return { synced: 0, apiError: `DB insert failed: ${msg.slice(0, 200)}` }
   }
 
   logger.info(
@@ -800,6 +801,9 @@ reposRouter.post(
       .from(teams)
       .where(eq(teams.id, sess.teamId))
       .limit(1)
+
+    // Clear sync state so the UI shows the spinner while the background sync runs.
+    await db.update(repos).set({ lastSyncedAt: null, lastSyncError: null }).where(eq(repos.id, id))
 
     // Respond immediately — the actual sync + backfill run in the background.
     // Waiting for the sync would exceed the client's 20-second abort timeout

@@ -30,6 +30,7 @@ function answerBadge(count: number, isAiHeavy: boolean) {
 export function ReceiptsHomePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [resyncing, setResyncing] = useState(false)
   const { open: openInstall, syncing: installSyncing } = useInstallPopup()
   const qc = useQueryClient()
 
@@ -40,11 +41,14 @@ export function ReceiptsHomePage() {
 
   const me = useQuery({ queryKey: ['me'], queryFn: api.me })
   const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get, staleTime: 30_000 })
-  // Poll repos every 10s until the active repo shows lastSyncedAt — fires after the background sync finishes
+  // Poll repos every 10s until the active repo shows lastSyncedAt — fires after the background sync finishes.
+  // Also poll while resyncing (button clears lastSyncedAt on the server so hasUnsyncedActiveRepo catches it,
+  // but the extra resyncing flag covers the brief window before the server responds).
   const repos = useQuery({
     queryKey: ['repos'],
     queryFn: api.repos.list,
     refetchInterval: (query) => {
+      if (resyncing) return 5_000
       const r = query.state.data
       if (!r || r.length === 0) return 10_000
       const hasUnsyncedActiveRepo = r.filter((x) => x.isActive).some((x) => !x.lastSyncedAt)
@@ -64,9 +68,14 @@ export function ReceiptsHomePage() {
 
   const syncRepo = useMutation({
     mutationFn: (id: string) => api.repos.sync(id),
+    onMutate: () => setResyncing(true),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['repos'] })
       void qc.invalidateQueries({ queryKey: ['receipts'] })
+    },
+    onSettled: () => {
+      // Keep polling until lastSyncedAt returns (server clears it before firing the background job)
+      setTimeout(() => setResyncing(false), 90_000)
     },
   })
 
