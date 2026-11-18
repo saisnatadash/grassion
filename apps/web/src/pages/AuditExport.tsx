@@ -105,7 +105,7 @@ export function AuditExportPage() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 transition-colors"
           >
-            Upgrade to Team — $99/mo
+            Upgrade to Team for $99/mo
           </a>
           <p className="text-xs text-[#555]">Up to 25 developers · All repos · Full receipt history</p>
         </div>

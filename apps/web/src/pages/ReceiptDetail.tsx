@@ -68,7 +68,7 @@ export function ReceiptDetailPage() {
           <FileText className="w-6 h-6 text-[#4f8ef7] mt-0.5 shrink-0" />
           <div className="min-w-0">
             <h1 className="text-lg font-semibold text-white leading-tight">
-              #{pr.number} — {pr.title}
+              #{pr.number}: {pr.title}
             </h1>
             <div className="mt-2 flex flex-wrap gap-3 text-sm text-[#888]">
               <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" />{pr.authorLogin ?? '—'}</span>

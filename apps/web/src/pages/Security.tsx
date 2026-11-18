@@ -104,7 +104,7 @@ export function SecurityPage() {
         <TrustBadge label="No source code stored" />
         <TrustBadge label="TLS in transit" />
         <TrustBadge label="Data scoped to your team" />
-        <TrustBadge label="Sessions expire in 30 days" />
+        <TrustBadge label="Sessions expire in 12 hours" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -132,7 +132,7 @@ export function SecurityPage() {
             </div>
             <div className="flex justify-between items-center">
               <dt className="text-xs text-[#555]">Session TTL</dt>
-              <dd className="text-sm text-[#aaa]">30 days</dd>
+              <dd className="text-sm text-[#aaa]">12 hours</dd>
             </div>
             <div className="flex justify-between items-center">
               <dt className="text-xs text-[#555]">Authentication</dt>
@@ -141,7 +141,7 @@ export function SecurityPage() {
           </dl>
           <div className="mt-4 border-t border-[#1a1a1a] pt-3">
             <p className="text-[10px] text-[#444] leading-relaxed">
-              To revoke all sessions, uninstall and reinstall the GitHub App. Individual sessions expire automatically after 30 days.
+              To revoke all sessions, uninstall and reinstall the GitHub App. Individual sessions expire automatically after 12 hours.
             </p>
           </div>
         </SectionCard>
@@ -159,7 +159,7 @@ export function SecurityPage() {
           <div className="mt-3 flex items-start gap-2 rounded-lg bg-blue-500/5 border border-blue-500/15 px-3 py-2.5">
             <CheckCircle className="h-3.5 w-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-[#888] leading-relaxed">
-              These scopes are enforced by GitHub. Grassion is technically incapable of writing, merging, or modifying your repositories.
+              Grassion can post check runs and request reviewers on pull requests. It cannot change your code, push commits, or merge pull requests.
             </p>
           </div>
         </SectionCard>

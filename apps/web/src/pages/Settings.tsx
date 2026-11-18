@@ -73,7 +73,6 @@ export function SettingsPage() {
       </div>
       <GitHubSection />
       <TeamSettings />
-      <AiToolCostsSection />
       <SlackSection />
       <ReposSection />
       <MembersSection />
@@ -322,39 +321,6 @@ function TeamSettings() {
       }}
       className="space-y-4"
     >
-      {/* ROI calibration */}
-      <Card>
-        <CardHeader>
-          <CardTitle>ROI calibration</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-[#888888] mb-1.5">Monthly AI spend (USD)</label>
-              <Input
-                type="number"
-                min={0}
-                step="1"
-                value={form.monthlyAiSpendUsd}
-                onChange={(e) => setForm({ ...form, monthlyAiSpendUsd: Number(e.target.value) })}
-              />
-              <p className="mt-1 text-xs text-[#555555]">Your total monthly AI tools bill (Copilot, Cursor, etc.)</p>
-            </div>
-            <div>
-              <label className="block text-xs text-[#888888] mb-1.5">Avg dev hourly rate (USD)</label>
-              <Input
-                type="number"
-                min={0}
-                step="1"
-                value={form.avgDevHourlyRateUsd}
-                onChange={(e) => setForm({ ...form, avgDevHourlyRateUsd: Number(e.target.value) })}
-              />
-              <p className="mt-1 text-xs text-[#555555]">Used to estimate time-saved value in ROI calculations</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* AI tools */}
       <Card>
         <CardHeader>
@@ -659,11 +625,10 @@ function SlackSection() {
         {/* Preview */}
         <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
           <p className="text-xs text-[#555555] font-mono leading-relaxed">
-            📊 Weekly digest · Every {DAYS[team.data?.emailDigestDay ?? 1]} {team.data?.emailDigestHour ?? 9}:00 {team.data?.timezone ?? 'UTC'}<br />
-            Includes: ROI verdict, savings, health score, top performer<br />
+            📊 Weekly exceptions report · Every {DAYS[team.data?.emailDigestDay ?? 1]} {team.data?.emailDigestHour ?? 9}:00 {team.data?.timezone ?? 'UTC'}<br />
+            Includes: unreviewed AI PRs, attestation gaps, check failures<br />
             ⚠️ Instant alert when a PR is reverted<br />
-            🔴 Alert when health score drops below 75<br />
-            💸 Alert when a seat goes idle for 7+ days
+            🔴 Alert when health score drops below 75
           </p>
         </div>
 
@@ -699,12 +664,12 @@ function SlackSection() {
 }
 
 const REPO_LIMITS: Record<string, number> = {
-  trial: 1,
+  trial: 9999,
   free: 1,
-  starter: 3,
-  growth: 10,
-  pro: 10,
-  team: 10,
+  starter: 9999,
+  growth: 9999,
+  pro: 9999,
+  team: 9999,
   business: 9999,
   admin: 9999,
 }
@@ -746,7 +711,7 @@ function ReposSection() {
           <div>
             <CardTitle>Connected repositories</CardTitle>
             {plan !== 'admin' && repoLimit < 9999 && (
-              <p className="text-xs text-[#555555] mt-1">{repoCount}/{repoLimit} repos on {plan ?? 'trial'} plan</p>
+              <p className="text-xs text-[#555555] mt-1">{repoCount} repo{repoCount === 1 ? '' : 's'} connected</p>
             )}
           </div>
           <button
@@ -950,8 +915,8 @@ function ConnectRepoForm({
         <CardContent>
           {limitReached ? (
             <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-400">
-              You've reached the {plan} plan limit.{' '}
-              <Link to="/billing" className="underline hover:text-yellow-300">Upgrade</Link>{' '}
+              Your plan is limited to 1 repository.{' '}
+              <Link to="/billing" className="underline hover:text-yellow-300">Upgrade to Team</Link>{' '}
               to connect more repositories.
             </div>
           ) : (
@@ -1244,7 +1209,7 @@ function HcSettingsSection() {
         <CardContent className="py-1 flex flex-col divide-y divide-[#1e1e1e]">
           <Toggle
             label="Enable PR check run"
-            description="Post a Grassion coverage check on every PR open / synchronize event (Pro+)."
+            description="Post a Grassion coverage check on every PR open / synchronize event (Team plan)."
             checked={team.hcCheckRunEnabled}
             onChange={(v) => patch({ hcCheckRunEnabled: v })}
           />
@@ -1257,7 +1222,7 @@ function HcSettingsSection() {
           <div className="flex items-center justify-between gap-4 py-3">
             <div>
               <div className="text-sm font-medium text-white">Max reviewer requests per PR</div>
-              <div className="text-xs text-[#888888] mt-0.5">How many reviewers Grassion can auto-request (0 = off, max 5).</div>
+              <div className="text-xs text-[#888888] mt-0.5">How many reviewers Grassion can auto-request (0 = off, max 5). Default: 2.</div>
             </div>
             <select
               className="bg-[#1e1e1e] border border-[#333] text-white text-sm rounded px-2 py-1"
@@ -1305,15 +1270,9 @@ function PrivacyControlsSection() {
         <CardContent className="py-1 flex flex-col divide-y divide-[#1e1e1e]">
           <Toggle
             label="Team-only mode"
-            description="Store only team and area aggregates — no per-person evidence (for EU customers / GDPR)."
+            description="Store only team and area aggregates, no per-person evidence (for EU customers / GDPR)."
             checked={team.teamOnlyMode}
             onChange={(v) => patch({ teamOnlyMode: v })}
-          />
-          <Toggle
-            label="Per-developer metrics"
-            description="Show seat waste and adoption metrics broken down per developer (admin-only view)."
-            checked={team.perDevMetricsEnabled}
-            onChange={(v) => patch({ perDevMetricsEnabled: v })}
           />
         </CardContent>
         {toast && (
@@ -1364,7 +1323,7 @@ function McpTokensSection() {
       <Card>
         <CardContent className="py-5 flex flex-col gap-4">
           {!isPro && (
-            <div className="text-sm text-[#888888]">MCP server access requires a Pro plan.</div>
+            <div className="text-sm text-[#888888]">MCP server access requires a Team plan.</div>
           )}
           {isPro && (
             <>
@@ -1468,9 +1427,9 @@ function DangerZone() {
         <CardContent className="py-5 flex flex-col gap-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <div className="text-sm font-medium text-white">Delete coverage data</div>
+              <div className="text-sm font-medium text-white">Delete all Grassion data</div>
               <div className="text-xs text-[#888888] mt-0.5">
-                Permanently removes all Human Coverage data for your team — people, code areas, evidence, check runs, and share links.
+                Permanently removes all coverage data for your team: people, code areas, evidence, check runs, and share links.
                 This cannot be undone.
               </div>
               {deleteError && <div className="text-xs text-red-400 mt-1">{deleteError}</div>}
@@ -1483,7 +1442,7 @@ function DangerZone() {
               className="flex items-center gap-2 shrink-0"
             >
               <Trash2 className="h-4 w-4" />
-              {deleteConfirm ? (deleting ? 'Deleting…' : 'Confirm delete') : 'Delete coverage data'}
+              {deleteConfirm ? (deleting ? 'Deleting…' : 'Confirm delete') : 'Delete all Grassion data'}
             </Button>
           </div>
           {deleteConfirm && !deleting && (

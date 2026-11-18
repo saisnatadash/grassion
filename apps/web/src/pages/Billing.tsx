@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import { Check, Zap, Shield, Star } from 'lucide-react'
+import { Check, Shield, Star } from 'lucide-react'
 import { api, ApiError } from '../lib/api.js'
 import { usePlan } from '../lib/plan.js'
 import {
@@ -349,7 +349,7 @@ function CurrentPlanCard({
     business: { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Business' },
     pro:      { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
     admin:    { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
-    trial:    { border: 'border-yellow-500/40', bg: 'bg-yellow-500/5', icon: <Zap className="h-5 w-5 text-yellow-400" />, badgeTone: 'yellow' as const, label: '14-day Trial' },
+    trial:    { border: 'border-yellow-500/40', bg: 'bg-yellow-500/5', icon: <Shield className="h-5 w-5 text-yellow-400" />, badgeTone: 'yellow' as const, label: '14-day Trial' },
     free:     { border: 'border-[#333]', bg: 'bg-white/2', icon: <Shield className="h-5 w-5 text-[#888888]" />, badgeTone: 'gray' as const, label: 'Free' },
   }
   const cfg = planConfig[plan as keyof typeof planConfig] ?? planConfig.free
@@ -487,7 +487,7 @@ function UpgradeCard({
             </div>
             {memberCount > totalSeats && (
               <div className="text-xs text-yellow-400 pt-2">
-                You have {memberCount} members — consider adding {memberCount - totalSeats} more seat{memberCount - totalSeats === 1 ? '' : 's'}.
+                You have {memberCount} members. Consider adding {memberCount - totalSeats} more seat{memberCount - totalSeats === 1 ? '' : 's'}.
               </div>
             )}
           </div>
@@ -510,7 +510,7 @@ function UpgradeCard({
 
         <div>
           <Button disabled={busy} onClick={onCheckout} size="lg" className="w-full sm:w-auto">
-            {busy ? 'Opening checkout…' : isTrial ? `Upgrade to ${plan.name} — $${totalUsd}/mo` : `Subscribe to ${plan.name} — $${totalUsd}/mo`}
+            {busy ? 'Opening checkout…' : isTrial ? `Upgrade to ${plan.name} for $${totalUsd}/mo` : `Subscribe to ${plan.name} for $${totalUsd}/mo`}
           </Button>
           <div className="mt-2 text-xs text-[#555555]">
             Billed in USD via Razorpay · Cancel anytime
@@ -581,7 +581,7 @@ function ExtraSeatsCard({
             </div>
             {memberCount > totalSeats && (
               <div className="text-xs text-yellow-400 pt-2">
-                You have {memberCount} members — need {memberCount - totalSeats} more seat{memberCount - totalSeats === 1 ? '' : 's'}.
+                You have {memberCount} members. Need {memberCount - totalSeats} more seat{memberCount - totalSeats === 1 ? '' : 's'}.
               </div>
             )}
           </div>
@@ -589,7 +589,7 @@ function ExtraSeatsCard({
 
         {extraSeats > 0 && (
           <Button disabled={busy} onClick={onCheckout} size="lg">
-            {busy ? 'Opening checkout…' : `Add ${extraSeats} seat${extraSeats === 1 ? '' : 's'} — $${totalUsd}/mo`}
+            {busy ? 'Opening checkout…' : `Add ${extraSeats} seat${extraSeats === 1 ? '' : 's'} for $${totalUsd}/mo`}
           </Button>
         )}
         <p className="text-xs text-[#555555]">Billed in USD via Razorpay · Prorated to your current billing cycle</p>

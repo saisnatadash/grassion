@@ -572,7 +572,7 @@ export function DashboardPage() {
       ) : (
         <LockedFeatureCard
           title="Developer Breakdown"
-          description="Per-developer AI PR count, adoption rate, and cost — broken down by team member."
+          description="Per-developer AI PR count, adoption rate, and cost broken down by team member."
           requiredPlan="Pro"
           icon={<Users className="h-5 w-5 text-[#444]" />}
         />
@@ -610,7 +610,7 @@ function CollectingBanner({ totalPrs }: { totalPrs: number }) {
     <div className="flex items-center gap-3 rounded-lg border border-[#333] bg-[#111] px-4 py-2.5">
       <Clock className="h-4 w-4 text-[#555555] flex-shrink-0" />
       <p className="text-sm text-[#888888]">
-        Collecting data —{' '}
+        Collecting data:{' '}
         <span className="text-white font-medium">{totalPrs}/5</span> PRs merged this week.
         {needed > 0 && ` Verdict unlocks after ${needed} more.`}
       </p>

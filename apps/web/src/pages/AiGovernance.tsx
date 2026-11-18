@@ -73,7 +73,7 @@ export function AiGovernancePage() {
           <h1 className="text-2xl font-light text-white">Human review of AI-assisted code</h1>
           <p className="text-sm text-[#444] mt-1">
             {new Date(period.from).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-            {' — '}
+            {' to '}
             {new Date(period.to).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         </div>

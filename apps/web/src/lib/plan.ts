@@ -3,7 +3,7 @@ import type { Plan } from '@grassion/shared'
 import { api } from './api.js'
 import { decodePlanFromToken } from './utils.js'
 
-const PRO_PLANS = ['pro', 'starter', 'growth', 'team', 'business', 'enterprise', 'admin']
+const PRO_PLANS = ['trial', 'pro', 'starter', 'growth', 'team', 'business', 'enterprise', 'admin']
 const BUSINESS_PLANS = ['business', 'enterprise', 'admin']
 
 export function isProPlan(plan: Plan | string | null | undefined): boolean {

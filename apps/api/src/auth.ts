@@ -16,8 +16,9 @@ export function isFreePlan(plan: string): boolean {
 }
 
 export function isProOrAbove(plan: string): boolean {
+  // 'trial' and 'starter' get full team-tier access.
   // 'team' and 'growth' are legacy names for pro-tier plans.
-  return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
+  return plan === 'trial' || plan === 'starter' || plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise' || plan === 'admin'
 }
 
 export function isBusinessOrAbove(plan: string): boolean {
