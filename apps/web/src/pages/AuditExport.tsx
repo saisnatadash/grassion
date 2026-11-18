@@ -163,6 +163,13 @@ export function AuditExportPage() {
 
       {exportQ.isLoading && <div className="flex justify-center p-8"><Spinner /></div>}
 
+      {exportQ.isError && (
+        <div className="rounded-xl border border-red-800/40 bg-red-950/10 px-4 py-3 text-sm text-red-300">
+          <AlertTriangle className="w-4 h-4 inline mr-2" />
+          Could not load audit data. Make sure the repo has been synced and try again.
+        </div>
+      )}
+
       {data && (
         <>
           {/* Compliance label */}

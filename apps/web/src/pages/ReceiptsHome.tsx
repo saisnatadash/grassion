@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Shield, AlertTriangle, CheckCircle, ChevronRight, Filter,
-  Circle, GitPullRequest, Zap, TrendingUp, RefreshCw,
+  Circle, GitPullRequest, TrendingUp, RefreshCw,
 } from 'lucide-react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -176,7 +176,6 @@ export function ReceiptsHomePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-yellow-400" />
               Get started
             </CardTitle>
           </CardHeader>
@@ -372,6 +371,12 @@ export function ReceiptsHomePage() {
                 {label}
               </button>
             ))}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-1.5 text-xs text-[#555]">
+            <AlertTriangle className="h-3 w-3 text-red-400 flex-shrink-0" />
+            <span>Merged without review</span>
           </div>
 
           {/* Receipts table */}
