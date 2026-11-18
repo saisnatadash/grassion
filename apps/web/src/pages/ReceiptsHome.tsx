@@ -84,6 +84,7 @@ export function ReceiptsHomePage() {
   // Track sync status for the active repo — used to show spinner vs "no PRs" state
   const currentRepo = repos.data?.find((r) => r.id === repoId) ?? repos.data?.[0]
   const syncDone = currentRepo?.lastSyncedAt !== null && currentRepo?.lastSyncedAt !== undefined
+  const syncError = currentRepo?.lastSyncError ?? null
 
   // Exceptions: PRs merged without review
   const exceptionsQ = useQuery({
@@ -379,11 +380,27 @@ export function ReceiptsHomePage() {
                   <Spinner />
                   <p className="mt-3 text-sm">Syncing your 12-month PR history — usually takes 1–2 minutes.</p>
                 </>
+              ) : activeRepos.length > 0 && syncDone && syncError ? (
+                <>
+                  <AlertTriangle className="mx-auto mb-4 w-10 h-10 text-yellow-500/60" />
+                  <p className="text-sm text-yellow-300">Sync failed: {syncError}</p>
+                  <p className="text-xs text-[#555] mt-2 max-w-xs mx-auto">
+                    Make sure the Grassion GitHub App is installed and has access to this repository.
+                  </p>
+                  <button
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#333] px-4 py-2 text-sm text-[#aaa] hover:text-white hover:border-[#555] transition-colors disabled:opacity-50"
+                    disabled={syncRepo.isPending}
+                    onClick={() => { if (repoId) syncRepo.mutate(repoId) }}
+                  >
+                    <RefreshCw className={cn('w-4 h-4', syncRepo.isPending && 'animate-spin')} />
+                    {syncRepo.isPending ? 'Syncing…' : 'Re-sync now'}
+                  </button>
+                </>
               ) : activeRepos.length > 0 && syncDone ? (
                 <>
                   <FileText className="mx-auto mb-4 w-10 h-10 opacity-30" />
                   <p className="text-sm">No merged PRs found in the past 12 months.</p>
-                  <p className="text-xs text-[#555] mt-1">Create and merge a PR, then re-sync below.</p>
+                  <p className="text-xs text-[#555] mt-1">Grassion tracks merged pull requests — direct pushes to main are not counted.</p>
                   <button
                     className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#333] px-4 py-2 text-sm text-[#aaa] hover:text-white hover:border-[#555] transition-colors disabled:opacity-50"
                     disabled={syncRepo.isPending}

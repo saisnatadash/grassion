@@ -1,0 +1,1 @@
+ALTER TABLE repos ADD COLUMN IF NOT EXISTS last_sync_error TEXT;

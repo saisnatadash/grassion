@@ -120,6 +120,7 @@ reposRouter.get('/api/repos', requireAuth, async (req: Request, res: Response) =
         isActive: repos.isActive,
         connectedAt: repos.connectedAt,
         lastSyncedAt: repos.lastSyncedAt,
+        lastSyncError: repos.lastSyncError,
         prCount: sql<number>`(SELECT COUNT(*)::int FROM pull_requests WHERE pull_requests.repo_id = repos.id)`,
       })
       .from(repos)
@@ -133,6 +134,7 @@ reposRouter.get('/api/repos', requireAuth, async (req: Request, res: Response) =
         isActive: r.isActive,
         connectedAt: r.connectedAt.toISOString(),
         lastSyncedAt: r.lastSyncedAt?.toISOString() ?? null,
+        lastSyncError: r.lastSyncError ?? null,
         prCount: r.prCount ?? 0,
       })),
     )
@@ -238,7 +240,7 @@ reposRouter.post(
     })
 
     // Back-fill last 100 merged PRs
-    const prsSynced = await syncHistoricalPrs(sess.teamId, newRepo.id, owner, ghData.name)
+    const { synced: prsSynced } = await syncHistoricalPrs(sess.teamId, newRepo.id, owner, ghData.name)
 
     res.json({ ok: true, repoName: ghData.full_name, prsSynced })
   },
@@ -289,7 +291,7 @@ async function syncHistoricalPrs(
   repoId: string,
   owner: string,
   repoName: string,
-): Promise<number> {
+): Promise<{ synced: number; apiError?: string }> {
   const ghHeaders = await teamGhHeaders(teamId)
   const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) // 12 months ago
 
@@ -298,6 +300,7 @@ async function syncHistoricalPrs(
   // when a stale PR received a recent comment.
   const merged: GhPr[] = []
   let page = 1
+  let apiError: string | undefined
   while (true) {
     let page_prs: GhPr[] = []
     try {
@@ -307,11 +310,24 @@ async function syncHistoricalPrs(
       )
       if (!res.ok) {
         logger.warn({ status: res.status, owner, repoName, page }, 'github pulls fetch failed during sync')
+        // Only surface first-page failure as a sync error — that's the auth/access case.
+        // Later-page failures (rate limit etc.) are partial but we keep what we got.
+        if (page === 1) {
+          apiError =
+            res.status === 401
+              ? 'GitHub authentication failed — sign in again'
+              : res.status === 403
+                ? 'GitHub access denied — ensure the GitHub App is installed on this repo'
+                : res.status === 404
+                  ? 'Repo not found on GitHub — check it still exists and is accessible'
+                  : `GitHub API error ${res.status}`
+        }
         break
       }
       page_prs = (await res.json()) as GhPr[]
     } catch (err) {
       logger.error({ err, page }, 'github pulls fetch threw during sync')
+      if (page === 1) apiError = 'Could not reach GitHub API'
       break
     }
     if (page_prs.length === 0) break
@@ -325,7 +341,7 @@ async function syncHistoricalPrs(
     page++
   }
 
-  if (merged.length === 0) return 0
+  if (merged.length === 0) return { synced: 0, apiError }
 
   // Deep detection for each PR (commits + files + reviews in parallel per PR)
   const rows: Array<{
@@ -400,14 +416,14 @@ async function syncHistoricalPrs(
       })
   } catch (err) {
     logger.error({ err }, 'pr bulk insert failed during sync')
-    return 0
+    return { synced: 0, apiError: 'Database insert failed' }
   }
 
   logger.info(
     { teamId, repoName, total: rows.length, aiDetected: rows.filter((r) => r.aiSource).length },
     'historical PR sync complete',
   )
-  return rows.length
+  return { synced: rows.length }
 }
 
 /* ── GitHub API types ─────────────────────────────────── */
@@ -792,9 +808,12 @@ reposRouter.post(
 
     // Fire-and-forget: sync PRs then trigger HC backfill
     syncHistoricalPrs(sess.teamId, repo.id, repo.owner, repo.name)
-      .then(async (prsSynced) => {
-        await db.update(repos).set({ lastSyncedAt: new Date() }).where(eq(repos.id, id))
-        logger.info({ teamId: sess.teamId, repoId: id, prsSynced }, 'repo manually synced')
+      .then(async ({ synced: prsSynced, apiError }) => {
+        await db.update(repos).set({
+          lastSyncedAt: new Date(),
+          lastSyncError: apiError ?? null,
+        }).where(eq(repos.id, id))
+        logger.info({ teamId: sess.teamId, repoId: id, prsSynced, apiError }, 'repo manually synced')
 
         let installationId = teamRow?.githubInstallationId ?? null
 

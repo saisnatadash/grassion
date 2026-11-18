@@ -91,6 +91,7 @@ export interface RepoDto {
   isActive: boolean
   connectedAt: string
   lastSyncedAt: string | null
+  lastSyncError: string | null
   prCount: number
 }
 

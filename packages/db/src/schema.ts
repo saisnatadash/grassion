@@ -120,6 +120,7 @@ export const repos = pgTable('repos', {
   isActive: boolean('is_active').default(true),
   connectedAt: timestamp('connected_at').defaultNow().notNull(),
   lastSyncedAt: timestamp('last_synced_at'),
+  lastSyncError: text('last_sync_error'),
 })
 
 // ============ PULL REQUESTS ============
