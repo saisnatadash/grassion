@@ -1,2 +1,3 @@
 #!/bin/sh
-exec node apps/api/dist/index.js
+set -e
+node dist/index.js
