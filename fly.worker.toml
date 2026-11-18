@@ -13,9 +13,22 @@ primary_region = "bom"
   NODE_ENV = "production"
   APP_URL = "https://app.grassion.com"
 
-# Worker doesn't expose HTTP — Fly will keep one machine alive for crons.
-[deploy]
-  strategy = "rolling"
-
 [processes]
   app = "node dist/index.js"
+
+[http_service]
+  internal_port = 8081
+  force_https = false
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/"
+
+[deploy]
+  strategy = "rolling"
