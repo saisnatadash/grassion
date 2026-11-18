@@ -2,6 +2,7 @@ import {
   pgTable,
   text,
   integer,
+  bigint,
   timestamp,
   boolean,
   real,
@@ -113,7 +114,7 @@ export const repos = pgTable('repos', {
   teamId: uuid('team_id')
     .references(() => teams.id, { onDelete: 'cascade' })
     .notNull(),
-  githubRepoId: integer('github_repo_id').notNull().unique(),
+  githubRepoId: bigint('github_repo_id', { mode: 'number' }).notNull().unique(),
   owner: text('owner').notNull(),
   name: text('name').notNull(),
   defaultBranch: text('default_branch').default('main'),
@@ -135,12 +136,12 @@ export const pullRequests = pgTable(
       .references(() => repos.id, { onDelete: 'cascade' })
       .notNull(),
 
-    githubPrId: integer('github_pr_id').notNull().unique(),
+    githubPrId: bigint('github_pr_id', { mode: 'number' }).notNull().unique(),
     githubPrNumber: integer('github_pr_number').notNull(),
 
     title: text('title').notNull(),
     state: text('state').notNull(),
-    authorGithubId: integer('author_github_id'),
+    authorGithubId: bigint('author_github_id', { mode: 'number' }),
     authorLogin: text('author_login'),
 
     openedAt: timestamp('opened_at').notNull(),
