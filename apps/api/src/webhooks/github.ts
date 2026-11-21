@@ -92,7 +92,7 @@ function getWebhooks(): Webhooks {
             .where(eq(teams.id, pr.teamId))
             .limit(1)
 
-          if (teamRow && isProPlan(teamRow.plan) && teamRow.hcCheckRunEnabled) {
+          if (teamRow && teamRow.hcCheckRunEnabled) {
             const installationId = payload.installation?.id
             if (installationId) {
               const [repoRow] = await db

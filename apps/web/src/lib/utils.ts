@@ -13,12 +13,15 @@ export function formatUsd(n: number): string {
 }
 
 const PLAN_LABELS: Record<string, string> = {
+  free: 'Free',
   trial: '14-day Trial',
-  starter: 'Pro',
   team: 'Team',
+  growth: 'Growth',
   business: 'Business',
-  pro: 'Pro',
-  admin: 'Pro',
+  enterprise: 'Enterprise',
+  starter: 'Team',
+  pro: 'Team',
+  admin: 'Free',
 }
 
 export function planDisplayLabel(plan: string | null | undefined): string {

@@ -7,7 +7,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import {
-  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend,
 } from 'recharts'
 import { api, type TrendPoint } from '../lib/api.js'
@@ -938,19 +938,32 @@ function TrendSection({ repoId }: { repoId: string }) {
     )
   }
 
-  const chartData = data.map((d) => ({
-    month: d.month.slice(5),   // "2026-11" → "11"
-    'AI-heavy %': d.aiHeavyPct,
-    'Attested %': d.attestedPct,
-    'Unreviewed': d.unreviewed,
-  }))
+  // Only include months that have at least one PR
+  const chartData = data
+    .filter((d) => d.totalPrs > 0)
+    .map((d) => ({
+      month: d.month.slice(5),   // "2026-11" → "11"
+      'AI-heavy %': d.aiHeavyPct,
+      'Attested %': d.attestedPct,
+    }))
+
+  if (chartData.length === 0) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-6">
+        <div className="rounded-xl border border-[#1a1a1a] bg-[#0d0d0d] px-5 py-4">
+          <p className="text-xs font-semibold text-[#555] uppercase tracking-wide mb-1">Merge Receipt Trend</p>
+          <p className="text-sm text-[#444]">No data yet — will populate as PRs are merged.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-6">
       <div className="rounded-xl border border-[#1a1a1a] bg-[#0d0d0d] p-5">
-        <p className="text-xs font-semibold text-[#555] uppercase tracking-wide mb-4">Merge Receipt Trend (6 months)</p>
+        <p className="text-xs font-semibold text-[#555] uppercase tracking-wide mb-4">Merge Receipt Trend</p>
         <ResponsiveContainer width="100%" height={160}>
-          <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+          <BarChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
             <XAxis dataKey="month" tick={{ fill: '#555', fontSize: 11 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: '#555', fontSize: 10 }} axisLine={false} tickLine={false} width={28} unit="%" />
@@ -959,9 +972,9 @@ function TrendSection({ repoId }: { repoId: string }) {
               labelStyle={{ color: '#888' }}
             />
             <Legend wrapperStyle={{ fontSize: 10, color: '#555' }} />
-            <Line type="monotone" dataKey="AI-heavy %" stroke="#4f8ef7" strokeWidth={1.5} dot={false} />
-            <Line type="monotone" dataKey="Attested %" stroke="#22c55e" strokeWidth={1.5} dot={false} />
-          </LineChart>
+            <Bar dataKey="AI-heavy %" fill="#4f8ef7" radius={[2, 2, 0, 0]} maxBarSize={32} />
+            <Bar dataKey="Attested %" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={32} />
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>

@@ -80,6 +80,7 @@ export function SettingsPage() {
       <HcSettingsSection />
       <PrivacyControlsSection />
       <McpTokensSection />
+      <AdminPlanSwitcher />
       <DangerZone />
     </div>
   )
@@ -204,7 +205,7 @@ function AiDetectionTable() {
         </div>
       ))}
       <p className="pt-3 text-xs text-[#555555]">
-        Detection is automatic — no config needed. Add a PR label or git trailer to your AI-assisted PRs for the most accurate tracking.
+        Detection is automatic. No config needed. Add a PR label or git trailer to your AI-assisted PRs for the most accurate tracking.
       </p>
     </div>
   )
@@ -224,7 +225,7 @@ function TestDigestButton() {
       setMsg(`Test email sent to ${r.sentTo}`)
     } catch (err) {
       setState('error')
-      setMsg((err as { message?: string }).message ?? 'Send failed — check API email config')
+      setMsg((err as { message?: string }).message ?? 'Send failed. Check API email config.')
     }
     setTimeout(() => setState('idle'), 5000)
   }
@@ -238,7 +239,7 @@ function TestDigestButton() {
           {email ? (
             <span>Sends to <span className="text-white font-mono">{email}</span></span>
           ) : (
-            <span className="text-[#555]">No email on account — add one via GitHub profile.</span>
+            <span className="text-[#555]">No email on account. Add one via GitHub profile.</span>
           )}
         </p>
         {state !== 'idle' && (
@@ -333,15 +334,15 @@ function TeamSettings() {
           <div className="flex items-start gap-6 mb-5 flex-wrap">
             <div className="flex items-center gap-2 text-xs text-[#888888]">
               <Tag className="h-3.5 w-3.5 text-white flex-shrink-0" />
-              <span><span className="text-white font-medium">1. PR Label</span> — highest priority</span>
+              <span><span className="text-white font-medium">1. PR Label</span> (highest priority)</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-[#888888]">
               <MessageSquare className="h-3.5 w-3.5 text-white flex-shrink-0" />
-              <span><span className="text-white font-medium">2. Git Trailer</span> — in commit message</span>
+              <span><span className="text-white font-medium">2. Git Trailer</span> (in commit message)</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-[#888888]">
               <Hash className="h-3.5 w-3.5 text-white flex-shrink-0" />
-              <span><span className="text-white font-medium">3. Body Regex</span> — fallback pattern match</span>
+              <span><span className="text-white font-medium">3. Body Regex</span> (fallback pattern match)</span>
             </div>
           </div>
           <AiDetectionTable />
@@ -564,7 +565,7 @@ function SlackSection() {
   const test = useMutation({
     mutationFn: api.slack.test,
     onSuccess: () => showToast('success', '✅ Test message sent to Slack!'),
-    onError: () => showToast('error', '❌ Slack delivery failed — check your webhook URL is correct'),
+    onError: () => showToast('error', '❌ Slack delivery failed. Check your webhook URL is correct.'),
   })
 
   async function saveAndTest() {
@@ -575,7 +576,7 @@ function SlackSection() {
       await api.slack.test()
       showToast('success', '✅ Test message sent to Slack!')
     } catch {
-      showToast('error', '❌ Slack delivery failed — check your webhook URL is correct')
+      showToast('error', '❌ Slack delivery failed. Check your webhook URL is correct.')
     }
   }
 
@@ -691,7 +692,7 @@ function ReposSection() {
     mutationFn: (id: string) => api.repos.sync(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['repos'] })
-      setSyncToast({ type: 'success', msg: 'Sync started — PRs will appear shortly.' })
+      setSyncToast({ type: 'success', msg: 'Sync started. PRs will appear shortly.' })
       setTimeout(() => setSyncToast(null), 4000)
     },
     onError: () => {
@@ -848,7 +849,7 @@ function ConnectRepoForm({
         type: 'success',
         msg: data.alreadyConnected
           ? `${data.repoName} is already connected.`
-          : `Connected ${data.repoName} — synced ${data.prsSynced} PRs`,
+          : `Connected ${data.repoName}. Synced ${data.prsSynced} PRs.`,
       })
       onConnected()
     },
@@ -885,7 +886,7 @@ function ConnectRepoForm({
               <div>
                 <h3 className="text-sm font-semibold text-white mb-1">Read-only access</h3>
                 <p className="text-xs text-[#888] leading-relaxed">
-                  Grassion reads <strong className="text-[#bbb]">PR metadata only</strong> — titles, labels, merge dates, and author logins. We never read your source code, write access is not requested, and no data is shared with third parties.
+                  Grassion reads <strong className="text-[#bbb]">PR metadata only</strong>: titles, labels, merge dates, and author logins. We never read your source code, write access is not requested, and no data is shared with third parties.
                 </p>
               </div>
             </div>
@@ -1069,7 +1070,7 @@ function RepoPicker({ onSelect, onClose }: { onSelect: (fullName: string) => voi
         {/* Privacy note */}
         <div className="px-4 py-2.5 border-t border-[#1a1a1a] flex items-center gap-1.5">
           <Lock className="h-3 w-3 text-[#444]" />
-          <span className="text-[10px] text-[#444]">Read-only access to PR metadata — no source code is ever read</span>
+          <span className="text-[10px] text-[#444]">Read-only access to PR metadata. No source code is ever read.</span>
         </div>
       </div>
     </div>
@@ -1209,7 +1210,7 @@ function HcSettingsSection() {
         <CardContent className="py-1 flex flex-col divide-y divide-[#1e1e1e]">
           <Toggle
             label="Enable PR check run"
-            description="Post a Grassion coverage check on every PR open / synchronize event (Team plan)."
+            description="Post a Grassion coverage check on every PR open / synchronize event."
             checked={team.hcCheckRunEnabled}
             onChange={(v) => patch({ hcCheckRunEnabled: v })}
           />
@@ -1235,7 +1236,7 @@ function HcSettingsSection() {
         </CardContent>
         {toast && (
           <div className={cn('px-5 pb-3 text-xs font-medium', toast === 'saved' ? 'text-green-400' : 'text-red-400')}>
-            {toast === 'saved' ? 'Saved.' : 'Save failed — try again.'}
+            {toast === 'saved' ? 'Saved.' : 'Save failed. Try again.'}
           </div>
         )}
       </Card>
@@ -1277,7 +1278,7 @@ function PrivacyControlsSection() {
         </CardContent>
         {toast && (
           <div className={cn('px-5 pb-3 text-xs font-medium', toast === 'saved' ? 'text-green-400' : 'text-red-400')}>
-            {toast === 'saved' ? 'Saved.' : 'Save failed — try again.'}
+            {toast === 'saved' ? 'Saved.' : 'Save failed. Try again.'}
           </div>
         )}
       </Card>
@@ -1333,7 +1334,7 @@ function McpTokensSection() {
               </div>
               {revealed && (
                 <div className="bg-[#0f1f0f] border border-green-900 rounded p-3 flex flex-col gap-1">
-                  <div className="text-xs text-green-400 font-semibold">Token created — copy it now, it won't be shown again.</div>
+                  <div className="text-xs text-green-400 font-semibold">Token created. Copy it now; it will not be shown again.</div>
                   <code className="text-xs font-mono text-green-300 break-all select-all">{revealed.token}</code>
                   <button className="text-[10px] text-green-500 underline text-left w-fit mt-1" onClick={() => { void navigator.clipboard.writeText(revealed.token) }}>
                     Copy to clipboard
@@ -1414,7 +1415,7 @@ function DangerZone() {
       qc.invalidateQueries()
       setDeleteConfirm(false)
     } catch {
-      setDeleteError('Delete failed — please try again.')
+      setDeleteError('Delete failed. Please try again.')
     } finally {
       setDeleting(false)
     }
@@ -1466,6 +1467,66 @@ function DangerZone() {
               Sign out
             </Button>
           </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+/* ── ADMIN PLAN SWITCHER ── */
+const SWITCHABLE_PLANS = ['free', 'trial', 'team', 'growth', 'business', 'enterprise', 'admin'] as const
+
+function AdminPlanSwitcher() {
+  const { plan } = usePlan()
+  const qc = useQueryClient()
+  const [selected, setSelected] = useState<string>('free')
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  if (plan !== 'admin') return null
+
+  function apply() {
+    setStatus('saving')
+    api.team.switchPlan(selected)
+      .then(() => {
+        qc.invalidateQueries({ queryKey: ['team'] })
+        qc.invalidateQueries({ queryKey: ['me'] })
+        setStatus('saved')
+        setTimeout(() => setStatus('idle'), 2500)
+      })
+      .catch(() => {
+        setStatus('error')
+        setTimeout(() => setStatus('idle'), 3000)
+      })
+  }
+
+  return (
+    <div>
+      <SectionHeading>Admin: plan switcher</SectionHeading>
+      <Card>
+        <CardContent className="py-4 flex flex-col gap-3">
+          <p className="text-xs text-[#666]">Switch this team to any plan for testing. Visible only to admin-plan sessions.</p>
+          <div className="flex items-center gap-3">
+            <select
+              className="bg-[#1e1e1e] border border-[#333] text-white text-sm rounded px-3 py-1.5 flex-1 max-w-xs"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              disabled={status === 'saving'}
+            >
+              {SWITCHABLE_PLANS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={apply}
+              disabled={status === 'saving'}
+            >
+              {status === 'saving' ? 'Applying…' : 'Apply'}
+            </Button>
+          </div>
+          {status === 'saved' && <p className="text-xs text-green-400">Plan switched. Reload the page to see changes.</p>}
+          {status === 'error' && <p className="text-xs text-red-400">Failed to switch plan.</p>}
         </CardContent>
       </Card>
     </div>

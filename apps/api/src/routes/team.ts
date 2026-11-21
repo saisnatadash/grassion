@@ -258,6 +258,27 @@ teamRouter.post('/api/team/send-test-digest', requireAuth, async (req: Request, 
   }
 })
 
+// Admin-only: switch the team's plan — for internal testing only.
+teamRouter.patch('/api/team/switch-plan', requireAuth, requireRole('owner', 'admin'), async (req: Request, res: Response) => {
+  const sess = req.session!
+  const VALID_PLANS = ['free', 'trial', 'starter', 'pro', 'team', 'growth', 'business', 'enterprise', 'admin'] as const
+  type ValidPlan = typeof VALID_PLANS[number]
+  const { plan } = req.body as { plan?: string }
+  if (!plan || !VALID_PLANS.includes(plan as ValidPlan)) {
+    res.status(400).json({ error: 'invalid_plan', validPlans: VALID_PLANS })
+    return
+  }
+  // Only available to teams already on the admin plan.
+  const [teamRow] = await db.select({ plan: teams.plan }).from(teams).where(eq(teams.id, sess.teamId)).limit(1)
+  if (teamRow?.plan !== 'admin') {
+    res.status(404).json({ error: 'not_found' })
+    return
+  }
+  await db.update(teams).set({ plan: plan as ValidPlan, updatedAt: new Date() }).where(eq(teams.id, sess.teamId))
+  logger.info({ teamId: sess.teamId, plan }, 'admin switched plan')
+  res.json({ ok: true, plan })
+})
+
 // Generate a 7-day signed invite link for the team (owner/admin only).
 teamRouter.get('/api/team/invite-link', requireAuth, requireRole('owner', 'admin'), async (req: Request, res: Response) => {
   const sess = req.session!

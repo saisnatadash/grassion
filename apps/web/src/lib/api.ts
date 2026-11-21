@@ -419,6 +419,8 @@ export const api = {
       ),
     sendTestDigest: () =>
       request<{ ok: true; sentTo: string }>('/api/team/send-test-digest', { method: 'POST' }),
+    switchPlan: (plan: string) =>
+      request<{ ok: true; plan: string }>('/api/team/switch-plan', { method: 'PATCH', body: JSON.stringify({ plan }) }),
   },
 
   repos: {

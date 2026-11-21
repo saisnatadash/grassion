@@ -16,6 +16,7 @@ import {
   hcEvidenceEvents,
   hcFailures,
   hcCheckRuns,
+  pullRequests,
 } from '@grassion/db'
 import { db } from '../db.js'
 import { getInstallationOctokit } from '../github.js'
@@ -300,6 +301,17 @@ export async function handleUnderstandingAction(params: {
   actionIdentifier: string
 }): Promise<void> {
   const { orgId, repoId, installationId, prNumber, senderLogin, actionIdentifier } = params
+
+  // Authors may not attest their own PR — it defeats the review signal.
+  const prAuthorRow = await db
+    .select({ authorLogin: pullRequests.authorLogin })
+    .from(pullRequests)
+    .where(and(eq(pullRequests.repoId, repoId), eq(pullRequests.teamId, orgId), eq(pullRequests.githubPrNumber, prNumber)))
+    .limit(1)
+  if (prAuthorRow[0]?.authorLogin?.toLowerCase() === senderLogin.toLowerCase()) {
+    logger.info({ prNumber, senderLogin }, 'hc-check: author tried to attest own PR; blocked')
+    return
+  }
 
   const answer = actionIdentifier === 'understand' ? 'understand'
     : actionIdentifier === 'partly' ? 'partly'

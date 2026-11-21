@@ -1309,12 +1309,8 @@ hcRouter.get('/api/hc/:repoId/audit-export', requireAuth, async (req: Request, r
   const totalPrs = entries.length
   const aiHeavyPrs = entries.filter((e) => e.isAiHeavy).length
   const attestedPrs = entries.filter((e) => e.hasAttestation).length
-  const exceptions = entries.filter((e) => e.noReview || (e.isAiHeavy && !e.hasAttestation)).length
-
-  // Random 25-PR sample (or all if fewer)
-  const sample = entries.length <= 25
-    ? entries
-    : [...entries].sort(() => Math.random() - 0.5).slice(0, 25).sort((a, b) => (a.mergedAt ?? '').localeCompare(b.mergedAt ?? ''))
+  // Exception: merged with 0 GitHub reviews AND no attestation (both conditions required)
+  const exceptions = entries.filter((e) => e.noReview && !e.hasAttestation).length
 
   res.json({
     generatedAt: new Date().toISOString(),
@@ -1330,6 +1326,6 @@ hcRouter.get('/api/hc/:repoId/audit-export', requireAuth, async (req: Request, r
       complianceLabel: 'Supports change-management evidence (e.g. SOC 2 CC8.1, SEBI CSCRF change management). Does not constitute certification or compliance.',
     },
     entries,
-    sample,
+    sample: entries,
   })
 })

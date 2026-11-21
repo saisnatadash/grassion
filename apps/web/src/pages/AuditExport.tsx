@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Download, Shield, FileText, AlertTriangle, CheckCircle, Lock } from 'lucide-react'
 import { api, type AuditExportEntry } from '../lib/api.js'
@@ -12,7 +12,9 @@ function isoToDateInput(iso: string) {
 
 function formatDate(iso: string | null) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-GB', { dateStyle: 'medium' })
+  // Use date-only portion at noon UTC to avoid timezone shift when displaying period bounds
+  const datePart = iso.slice(0, 10)
+  return new Date(`${datePart}T12:00:00Z`).toLocaleDateString('en-GB', { dateStyle: 'medium' })
 }
 
 function entriesToCsv(entries: AuditExportEntry[]): string {
@@ -44,16 +46,22 @@ function downloadCsv(csv: string, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+const PAGE_SIZE = 25
+
 export function AuditExportPage() {
   const now = new Date()
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
   const [from, setFrom] = useState(isoToDateInput(ninetyDaysAgo.toISOString()))
   const [to, setTo] = useState(isoToDateInput(now.toISOString()))
+  const [page, setPage] = useState(0)
   const printRef = useRef<HTMLDivElement>(null)
   const { isFree, isLoading: planLoading } = usePlan()
 
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoId = repos.data?.[0]?.id ?? ''
+
+  // Reset to first page when date range or repo changes
+  useMemo(() => setPage(0), [from, to, repoId])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportQ = useQuery({
     queryKey: ['audit-export', repoId, from, to],
@@ -203,67 +211,97 @@ export function AuditExportPage() {
             Generated: {new Date(data.generatedAt).toLocaleString()}
           </div>
 
-          {/* Entries table (sample of 25 or all) */}
-          <div>
-            <h2 className="text-sm font-semibold text-[#aaa] uppercase tracking-wide mb-3">
-              {data.entries.length <= 25 ? `All ${data.entries.length} PRs` : `Random sample of 25 PRs`}
-            </h2>
-            <div className="rounded-xl border border-[#222] overflow-auto">
-              <table className="w-full text-xs min-w-[600px]">
-                <thead className="bg-[#141414] text-[#555] uppercase tracking-wide">
-                  <tr>
-                    <th className="text-left px-4 py-2">PR</th>
-                    <th className="text-left px-4 py-2">Author</th>
-                    <th className="text-left px-4 py-2">AI Tool</th>
-                    <th className="text-left px-4 py-2">Reviews</th>
-                    <th className="text-left px-4 py-2">Attestation</th>
-                    <th className="text-left px-4 py-2">Check</th>
-                    <th className="text-left px-4 py-2">Merged</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1a1a1a]">
-                  {(data.entries.length <= 25 ? data.entries : data.sample).map((e) => (
-                    <tr key={e.prNumber} className={cn('hover:bg-[#141414]', e.noReview || (e.isAiHeavy && !e.hasAttestation) ? 'bg-red-950/10' : '')}>
-                      <td className="px-4 py-2">
-                        <div className="font-medium text-white">#{e.prNumber}</div>
-                        <div className="text-[#555] truncate max-w-[180px]">{e.title}</div>
-                      </td>
-                      <td className="px-4 py-2 text-[#888]">{e.authorLogin ?? '—'}</td>
-                      <td className="px-4 py-2">
-                        {e.isAiHeavy
-                          ? <Badge className="bg-blue-900/40 text-blue-300 border-blue-700/50 text-[10px]">{e.aiSource}</Badge>
-                          : <span className="text-[#444]">—</span>}
-                      </td>
-                      <td className="px-4 py-2">
-                        {e.noReview
-                          ? <span className="text-red-400">None</span>
-                          : <span className="text-[#888]">{e.reviewCount}</span>}
-                      </td>
-                      <td className="px-4 py-2">
-                        {e.hasAttestation
-                          ? <span className="text-green-400">{e.attestations.map((a) => `${a.personLogin}`).join(', ')}</span>
-                          : <span className={cn(e.isAiHeavy ? 'text-yellow-400' : 'text-[#444]')}>
-                              {e.isAiHeavy ? 'None' : '—'}
-                            </span>}
-                      </td>
-                      <td className="px-4 py-2">
-                        {e.checkConclusion === 'success' && <CheckCircle className="w-3.5 h-3.5 text-green-400" />}
-                        {e.checkConclusion === 'action_required' && <AlertTriangle className="w-3.5 h-3.5 text-red-400" />}
-                        {e.checkConclusion === 'neutral' && <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />}
-                        {!e.checkConclusion && <span className="text-[#333]">—</span>}
-                      </td>
-                      <td className="px-4 py-2 text-[#666]">{formatDate(e.mergedAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {data.entries.length > 25 && (
-              <div className="text-xs text-[#555] mt-2 text-right">
-                Showing random sample of 25 / {data.entries.length} PRs. Download CSV for the full set.
+          {/* Entries table with pagination */}
+          {(() => {
+            const totalPages = Math.max(1, Math.ceil(data.entries.length / PAGE_SIZE))
+            const safePage = Math.min(page, totalPages - 1)
+            const pageEntries = data.entries.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+            return (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-[#aaa] uppercase tracking-wide">
+                    All {data.entries.length} PRs
+                  </h2>
+                  {totalPages > 1 && (
+                    <span className="text-xs text-[#555]">
+                      Page {safePage + 1} of {totalPages}
+                    </span>
+                  )}
+                </div>
+                <div className="rounded-xl border border-[#222] overflow-auto">
+                  <table className="w-full text-xs min-w-[600px]">
+                    <thead className="bg-[#141414] text-[#555] uppercase tracking-wide">
+                      <tr>
+                        <th className="text-left px-4 py-2">PR</th>
+                        <th className="text-left px-4 py-2">Author</th>
+                        <th className="text-left px-4 py-2">AI Tool</th>
+                        <th className="text-left px-4 py-2">Reviews</th>
+                        <th className="text-left px-4 py-2">Attestation</th>
+                        <th className="text-left px-4 py-2">Check</th>
+                        <th className="text-left px-4 py-2">Merged</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#1a1a1a]">
+                      {pageEntries.map((e) => (
+                        <tr key={e.prNumber} className={cn('hover:bg-[#141414]', e.noReview && !e.hasAttestation ? 'bg-red-950/10' : '')}>
+                          <td className="px-4 py-2">
+                            <div className="font-medium text-white">#{e.prNumber}</div>
+                            <div className="text-[#555] truncate max-w-[180px]">{e.title}</div>
+                          </td>
+                          <td className="px-4 py-2 text-[#888]">{e.authorLogin ?? '—'}</td>
+                          <td className="px-4 py-2">
+                            {e.isAiHeavy
+                              ? <Badge className="bg-blue-900/40 text-blue-300 border-blue-700/50 text-[10px]">{e.aiSource}</Badge>
+                              : <span className="text-[#444]">—</span>}
+                          </td>
+                          <td className="px-4 py-2">
+                            {e.noReview
+                              ? <span className="text-red-400">None</span>
+                              : <span className="text-[#888]">{e.reviewCount}</span>}
+                          </td>
+                          <td className="px-4 py-2">
+                            {e.hasAttestation
+                              ? <span className="text-green-400">{e.attestations.map((a) => `${a.personLogin}`).join(', ')}</span>
+                              : <span className={cn(e.isAiHeavy ? 'text-yellow-400' : 'text-[#444]')}>
+                                  {e.isAiHeavy ? 'None' : '—'}
+                                </span>}
+                          </td>
+                          <td className="px-4 py-2">
+                            {e.checkConclusion === 'success' && <CheckCircle className="w-3.5 h-3.5 text-green-400" />}
+                            {e.checkConclusion === 'action_required' && <AlertTriangle className="w-3.5 h-3.5 text-red-400" />}
+                            {e.checkConclusion === 'neutral' && <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />}
+                            {!e.checkConclusion && <span className="text-[#333]">—</span>}
+                          </td>
+                          <td className="px-4 py-2 text-[#666]">{formatDate(e.mergedAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-3">
+                    <button
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      disabled={safePage === 0}
+                      className="px-3 py-1.5 text-xs rounded-lg border border-[#333] text-[#888] hover:text-white hover:border-[#555] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-xs text-[#555]">
+                      {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, data.entries.length)} of {data.entries.length}
+                    </span>
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                      disabled={safePage >= totalPages - 1}
+                      className="px-3 py-1.5 text-xs rounded-lg border border-[#333] text-[#888] hover:text-white hover:border-[#555] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            )
+          })()}
         </>
       )}
     </div>
