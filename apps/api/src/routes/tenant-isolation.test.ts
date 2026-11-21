@@ -212,3 +212,29 @@ describe('list endpoints scope to session team', () => {
     }
   })
 })
+
+// ── Plan switcher security ────────────────────────────────────────────────────
+// A regular customer (owner/admin role, non-admin plan) must never be able to
+// upgrade their own plan via PATCH /api/team/switch-plan.
+describe('plan switcher is restricted to admin-plan teams', () => {
+  it('PATCH /api/team/switch-plan — 403 for non-admin plan team', async () => {
+    // The DB mock returns [] for every SELECT so teamRow is undefined.
+    // undefined?.plan !== 'admin' → true → route must return 403.
+    const { teamRouter } = await import('./team.js')
+    const app = buildApp(teamRouter)
+    const res = await request(app)
+      .patch('/api/team/switch-plan')
+      .send({ plan: 'growth' })
+    expect(res.status).toBe(403)
+    expect((res.body as { error: string }).error).toBe('forbidden')
+  })
+
+  it('PATCH /api/team/switch-plan — 401 without session', async () => {
+    const { teamRouter } = await import('./team.js')
+    const app = buildApp(teamRouter, null)
+    const res = await request(app)
+      .patch('/api/team/switch-plan')
+      .send({ plan: 'growth' })
+    expect(res.status).toBe(401)
+  })
+})

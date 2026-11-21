@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express'
-import { eq, and, sql, gte, lte, desc, asc, count, sum, ilike } from 'drizzle-orm'
+import { eq, and, sql, gte, lte, desc, asc, count, sum, ilike, isNotNull } from 'drizzle-orm'
 import {
   users, teams, repos, pullRequests, llmUsageLog,
   contactSubmissions, careerApplications, analyticsEvents,
@@ -591,6 +591,30 @@ adminRouter.patch('/api/admin/teams/:teamId/plan', requireAuth, requireSuperAdmi
     res.json({ ok: true, teamId: updated.id, plan: updated.plan })
   } catch (err) {
     logger.error({ err }, 'admin plan override failed')
+    res.status(500).json({ error: 'internal_error' })
+  }
+})
+
+// Reset AI detections that came from the now-removed statistical_pattern heuristic.
+// Those were false positives (large/fast/conventional PRs wrongly flagged as AI).
+// Scoped by optional repoId; without it resets across all teams.
+adminRouter.post('/api/admin/reset-statistical-detections', requireAuth, requireSuperAdmin, async (req: Request, res: Response) => {
+  const { repoId } = req.body as { repoId?: string }
+  try {
+    const conditions = [
+      eq(pullRequests.aiDetectionMethod, 'statistical_pattern'),
+      isNotNull(pullRequests.aiDetectionMethod),
+    ]
+    if (repoId) conditions.push(eq(pullRequests.repoId, repoId))
+    const updated = await db
+      .update(pullRequests)
+      .set({ aiSource: null, aiDetectionMethod: null, aiConfidence: 0 })
+      .where(and(...conditions))
+      .returning({ id: pullRequests.id })
+    logger.info({ count: updated.length, repoId: repoId ?? 'all', by: req.session!.githubLogin }, 'admin: reset statistical_pattern detections')
+    res.json({ ok: true, resetCount: updated.length })
+  } catch (err) {
+    logger.error({ err }, 'reset-statistical-detections failed')
     res.status(500).json({ error: 'internal_error' })
   }
 })

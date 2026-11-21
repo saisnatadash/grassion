@@ -272,7 +272,7 @@ teamRouter.patch('/api/team/switch-plan', requireAuth, requireRole('owner', 'adm
   // Only available to teams already on the admin plan.
   const [teamRow] = await db.select({ plan: teams.plan }).from(teams).where(eq(teams.id, sess.teamId)).limit(1)
   if (teamRow?.plan !== 'admin') {
-    res.status(404).json({ error: 'not_found' })
+    res.status(403).json({ error: 'forbidden', message: 'Plan switching is only available to admin accounts.' })
     return
   }
   await db.update(teams).set({ plan: plan as ValidPlan, updatedAt: new Date() }).where(eq(teams.id, sess.teamId))
