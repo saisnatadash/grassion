@@ -4,7 +4,6 @@ import { env } from './env.js'
 import { logger } from './logger.js'
 import { trackAllPendingOutcomes } from './outcome-tracker.js'
 import { computeWeeklyMetricsForAllTeams } from './metrics.js'
-import { sendDigestsForDueTeams } from './digest-runner.js'
 import { sendEmail } from './emails/send.js'
 import { startOfWeekUtc, addDays } from '@grassion/shared'
 import { closeDb, auditLogs, llmUsageLog, outcomeCheckQueue, webhookEvents, analyticsEvents, careerApplications, teams, lt, lte, and, isNotNull, ne } from '@grassion/db'
@@ -88,15 +87,14 @@ cron.schedule(e.OUTCOME_CRON, () => {
   runOutcomePass().catch((err) => logger.error({ err }, 'runOutcomePass unexpected error'))
 })
 
-// Weekly digest — runs hourly so each team gets it at their configured day/hour.
+// Weekly metrics recompute — runs hourly to stay current for the dark code dashboard.
 cron.schedule('0 * * * *', async () => {
-  logger.info('cron: weekly digest tick')
+  logger.info('cron: weekly metrics recompute tick')
   try {
     const lastWeek = addDays(startOfWeekUtc(), -7)
     await computeWeeklyMetricsForAllTeams(lastWeek)
-    await sendDigestsForDueTeams()
   } catch (err) {
-    logger.error({ err }, 'digest cron failed')
+    logger.error({ err }, 'weekly metrics cron failed')
   }
 })
 

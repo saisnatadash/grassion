@@ -91,107 +91,114 @@ describe('detectAI', () => {
     expect(r.confidence).toBe(0)
   })
 
-  describe('statistical_pattern (priority 4)', () => {
+  // Representative human PRs — shape matches what the test repo sends for non-AI work.
+  // These were causing false positives before statistical patterns were removed (bug #1).
+  describe('human PRs — no signals, must return source: null', () => {
     const now = new Date('2024-01-15T10:00:00Z')
     const mergedIn2h = new Date('2024-01-15T12:00:00Z')
-    const mergedIn3h = new Date('2024-01-15T13:00:00Z')
 
-    it('4a fires for bulk generation pattern', () => {
+    // Large, fast-merged PR (old 4a heuristic would have tagged this as AI)
+    it('large fast-merged human PR is not AI', () => {
       const r = detectAI({
         ...base,
-        title: 'add feature',
-        body: null,
-        labels: [],
-        commits: [],
-        additions: 250,
-        deletions: 10,
-        changedFiles: 3,
-        openedAt: now,
-        mergedAt: mergedIn3h,
-      })
-      expect(r.source).toBe('unknown_ai')
-      expect(r.method).toBe('statistical_pattern')
-      expect(r.confidence).toBeCloseTo(0.45)
-    })
-
-    it('4a does not fire when changedFiles > 5', () => {
-      const r = detectAI({
-        ...base,
-        title: 'add feature',
-        body: null,
-        labels: [],
-        commits: [],
-        additions: 250,
-        deletions: 10,
-        changedFiles: 8,
-        commitCount: 5,
-        openedAt: now,
-        mergedAt: mergedIn3h,
-      })
-      expect(r.source).toBe(null)
-    })
-
-    it('4b fires for single-commit large write', () => {
-      const r = detectAI({
-        ...base,
-        title: 'add feature',
-        body: null,
-        labels: [],
-        commits: [],
+        title: 'refactor: extract payment service',
+        body: 'Moving payment logic to its own module for testability.',
+        labels: ['refactor'],
+        commits: [
+          { message: 'refactor: extract payment service', author: { name: 'Alice', email: 'a@co.com' } },
+        ],
+        additions: 280,
+        deletions: 15,
+        changedFiles: 4,
         commitCount: 1,
-        additions: 200,
-        deletions: 5,
-      })
-      expect(r.source).toBe('unknown_ai')
-      expect(r.method).toBe('statistical_pattern')
-      expect(r.confidence).toBeCloseTo(0.40)
-    })
-
-    it('4c fires for conventional commit + large + no review + fast merge', () => {
-      const r = detectAI({
-        ...base,
-        title: 'feat(auth): add OAuth flow',
-        body: null,
-        labels: [],
-        commits: [],
-        additions: 150,
         reviewCount: 0,
         openedAt: now,
         mergedAt: mergedIn2h,
       })
-      expect(r.source).toBe('unknown_ai')
-      expect(r.method).toBe('statistical_pattern')
-      expect(r.confidence).toBeCloseTo(0.35)
+      expect(r.source).toBe(null)
+      expect(r.confidence).toBe(0)
     })
 
-    it('4c does not fire when reviewCount > 0', () => {
+    // Single-commit large write (old 4b heuristic)
+    it('single-commit large human PR is not AI', () => {
+      const r = detectAI({
+        ...base,
+        title: 'add: bulk import endpoint',
+        body: 'Implements the CSV import requested in JIRA-1234.',
+        labels: ['feature'],
+        commits: [
+          { message: 'add: bulk import endpoint\n\nImplements JIRA-1234', author: { name: 'Bob', email: 'b@co.com' } },
+        ],
+        additions: 200,
+        deletions: 5,
+        commitCount: 1,
+        reviewCount: 0,
+      })
+      expect(r.source).toBe(null)
+      expect(r.confidence).toBe(0)
+    })
+
+    // Conventional commit + large + no review (old 4c heuristic)
+    it('feat(scope): conventional-commit human PR is not AI', () => {
       const r = detectAI({
         ...base,
         title: 'feat(auth): add OAuth flow',
-        body: null,
+        body: 'Implements GitHub OAuth as discussed in the team meeting.',
         labels: [],
-        commits: [],
-        additions: 150,
-        reviewCount: 1,
+        commits: [
+          { message: 'feat(auth): add OAuth flow', author: { name: 'Carol', email: 'c@co.com' } },
+        ],
+        additions: 160,
+        reviewCount: 0,
         openedAt: now,
         mergedAt: mergedIn2h,
       })
       expect(r.source).toBe(null)
+      expect(r.confidence).toBe(0)
     })
+  })
 
-    it('label takes priority over statistical pattern', () => {
+  // Representative AI PRs — have explicit signals (label or trailer).
+  describe('AI PRs with explicit signals', () => {
+    // Copilot trailer in a large fast-merged PR
+    it('copilot trailer in large PR is detected', () => {
       const r = detectAI({
         ...base,
-        title: 'feat: big write',
+        title: 'feat: add payment webhook handler',
         body: null,
-        labels: ['grassion:ai-copilot'],
-        commits: [],
-        commitCount: 1,
+        labels: [],
+        commits: [
+          {
+            message: 'feat: add payment webhook handler\n\nCo-authored-by: Copilot <Copilot@users.noreply.github.com>',
+            author: { name: 'Alice', email: 'a@co.com' },
+          },
+        ],
         additions: 300,
-        deletions: 5,
+        deletions: 10,
+        reviewCount: 0,
       })
-      expect(r.method).toBe('label')
       expect(r.source).toBe('copilot')
+      expect(r.method).toBe('trailer')
+      expect(r.confidence).toBeCloseTo(0.95)
+    })
+
+    // AI label on a small quick PR
+    it('grassion:ai-cursor label on quick PR is detected', () => {
+      const r = detectAI({
+        ...base,
+        title: 'fix: null pointer in user lookup',
+        body: 'Quick fix.',
+        labels: ['grassion:ai-cursor', 'bug'],
+        commits: [
+          { message: 'fix: null pointer in user lookup', author: { name: 'Bob', email: 'b@co.com' } },
+        ],
+        additions: 5,
+        deletions: 2,
+        reviewCount: 1,
+      })
+      expect(r.source).toBe('cursor')
+      expect(r.method).toBe('label')
+      expect(r.confidence).toBe(1)
     })
   })
 })

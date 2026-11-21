@@ -80,6 +80,7 @@ export interface MeResponse {
     hcMaxReviewRequests: number
     teamOnlyMode: boolean
     perDevMetricsEnabled: boolean
+    notificationEmail: string | null
   }
 }
 

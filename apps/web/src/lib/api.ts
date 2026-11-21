@@ -537,6 +537,10 @@ export const api = {
     },
     verifyChain: (repoId: string, prNumber: number) =>
       request<{ valid: boolean; rowCount: number; firstTamperedAt?: string }>(`/api/hc/${repoId}/attestation/${prNumber}/verify`),
+    auditVerify: (repoId: string, from: string, to: string) =>
+      request<{ valid: boolean; checkedPrs: number; totalAttestations: number; checkedAt: string }>(
+        `/api/hc/${repoId}/audit-verify?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      ),
     trend: (repoId: string, months?: number) =>
       request<TrendPoint[]>(`/api/hc/${repoId}/trend${months ? `?months=${months}` : ''}`),
     auditExport: (repoId: string, params?: { from?: string; to?: string }) => {

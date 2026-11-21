@@ -63,6 +63,8 @@ export const teams = pgTable('teams', {
   slackWebhookUrl: text('slack_webhook_url'),
   // Slack workspace ID from Slack OAuth — used to scope /grassion slash commands to a single team.
   slackTeamId: text('slack_team_id'),
+  // Dedicated notification email for weekly exceptions and alerts (independent of GitHub account emails).
+  notificationEmail: text('notification_email'),
 
   // Human Coverage check-run settings (Pro plan only)
   hcCheckRunEnabled: boolean('hc_check_run_enabled').default(false).notNull(),

@@ -74,6 +74,7 @@ export function SettingsPage() {
       <GitHubSection />
       <TeamSettings />
       <SlackSection />
+      <NotificationEmailSection />
       <ReposSection />
       <MembersSection />
       <InviteSection />
@@ -664,6 +665,55 @@ function SlackSection() {
   )
 }
 
+/* ── NOTIFICATION EMAIL ── */
+function NotificationEmailSection() {
+  const qc = useQueryClient()
+  const teamQ = useQuery({ queryKey: ['team'], queryFn: api.team.get })
+  const [email, setEmail] = useState('')
+  const [toast, setToast] = useState<'saved' | 'error' | null>(null)
+
+  useEffect(() => {
+    if (teamQ.data) setEmail(teamQ.data.notificationEmail ?? '')
+  }, [teamQ.data])
+
+  function save() {
+    const val = email.trim() || null
+    api.team.update({ notificationEmail: val } as never)
+      .then(() => { qc.invalidateQueries({ queryKey: ['team'] }); setToast('saved'); setTimeout(() => setToast(null), 2500) })
+      .catch(() => { setToast('error'); setTimeout(() => setToast(null), 3000) })
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-[#888]" />
+          <CardTitle>Exception notification email</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-xs text-[#666]">
+          Weekly exception reports go here — independent of GitHub account emails.
+          Leave blank to use owner/admin account emails instead.
+        </p>
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="alerts@yourcompany.com"
+            />
+          </div>
+          <Button onClick={save}>Save</Button>
+        </div>
+        {toast === 'saved' && <p className="text-xs text-green-400">Saved.</p>}
+        {toast === 'error' && <p className="text-xs text-red-400">Save failed.</p>}
+      </CardContent>
+    </Card>
+  )
+}
+
 const REPO_LIMITS: Record<string, number> = {
   trial: 9999,
   free: 1,
@@ -1237,6 +1287,29 @@ function HcSettingsSection() {
         {toast && (
           <div className={cn('px-5 pb-3 text-xs font-medium', toast === 'saved' ? 'text-green-400' : 'text-red-400')}>
             {toast === 'saved' ? 'Saved.' : 'Save failed. Try again.'}
+          </div>
+        )}
+        {team.hcCheckRunEnabled && (
+          <div className="mx-5 mb-4 rounded-lg border border-[#2a2a2a] bg-[#0d0d0d] px-4 py-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[#aaa]">
+              <GitBranch className="h-3.5 w-3.5" />
+              Make it a required status check
+            </div>
+            <p className="text-xs text-[#666] leading-relaxed">
+              To block merges until Grassion passes, go to your repo's{' '}
+              <strong className="text-[#aaa]">Settings → Branches → Branch protection rules</strong>,
+              enable <em>Require status checks to pass before merging</em>, and add{' '}
+              <code className="bg-[#1a1a1a] text-[#4f8ef7] px-1 py-0.5 rounded text-[11px]">Grassion Human Coverage</code>{' '}
+              to the required checks list.
+            </p>
+            <a
+              href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-[#4f8ef7] hover:underline"
+            >
+              GitHub docs <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
         )}
       </Card>

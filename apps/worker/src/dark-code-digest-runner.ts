@@ -19,13 +19,13 @@ import {
 } from './emails/dark-code-digest.js'
 import { sendEmail } from './emails/send.js'
 
-function isProPlan(plan: string): boolean {
-  return plan === 'pro' || plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise'
+function isTeamOrAbove(plan: string): boolean {
+  return plan === 'team' || plan === 'growth' || plan === 'business' || plan === 'enterprise' || plan === 'trial'
 }
 
 async function buildDigestData(teamId: string): Promise<DarkCodeDigestData | null> {
   const [team] = await db.select().from(teams).where(eq(teams.id, teamId)).limit(1)
-  if (!team || !isProPlan(team.plan)) return null
+  if (!team || !isTeamOrAbove(team.plan)) return null
 
   const teamRepos = await db.select().from(repos).where(and(eq(repos.teamId, teamId), eq(repos.isActive, true)))
   if (teamRepos.length === 0) return null
@@ -140,7 +140,7 @@ export async function sendDarkCodeDigestForAllProTeams(): Promise<void> {
     .from(teams)
     .where(eq(teams.emailDigestEnabled, true))
 
-  const proTeams = allTeams.filter((t) => isProPlan(t.plan))
+  const proTeams = allTeams.filter((t) => isTeamOrAbove(t.plan))
 
   for (const team of proTeams) {
     try {

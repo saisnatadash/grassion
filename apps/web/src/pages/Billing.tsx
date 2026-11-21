@@ -248,7 +248,7 @@ export function BillingPage() {
 
   return (
     <div className="space-y-6">
-      {isPro && !success && (
+      {isPro && !isTrial && !success && (
         <div className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-6 py-4">
           <Check className="h-5 w-5 text-white flex-shrink-0" />
           <div>
@@ -281,7 +281,7 @@ export function BillingPage() {
       />
 
       {/* Show full upgrade card for trial/free users; show extra-seats-only card for paid users */}
-      {!isPro ? (
+      {(isTrial || !isPro) ? (
         <UpgradeCard
           selectedPlan={selectedPlan}
           setSelectedPlan={(p) => {

@@ -31,7 +31,7 @@ export async function sendWeeklyExceptionsForAllProTeams(): Promise<void> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const allTeams = await db
-    .select({ id: teams.id, name: teams.name, plan: teams.plan, slackWebhookUrl: teams.slackWebhookUrl })
+    .select({ id: teams.id, name: teams.name, plan: teams.plan, slackWebhookUrl: teams.slackWebhookUrl, notificationEmail: teams.notificationEmail })
     .from(teams)
     .where(isNotNull(teams.id))
 
@@ -46,7 +46,7 @@ export async function sendWeeklyExceptionsForAllProTeams(): Promise<void> {
 }
 
 async function processTeamExceptions(
-  team: { id: string; name: string; plan: string; slackWebhookUrl: string | null },
+  team: { id: string; name: string; plan: string; slackWebhookUrl: string | null; notificationEmail: string | null },
   since: Date,
 ): Promise<void> {
   const teamRepos = await db
@@ -125,17 +125,21 @@ async function processTeamExceptions(
 
   if (exceptions.length === 0) return
 
-  // Send email to team owners/admins
-  const recipients = await db
-    .select({ email: users.email })
-    .from(users)
-    .where(and(
-      eq(users.teamId, team.id),
-      inArray(users.role, ['owner', 'admin']),
-      isNotNull(users.email),
-    ))
-
-  const emails = recipients.map((r) => r.email).filter((e): e is string => !!e)
+  // notificationEmail (owner-configured) takes priority; fall back to owner/admin GitHub emails.
+  let emails: string[]
+  if (team.notificationEmail) {
+    emails = [team.notificationEmail]
+  } else {
+    const recipients = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(and(
+        eq(users.teamId, team.id),
+        inArray(users.role, ['owner', 'admin']),
+        isNotNull(users.email),
+      ))
+    emails = recipients.map((r) => r.email).filter((e): e is string => !!e)
+  }
 
   if (emails.length === 0 && !team.slackWebhookUrl) return
 

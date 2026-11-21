@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, User, Users, Shield, EyeOff, Moon, Flame } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, User, Users, Shield, EyeOff, Moon, Flame, RefreshCw } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { type DarkCodeReportData } from './DarkCodeReport.js'
 import { cn } from '../lib/utils.js'
@@ -11,6 +11,7 @@ type Tab = 'dark' | 'fragile' | 'single'
 
 export function RiskMapPage() {
   const [searchParams] = useSearchParams()
+  const qc = useQueryClient()
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoId = searchParams.get('repo') ?? repos.data?.[0]?.id ?? ''
 
@@ -21,9 +22,46 @@ export function RiskMapPage() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const backfillStatus = useQuery({
+    queryKey: ['backfill-status', repoId],
+    queryFn: () => api.hc.backfillStatus(repoId),
+    enabled: !!repoId,
+    refetchInterval: (q) => q.state.data?.status === 'running' ? 3_000 : false,
+  })
+
+  const syncMutation = useMutation({
+    mutationFn: (id: string) => api.repos.sync(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['backfill-status', repoId] })
+    },
+  })
+
+  // Refresh report once backfill completes
+  const prevStatus = useRef<string | undefined>()
+  useEffect(() => {
+    const s = backfillStatus.data?.status
+    if (prevStatus.current === 'running' && s === 'complete') {
+      void qc.invalidateQueries({ queryKey: ['hc-report', repoId] })
+    }
+    prevStatus.current = s
+  }, [backfillStatus.data?.status, repoId, qc])
+
+  // Auto-trigger backfill if no data and no run has started
+  const autoTriggered = useRef(false)
+  useEffect(() => {
+    if (!repoId || autoTriggered.current) return
+    if (!backfillStatus.isFetched) return
+    if (backfillStatus.data?.status !== 'none') return
+    if (report.data?.headline.totalAreas) return
+    autoTriggered.current = true
+    syncMutation.mutate(repoId)
+  }, [repoId, backfillStatus.isFetched, backfillStatus.data?.status, report.data, syncMutation])
+
   const [tab, setTab] = useState<Tab>('dark')
 
-  if (repos.isLoading || report.isLoading) {
+  const isRunning = backfillStatus.data?.status === 'running' || syncMutation.isPending
+
+  if (repos.isLoading) {
     return <div className="flex justify-center p-12"><Spinner /></div>
   }
   if (!repoId) {
@@ -49,15 +87,36 @@ export function RiskMapPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-white flex items-center gap-2">
-          <EyeOff className="w-6 h-6 text-purple-400" />
-          Risk Map
-        </h1>
-        <p className="mt-1 text-sm text-[#888]">
-          Code areas with no human reviewer, risky AI-only changes, and fragile single-owner paths
-          {data?.repo ? ` · ${data.repo.owner}/${data.repo.name}` : ''}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-white flex items-center gap-2">
+            <EyeOff className="w-6 h-6 text-purple-400" />
+            Risk Map
+          </h1>
+          <p className="mt-1 text-sm text-[#888]">
+            Code areas with no human reviewer, risky AI-only changes, and fragile single-owner paths
+            {data?.repo ? ` · ${data.repo.owner}/${data.repo.name}` : ''}
+          </p>
+          {isRunning && (
+            <p className="mt-1.5 text-xs text-purple-400 flex items-center gap-1.5">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              {backfillStatus.data?.statusDetail ?? 'Scanning PR history…'}
+              {backfillStatus.data?.progressPct != null && ` (${backfillStatus.data.progressPct}%)`}
+            </p>
+          )}
+          {backfillStatus.data?.status === 'failed' && (
+            <p className="mt-1.5 text-xs text-red-400">{backfillStatus.data.error ?? 'Backfill failed'}</p>
+          )}
+        </div>
+        <button
+          onClick={() => syncMutation.mutate(repoId)}
+          disabled={isRunning}
+          className="flex items-center gap-1.5 rounded-lg border border-[#333] px-3 py-1.5 text-sm text-[#888] hover:border-[#555] hover:text-white transition-colors disabled:opacity-40 flex-shrink-0"
+          title="Re-scan PR history to rebuild coverage data"
+        >
+          <RefreshCw className={cn('w-3.5 h-3.5', isRunning && 'animate-spin')} />
+          {isRunning ? 'Scanning…' : 'Re-sync'}
+        </button>
       </div>
 
       {/* Headline stats */}

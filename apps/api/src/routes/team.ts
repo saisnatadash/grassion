@@ -27,7 +27,7 @@ teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => 
         teamSizeRange: teams.teamSizeRange, industry: teams.industry, demoMode: teams.demoMode,
         hcCheckRunEnabled: teams.hcCheckRunEnabled, hcBlockOnCritical: teams.hcBlockOnCritical,
         hcMaxReviewRequests: teams.hcMaxReviewRequests, teamOnlyMode: teams.teamOnlyMode,
-        perDevMetricsEnabled: teams.perDevMetricsEnabled,
+        perDevMetricsEnabled: teams.perDevMetricsEnabled, notificationEmail: teams.notificationEmail,
       })
       .from(teams).where(eq(teams.id, sess.teamId)).limit(1)
     if (!row[0]) {
@@ -60,6 +60,7 @@ teamRouter.get('/api/team', requireAuth, async (req: Request, res: Response) => 
       hcMaxReviewRequests: t.hcMaxReviewRequests ?? 2,
       teamOnlyMode: t.teamOnlyMode ?? false,
       perDevMetricsEnabled: t.perDevMetricsEnabled ?? false,
+      notificationEmail: t.notificationEmail ?? null,
     })
   } catch (err) {
     logger.error({ err }, 'team get failed')

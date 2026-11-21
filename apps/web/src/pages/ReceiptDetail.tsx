@@ -1,11 +1,12 @@
+import { useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   FileText, CheckCircle, AlertTriangle, Shield, ArrowLeft,
-  User, GitMerge, Clock, Lock, Unlock,
+  User, GitMerge, Clock, Lock, Unlock, RefreshCw,
 } from 'lucide-react'
 import { api } from '../lib/api.js'
-import { Spinner, Badge } from '../components/ui.js'
+import { Spinner, Badge, Button } from '../components/ui.js'
 import { cn } from '../lib/utils.js'
 
 function answerLabel(answer: string) {
@@ -23,6 +24,7 @@ export function ReceiptDetailPage() {
   const { prNumber: prStr } = useParams<{ prNumber: string }>()
   const [searchParams] = useSearchParams()
   const prNumber = parseInt(prStr ?? '0', 10)
+  const [verifyState, setVerifyState] = useState<{ loading: boolean; result: { valid: boolean; rowCount: number; checkedAt: string } | null }>({ loading: false, result: null })
 
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoIdParam = searchParams.get('repo')
@@ -33,6 +35,17 @@ export function ReceiptDetailPage() {
     queryFn: () => api.hc.receipt(repoId, prNumber),
     enabled: !!repoId && !isNaN(prNumber),
   })
+
+  async function runVerify() {
+    if (!repoId) return
+    setVerifyState({ loading: true, result: null })
+    try {
+      const r = await api.hc.verifyChain(repoId, prNumber)
+      setVerifyState({ loading: false, result: { ...r, checkedAt: new Date().toISOString() } })
+    } catch {
+      setVerifyState({ loading: false, result: null })
+    }
+  }
 
   if (repos.isLoading || receipt.isLoading) {
     return <div className="flex justify-center p-12"><Spinner /></div>
@@ -98,16 +111,39 @@ export function ReceiptDetailPage() {
       </div>
 
       {/* Chain integrity */}
-      <div className={cn(
-        'flex items-center gap-3 px-4 py-3 rounded-lg border text-sm',
-        chainValid
-          ? 'bg-green-950/30 border-green-800/40 text-green-300'
-          : 'bg-red-950/30 border-red-800/40 text-red-300',
-      )}>
-        {chainValid ? <Lock className="w-4 h-4 shrink-0" /> : <Unlock className="w-4 h-4 shrink-0" />}
-        {chainValid
-          ? `Hash chain intact — ${chainRowCount} attestation${chainRowCount !== 1 ? 's' : ''} verified`
-          : `Chain verification failed — potential tampering detected`}
+      <div className="bg-[#111] border border-[#222] rounded-xl p-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold text-[#aaa] uppercase tracking-wide mb-2">Hash Chain Integrity</h2>
+          {verifyState.result ? (
+            <div className={cn(
+              'flex items-center gap-2 text-sm',
+              verifyState.result.valid ? 'text-green-400' : 'text-red-400',
+            )}>
+              {verifyState.result.valid ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+              <span>
+                {verifyState.result.valid
+                  ? `Chain intact, ${verifyState.result.rowCount} record${verifyState.result.rowCount !== 1 ? 's' : ''}, checked ${new Date(verifyState.result.checkedAt).toLocaleString()}`
+                  : 'Chain verification failed — potential tampering detected'}
+              </span>
+            </div>
+          ) : (
+            <div className={cn(
+              'flex items-center gap-2 text-sm',
+              chainValid ? 'text-green-400' : 'text-red-400',
+            )}>
+              {chainValid ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+              <span>
+                {chainValid
+                  ? `Hash chain intact — ${chainRowCount} record${chainRowCount !== 1 ? 's' : ''}`
+                  : 'Chain verification failed'}
+              </span>
+            </div>
+          )}
+        </div>
+        <Button variant="secondary" size="sm" onClick={runVerify} disabled={verifyState.loading} className="shrink-0">
+          <RefreshCw className={cn('w-3.5 h-3.5 mr-1', verifyState.loading && 'animate-spin')} />
+          {verifyState.loading ? 'Verifying…' : 'Verify chain'}
+        </Button>
       </div>
 
       {/* GitHub check run */}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
-  ChevronDown, Menu, X, Download, Settings, LogOut, CreditCard,
+  ChevronDown, ChevronLeft, Menu, X, Download, Settings, LogOut, CreditCard,
   Shield, Bell, CheckCheck, XCircle, Zap, EyeOff, FileText,
 } from 'lucide-react'
 import { api, type NotificationItem } from '../lib/api.js'
@@ -262,6 +262,8 @@ export function AppLayout() {
     { to: '/settings', label: 'Settings', icon: Settings, badge: null as number | null, end: false },
   ]
 
+  const showBackButton = location.key !== 'default'
+
   const isTrial = team.plan === 'trial'
   const planLabel = planDisplayLabel(team.plan)
 
@@ -271,15 +273,27 @@ export function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-[#222222] bg-[#111111]">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
 
-          {/* Left: Logo */}
-          <Link to="/dashboard" className="flex items-center gap-2.5 select-none flex-shrink-0">
-            <img
-              src="/W+L.png"
-              alt="Grassion"
-              style={{ height: '26px' }}
-              onError={(e) => { e.currentTarget.style.display = 'none' }}
-            />
-          </Link>
+          {/* Left: Logo + Back button */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {showBackButton && (
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-[#888] hover:bg-white/5 hover:text-white transition-colors"
+                aria-label="Go back"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Back</span>
+              </button>
+            )}
+            <Link to="/" className="flex items-center gap-2.5 select-none">
+              <img
+                src="/W+L.png"
+                alt="Grassion"
+                style={{ height: '26px' }}
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
+            </Link>
+          </div>
 
           {/* Center: Nav links (desktop) */}
           <nav className="hidden md:flex items-center gap-1">

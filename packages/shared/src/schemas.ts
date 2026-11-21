@@ -20,6 +20,7 @@ export const updateTeamSchema = z.object({
   hcMaxReviewRequests: z.number().int().min(0).max(5).optional(),
   teamOnlyMode: z.boolean().optional(),
   perDevMetricsEnabled: z.boolean().optional(),
+  notificationEmail: z.string().email().nullable().optional(),
 })
 
 export const checkoutSchema = z.object({

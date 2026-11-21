@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import { Router, type Request, type Response } from 'express'
 import rateLimit from 'express-rate-limit'
-import { eq, and, inArray, desc, asc, lt, isNotNull, gte, sql } from 'drizzle-orm'
+import { eq, and, inArray, desc, asc, lt, lte, isNotNull, gte, sql } from 'drizzle-orm'
 import {
   teams,
   repos,
@@ -1123,6 +1123,55 @@ hcRouter.get('/api/hc/:repoId/attestation/:prNumber/verify', requireAuth, async 
 
   const result = await verifyAttestationChain(sess.teamId, prNumber)
   res.json(result)
+})
+
+// GET /api/hc/:repoId/audit-verify?from=...&to=... — verify all attestation chains for a date range
+hcRouter.get('/api/hc/:repoId/audit-verify', requireAuth, async (req: Request, res: Response) => {
+  const sess = req.session!
+  const { repoId } = req.params as { repoId: string }
+  const { from: fromStr, to: toStr } = req.query as Record<string, string>
+  if (!fromStr || !toStr) { res.status(400).json({ error: 'from and to required' }); return }
+  const from = new Date(fromStr)
+  const to = new Date(toStr)
+  if (isNaN(from.getTime()) || isNaN(to.getTime())) { res.status(400).json({ error: 'invalid_date' }); return }
+
+  const repoRow = await db.select({ id: repos.id }).from(repos)
+    .where(and(eq(repos.id, repoId), eq(repos.teamId, sess.teamId))).limit(1)
+  if (!repoRow[0]) { res.status(404).json({ error: 'repo_not_found' }); return }
+
+  // Get all PRs in the range that have at least one attestation
+  const prsWithAttestations = await db
+    .selectDistinct({ prNumber: hcAttestationLog.prNumber })
+    .from(hcAttestationLog)
+    .innerJoin(pullRequests, and(
+      eq(pullRequests.githubPrNumber, hcAttestationLog.prNumber),
+      eq(pullRequests.repoId, repoId),
+      eq(pullRequests.teamId, sess.teamId),
+    ))
+    .where(and(
+      eq(hcAttestationLog.orgId, sess.teamId),
+      gte(pullRequests.mergedAt, from),
+      lte(pullRequests.mergedAt, to),
+    ))
+    .limit(500)
+
+  let allValid = true
+  let totalAttestations = 0
+  let checkedPrs = 0
+
+  for (const { prNumber } of prsWithAttestations) {
+    const result = await verifyAttestationChain(sess.teamId, prNumber)
+    totalAttestations += result.rowCount
+    checkedPrs++
+    if (!result.valid) { allValid = false }
+  }
+
+  res.json({
+    valid: allValid,
+    checkedPrs,
+    totalAttestations,
+    checkedAt: new Date().toISOString(),
+  })
 })
 
 // ── Trend endpoint ────────────────────────────────────────────────────────────

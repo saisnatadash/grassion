@@ -1,10 +1,12 @@
 import { useState, useRef, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download, Shield, FileText, AlertTriangle, CheckCircle, Lock } from 'lucide-react'
+import { Download, Shield, FileText, AlertTriangle, CheckCircle, Lock, CheckCircle2, XCircle } from 'lucide-react'
 import { api, type AuditExportEntry } from '../lib/api.js'
 import { Spinner, Badge, Button } from '../components/ui.js'
 import { cn } from '../lib/utils.js'
 import { usePlan } from '../lib/plan.js'
+
+type ChainResult = { valid: boolean; checkedPrs: number; totalAttestations: number; checkedAt: string }
 
 function isoToDateInput(iso: string) {
   return iso.slice(0, 10)
@@ -54,14 +56,16 @@ export function AuditExportPage() {
   const [from, setFrom] = useState(isoToDateInput(ninetyDaysAgo.toISOString()))
   const [to, setTo] = useState(isoToDateInput(now.toISOString()))
   const [page, setPage] = useState(0)
+  const [chainResult, setChainResult] = useState<ChainResult | null>(null)
+  const [verifying, setVerifying] = useState(false)
   const printRef = useRef<HTMLDivElement>(null)
   const { isFree, isLoading: planLoading } = usePlan()
 
   const repos = useQuery({ queryKey: ['repos'], queryFn: api.repos.list })
   const repoId = repos.data?.[0]?.id ?? ''
 
-  // Reset to first page when date range or repo changes
-  useMemo(() => setPage(0), [from, to, repoId])  // eslint-disable-line react-hooks/exhaustive-deps
+  // Reset to first page and clear chain result when date range or repo changes
+  useMemo(() => { setPage(0); setChainResult(null) }, [from, to, repoId])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportQ = useQuery({
     queryKey: ['audit-export', repoId, from, to],
@@ -77,8 +81,19 @@ export function AuditExportPage() {
     downloadCsv(csv, `grassion-audit-${from}_${to}.csv`)
   }
 
-  function handlePdfPrint() {
-    window.print()
+  async function handleVerifyAndPrint() {
+    if (!repoId) return
+    setVerifying(true)
+    try {
+      const result = await api.hc.auditVerify(repoId, `${from}T00:00:00Z`, `${to}T23:59:59Z`)
+      setChainResult(result)
+      // Small delay so React re-renders the chain result before the browser's print dialog opens
+      setTimeout(() => window.print(), 200)
+    } catch {
+      window.print()
+    } finally {
+      setVerifying(false)
+    }
   }
 
   if (repos.isLoading || planLoading) return <div className="flex justify-center p-12"><Spinner /></div>
@@ -138,8 +153,8 @@ export function AuditExportPage() {
           <Button variant="secondary" size="sm" onClick={handleCsvDownload} disabled={!data}>
             <Download className="w-4 h-4 mr-1" /> CSV
           </Button>
-          <Button variant="secondary" size="sm" onClick={handlePdfPrint} disabled={!data}>
-            <FileText className="w-4 h-4 mr-1" /> PDF
+          <Button variant="secondary" size="sm" onClick={handleVerifyAndPrint} disabled={!data || verifying}>
+            <FileText className="w-4 h-4 mr-1" /> {verifying ? 'Verifying…' : 'PDF'}
           </Button>
         </div>
       </div>
@@ -204,12 +219,45 @@ export function AuditExportPage() {
             ))}
           </div>
 
+          {/* Report header — visible in print */}
+          <div className="hidden print:block mb-6">
+            <div className="text-2xl font-bold text-black">Audit Period Report</div>
+            <div className="mt-1 text-sm text-gray-600">
+              {data.repo.owner}/{data.repo.name} · {formatDate(data.period.from)} – {formatDate(data.period.to)}
+            </div>
+            <div className="mt-0.5 text-xs text-gray-400">Generated {new Date(data.generatedAt).toLocaleString()}</div>
+          </div>
+
           {/* Period */}
-          <div className="text-xs text-[#555]">
+          <div className="text-xs text-[#555] print:hidden">
             Period: {formatDate(data.period.from)} – {formatDate(data.period.to)} ·
             Repo: {data.repo.owner}/{data.repo.name} ·
             Generated: {new Date(data.generatedAt).toLocaleString()}
           </div>
+
+          {/* Chain verification result — shown when verified, also in print */}
+          {chainResult && (
+            <div className={cn(
+              'flex items-start gap-3 rounded-xl border px-4 py-3 text-sm',
+              chainResult.valid
+                ? 'bg-green-950/30 border-green-800/40 text-green-300 print:bg-green-50 print:border-green-200 print:text-green-800'
+                : 'bg-red-950/30 border-red-800/40 text-red-300 print:bg-red-50 print:border-red-200 print:text-red-800',
+            )}>
+              {chainResult.valid
+                ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                : <XCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+              <div>
+                <div className="font-medium">
+                  {chainResult.valid
+                    ? `Chain intact — ${chainResult.totalAttestations} attestation${chainResult.totalAttestations !== 1 ? 's' : ''} across ${chainResult.checkedPrs} PR${chainResult.checkedPrs !== 1 ? 's' : ''} verified`
+                    : 'Chain verification failed — potential tampering detected'}
+                </div>
+                <div className="mt-0.5 text-xs opacity-70">
+                  Verified {new Date(chainResult.checkedAt).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Entries table with pagination */}
           {(() => {
@@ -302,6 +350,27 @@ export function AuditExportPage() {
               </div>
             )
           })()}
+
+          {/* Signature line — print only */}
+          <div className="hidden print:block mt-12 pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-2 gap-12">
+              <div>
+                <div className="text-xs text-gray-400 mb-6">Prepared by</div>
+                <div className="border-b border-gray-400 mb-1" style={{ minWidth: '200px' }} />
+                <div className="text-xs text-gray-500">Name / Title</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-400 mb-6">Reviewed by</div>
+                <div className="border-b border-gray-400 mb-1" style={{ minWidth: '200px' }} />
+                <div className="text-xs text-gray-500">Name / Title</div>
+              </div>
+            </div>
+            <div className="mt-6 text-[10px] text-gray-400">
+              This report was generated by Grassion. Attestation records are stored in an
+              append-only SHA-256 hash chain and cannot be retroactively altered.
+              {chainResult && ` Chain verified ${new Date(chainResult.checkedAt).toLocaleString()}.`}
+            </div>
+          </div>
         </>
       )}
     </div>
