@@ -21,15 +21,13 @@ import { logAuditEvent, getIp } from '../services/audit.js'
 export const billingRouter = Router()
 
 const PLAN_BASE_MRR_USD: Record<string, number> = {
-  starter: 49,
-  team: 149,
-  business: 399,
+  team:   99,
+  growth: 99,
 }
 
 const PLAN_PRICING = {
-  starter:  { baseCents: 4900,  includedSeats: 10, extraCentsPerSeat: 500  },
-  team:     { baseCents: 14900, includedSeats: 30, extraCentsPerSeat: 400  },
-  business: { baseCents: 39900, includedSeats: 75, extraCentsPerSeat: 300  },
+  team:   { baseCents: 9900, includedSeats: 25, extraCentsPerSeat: 0   },
+  growth: { baseCents: 9900, includedSeats: 25, extraCentsPerSeat: 800 },
 } as const
 
 async function recordReferralConversion(teamId: string, plan: string) {

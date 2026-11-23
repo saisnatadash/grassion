@@ -493,7 +493,7 @@ export const api = {
 
   billing: {
     /** Order-based checkout (primary flow). Creates a Razorpay Order for the selected plan + extra seats. */
-    checkout: (plan: 'starter' | 'team' | 'business', seatCount: number) =>
+    checkout: (plan: 'team' | 'growth', seatCount: number) =>
       request<CheckoutOrderResponse>('/api/billing/checkout', {
         method: 'POST',
         body: JSON.stringify({ plan, seatCount }),

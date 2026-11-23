@@ -201,12 +201,12 @@ export async function computeAndStoreOutcome(pr: PullRequest, repo: Repo, checkp
         teamId: outcome.teamId,
         type,
         title: outcome.wasReverted
-          ? `PR #${pr.githubPrNumber} was reverted`
+          ? (outcome.revertPrNumber
+              ? `PR #${pr.githubPrNumber} was reverted by #${outcome.revertPrNumber}`
+              : `PR #${pr.githubPrNumber} was reverted`)
           : `High-risk PR: #${pr.githubPrNumber}`,
         body: outcome.wasReverted
-          ? (outcome.revertPrNumber
-              ? `PR #${pr.githubPrNumber} was reverted by #${outcome.revertPrNumber}.`
-              : `PR #${pr.githubPrNumber} was reverted.`)
+          ? `Check the revert for details.`
           : `High-risk changes detected in "${shortTitle}".`,
         link: '/outcomes',
         sourceId: pr.id,

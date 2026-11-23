@@ -65,71 +65,47 @@ function loadRazorpayScript(): Promise<void> {
   })
 }
 
-type PlanId = 'starter' | 'team' | 'business'
+type PlanId = 'team' | 'growth'
 
 const PLAN_OPTIONS = [
   {
-    id: 'starter' as PlanId,
-    name: 'Starter',
-    priceUsd: 49,
-    includedSeats: 10,
-    extraPerSeat: 5,
-    best: 'Best for 1–10 devs',
-    popular: false,
-    features: [
-      'All repos monitored',
-      'AI PR detection (label, git trailer & body)',
-      'Weekly ROI verdict: Net Positive / Neutral / Negative',
-      'Problem PR alerts with AI root-cause summaries',
-      'Seat waste analysis',
-      'Codebase health score & trend',
-      'Outcomes tracking (reverts, hotfixes)',
-      'Weekly email digest',
-      'Slack weekly digest + instant alerts',
-      'GitHub App · 5-minute setup',
-      'Email support',
-    ],
-  },
-  {
     id: 'team' as PlanId,
-    name: 'Growth',
-    priceUsd: 149,
-    includedSeats: 30,
-    extraPerSeat: 4,
-    best: 'Best for 11–30 devs',
-    popular: true,
+    name: 'Team',
+    baseUsd: 99,
+    includedSeats: 25,
+    extraPerSeat: 0,
+    best: 'Up to 25 developers · flat rate',
+    popular: false,
     features: [
-      'Everything in Starter',
-      'Per-developer seat waste breakdown',
-      'AI adoption rate by team member',
-      'Tool comparison (Copilot vs Cursor vs Claude Code)',
-      'Developer metrics & trend analysis',
-      'Journey milestones tracker',
-      'Priority email support',
+      'Merge Receipt check on every PR',
+      'Permanent receipt history',
+      'All repos',
+      'Full Risk Map',
+      'Weekly exceptions email + Slack',
+      'Audit export — CSV and PDF',
+      'MCP access for AI agents',
+      'Owner and admin roles',
     ],
   },
   {
-    id: 'business' as PlanId,
-    name: 'Business',
-    priceUsd: 399,
-    includedSeats: 75,
-    extraPerSeat: 3,
-    best: 'Best for 31–75 devs',
+    id: 'growth' as PlanId,
+    name: 'Growth',
+    baseUsd: 99,
+    includedSeats: 25,
+    extraPerSeat: 8,
+    best: '26+ developers · $8/dev above 25',
     popular: false,
     features: [
-      'Everything in Growth',
-      'Security overview & audit log',
-      'Custom data retention policy',
-      'Dedicated onboarding session',
-      '24h support SLA',
+      'Everything in Team',
+      'Viewer role for auditors',
+      'Block merges on risky areas',
+      'Unlimited developers',
     ],
   },
 ]
 
 function suggestPlan(memberCount: number): PlanId {
-  if (memberCount <= 10) return 'starter'
-  if (memberCount <= 30) return 'team'
-  return 'business'
+  return memberCount > 25 ? 'growth' : 'team'
 }
 
 export function BillingPage() {
@@ -158,14 +134,14 @@ export function BillingPage() {
 
   // For paid users, keep selectedPlan in sync with their actual DB plan
   useEffect(() => {
-    if (isPro && plan && ['starter', 'team', 'business'].includes(plan)) {
+    if (isPro && plan && ['team', 'growth'].includes(plan)) {
       setSelectedPlan(plan as PlanId)
     }
   }, [isPro, plan])
 
   const planConfig = PLAN_OPTIONS.find((p) => p.id === selectedPlan)!
   const totalSeats = planConfig.includedSeats + extraSeats
-  const totalUsd = planConfig.priceUsd + extraSeats * planConfig.extraPerSeat
+  const totalUsd = planConfig.baseUsd + extraSeats * planConfig.extraPerSeat
 
   async function startCheckout() {
     setError(null)
@@ -299,7 +275,7 @@ export function BillingPage() {
         />
       ) : (
         <ExtraSeatsCard
-          currentPlan={(plan ?? 'starter') as PlanId}
+          currentPlan={(plan === 'growth' ? 'growth' : 'team') as PlanId}
           extraSeats={extraSeats}
           setExtraSeats={setExtraSeats}
           memberCount={memberCount}
@@ -344,11 +320,13 @@ function CurrentPlanCard({
   onCancel: () => void
 }) {
   const planConfig = {
-    starter:  { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Starter' },
-    team:     { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Growth' },
-    business: { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Business' },
-    pro:      { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
-    admin:    { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Pro' },
+    team:     { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Team' },
+    growth:   { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Growth' },
+    // legacy plan names
+    starter:  { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Team' },
+    business: { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Growth' },
+    pro:      { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Team' },
+    admin:    { border: 'border-white/20', bg: 'bg-white/5', icon: <Star className="h-5 w-5 text-white" />, badgeTone: 'green' as const, label: 'Admin' },
     trial:    { border: 'border-yellow-500/40', bg: 'bg-yellow-500/5', icon: <Shield className="h-5 w-5 text-yellow-400" />, badgeTone: 'yellow' as const, label: '14-day Trial' },
     free:     { border: 'border-[#333]', bg: 'bg-white/2', icon: <Shield className="h-5 w-5 text-[#888888]" />, badgeTone: 'gray' as const, label: 'Free' },
   }
@@ -447,7 +425,7 @@ function UpgradeCard({
                 <span className="text-xs font-semibold uppercase tracking-wider text-[#888888]">{opt.name}</span>
                 {selectedPlan === opt.id && <Check className="h-3.5 w-3.5 text-green-500" />}
               </div>
-              <div className="text-2xl font-bold text-white">${opt.priceUsd}</div>
+              <div className="text-2xl font-bold text-white">${opt.baseUsd}</div>
               <div className="text-xs text-[#555] mt-0.5">/mo · {opt.includedSeats} seats incl.</div>
               <div className="text-xs text-[#444] mt-1">${opt.extraPerSeat}/seat extra</div>
               <div className="text-xs text-[#444] mt-2">{opt.best}</div>
@@ -473,7 +451,7 @@ function UpgradeCard({
           <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3 flex-1">
             <div className="flex justify-between text-sm mb-1">
               <span className="text-[#888888]">{plan.name} base ({plan.includedSeats} seats)</span>
-              <span className="text-white font-medium tabular-nums">${plan.priceUsd}/mo</span>
+              <span className="text-white font-medium tabular-nums">${plan.baseUsd}/mo</span>
             </div>
             {extraSeats > 0 && (
               <div className="flex justify-between text-sm mb-1">
@@ -538,7 +516,7 @@ function ExtraSeatsCard({
   onCheckout: () => void
 }) {
   const cfg = PLAN_OPTIONS.find((p) => p.id === currentPlan)!
-  const totalUsd = cfg.priceUsd + extraSeats * cfg.extraPerSeat
+  const totalUsd = cfg.baseUsd + extraSeats * cfg.extraPerSeat
   const totalSeats = cfg.includedSeats + extraSeats
 
   return (
@@ -567,7 +545,7 @@ function ExtraSeatsCard({
           <div className="rounded-lg bg-[#0a0a0a] border border-[#222] px-4 py-3 flex-1">
             <div className="flex justify-between text-sm mb-1">
               <span className="text-[#888888]">{cfg.name} base ({cfg.includedSeats} seats)</span>
-              <span className="text-white font-medium tabular-nums">${cfg.priceUsd}/mo</span>
+              <span className="text-white font-medium tabular-nums">${cfg.baseUsd}/mo</span>
             </div>
             {extraSeats > 0 && (
               <div className="flex justify-between text-sm mb-1">
@@ -600,9 +578,9 @@ function ExtraSeatsCard({
 
 /* ── PLAN COMPARISON ── */
 function PlanComparison({ plan }: { plan: string }) {
-  const isStarter = ['starter', 'pro', 'admin'].includes(plan)
-  const isGrowth = plan === 'team'
-  const isBusiness = plan === 'business'
+  const isFree  = plan === 'free' || plan === 'trial'
+  const isTeam  = ['team', 'starter', 'pro'].includes(plan)
+  const isGrowth = plan === 'growth' || plan === 'business'
 
   type Tier = {
     name: string
@@ -620,77 +598,74 @@ function PlanComparison({ plan }: { plan: string }) {
 
   const tiers: Tier[] = [
     {
-      name: 'Starter',
-      price: '$49',
-      seats: '10 seats incl.',
-      extra: '$5/seat extra',
-      best: 'Best for 1–10 devs',
+      name: 'Free',
+      price: '$0',
+      seats: '5 devs max',
+      extra: '1 repo · 30-day history',
+      best: 'Try before you buy',
       features: [
-        'All repos monitored',
         'AI PR detection',
-        'Weekly ROI verdict',
-        'Problem PR alerts + AI summaries',
-        'Seat waste analysis',
-        'Health score & codebase trends',
-        'Weekly email + Slack digest',
+        'Merge Receipt on every PR',
+        'Dashboard + Risk Map',
       ],
       inherited: null,
-      cta: isStarter ? 'Current plan' : 'Upgrade',
-      isCurrent: isStarter,
+      cta: isFree ? 'Current plan' : 'Free forever',
+      isCurrent: isFree,
       isFeatured: false,
     },
     {
-      name: 'Growth',
-      price: '$149',
-      seats: '30 seats incl.',
-      extra: '$4/seat extra',
-      best: 'Best for 11–30 devs',
+      name: 'Team',
+      price: '$99',
+      seats: '25 devs incl.',
+      extra: 'Flat rate',
+      best: 'Best for ≤ 25 devs',
       features: [
-        'Per-developer seat breakdown',
-        'AI adoption by team member',
-        'Tool comparison dashboard',
-        'Developer metrics & trends',
-        'Journey milestones tracker',
-        'Priority support',
+        'All repos',
+        'Permanent receipt history',
+        'Full Risk Map',
+        'Weekly exceptions email + Slack',
+        'Audit export — CSV and PDF',
+        'MCP access for AI agents',
+        'Owner and admin roles',
       ],
-      inherited: 'Everything in Starter',
-      cta: isGrowth ? 'Current plan' : 'Contact sales',
-      ctaHref: isGrowth ? undefined : 'mailto:info@grassion.com?subject=Growth plan',
-      isCurrent: isGrowth,
+      inherited: 'Everything in Free',
+      cta: isTeam ? 'Current plan' : 'Upgrade',
+      isCurrent: isTeam,
       isFeatured: true,
     },
     {
-      name: 'Business',
-      price: '$399',
-      seats: '75 seats incl.',
-      extra: '$3/seat extra',
-      best: 'Best for 31–75 devs',
+      name: 'Growth',
+      price: '$99 + $8/dev',
+      seats: '25 incl. · unlimited',
+      extra: '$8/dev above 25',
+      best: 'Best for 26+ devs',
       features: [
-        'Security overview & audit log',
-        'Custom data retention',
-        'Dedicated onboarding session',
-        '24h support SLA',
+        'Viewer role for auditors',
+        'Block merges on risky areas',
+        'Unlimited developers',
       ],
-      inherited: 'Everything in Growth',
-      cta: isBusiness ? 'Current plan' : 'Contact sales',
-      ctaHref: isBusiness ? undefined : 'mailto:info@grassion.com?subject=Business plan',
-      isCurrent: isBusiness,
+      inherited: 'Everything in Team',
+      cta: isGrowth ? 'Current plan' : 'Upgrade',
+      isCurrent: isGrowth,
       isFeatured: false,
     },
     {
-      name: 'Enterprise',
-      price: 'Contact us',
-      seats: 'Unlimited seats',
-      extra: 'Tailored pricing',
-      best: '75+ devs',
+      name: 'Audit Pack',
+      price: '$500',
+      seats: 'One-time add-on',
+      extra: 'Any plan',
+      best: 'Compliance & security',
       features: [
-        'Custom contract & SLA',
-        'Dedicated account manager',
-        'On-premise deployment option',
+        'Full 12-month history import',
+        'Auditor-ready PDF reports',
+        'Security overview & audit log',
+        'Custom data retention policy',
+        'Dedicated onboarding session',
+        '24h support SLA',
       ],
-      inherited: 'Everything in Business',
+      inherited: null,
       cta: 'Contact sales',
-      ctaHref: 'mailto:info@grassion.com?subject=Enterprise plan',
+      ctaHref: 'mailto:info@grassion.com?subject=Audit Pack',
       isCurrent: false,
       isFeatured: false,
     },
@@ -821,11 +796,13 @@ function SubscriptionReceipt({
   plan: string
 }) {
   const PLAN_CONFIG: Record<string, { base: number; included: number; extra: number; name: string }> = {
-    starter:  { base: 49,  included: 10, extra: 5, name: 'Starter' },
-    team:     { base: 149, included: 30, extra: 4, name: 'Growth' },
-    business: { base: 399, included: 75, extra: 3, name: 'Business' },
-    pro:      { base: 49,  included: 10, extra: 5, name: 'Pro' },
-    admin:    { base: 49,  included: 10, extra: 5, name: 'Pro' },
+    team:     { base: 99,  included: 25, extra: 0, name: 'Team' },
+    growth:   { base: 99,  included: 25, extra: 8, name: 'Growth' },
+    // legacy names
+    starter:  { base: 99,  included: 25, extra: 0, name: 'Team' },
+    business: { base: 99,  included: 25, extra: 8, name: 'Growth' },
+    pro:      { base: 99,  included: 25, extra: 0, name: 'Team' },
+    admin:    { base: 99,  included: 25, extra: 0, name: 'Admin' },
   }
   const config = PLAN_CONFIG[plan]
   const seats = subData.seatCount > 0 ? subData.seatCount : (config?.included ?? 1)
